@@ -117,17 +117,18 @@
             min-height: 1.7em;
             vertical-align: middle;
             margin-right: 0.1em;
-            background-image: url(./images/toad icon static.png);
+            background-image: url("./images/toad icon static.png");
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
             image-rendering: auto;
             transition: background-image 0.15s;
         }
-        .main-links a.shop:hover .icon    { background-image: url(./images/toad shop.png); }
-        .main-links a.contact:hover .icon { background-image: url(./images/toad mail.png); }
-        .main-links a.about:hover .icon   { background-image: url(./images/toad about.png); }
-        .main-links a.work:hover .icon    { background-image: url(./images/toad work.png); }
+        .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
+        .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+        .main-links a.about:hover .icon   { background-image: url("./images/toad about.png"); }
+        .main-links a.work:hover .icon    { background-image: url("./images/toad work.png"); }
+
         .nav-hero-separator,
         .banner-hero-separator {
             width: 86vw;
@@ -200,6 +201,8 @@
         .hero-image-box:focus .hero-image {
             transform: scale(1);
         }
+
+        /* Responsive adjustments */
         @media (max-width: 900px) {
             .hero-header {
                 padding-left: 3vw;
