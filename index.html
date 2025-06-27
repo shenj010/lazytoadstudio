@@ -26,7 +26,7 @@
             display: flex;
             flex-direction: row;
             align-items: flex-end;
-            justify-content: flex-end;
+            justify-content: space-between; /* logo left, nav/title right */
             margin-top: 36px;
             margin-bottom: 0;
             box-sizing: border-box;
@@ -39,9 +39,6 @@
             align-items: center;
             justify-content: flex-start;
             flex: 0 0 auto;
-            margin-right: 32px;
-            /* move logo about 20% more to right using left margin */
-            margin-left: 10vw;
         }
         .logo-circle {
             display: flex;
@@ -67,12 +64,9 @@
             flex-direction: column;
             align-items: flex-end;
             justify-content: flex-end;
-            flex: 1 1 0;
             min-width: 0;
             min-height: 0;
             padding: 0;
-            /* move nav col further to the right */
-            margin-right: 8vw;
         }
         .hero-nav-title, 
         .main-links a, 
@@ -121,7 +115,7 @@
             gap: 0.5em;
             padding: 0.4em 1.6em;
             border-radius: 20px;
-            border: 2.2px solid #fff;
+            border: 2.2px solid #fff; /* 10% thicker */
             background: none;
             box-shadow: none;
             margin: 0 0.1em;
@@ -242,7 +236,6 @@
                 align-items: center;
                 width: 100%;
                 margin-bottom: 10px;
-                margin-left: 0;
             }
             .logo-circle {
                 margin: 0 auto;
@@ -257,9 +250,6 @@
             .main-links { gap: 14px; margin-top: 8px;}
             .hero-images-spacing, .banner-images-spacing { height: 22px; }
             .nav-hero-separator { margin-top: 6px; }
-            .hero-nav-col {
-                margin-right: 0;
-            }
         }
         @media (max-width: 700px) {
             .hero-header {
@@ -275,7 +265,6 @@
                 align-items: center;
                 width: 100%;
                 margin-bottom: 10px;
-                margin-left: 0;
             }
             .logo-circle {
                 margin: 0 auto;
@@ -288,7 +277,6 @@
                 justify-content: center;
                 width: 100%;
                 align-items: flex-end;
-                margin-right: 0;
             }
             .hero-nav-title {
                 text-align: right;
