@@ -128,8 +128,6 @@
         .main-links a.contact:hover .icon { background-image: url(./images/toad mail.png); }
         .main-links a.about:hover .icon   { background-image: url(./images/toad about.png); }
         .main-links a.work:hover .icon    { background-image: url(./images/toad work.png); }
-
-        /* Marker-Style Separator lines (half thickness) */
         .nav-hero-separator,
         .banner-hero-separator {
             width: 86vw;
@@ -157,8 +155,6 @@
         .hero-images-spacing, .banner-images-spacing {
             height: 38px;
         }
-
-        /* Remove borders between hero images: make them flush */
         .hero-image-row .hero-image-box:not(:last-child) {
             border-right: none !important;
         }
@@ -204,8 +200,6 @@
         .hero-image-box:focus .hero-image {
             transform: scale(1);
         }
-
-        /* Responsive adjustments */
         @media (max-width: 900px) {
             .hero-header {
                 padding-left: 3vw;
@@ -541,16 +535,16 @@
       <!-- 4-IMAGE HERO ROW -->
       <div class="hero-image-row">
         <div class="hero-image-box" tabindex="0">
-          <img src="/images/1 Joe Shenton - Respite.jpg" alt="After the War" class="hero-image">
+          <img src="images/1 Joe Shenton - Respite.jpg" alt="After the War" class="hero-image">
         </div>
         <div class="hero-image-box" tabindex="0">
-          <img src="./images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship" class="hero-image">
+          <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship" class="hero-image">
         </div>
         <div class="hero-image-box" tabindex="0">
-          <img src="/images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine" class="hero-image">
+          <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine" class="hero-image">
         </div>
         <div class="hero-image-box" tabindex="0">
-          <img src="/images/2 Joe Shenton - Routine.jpg" alt="Transporter" class="hero-image">
+          <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter" class="hero-image">
         </div>
       </div>
       <div class="banner-images-spacing"></div>
@@ -576,7 +570,6 @@
             <h2>Gallery</h2>
         </div>
         <div class="gallery-grid">
-            <!-- ...gallery as before... -->
             <div class="gallery-item">
                 <a href="gallery/after-the-war.html">
                     <img src="images/1 Joe Shenton - Respite.jpg" alt="After the War">
@@ -589,7 +582,7 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/ptsd-machine.html">
-                    <img src="images/4 Joe Shenton - Reflection" alt="PTSD Machine">
+                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">PTSD Machine</div>
                         <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
@@ -599,7 +592,7 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/transporter.html">
-                    <img src="/images/2 Joe Shenton - Routine.jpg" alt="Transporter">
+                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Transporter</div>
                         <div class="gallery-overlay-meta">Digital illustration · 2021</div>
@@ -609,7 +602,7 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/ramen-battleship.html">
-                    <img src="/images/3 Joe Shenton - Reunion.jpg alt="Ramen Battleship">
+                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Ramen Battleship</div>
                         <div class="gallery-overlay-meta">Watercolor · 2020</div>
@@ -619,7 +612,7 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/walking-temple.html">
-                    <img src="/images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
+                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Quiet day at the beach</div>
                         <div class="gallery-overlay-meta">Digital painting · 2023</div>
@@ -629,7 +622,7 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/demons.html">
-                    <img src="./images/demons website.jpg" alt="Waiting for the bus in the desert">
+                    <img src="images/demons website.jpg" alt="Waiting for the bus in the desert">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Waiting for the bus in the desert</div>
                         <div class="gallery-overlay-meta">Ink · 2022</div>
@@ -639,7 +632,8 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/mountain.html">
-                    <img src="./images/mountain website.jpg" alt="Nature again.. At its finest!">
+                    <!-- No "mountain website.jpg" in your images folder! -->
+                    <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Nature again.. At its finest!</div>
                         <div class="gallery-overlay-meta">Acrylic · 2021</div>
@@ -649,7 +643,8 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/osaka.html">
-                    <img src="./images/osaka wesbite.jpg" alt="Canoeing again">
+                    <!-- The filename is "osaka wesbite.jpg" (typo). -->
+                    <img src="images/osaka wesbite.jpg" alt="Canoeing again">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Canoeing again</div>
                         <div class="gallery-overlay-meta">Gouache · 2022</div>
@@ -659,7 +654,8 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/girl-train.html">
-                    <img src="./images/fisherman website.jpg" alt="A girl, and a train passing">
+                    <!-- No "fisherman website.jpg" in your images folder! -->
+                    <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">A girl, and a train passing</div>
                         <div class="gallery-overlay-meta">Mixed media · 2023</div>
@@ -669,7 +665,8 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/closegirl.html">
-                    <img src="./images/wanderer website.jpg" alt="What a beautiful day!">
+                    <!-- No "wanderer website.jpg" in your images folder! -->
+                    <img src="images/wanderer website.jpg" alt="What a beautiful day!">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">What a beautiful day!</div>
                         <div class="gallery-overlay-meta">Digital · 2022</div>
