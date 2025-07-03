@@ -4,7 +4,7 @@
     <title>Lazy Toad Studios</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Add Press Start 2P Pixel Font and DotGothic16 -->
+    <!-- Press Start 2P & DotGothic16 fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
     <style>
         html, body {
@@ -16,10 +16,8 @@
             width: 100vw;
             overflow-x: hidden;
         }
-        body {
-            min-height: 100vh;
-            background: #FDEDF4;
-        }
+        body { min-height: 100vh; }
+
         .hero-header {
             width: 100vw;
             display: flex;
@@ -111,42 +109,52 @@
             text-stroke: 0;
             font-weight: normal;
         }
-        /* Frog animation styles */
-        .hero-nav-subtitle span.char-frog-wrap {
+        /* Robust Frog Mask Animation */
+        .hero-nav-subtitle .char-frog-wrap {
             position: relative;
             display: inline-block;
             vertical-align: baseline;
-            min-height: 1em;
-            overflow: visible; /* allow full letter display */
         }
-        .hero-nav-subtitle .frog-peep {
+        .hero-nav-subtitle .letter-wrap {
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-nav-subtitle .frog-wrap {
             position: absolute;
             left: 50%;
             bottom: 0;
-            width: 1em;
-            height: 1em;
-            z-index: 1;
-            transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97);
+            width: 1.2em;
+            height: 0.7em; /* shows only top of frog when peeping */
+            transform: translateX(-50%);
+            overflow: hidden;
             pointer-events: none;
+            z-index: 2;
+            display: block;
+        }
+        .hero-nav-subtitle .frog-peep {
+            width: 1.2em;
+            height: 1.2em;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97);
             will-change: transform;
-            display: none;
-            transform: translate(-50%, 120%); /* hidden below */
+            display: block;
+            transform: translateY(100%);
         }
         .hero-nav-subtitle .frog-peep.peeping {
-            display: block;
-            /* Show just the top part. Adjust 65% to taste for your PNG */
-            transform: translate(-50%, 65%);
+            transform: translateY(30%); /* adjust for top half only */
         }
         .hero-nav-subtitle .frog-peep.fully-raised {
-            display: block;
-            /* Frog sits exactly where the letter was */
-            transform: translate(-50%, 0%);
+            /* frog fully occupies the letter's space */
+            transform: translateY(0);
         }
         .hero-nav-subtitle .the-letter {
             display: inline-block;
             transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97), opacity 0.3s;
             will-change: transform;
-            z-index: 2;
+            z-index: 1;
             position: relative;
         }
         .hero-nav-subtitle .the-letter.lifted {
@@ -297,18 +305,10 @@
                 width: 100%;
                 margin-bottom: 10px;
             }
-            .logo-circle {
-                margin: 0 auto;
-            }
+            .logo-circle { margin: 0 auto; }
             .hero-logo { height: 95px; }
-            .hero-nav-title {
-                font-size: 1.3rem;
-                margin-bottom: 10px;
-            }
-            .hero-nav-subtitle {
-                font-size: 1.2rem;
-                margin-bottom: 10px;
-            }
+            .hero-nav-title { font-size: 1.3rem; margin-bottom: 10px; }
+            .hero-nav-subtitle { font-size: 1.2rem; margin-bottom: 10px; }
             .main-links a { font-size: 0.9rem; }
             .main-links .icon { width: 1.2em; height: 1.2em; }
             .main-links { gap: 14px; margin-top: 8px;}
@@ -328,13 +328,8 @@
                 width: 100%;
                 margin-bottom: 10px;
             }
-            .logo-circle {
-                margin: 0 auto;
-            }
-            .hero-logo {
-                height: 54px;
-                margin: 0;
-            }
+            .logo-circle { margin: 0 auto; }
+            .hero-logo { height: 54px; margin: 0; }
             .hero-nav-col {
                 justify-content: center;
                 width: 100%;
@@ -396,12 +391,8 @@
             }
         }
         @media (min-width: 901px) and (orientation: landscape) {
-            .hero-image-row {
-                flex-direction: row !important;
-            }
-            .hero-image-box {
-                border-bottom: none !important;
-            }
+            .hero-image-row { flex-direction: row !important; }
+            .hero-image-box { border-bottom: none !important; }
             .hero-image-row .hero-image-box:not(:last-child) {
                 border-right: none !important;
             }
@@ -817,6 +808,7 @@
         </div>
     </footer>
     <script>
+    // Modal & scroll logic (unchanged)
     function openModal(img) {
         var modal = document.getElementById('imgModal');
         var modalImg = document.getElementById('modalImg');
@@ -845,30 +837,38 @@
         }
     });
 
-    // FROG "PEEP" ANIMATION SCRIPT
+    // FROG "PEEP" ANIMATION SCRIPT (robust, non-clipping)
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
-        // Wrap each character in a span for animation
         for (const c of originalText) {
             const wrap = document.createElement('span');
             wrap.className = 'char-frog-wrap';
-            // Letter span
+
+            // Letter span (never clipped)
+            const letterWrap = document.createElement('span');
+            letterWrap.className = 'letter-wrap';
             const letter = document.createElement('span');
             letter.className = 'the-letter';
             letter.textContent = c;
-            // Frog image
+            letterWrap.appendChild(letter);
+
+            // Frog mask span (absolutely positioned, clipped)
+            const frogWrap = document.createElement('span');
+            frogWrap.className = 'frog-wrap';
             const frog = document.createElement('img');
             frog.src = frogImgSrc;
             frog.alt = "🐸";
             frog.className = 'frog-peep';
-            frog.style.height = '1em';
-            frog.style.width = '1em';
-            wrap.appendChild(letter);
-            wrap.appendChild(frog);
+            frog.style.height = '1.2em';
+            frog.style.width = '1.2em';
+            frogWrap.appendChild(frog);
+
+            wrap.appendChild(letterWrap);
+            wrap.appendChild(frogWrap);
             subtitle.appendChild(wrap);
         }
         const wraps = subtitle.querySelectorAll('.char-frog-wrap');
@@ -882,7 +882,6 @@
             const wrap = wraps[idx];
             const letter = wrap.querySelector('.the-letter');
             const frog = wrap.querySelector('.frog-peep');
-            frog.style.display = 'block';
             frog.classList.remove('fully-raised');
             frog.classList.remove('peeping');
             letter.classList.remove('lifted');
@@ -904,7 +903,6 @@
 
             // Step 3: After 5 seconds, reset
             setTimeout(() => {
-                frog.style.display = 'none';
                 frog.classList.remove('peeping', 'fully-raised');
                 letter.classList.remove('lifted','raised');
                 setTimeout(doFrogAnimation, randomDelay());
