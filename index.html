@@ -92,13 +92,12 @@
         }
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
-            font-size: 2.2rem; /* Reduced from 3.2rem to 2.2rem */
+            font-size: 2.2rem;
             color: #fff;
             text-align: right;
             margin-bottom: 14px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            /* Black outline for pixel effect */
             text-shadow:
                 -2px -2px 0 #000,
                 2px -2px 0 #000,
@@ -111,6 +110,47 @@
             -webkit-text-stroke: 0;
             text-stroke: 0;
             font-weight: normal;
+        }
+        /* Frog animation styles */
+        .hero-nav-subtitle span.char-frog-wrap {
+            position: relative;
+            display: inline-block;
+            overflow: visible;
+        }
+        .hero-nav-subtitle .frog-peep {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 100%);
+            bottom: 0;
+            width: 1.2em;
+            height: auto;
+            z-index: 1;
+            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97);
+            pointer-events: none;
+            will-change: transform;
+            display: none;
+        }
+        .hero-nav-subtitle .frog-peep.raised {
+            display: block;
+            transform: translate(-50%, 30%);
+        }
+        .hero-nav-subtitle .frog-peep.fully-raised {
+            display: block;
+            transform: translate(-50%, 20%);
+        }
+        .hero-nav-subtitle .the-letter {
+            display: inline-block;
+            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.3s;
+            will-change: transform;
+            z-index: 2;
+            position: relative;
+        }
+        .hero-nav-subtitle .the-letter.lifted {
+            transform: translateY(-1.3em);
+            opacity: 0;
+        }
+        .hero-nav-subtitle .the-letter.raised {
+            transform: translateY(-0.5em);
         }
         .main-links {
             display: flex;
@@ -801,37 +841,72 @@
         }
     });
 
-    // FROG SWAP SCRIPT
+    // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
         const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
-        // Wrap each character in a span
+        // Wrap each character in a span for animation
         for (const c of originalText) {
-            const span = document.createElement('span');
-            span.textContent = c;
-            subtitle.appendChild(span);
+            const wrap = document.createElement('span');
+            wrap.className = 'char-frog-wrap';
+            // Letter span
+            const letter = document.createElement('span');
+            letter.className = 'the-letter';
+            letter.textContent = c;
+            // Frog image
+            const frog = document.createElement('img');
+            frog.src = frogImgSrc;
+            frog.alt = "🐸";
+            frog.className = 'frog-peep';
+            frog.style.height = '1em';
+            wrap.appendChild(letter);
+            wrap.appendChild(frog);
+            subtitle.appendChild(wrap);
         }
-        const spans = subtitle.querySelectorAll('span');
+        const wraps = subtitle.querySelectorAll('.char-frog-wrap');
 
         function randomDelay() {
             return Math.floor(Math.random() * 20000) + 10000;
         }
-        function doFrogSwap() {
-            const idx = Math.floor(Math.random() * spans.length);
-            const span = spans[idx];
-            const originalChar = span.textContent;
-            span.innerHTML = `<img src="${frogImgSrc}" alt="🐸" style="height:1em;vertical-align:middle;">`;
 
+        function doFrogAnimation() {
+            const idx = Math.floor(Math.random() * wraps.length);
+            const wrap = wraps[idx];
+            const letter = wrap.querySelector('.the-letter');
+            const frog = wrap.querySelector('.frog-peep');
+            frog.style.display = 'block';
+            frog.classList.remove('fully-raised');
+            frog.classList.remove('raised');
+            letter.classList.remove('lifted');
+            letter.classList.remove('raised');
+
+            // Step 1: Frog peeps up behind letter
             setTimeout(() => {
-                span.textContent = originalChar;
-                setTimeout(doFrogSwap, randomDelay());
-            }, 5000); // Show frog for 5 seconds
+                frog.classList.add('raised');
+                letter.classList.add('raised');
+            }, 100);
+
+            // Step 2: After 1.2s, frog pushes letter up and fully raises
+            setTimeout(() => {
+                frog.classList.remove('raised');
+                frog.classList.add('fully-raised');
+                letter.classList.remove('raised');
+                letter.classList.add('lifted');
+            }, 1500);
+
+            // Step 3: After 5 seconds, reset letter and frog
+            setTimeout(() => {
+                frog.style.display = 'none';
+                frog.classList.remove('raised','fully-raised');
+                letter.classList.remove('lifted','raised');
+                setTimeout(doFrogAnimation, randomDelay());
+            }, 5000);
         }
 
-        setTimeout(doFrogSwap, randomDelay());
+        setTimeout(doFrogAnimation, randomDelay());
     });
     </script>
 </body>
