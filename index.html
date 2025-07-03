@@ -26,12 +26,12 @@
             display: flex;
             flex-direction: row;
             align-items: flex-end;
-            justify-content: space-between; /* logo left, nav/title right */
+            justify-content: space-between;
             margin-top: 36px;
             margin-bottom: 0;
             box-sizing: border-box;
             padding-left: 2vw;
-            padding-right: 2vw;
+            padding-right: 6vw; /* Push nav/title further right */
             position: relative;
         }
         .hero-logo-col {
@@ -67,6 +67,7 @@
             min-width: 0;
             min-height: 0;
             padding: 0;
+            margin-right: 2vw; /* Fine-tune right spacing */
         }
         .hero-nav-title, 
         .main-links a, 
@@ -78,12 +79,28 @@
         .hero-nav-title {
             font-size: 2.2rem;
             color: #fff;
-            margin: 0 0 14px 0;
+            margin: 0 0 0.3em 0;
             text-align: right;
             line-height: 1.1;
             text-transform: uppercase;
             -webkit-text-stroke: 1.2px #111;
             text-stroke: 1.2px #111;
+            text-shadow:
+                1px 1px 0 #111,
+                -1px 1px 0 #111,
+                1px -1px 0 #111,
+                -1px -1px 0 #111;
+        }
+        .hero-nav-subtitle {
+            font-family: 'Press Start 2P', cursive, monospace;
+            font-size: 1.2rem;
+            color: #fff;
+            text-align: right;
+            margin-bottom: 14px;
+            margin-top: -6px;
+            letter-spacing: 0.04em;
+            -webkit-text-stroke: 1.1px #111;
+            text-stroke: 1.1px #111;
             text-shadow:
                 1px 1px 0 #111,
                 -1px 1px 0 #111,
@@ -115,7 +132,7 @@
             gap: 0.5em;
             padding: 0.4em 1.6em;
             border-radius: 20px;
-            border: 2.2px solid #fff; /* 10% thicker */
+            border: 2.2px solid #fff;
             background: none;
             box-shadow: none;
             margin: 0 0.1em;
@@ -245,11 +262,18 @@
                 font-size: 1.3rem;
                 margin-bottom: 10px;
             }
+            .hero-nav-subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
             .main-links a { font-size: 0.9rem; }
             .main-links .icon { width: 1.2em; height: 1.2em; }
             .main-links { gap: 14px; margin-top: 8px;}
             .hero-images-spacing, .banner-images-spacing { height: 22px; }
             .nav-hero-separator { margin-top: 6px; }
+            .hero-nav-col {
+                margin-right: 0;
+            }
         }
         @media (max-width: 700px) {
             .hero-header {
@@ -277,6 +301,7 @@
                 justify-content: center;
                 width: 100%;
                 align-items: flex-end;
+                margin-right: 0;
             }
             .hero-nav-title {
                 text-align: right;
@@ -284,6 +309,11 @@
                 font-size: 1rem;
                 margin-bottom: 2px;
                 margin-top: 0;
+            }
+            .hero-nav-subtitle {
+                font-size: 0.7rem;
+                margin-bottom: 8px;
+                margin-top: -2px;
             }
             .main-links {
                 justify-content: flex-end;
@@ -539,6 +569,7 @@
         </div>
         <div class="hero-nav-col">
           <div class="hero-nav-title">LAZY TOAD STUDIOS</div>
+          <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
           <nav class="main-links">
             <a href="/shop.html" class="shop" title="Shop">
               <span class="icon" aria-hidden="true"></span>
@@ -673,7 +704,6 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/mountain.html">
-                    <!-- No "mountain website.jpg" in your images folder! -->
                     <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Nature again.. At its finest!</div>
@@ -684,7 +714,6 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/osaka.html">
-                    <!-- The filename is "osaka wesbite.jpg" (typo). -->
                     <img src="images/osaka wesbite.jpg" alt="Canoeing again">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">Canoeing again</div>
@@ -695,7 +724,6 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/girl-train.html">
-                    <!-- No "fisherman website.jpg" in your images folder! -->
                     <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">A girl, and a train passing</div>
@@ -706,7 +734,6 @@
             </div>
             <div class="gallery-item">
                 <a href="gallery/closegirl.html">
-                    <!-- No "wanderer website.jpg" in your images folder! -->
                     <img src="images/wanderer website.jpg" alt="What a beautiful day!">
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-title">What a beautiful day!</div>
