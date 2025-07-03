@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Add Press Start 2P Pixel Font -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Add PixelMplus10 Japanese Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=PixelMplus10&display=swap" rel="stylesheet">
     <style>
         html, body {
             margin: 0;
             padding: 0;
             background: #FDEDF4;
             color: #222;
-            font-family: 'Press Start 2P', cursive, monospace;
+            font-family: 'Press Start 2P', 'PixelMplus10', monospace;
             width: 100vw;
             overflow-x: hidden;
         }
@@ -91,20 +93,19 @@
                 -1px -1px 0 #111;
         }
         .hero-nav-subtitle {
-            font-family: 'Press Start 2P', cursive, monospace;
+            font-family: 'PixelMplus10', 'Press Start 2P', monospace;
             font-size: 2rem;
             color: #fff;
             text-align: right;
             margin-bottom: 14px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            -webkit-text-stroke: 1.1px #111;
-            text-stroke: 1.1px #111;
+            /* Optional: give a subtle shadow for readability, but avoid strong outline */
             text-shadow:
                 1px 1px 0 #111,
-                -1px 1px 0 #111,
-                1px -1px 0 #111,
-                -1px -1px 0 #111;
+                0px 2px 0 #111,
+                2px 0px 0 #111;
+            /* Remove -webkit-text-stroke for Japanese for cleaner look */
         }
         .main-links {
             display: flex;
@@ -300,6 +301,7 @@
                 margin-top: 0;
             }
             .hero-nav-subtitle {
+                font-family: 'PixelMplus10', 'Press Start 2P', monospace;
                 font-size: 0.85rem;
                 margin-bottom: 8px;
                 margin-top: -2px;
