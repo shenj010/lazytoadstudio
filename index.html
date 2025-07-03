@@ -501,16 +501,6 @@
                 margin-top: 0;
                 word-break: break-word;
             }
-            /* Force DotGothic16 for subtitle on mobile */
-            .hero-nav-subtitle {
-                font-family: 'DotGothic16', monospace !important;
-                text-align: center;
-                width: 100%;
-                font-size: 0.88rem;
-                margin-bottom: 18px;
-                margin-top: -2px;
-                word-break: break-all;
-            }
             .main-links {
                 flex-direction: column;
                 align-items: center;
@@ -591,6 +581,12 @@
             }
             .hero-nav-subtitle .frog-wrap.fully-raised {
                 height: 1em;
+            }
+        }
+        /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
+        @media (max-width: 700px) {
+            body .hero-nav-subtitle {
+                font-family: 'DotGothic16', monospace !important;
             }
         }
     </style>
@@ -847,7 +843,7 @@
     // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
