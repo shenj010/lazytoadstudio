@@ -115,28 +115,30 @@
         .hero-nav-subtitle span.char-frog-wrap {
             position: relative;
             display: inline-block;
-            overflow: visible;
+            overflow: hidden;
+            height: 1.2em; /* matches frog image height */
+            vertical-align: bottom;
         }
         .hero-nav-subtitle .frog-peep {
             position: absolute;
             left: 50%;
-            transform: translate(-50%, 100%);
-            bottom: 0;
+            bottom: -0.6em;
             width: 1.2em;
-            height: auto;
+            height: 1.2em;
             z-index: 1;
             transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97);
             pointer-events: none;
             will-change: transform;
             display: none;
+            transform: translate(-50%, 100%);
         }
-        .hero-nav-subtitle .frog-peep.raised {
+        .hero-nav-subtitle .frog-peep.peeping {
             display: block;
-            transform: translate(-50%, 30%);
+            transform: translate(-50%, 50%);
         }
         .hero-nav-subtitle .frog-peep.fully-raised {
             display: block;
-            transform: translate(-50%, 20%);
+            transform: translate(-50%, 0%);
         }
         .hero-nav-subtitle .the-letter {
             display: inline-block;
@@ -861,7 +863,8 @@
             frog.src = frogImgSrc;
             frog.alt = "🐸";
             frog.className = 'frog-peep';
-            frog.style.height = '1em';
+            frog.style.height = '1.2em';
+            frog.style.width = '1.2em';
             wrap.appendChild(letter);
             wrap.appendChild(frog);
             subtitle.appendChild(wrap);
@@ -879,28 +882,28 @@
             const frog = wrap.querySelector('.frog-peep');
             frog.style.display = 'block';
             frog.classList.remove('fully-raised');
-            frog.classList.remove('raised');
+            frog.classList.remove('peeping');
             letter.classList.remove('lifted');
             letter.classList.remove('raised');
 
-            // Step 1: Frog peeps up behind letter
+            // Step 1: Frog peeps up behind letter (top half shows)
             setTimeout(() => {
-                frog.classList.add('raised');
+                frog.classList.add('peeping');
                 letter.classList.add('raised');
             }, 100);
 
-            // Step 2: After 1.2s, frog pushes letter up and fully raises
+            // Step 2: After 1.2s, frog pushes letter up and fully raises (takes letter's place)
             setTimeout(() => {
-                frog.classList.remove('raised');
+                frog.classList.remove('peeping');
                 frog.classList.add('fully-raised');
                 letter.classList.remove('raised');
                 letter.classList.add('lifted');
             }, 1500);
 
-            // Step 3: After 5 seconds, reset letter and frog
+            // Step 3: After 5 seconds, reset
             setTimeout(() => {
                 frog.style.display = 'none';
-                frog.classList.remove('raised','fully-raised');
+                frog.classList.remove('peeping', 'fully-raised');
                 letter.classList.remove('lifted','raised');
                 setTimeout(doFrogAnimation, randomDelay());
             }, 5000);
