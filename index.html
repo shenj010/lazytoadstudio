@@ -88,12 +88,13 @@
                 1px -1px 0 #111,
                 -1px -1px 0 #111;
         }
+        /* Japanese subtitle: always DotGothic16 */
         .hero-nav-subtitle {
-            font-family: 'DotGothic16', monospace !important;
+            font-family: 'DotGothic16', monospace, sans-serif !important;
             font-size: 2.2rem;
             color: #fff;
             text-align: right;
-            margin-bottom: 14px;
+            margin-bottom: 18px;
             margin-top: -6px;
             letter-spacing: 0.04em;
             text-shadow:
@@ -247,6 +248,20 @@
         }
         .banner-hero-separator {
             margin-top: 0;
+        }
+        .banner-image-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px auto;
+        }
+        .banner-image {
+            width: 95vw;
+            max-width: 1200px;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 4px 28px rgba(0,0,0,0.07);
+            object-fit: cover;
         }
         .hero-images-spacing, .banner-images-spacing {
             height: 38px;
@@ -495,7 +510,10 @@
                 max-width: 100vw;
             }
             .hero-logo { height: 56px; }
-            .logo-circle { padding: 8px; }
+            .logo-circle { 
+                padding: 8px; 
+                margin-bottom: 18px; /* Add space below logo */
+            }
             .hero-nav-col {
                 align-items: center;
                 width: 100%;
@@ -510,11 +528,13 @@
                 margin-top: 0;
                 word-break: break-word;
             }
+            /* Repeat font-family for subtitle to ensure correct font */
             .hero-nav-subtitle {
+                font-family: 'DotGothic16', monospace, sans-serif !important;
                 text-align: center;
                 width: 100%;
                 font-size: 0.88rem;
-                margin-bottom: 8px;
+                margin-bottom: 18px;
                 margin-top: -2px;
                 word-break: break-all;
             }
@@ -542,6 +562,10 @@
             .nav-hero-separator svg, .banner-hero-separator svg {
                 height: 36px;
                 min-height: 36px;
+            }
+            .banner-image {
+                width: 98vw;
+                border-radius: 10px;
             }
             .hero-images-spacing, .banner-images-spacing {
                 height: 18px;
@@ -671,6 +695,10 @@
             opacity="0.97"
           />
         </svg>
+      </div>
+      <!-- Banner image(s) -->
+      <div class="banner-image-row">
+        <img src="images/banner1.jpg" alt="Featured Banner" class="banner-image">
       </div>
     </section>
     <!-- Main Content (hidden until scroll or click) -->
@@ -846,7 +874,7 @@
     // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
