@@ -32,7 +32,7 @@
             margin-bottom: 0;
             box-sizing: border-box;
             padding-left: 2vw;
-            padding-right: 4vw; /* natural margin from right edge */
+            padding-right: 4vw;
             position: relative;
         }
         .hero-logo-col {
@@ -100,12 +100,10 @@
             margin-bottom: 14px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            /* Optional: give a subtle shadow for readability, but avoid strong outline */
             text-shadow:
                 1px 1px 0 #111,
                 0px 2px 0 #111,
                 2px 0px 0 #111;
-            /* Remove -webkit-text-stroke for Japanese for cleaner look */
         }
         .main-links {
             display: flex;
@@ -235,7 +233,6 @@
             transform: scale(1);
         }
 
-        /* Responsive adjustments */
         @media (max-width: 900px) {
             .hero-header {
                 padding-left: 3vw;
