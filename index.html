@@ -841,10 +841,10 @@
         }
     });
 
-    // FROG "PEEP" ANIMATION SCRIPT (robust, non-clipping, fix for fully raised)
+    // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
@@ -877,11 +877,15 @@
         }
         const wraps = subtitle.querySelectorAll('.char-frog-wrap');
 
+        let animationCount = 0;
+        let nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7
+
         function randomDelay() {
             return Math.floor(Math.random() * 20000) + 10000;
         }
 
         function doFrogAnimation() {
+            animationCount++;
             const idx = Math.floor(Math.random() * wraps.length);
             const wrap = wraps[idx];
             const letter = wrap.querySelector('.the-letter');
@@ -898,23 +902,33 @@
             setTimeout(() => {
                 frog.classList.add('peeping');
                 letter.classList.add('raised');
-                // frogWrap stays small (not fully raised)
             }, 100);
 
-            // Step 2: After 1.2s, frog pushes letter up and fully raises (takes letter's place)
+            const doFullRaise = animationCount === nextFullRaise;
+
+            // Step 2: After 1.2s, either drop back or fully raise
             setTimeout(() => {
-                frog.classList.remove('peeping');
-                frog.classList.add('fully-raised');
-                frogWrap.classList.add('fully-raised'); // Make frogWrap tall!
-                letter.classList.remove('raised');
-                letter.classList.add('lifted');
+                if (doFullRaise) {
+                    frog.classList.remove('peeping');
+                    frog.classList.add('fully-raised');
+                    frogWrap.classList.add('fully-raised');
+                    letter.classList.remove('raised');
+                    letter.classList.add('lifted');
+                } else {
+                    frog.classList.remove('peeping');
+                    letter.classList.remove('raised');
+                }
             }, 1500);
 
-            // Step 3: After 5 seconds, reset
+            // Step 3: After 5 seconds, reset everything and possibly set up next full raise
             setTimeout(() => {
                 frog.classList.remove('peeping', 'fully-raised');
                 frogWrap.classList.remove('fully-raised');
                 letter.classList.remove('lifted','raised');
+                if (doFullRaise) {
+                    animationCount = 0;
+                    nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7 again
+                }
                 setTimeout(doFrogAnimation, randomDelay());
             }, 5000);
         }
