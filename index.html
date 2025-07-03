@@ -115,40 +115,42 @@
         .hero-nav-subtitle span.char-frog-wrap {
             position: relative;
             display: inline-block;
-            overflow: hidden;
-            height: 1.2em; /* matches frog image height */
-            vertical-align: bottom;
+            vertical-align: baseline;
+            min-height: 1em;
+            overflow: visible; /* allow full letter display */
         }
         .hero-nav-subtitle .frog-peep {
             position: absolute;
             left: 50%;
-            bottom: -0.6em;
-            width: 1.2em;
-            height: 1.2em;
+            bottom: 0;
+            width: 1em;
+            height: 1em;
             z-index: 1;
-            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97);
+            transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97);
             pointer-events: none;
             will-change: transform;
             display: none;
-            transform: translate(-50%, 100%);
+            transform: translate(-50%, 120%); /* hidden below */
         }
         .hero-nav-subtitle .frog-peep.peeping {
             display: block;
-            transform: translate(-50%, 50%);
+            /* Show just the top part. Adjust 65% to taste for your PNG */
+            transform: translate(-50%, 65%);
         }
         .hero-nav-subtitle .frog-peep.fully-raised {
             display: block;
+            /* Frog sits exactly where the letter was */
             transform: translate(-50%, 0%);
         }
         .hero-nav-subtitle .the-letter {
             display: inline-block;
-            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.3s;
+            transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97), opacity 0.3s;
             will-change: transform;
             z-index: 2;
             position: relative;
         }
         .hero-nav-subtitle .the-letter.lifted {
-            transform: translateY(-1.3em);
+            transform: translateY(-1.2em);
             opacity: 0;
         }
         .hero-nav-subtitle .the-letter.raised {
@@ -846,7 +848,7 @@
     // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
@@ -863,8 +865,8 @@
             frog.src = frogImgSrc;
             frog.alt = "🐸";
             frog.className = 'frog-peep';
-            frog.style.height = '1.2em';
-            frog.style.width = '1.2em';
+            frog.style.height = '1em';
+            frog.style.width = '1em';
             wrap.appendChild(letter);
             wrap.appendChild(frog);
             subtitle.appendChild(wrap);
@@ -886,7 +888,7 @@
             letter.classList.remove('lifted');
             letter.classList.remove('raised');
 
-            // Step 1: Frog peeps up behind letter (top half shows)
+            // Step 1: Frog peeps up behind letter (top part shows)
             setTimeout(() => {
                 frog.classList.add('peeping');
                 letter.classList.add('raised');
