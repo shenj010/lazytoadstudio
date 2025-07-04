@@ -73,14 +73,32 @@
             font-family: 'Press Start 2P', monospace !important;
             letter-spacing: 0.04em;
         }
-        /* Subtitle uses DotGothic16 by default (desktop) */
+        .hero-nav-title {
+            color: #fff;
+            text-shadow:
+                -2px -2px 0 #000,
+                2px -2px 0 #000,
+                -2px 2px 0 #000,
+                2px 2px 0 #000,
+                0px -2px 0 #000,
+                0px 2px 0 #000,
+                -2px 0px 0 #000,
+                2px 0px 0 #000;
+            text-align: right;
+            font-size: 2.2rem;
+            margin-bottom: 0.2em;
+            margin-top: 0;
+            font-weight: normal;
+            line-height: 1.15;
+            word-break: break-word;
+        }
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
-            font-size: 2.2rem;
+            font-size: 1.5rem;
             color: #fff;
-            text-align: right;
-            margin-bottom: 18px;
-            margin-top: -6px;
+            text-align: center;
+            width: 100%;
+            margin: 0 auto 18px auto;
             letter-spacing: 0.04em;
             text-shadow:
                 -2px -2px 0 #000,
@@ -95,12 +113,19 @@
             text-stroke: 0;
             font-weight: normal;
             word-break: break-word;
+            line-height: 1.2;
+            display: block;
+            padding: 0 0.5em;
+            box-sizing: border-box;
+            max-width: 98vw;
         }
         /* Robust Frog Mask Animation */
         .hero-nav-subtitle .char-frog-wrap {
             position: relative;
             display: inline-block;
             vertical-align: baseline;
+            margin: 0 0.06em; /* prevent frog cutoff */
+            overflow: visible;
         }
         .hero-nav-subtitle .letter-wrap {
             display: inline-block;
@@ -112,16 +137,16 @@
             left: 50%;
             bottom: 0;
             width: 1.2em;
-            height: 0.7em; /* shows only top of frog when peeping */
+            height: 0.7em;
             transform: translateX(-50%);
-            overflow: hidden;
+            overflow: visible !important;
             pointer-events: none;
             z-index: 2;
             display: block;
             transition: height 0.3s;
         }
         .hero-nav-subtitle .frog-wrap.fully-raised {
-            height: 1.2em; /* Fully raised: show all */
+            height: 1.2em;
         }
         .hero-nav-subtitle .frog-peep {
             width: 1.2em;
@@ -496,10 +521,33 @@
             .hero-nav-title {
                 text-align: center;
                 width: 100%;
-                font-size: 1.05rem;
-                margin-bottom: 4px;
+                font-size: 1.15rem;
+                margin-bottom: 0;
                 margin-top: 0;
                 word-break: break-word;
+                color: #fff;
+                text-shadow:
+                    -2px -2px 0 #000,
+                    2px -2px 0 #000,
+                    -2px 2px 0 #000,
+                    2px 2px 0 #000,
+                    0px -2px 0 #000,
+                    0px 2px 0 #000,
+                    -2px 0px 0 #000,
+                    2px 0px 0 #000;
+            }
+            .hero-nav-subtitle {
+                font-family: 'DotGothic16', monospace !important;
+                text-align: center;
+                width: 100%;
+                font-size: 1.07rem;
+                margin: 0 auto 14px auto;
+                line-height: 1.2;
+                display: block;
+                word-break: break-word;
+                padding: 0 0.7em;
+                box-sizing: border-box;
+                max-width: 95vw;
             }
             .main-links {
                 flex-direction: column;
@@ -511,7 +559,7 @@
             }
             .main-links a {
                 font-size: 0.95rem;
-                width: 90%;
+                width: 95%;
                 justify-content: center;
                 padding: 0.5em 0;
                 border-radius: 10px;
@@ -581,6 +629,14 @@
             }
             .hero-nav-subtitle .frog-wrap.fully-raised {
                 height: 1em;
+            }
+            .hero-nav-subtitle,
+            .hero-nav-col,
+            .char-frog-wrap {
+                overflow: visible !important;
+            }
+            .hero-nav-subtitle .char-frog-wrap {
+                margin: 0 0.08em;
             }
         }
         /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
@@ -843,7 +899,7 @@
     // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
+        const frogImgSrc = 'images/frog.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
