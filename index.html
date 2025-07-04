@@ -174,44 +174,53 @@
         }
       .main-links a {
             font-size: 1rem;
-            color: #444;
+            color: #181818; /* Set text color to dark for the white button */
             text-decoration: none;
             opacity: 0.90;
-            /* Added box-shadow to the transition for smooth hover effects */
-            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, text-shadow 0.18s, box-shadow 0.18s;
+            transition: color 0.18s, opacity 0.18s, background 0.18s, box-shadow 0.18s; /* Updated transition */
             font-weight: normal;
             display: flex;
             align-items: center;
             gap: 0.5em;
-            padding: 0.4em 1.6em;
-            border-radius: 20px; /* Maintained curved style */
-            border: 3px solid #fff; /* Slightly thicker white border as the base */
-            background: none;
-            box-shadow:
-                /* Outer black "pixel" outline using multiple shadows */
-                -3px -3px 0 #000, /* Top-left corner pixel */
-                3px -3px 0 #000,  /* Top-right corner pixel */
-                -3px 3px 0 #000,  /* Bottom-left corner pixel */
-                3px 3px 0 #000,   /* Bottom-right corner pixel */
-
-                -4px 0 0 #000,    /* Left edge pixel */
-                4px 0 0 #000,     /* Right edge pixel */
-                0 -4px 0 #000,    /* Top edge pixel */
-                0 4px 0 #000;     /* Bottom edge pixel */
+            padding: 0.4em 1.6em; /* Adjust padding if button size changes too much with border removed */
+            border-radius: 5px; /* A small radius for a subtly rounded base for the pixel effect */
+            border: none; /* Remove the smooth border; pixel outline will be box-shadow */
+            background: #fff; /* Set background to white for the button body */
             margin: 0 0.1em;
+
+            /* Pixelated Outline using multiple box-shadow layers */
+            box-shadow:
+                /* Inner 1px pixel outline */
+                1px 1px 0 #000,    /* Top-left diagonal */
+                -1px 1px 0 #000,   /* Top-right diagonal */
+                1px -1px 0 #000,   /* Bottom-left diagonal */
+                -1px -1px 0 #000,  /* Bottom-right diagonal */
+                0 1px 0 #000,      /* Top edge */
+                0 -1px 0 #000,     /* Bottom edge */
+                1px 0 0 #000,      /* Right edge */
+                -1px 0 0 #000,     /* Left edge */
+
+                /* Outer 2px pixel outline (creating the "steps" and thickness) */
+                2px 2px 0 #000,    /* Top-left diagonal step */
+                -2px 2px 0 #000,   /* Top-right diagonal step */
+                2px -2px 0 #000,   /* Bottom-left diagonal step */
+                -2px -2px 0 #000,  /* Bottom-right diagonal step */
+                0 2px 0 #000,      /* Top edge 2px */
+                0 -2px 0 #000,     /* Bottom edge 2px */
+                2px 0 0 #000,      /* Right edge 2px */
+                -2px 0 0 #000;     /* Left edge 2px */
         }
 
-        /* Update the hover state to manage the new box-shadow */
+        /* Update the hover state */
         .main-links a:hover,
         .main-links a:focus {
-            background: #fff;
-            color: #181818;
-            border-color: #111;
-            opacity: 1;
+            background: #eee; /* Slightly darker background on hover for visual feedback */
+            color: #000; /* Adjust text color on hover */
+            box-shadow: none; /* Remove the pixelated outline on hover */
+            opacity: 1; /* Ensure full opacity */
             text-decoration: none;
             filter: none;
             text-shadow: none;
-            box-shadow: none; /* Remove the pixelated shadow on hover */
         }
         .main-links .icon {
             display: inline-block;
