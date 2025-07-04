@@ -174,46 +174,63 @@
         }
 .main-links a {
             font-size: 1rem;
-            color: #444; /* Default text color, visible against page background */
+            color: #444; /* Keep default text color as it was, visible on transparent */
             text-decoration: none;
             opacity: 0.90;
-            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, box-shadow 0.18s; /* Re-added border-color to transition */
+            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, box-shadow 0.18s;
             font-weight: normal;
             display: flex;
             align-items: center;
             gap: 0.5em;
             padding: 0.4em 1.6em;
-            border-radius: 20px; /* MAINTAINING the curved style you like */
-            border: 3px solid #fff; /* A THICKER WHITE INNER LINE, also curved */
-            background: none; /* KEPT TRANSPARENT by default so frogs are always visible */
+            border-radius: 0; /* Crucial: no native border-radius, all curves from box-shadow */
+            border: none; /* Remove any smooth border */
+            background: none; /* Keep background transparent by default to ensure frog visibility */
             margin: 0 0.1em;
 
-            /* Pixelated Outer Black Outline - designed to be distinct steps */
+            /* **Extensive Pixelated Black Outline - 2px thick, with clear stepped curves** */
             box-shadow:
-                /* Main corner pixels */
-                -4px -4px 0 #000,
-                4px -4px 0 #000,
-                -4px 4px 0 #000,
-                4px 4px 0 #000,
+                /* Straight 2px segments (core outline) */
+                2px 0 0 #000, -2px 0 0 #000,
+                0 2px 0 #000, 0 -2px 0 #000,
 
-                /* Straight edge pixels for thickness */
-                -4px 0 0 #000, 4px 0 0 #000,
-                0 -4px 0 #000, 0 4px 0 #000,
+                /* Inner 1px segments (to ensure full 2px thickness and continuity) */
+                1px 0 0 #000, -1px 0 0 #000,
+                0 1px 0 #000, 0 -1px 0 #000,
 
-                /* Intermediate pixels to create the "stair-step" effect on curves */
-                -3px -1px 0 #000, -1px -3px 0 #000,
-                3px -1px 0 #000, 1px -3px 0 #000,
+                /* Inner corner pixels (for the initial curve step) */
+                1px 1px 0 #000, -1px 1px 0 #000,
+                1px -1px 0 #000, -1px -1px 0 #000,
+
+                /* Main 2px corner pixels (more pronounced steps) */
+                2px 2px 0 #000, -2px 2px 0 #000,
+                2px -2px 0 #000, -2px -2px 0 #000,
+
+                /* Further outer pixels for more distinct steps on the corners (3x1 and 1x3 patterns) */
+                3px 1px 0 #000, 1px 3px 0 #000,
                 -3px 1px 0 #000, -1px 3px 0 #000,
-                3px 1px 0 #000, 1px 3px 0 #000;
+                3px -1px 0 #000, 1px -3px 0 #000,
+                -3px -1px 0 #000, -1px -3px 0 #000,
+
+                /* Outermost pixels for a truly chunky, pixelated curve effect (4x1, 4x2, etc. patterns) */
+                4px 0 0 #000, -4px 0 0 #000,
+                0 4px 0 #000, 0 -4px 0 #000,
+
+                4px 1px 0 #000, 4px 2px 0 #000, 4px 3px 0 #000,
+                -4px 1px 0 #000, -4px 2px 0 #000, -4px 3px 0 #000,
+                1px 4px 0 #000, 2px 4px 0 #000, 3px 4px 0 #000,
+                1px -4px 0 #000, 2px -4px 0 #000, 3px -4px 0 #000,
+                -1px 4px 0 #000, -2px 4px 0 #000, -3px 4px 0 #000,
+                -1px -4px 0 #000, -2px -4px 0 #000, -3px -4px 0 #000;
         }
 
-        /* Update the hover state - this will now turn the button white with a dark border */
+        /* Hover state: Button turns white with a dark border, pixelated shadow disappears */
         .main-links a:hover,
         .main-links a:focus {
             background: #fff; /* Button turns white on hover */
             color: #181818; /* Text turns dark on hover */
-            border-color: #111; /* Border darkens on hover */
-            box-shadow: none; /* Pixelated shadow removed on hover */
+            border: 3px solid #111; /* Add a crisp dark border on hover */
+            box-shadow: none; /* Remove pixelated outline on hover */
             opacity: 1;
             text-decoration: none;
             filter: none;
