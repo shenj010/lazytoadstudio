@@ -172,52 +172,52 @@
             margin-bottom: 0;
             padding: 0;
         }
-    .main-links a {
+.main-links a {
             font-size: 1rem;
-            color: #181818; /* Set text color to dark for the white button */
+            color: #444; /* Default text color, visible against page background */
             text-decoration: none;
             opacity: 0.90;
-            transition: color 0.18s, opacity 0.18s, background 0.18s, box-shadow 0.18s;
+            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, box-shadow 0.18s; /* Re-added border-color to transition */
             font-weight: normal;
             display: flex;
             align-items: center;
             gap: 0.5em;
-            padding: 0.4em 1.6em; /* Adjust padding if button size changes too much with border removed */
-            border-radius: 2px; /* A very small border-radius to enable precise pixel steps */
-            border: none; /* Remove any smooth border; pixel outline will be box-shadow */
-            background: #fff; /* Set background to white for the button body */
+            padding: 0.4em 1.6em;
+            border-radius: 20px; /* MAINTAINING the curved style you like */
+            border: 3px solid #fff; /* A THICKER WHITE INNER LINE, also curved */
+            background: none; /* KEPT TRANSPARENT by default so frogs are always visible */
             margin: 0 0.1em;
 
-            /* Pixelated Outline using multiple box-shadow layers */
+            /* Pixelated Outer Black Outline - designed to be distinct steps */
             box-shadow:
-                /* Main 2px outline (straight segments) */
-                2px 0 0 #000,
-                -2px 0 0 #000,
-                0 2px 0 #000,
-                0 -2px 0 #000,
+                /* Main corner pixels */
+                -4px -4px 0 #000,
+                4px -4px 0 #000,
+                -4px 4px 0 #000,
+                4px 4px 0 #000,
 
-                /* Corner pixel extensions (creates the "stair-step" effect) */
-                3px 1px 0 0 #000,  /* Bottom-right diagonal step */
-                1px 3px 0 0 #000,  /* Bottom-right diagonal step */
-                -3px 1px 0 0 #000, /* Bottom-left diagonal step */
-                -1px 3px 0 0 #000, /* Bottom-left diagonal step */
-                3px -1px 0 0 #000, /* Top-right diagonal step */
-                1px -3px 0 0 #000, /* Top-right diagonal step */
-                -3px -1px 0 0 #000, /* Top-left diagonal step */
-                -1px -3px 0 0 #000; /* Top-left diagonal step */
+                /* Straight edge pixels for thickness */
+                -4px 0 0 #000, 4px 0 0 #000,
+                0 -4px 0 #000, 0 4px 0 #000,
+
+                /* Intermediate pixels to create the "stair-step" effect on curves */
+                -3px -1px 0 #000, -1px -3px 0 #000,
+                3px -1px 0 #000, 1px -3px 0 #000,
+                -3px 1px 0 #000, -1px 3px 0 #000,
+                3px 1px 0 #000, 1px 3px 0 #000;
         }
 
-        /* Update the hover state */
+        /* Update the hover state - this will now turn the button white with a dark border */
         .main-links a:hover,
         .main-links a:focus {
-            background: #eee; /* Slightly darker background on hover for visual feedback */
-            color: #000; /* Adjust text color on hover */
-            box-shadow: none; /* Remove the pixelated outline on hover */
-            opacity: 1; /* Ensure full opacity */
+            background: #fff; /* Button turns white on hover */
+            color: #181818; /* Text turns dark on hover */
+            border-color: #111; /* Border darkens on hover */
+            box-shadow: none; /* Pixelated shadow removed on hover */
+            opacity: 1;
             text-decoration: none;
             filter: none;
             text-shadow: none;
-        }
         }
         .main-links .icon {
             display: inline-block;
