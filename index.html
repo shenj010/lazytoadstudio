@@ -72,7 +72,18 @@
             font-family: 'Press Start 2P', monospace !important;
             letter-spacing: 0.04em;
         }
-        /* Subtitle uses DotGothic16 by default (desktop) */
+        /* MAIN TITLE FONT & OUTLINE */
+        .hero-nav-title {
+            color: #fff; /* White text */
+            /* Removed text-shadow to rely only on text-stroke for outline */
+            -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
+            text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
+            font-weight: normal;
+            word-break: break-word;
+            text-align: right;
+            margin-bottom: 4px;
+        }
+        /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
             font-size: 2.2rem;
