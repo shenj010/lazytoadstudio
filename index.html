@@ -92,11 +92,11 @@
             margin-bottom: 18px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            text-shadow: none; /* Ensure no text-shadow for crispness */
-            -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
-            text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
-            font-weight: normal; /* Default to normal for desktop, overridden for mobile */
+            -webkit-text-stroke: 1px #000; /* Crisp 1px black outline */
+            text-stroke: 1px #000;         /* Crisp 1px black outline */
+            font-weight: normal; /* Default to normal, as bold made it black */
             word-break: break-word;
+            text-shadow: 0 0 1px #fff; /* Subtle white shadow to thicken the white pixels */
         }
         /* Robust Frog Mask Animation */
         .hero-nav-subtitle .char-frog-wrap {
@@ -607,8 +607,8 @@
             body .hero-nav-subtitle {
                 font-family: 'DotGothic16', monospace !important;
                 text-align: center;
-                font-size: 1.05rem; /* Subtitle font size remains matched to main title */
-                font-weight: bold; /* Make the white of the font bolder */
+                font-size: 1.1rem; /* Slightly increased font-size for bolder white appearance */
+                font-weight: normal; /* Ensure normal font-weight on mobile */
             }
         }
     </style>
@@ -816,7 +816,7 @@
                 Contact
             </a>
             <a class="footer-social-link" href="https://instagram.com/lazytoadstudios" target="_blank" rel="noopener" title="Instagram">
-                <svg viewBox="0 0 24 24"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm6.13.38a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M7.75 2h8.75A5.75 5.75 0 0 1 22 7.75v8.75A5.75 5.75 0 0 1 16.25 22h-8.75A5.75 5.75 0 0 1 2 16.25v-8.75A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.75A4.25 4.25 0 0 0 7.75 20.5h8.75A4.25 4.25 0 0 0 20.5 16.25v-8.75A4.25 4.25 0 0 0 16.25 3.5h-8.75zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm6.13.38a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg>
                 Instagram
             </a>
             <a class="footer-social-link" href="https://twitter.com/lazytoadstudios" target="_blank" rel="noopener" title="Twitter">
