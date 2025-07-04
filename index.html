@@ -528,12 +528,19 @@
                 word-break: break-word;
             }
             /* Subtitle text aligned to center on mobile */
-           .hero-nav-subtitle {
+          .hero-nav-subtitle {
                 text-align: center;
-                font-size: 1.5rem; /* Add or change this line */
+                font-size: 1.5rem; /* Reduced font size for mobile */
+                text-shadow:
+                    -1px -1px 0 #000,
+                    1px -1px 0 #000,
+                    -1px 1px 0 #000,
+                    1px 1px 0 #000,
+                    0px -1px 0 #000,
+                    0px 1px 0 #000,
+                    -1px 0px 0 #000,
+                    1px 0px 0 #000; /* Reduced text-shadow to 1px for sharpness on mobile */
             }
-            /* ... rest of mobile styles ... */
-        }
             
             .main-links {
                 flex-direction: column;
