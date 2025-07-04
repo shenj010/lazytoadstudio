@@ -174,26 +174,38 @@
         }
         .main-links a {
             font-size: 1rem;
-            color: #444;
+            color: #181818; /* Default text color: Black */
             text-decoration: none;
             opacity: 0.90;
-            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, text-shadow 0.18s;
+            transition: color 0.18s, opacity 0.18s, --button-fill-color 0.18s; 
             font-weight: normal;
-            display: flex;
+            display: flex; 
             align-items: center;
             gap: 0.5em;
-            padding: 0.4em 1.6em;
-            border-radius: 20px;
-            border: 2.2px solid #fff;
-            background: none;
-            box-shadow: none;
+            
+            box-sizing: border-box; 
+            
+            /* --- ADJUSTED LINE HERE: Increased horizontal padding --- */
+            padding: 6px 40px; /* Double the previous 20px to make it twice as wide */
+            
+            border-radius: 0; 
+            border: 2px solid transparent; 
             margin: 0 0.1em;
+
+            --button-fill-color: #fff; /* Default state: SVG interior is white */
+            
+            background-color: transparent; 
+            background-image: url('./images/pixel-border.svg'); 
+            background-repeat: no-repeat;
+            background-size: 150% 150%; /* SVG fills the entire button area */
+            background-origin: border-box;
+            background-clip: border-box; 
         }
+
         .main-links a:hover,
         .main-links a:focus {
-            background: #fff;
-            color: #181818;
-            border-color: #111;
+            --button-fill-color: #000; /* On hover: SVG interior turns black */
+            color: #fff; /* On hover: Text turns white */
             opacity: 1;
             text-decoration: none;
             filter: none;
