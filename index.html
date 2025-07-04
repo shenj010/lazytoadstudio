@@ -174,43 +174,55 @@
         }
         .main-links a {
             font-size: 1rem;
-            color: #181818; /* Text color for a white button */
+            color: #181818; /* Text color */
             text-decoration: none;
             opacity: 0.90;
-            /* Only transition properties that don't cause layout shifts */
-            transition: color 0.18s, opacity 0.18s, background-color 0.18s;
+            /* Transition color, opacity, and crucially, background-color for the hover effect */
+            transition: color 0.18s, opacity 0.18s, background-color 0.18s; 
             font-weight: normal;
             display: flex; /* Ensures padding and content sizing is reliable */
             align-items: center;
             gap: 0.5em;
-            padding: 0.4em 1.6em; /* This padding defines the button's internal size */
-            border-radius: 0; /* No native border-radius, the SVG creates the shape */
-            border: 2px solid transparent; /* **IMPORTANT:** This creates a transparent border to reserve 2px space, preventing layout shifts when hovering */
+            
+            /* **IMPORTANT:** Explicit box-sizing for predictable element sizing */
+            box-sizing: border-box; 
+
+            /* **CRITICAL FIX:** Use fixed pixel values for padding.
+               This prevents fractional pixel calculations that cause misalignment with pixel art.
+               Adjust these '6px' and '20px' values to what looks best for your button. */
+            padding: 6px 20px; 
+            
+            border-radius: 0; /* Ensures the native border is square if it ever shows */
+            border: 2px solid transparent; /* **IMPORTANT:** Reserves 2px space for the border, preventing layout shifts */
             margin: 0 0.1em;
 
-            background-color: #fff; /* This sets the white fill for the button's content area */
-            background-image: url('./images/pixel-border.svg'); /* This loads your pixelated SVG border */
+            /* **CRUCIAL:** Button's interior background starts transparent */
+            background-color: transparent; 
+            
+            /* Your pixelated border SVG (make sure the filename matches what you saved) */
+            background-image: url('./images/pixel-border.svg'); /* <--- Verify this filename and path! */
             background-repeat: no-repeat;
-            background-size: 100% 100%; /* Stretches the SVG to perfectly fit the button's dimensions */
-            background-origin: border-box; /* Starts drawing the background (and SVG) from the element's border edge */
-            background-clip: padding-box; /* Clips the 'background-color' to the padding area, allowing SVG to show in border area */
+            background-size: 100% 100%; /* Stretches SVG to fill the entire button's area */
+            background-origin: border-box; /* SVG starts drawing from the outer edge of the 2px transparent border */
+            
+            /* Clips the background color to the padding area, allowing the transparent border space for the SVG */
+            background-clip: padding-box; 
         }
 
         .main-links a:hover,
         .main-links a:focus {
-            background-color: #eee; /* **Only** the button's interior fill color changes on hover */
-
-            /* **IMPORTANT:** Do NOT change background-image or border properties here.
-                           The SVG will remain visible and pixelated, and no layout shifts will occur. */
-            background-image: url('./images/pixel-border.svg'); /* Explicitly keep the SVG on hover */
-            border-color: transparent; /* Keep border transparent */
+            /* **CRUCIAL:** Button's interior fill color turns white on hover */
+            background-color: #fff; 
+            
+            /* Maintain SVG and border properties consistent on hover to prevent layout shifts and shape changes */
+            background-image: url('./images/pixel-border.svg'); 
+            border-color: transparent; 
 
             color: #181818; /* Text color remains dark */
             opacity: 1;
             text-decoration: none;
             filter: none;
             text-shadow: none;
-        }
         }
         .main-links .icon {
             display: inline-block;
