@@ -75,8 +75,7 @@
         /* MAIN TITLE FONT & OUTLINE */
         .hero-nav-title {
             color: #fff; /* White text */
-            /* Removed text-shadow for crisp outline */
-            text-shadow: none; 
+            text-shadow: none; /* Ensure no text-shadow for crispness */
             -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
             text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
             font-weight: normal;
@@ -93,11 +92,10 @@
             margin-bottom: 18px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            /* Removed text-shadow for crisp outline */
-            text-shadow: none; 
+            text-shadow: none; /* Ensure no text-shadow for crispness */
             -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
             text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
-            font-weight: normal;
+            font-weight: normal; /* Default to normal for desktop, overridden for mobile */
             word-break: break-word;
         }
         /* Robust Frog Mask Animation */
@@ -514,7 +512,7 @@
             .hero-nav-title {
                 text-align: center;
                 width: 100%;
-                font-size: 1.05rem; /* Main title size remains the same */
+                font-size: 1.05rem;
                 margin-bottom: 4px;
                 margin-top: 0;
                 word-break: break-word;
@@ -608,8 +606,9 @@
         @media (max-width: 700px) {
             body .hero-nav-subtitle {
                 font-family: 'DotGothic16', monospace !important;
-                text-align: center; /* Centered on mobile */
-                font-size: 1.05rem; /* Increased size to match main title */
+                text-align: center;
+                font-size: 1.05rem; /* Subtitle font size remains matched to main title */
+                font-weight: bold; /* Make the white of the font bolder */
             }
         }
     </style>
