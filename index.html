@@ -75,21 +75,14 @@
         /* MAIN TITLE FONT & OUTLINE */
         .hero-nav-title {
             color: #fff; /* White text */
-            text-shadow:
-                -2px -2px 0 #000,
-                2px -2px 0 #000,
-                -2px 2px 0 #000,
-                2px 2px 0 #000,
-                0px -2px 0 #000,
-                0px 2px 0 #000,
-                -2px 0px 0 #000,
-                2px 0px 0 #000; /* Black outline */
-            -webkit-text-stroke: 0; /* Ensure no unintended browser-specific strokes interfere */
-            text-stroke: 0;
+            /* Removed text-shadow for crisp outline */
+            text-shadow: none; 
+            -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
+            text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
             font-weight: normal;
             word-break: break-word;
-            text-align: right; /* Keep original alignment */
-            margin-bottom: 4px; /* Adjust spacing if needed after adding shadow */
+            text-align: right;
+            margin-bottom: 4px;
         }
         /* Subtitle uses DotGothic16 by default (desktop) */
         .hero-nav-subtitle {
@@ -100,17 +93,10 @@
             margin-bottom: 18px;
             margin-top: -6px;
             letter-spacing: 0.04em;
-            text-shadow:
-                -2px -2px 0 #000,
-                2px -2px 0 #000,
-                -2px 2px 0 #000,
-                2px 2px 0 #000,
-                0px -2px 0 #000,
-                0px 2px 0 #000,
-                -2px 0px 0 #000,
-                2px 0px 0 #000;
-            -webkit-text-stroke: 0;
-            text-stroke: 0;
+            /* Removed text-shadow for crisp outline */
+            text-shadow: none; 
+            -webkit-text-stroke: 1px #000; /* Crisp 1px black outline for Webkit browsers */
+            text-stroke: 1px #000;         /* Crisp 1px black outline for standard browsers */
             font-weight: normal;
             word-break: break-word;
         }
@@ -528,7 +514,7 @@
             .hero-nav-title {
                 text-align: center;
                 width: 100%;
-                font-size: 1.1rem; /* Increased slightly for matching */
+                font-size: 1.05rem; /* Main title size remains the same */
                 margin-bottom: 4px;
                 margin-top: 0;
                 word-break: break-word;
@@ -623,7 +609,7 @@
             body .hero-nav-subtitle {
                 font-family: 'DotGothic16', monospace !important;
                 text-align: center; /* Centered on mobile */
-                font-size: 1.1rem; /* Adjusted size to match main title */
+                font-size: 1.05rem; /* Increased size to match main title */
             }
         }
     </style>
