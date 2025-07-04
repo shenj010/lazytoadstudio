@@ -232,9 +232,23 @@
         .banner-hero-separator {
             margin-top: 0;
         }
-        .banner-image-mobile {
-            display: none; /* Hidden on desktop */
+        
+        /* New containers for desktop/mobile banner content */
+        .desktop-banner-container {
+            display: block; /* Default for desktop */
         }
+        .mobile-banner-container {
+            display: none; /* Hidden by default for desktop */
+        }
+
+        .banner-image-mobile {
+            display: block; /* Displayed by default within mobile-banner-container */
+            width: 98vw;
+            max-width: 100vw;
+            margin: 0 auto 10px auto;
+            border-radius: 10px;
+        }
+
         .hero-images-spacing, .banner-images-spacing {
             height: 38px;
         }
@@ -243,7 +257,7 @@
         }
         .hero-image-row {
             width: 100vw;
-            display: flex;
+            display: flex; /* Displayed by default within desktop-banner-container */
             flex-direction: row;
             justify-content: center;
             align-items: stretch;
@@ -525,18 +539,21 @@
                 height: 36px;
                 min-height: 36px;
             }
-            .banner-image-mobile {
-                display: block; /* Visible on mobile */
-                width: 98vw;
-                max-width: 100vw;
-                margin: 0 auto 10px auto;
-                border-radius: 10px;
+
+            /* Show mobile banner container and hide desktop banner container on mobile */
+            .desktop-banner-container {
+                display: none;
             }
-            .hero-images-spacing, .banner-images-spacing {
+            .mobile-banner-container {
+                display: block;
+                width: 100%; /* Ensure it takes full width */
+            }
+
+            .banner-images-spacing {
                 height: 18px;
             }
             .hero-image-row {
-                flex-direction: column !important;
+                flex-direction: column !important; /* This rule will now only apply if desktop-banner-container is somehow visible on mobile */
                 width: 100vw;
                 align-items: center;
             }
@@ -634,23 +651,31 @@
           />
         </svg>
       </div>
-      
-      <div class="hero-images-spacing"></div> <div class="hero-image-row">
-        <div class="hero-image-box" tabindex="0">
-          <img src="images/walking temple website.jpg" alt="After the War" class="hero-image">
-        </div>
-        <div class="hero-image-box" tabindex="0">
-          <img src="images/the botanist a4 website.jpg" alt="Ramen Battleship" class="hero-image">
-        </div>
-        <div class="hero-image-box" tabindex="0">
-          <img src="images/3 Joe Shenton - Reunion.jpg" alt="PTSD Machine" class="hero-image">
-        </div>
-        <div class="hero-image-box" tabindex="0">
-          <img src="images/5 Joe Shenton - Remnants.jpg" alt="Transporter" class="hero-image">
-        </div>
+
+      <div class="desktop-banner-container">
+          <div class="hero-images-spacing"></div>
+          <div class="hero-image-row">
+            <div class="hero-image-box" tabindex="0">
+              <img src="images/walking temple website.jpg" alt="After the War" class="hero-image">
+            </div>
+            <div class="hero-image-box" tabindex="0">
+              <img src="images/the botanist a4 website.jpg" alt="Ramen Battleship" class="hero-image">
+            </div>
+            <div class="hero-image-box" tabindex="0">
+              <img src="images/3 Joe Shenton - Reunion.jpg" alt="PTSD Machine" class="hero-image">
+            </div>
+            <div class="hero-image-box" tabindex="0">
+              <img src="images/5 Joe Shenton - Remnants.jpg" alt="Transporter" class="hero-image">
+            </div>
+          </div>
+          <div class="banner-images-spacing"></div>
       </div>
 
-      <div class="banner-images-spacing"></div> <div class="banner-hero-separator">
+      <div class="mobile-banner-container">
+          <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
+      </div>
+
+      <div class="banner-hero-separator">
         <svg viewBox="0 0 100 56" preserveAspectRatio="none">
           <path
             d="M2,28 Q25,39 50,28 Q75,16 98,28"
@@ -663,7 +688,6 @@
           />
         </svg>
       </div>
-      <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
     </section>
     <section class="main-content hidden" id="mainContent">
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
