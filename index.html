@@ -173,6 +173,7 @@
             padding: 0;
         }
         .main-links a {
+        .main-links a {
             font-size: 1rem;
             color: #181818; /* Default text color: Black */
             text-decoration: none;
@@ -181,12 +182,19 @@
             font-weight: normal;
             display: flex; 
             align-items: center;
+            /* For centering the text within the button's available space if there's extra room */
+            justify-content: center; /* Add this to center content horizontally */
             gap: 0.5em;
             
             box-sizing: border-box; 
             
-            /* --- ADJUSTED LINE HERE: Increased horizontal padding --- */
-            padding: 12px 80px; /* Double the previous 20px to make it twice as wide */
+            /* --- Adjust Padding for internal spacing (try a higher value if 40px didn't work) --- */
+            padding: 6px 40px; /* You can increase this further (e.g., 50px, 60px) */
+            
+            /* --- Add min-width to force the button to be a certain size --- */
+            /* This is crucial if padding alone isn't expanding the box. */
+            /* Adjust this pixel value until the button is your desired minimum width. */
+            min-width: 180px; /* Example: start with 180px and adjust */
             
             border-radius: 0; 
             border: 2px solid transparent; 
@@ -197,7 +205,11 @@
             background-color: transparent; 
             background-image: url('./images/pixel-border.svg'); 
             background-repeat: no-repeat;
-            background-size: 150% 100%; /* SVG fills the entire button area */
+            
+            /* --- Keep 100% 100% to fill the button, and center the background image --- */
+            background-size: 100% 100%; /* SVG fills the entire button area */
+            background-position: center; /* This centers the background image */
+            
             background-origin: border-box;
             background-clip: border-box; 
         }
