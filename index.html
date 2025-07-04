@@ -174,44 +174,26 @@
         }
         .main-links a {
             font-size: 1rem;
-            color: #181818; /* Text color */
+            color: #444;
             text-decoration: none;
             opacity: 0.90;
-            /* Transition color, opacity, and crucially, the custom property for the fill */
-            transition: color 0.18s, opacity 0.18s, --button-fill-color 0.18s; 
+            transition: color 0.18s, opacity 0.18s, background 0.18s, border-color 0.18s, text-shadow 0.18s;
             font-weight: normal;
-            display: flex; /* Ensures padding and content sizing is reliable */
+            display: flex;
             align-items: center;
             gap: 0.5em;
-            
-            box-sizing: border-box; /* Ensures predictable sizing including padding and border */
-
-            /* Use fixed pixel values for padding to avoid sub-pixel rendering issues. */
-            padding: 6px 40px; /* Adjust these values if needed for visual fit */
-            
-            border-radius: 0; /* Ensures the native border is square if it ever shows */
-            border: 2px solid transparent; /* Reserves 2px space, prevents layout shift */
+            padding: 0.4em 1.6em;
+            border-radius: 20px;
+            border: 2.2px solid #fff;
+            background: none;
+            box-shadow: none;
             margin: 0 0.1em;
-
-            /* **CRUCIAL:** Set the default fill color using the custom property */
-            --button-fill-color: transparent; /* Default state: interior is transparent */
-            
-            /* The SVG now provides the entire visual (border + fill) */
-            background-color: transparent; /* The element's own background can remain transparent */
-            background-image: url('./images/pixel-border.svg'); /* <--- Verify this filename and path! */
-            background-repeat: no-repeat;
-            background-size: 100% 100%; /* Stretches the SVG to fill the button's dimensions */
-            background-origin: border-box; /* SVG starts drawing from the outer edge */
-            background-clip: border-box; /* The SVG itself will handle the clipping now */
         }
-
         .main-links a:hover,
         .main-links a:focus {
-            /* **CRUCIAL:** Change the custom property on hover to make the interior white */
-            --button-fill-color: #fff; /* On hover, the SVG's interior turns white */
-            
-            /* Keep other properties consistent */
+            background: #fff;
             color: #181818;
+            border-color: #111;
             opacity: 1;
             text-decoration: none;
             filter: none;
