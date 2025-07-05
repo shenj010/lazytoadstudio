@@ -510,10 +510,10 @@
         font-size: 15px;
     }
     .hero-header {
-        display: flex; /* Ensure it's a flex container */
-        flex-direction: row; /* Logo and nav-col side-by-side */
-        align-items: flex-start; /* Aligns the very top of logo and nav-col */
-        justify-content: space-between; /* Pushes logo left, nav-col right */
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
@@ -521,9 +521,9 @@
         box-sizing: border-box;
     }
     .hero-logo-col {
-        flex: 0 0 auto; /* Don't grow, don't shrink, take natural width */
-        margin-right: 10px; /* Space between logo and text block */
-        margin-top: 0px; /* Adjust as needed for vertical alignment with text top */
+        flex: 0 0 auto;
+        margin-right: 10px;
+        margin-top: 0px;
     }
     .hero-logo { height: 56px; }
     .logo-circle {
@@ -532,35 +532,29 @@
     }
     .hero-nav-col {
         display: flex;
-        flex-direction: column; /* Stack title, subtitle, nav vertically */
-        /* IMPORANT: Align the *contents* of this column to the right */
-        align-items: flex-end; /* This aligns the title, subtitle, and main-links to the right within hero-nav-col */
-        flex-grow: 1; /* Allows this column to take up remaining space */
-        /* NEW: Explicitly define the width of this column. */
-        /* This will be the "column" for your text. */
-        /* ADJUST THIS PERCENTAGE to control the width of the text block */
-        width: 70%; /* Example: takes 70% of the available space. Tune this! */
-        max-width: 250px; /* Optional: A max pixel width to prevent it from getting too wide on larger mobiles */
+        flex-direction: column;
+        /* REMOVE align-items: flex-end from here for the whole column */
+        /* It will now just be a flex container that grows */
+        flex-grow: 1;
+        width: 70%; /* Adjust this percentage to control text column width */
+        max-width: 250px; /* Optional: A max pixel width */
         margin: 0;
         padding: 0;
-        margin-top: 0px; /* Adjust as needed for vertical alignment with logo top */
+        margin-top: 0px;
     }
     .hero-nav-title {
-        text-align: right; /* Aligns the text itself to the right within its own container */
-        width: 100%; /* Make the title take up the full width of .hero-nav-col */
+        text-align: right; /* KEEP this to align the title text itself to the right */
+        width: 100%; /* Important for it to take full width of .hero-nav-col */
         font-size: 1.2rem;
         -webkit-text-stroke: 1px #000;
         text-stroke: 1.3px #000;
         margin-bottom: 8px;
-        /* If you want the text to wrap and still be right-aligned, keep these: */
-        word-break: break-word; /* Allows long words to break and wrap */
+        word-break: break-word;
         line-height: 1;
-        /* hyphens: auto; - Removed for now, only useful if actually justifying */
-        /* overflow-wrap: break-word; - Redundant with word-break for this context */
     }
     .hero-nav-subtitle {
-        text-align: right; /* Aligns the text itself to the right within its own container */
-        width: 100%; /* Make the subtitle take up the full width of .hero-nav-col */
+        text-align: right; /* KEEP this to align the subtitle text itself to the right */
+        width: 100%; /* Important for it to take full width of .hero-nav-col */
         font-size: 1.5rem;
         text-shadow:
             -1.5px -1.5px 0 #000,
@@ -573,24 +567,22 @@
             1.5px 0px 0 #000;
         margin-bottom: 18px;
         margin-top: 0;
-        /* If you want the text to wrap and still be right-aligned, keep these: */
         word-break: break-word;
         line-height: 1;
-        /* hyphens: auto; - Removed for now */
-        /* overflow-wrap: break-word; - Redundant */
     }
 
     .main-links {
+        display: flex; /* Make main-links a flex container */
         flex-direction: column;
-        align-items: center; /* Keeps buttons centered relative to their parent (.hero-nav-col) */
+        align-items: center; /* THIS IS THE KEY: Center the links within main-links */
         gap: 8px;
-        width: 100%; /* Takes full width of its parent (.hero-nav-col) */
-        margin: 8px 0 0 0;
+        width: 100%; /* Take full width of its parent (.hero-nav-col) */
+        margin: 8px 0 0 0; /* Add margin-top to separate from subtitle */
         padding: 0;
     }
     .main-links a {
         font-size: 0.95rem;
-        width: 90%; /* Buttons will be 90% width of the parent */
+        width: 90%;
         justify-content: center;
         padding: 0.5em 0;
         border-radius: 10px;
