@@ -512,7 +512,7 @@
     .hero-header {
         display: flex;
         flex-direction: row;
-        align-items: flex-start;
+        align-items: flex-start; /* Aligns the very top of logo and nav-col */
         justify-content: space-between;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
@@ -523,7 +523,7 @@
     .hero-logo-col {
         flex: 0 0 auto;
         margin-right: 10px;
-        margin-top: 0px;
+        margin-top: 0px; /* Adjust as needed for vertical alignment with text top */
     }
     .hero-logo { height: 56px; }
     .logo-circle {
@@ -532,29 +532,36 @@
     }
     .hero-nav-col {
         display: flex;
-        flex-direction: column;
-        /* REMOVE align-items: flex-end from here for the whole column */
-        /* It will now just be a flex container that grows */
+        flex-direction: column; /* Stacks title, subtitle, nav vertically */
+        /* REMOVED: align-items from here so it doesn't affect main-links */
         flex-grow: 1;
-        width: 70%; /* Adjust this percentage to control text column width */
-        max-width: 250px; /* Optional: A max pixel width */
+        /* CRITICAL: Define the width of the column for justified text */
+        /* You WILL need to tune this percentage (e.g., 60%, 70%, 80%) */
+        width: 70%; /* Start with this, adjust for visual appeal */
+        max-width: 250px; /* Optional: cap the max width for larger mobile screens */
         margin: 0;
         padding: 0;
-        margin-top: 0px;
+        margin-top: 0px; /* Adjust as needed for vertical alignment with logo top */
     }
     .hero-nav-title {
-        text-align: right; /* KEEP this to align the title text itself to the right */
-        width: 100%; /* Important for it to take full width of .hero-nav-col */
+        /* NEW/REVISED: For perfectly aligned left and right sides (justified) */
+        text-align: justify;
+        width: 100%; /* Must take up full width of .hero-nav-col for justify to work */
         font-size: 1.2rem;
         -webkit-text-stroke: 1px #000;
         text-stroke: 1.3px #000;
         margin-bottom: 8px;
+        /* Crucial for good justification with word wrapping */
         word-break: break-word;
+        hyphens: auto; /* Helps with cleaner line breaks for justification */
         line-height: 1;
+        /* New: Ensure the last line also justifies (common issue with justify) */
+        text-justify: inter-word; /* For older browsers/specific rendering */
     }
     .hero-nav-subtitle {
-        text-align: right; /* KEEP this to align the subtitle text itself to the right */
-        width: 100%; /* Important for it to take full width of .hero-nav-col */
+        /* NEW/REVISED: For perfectly aligned left and right sides (justified) */
+        text-align: justify;
+        width: 100%; /* Must take up full width of .hero-nav-col for justify to work */
         font-size: 1.5rem;
         text-shadow:
             -1.5px -1.5px 0 #000,
@@ -567,17 +574,21 @@
             1.5px 0px 0 #000;
         margin-bottom: 18px;
         margin-top: 0;
+        /* Crucial for good justification with word wrapping */
         word-break: break-word;
+        hyphens: auto; /* Helps with cleaner line breaks for justification */
         line-height: 1;
+        /* New: Ensure the last line also justifies (common issue with justify) */
+        text-justify: inter-word; /* For older browsers/specific rendering */
     }
 
     .main-links {
-        display: flex; /* Make main-links a flex container */
+        display: flex;
         flex-direction: column;
-        align-items: center; /* THIS IS THE KEY: Center the links within main-links */
+        align-items: center; /* Center the links within main-links */
         gap: 8px;
         width: 100%; /* Take full width of its parent (.hero-nav-col) */
-        margin: 8px 0 0 0; /* Add margin-top to separate from subtitle */
+        margin: 8px 0 0 0;
         padding: 0;
     }
     .main-links a {
