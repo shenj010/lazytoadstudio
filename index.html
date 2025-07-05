@@ -504,15 +504,14 @@
             text-align: center;
         }
 
-        /* MOBILE OPTIMIZATION (only for mobile) */
+       /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
         font-size: 15px;
     }
     .hero-header {
         flex-direction: row;
-        /* CHANGE HERE: Align items to their start (top) */
-        align-items: flex-start; /* Aligns the very top of flex items */
+        align-items: flex-start; /* Aligns the very top of flex items (logo and nav-col) */
         justify-content: space-between;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
@@ -523,11 +522,7 @@
     .hero-logo-col {
         flex: 0 0 auto;
         margin-right: 10px;
-        /* NEW: Add a small top margin to the logo to adjust its position */
-        /* This margin will push the logo down slightly if needed to align precisely */
-        /* You might need to experiment with this value (e.g., 0px, 2px, -2px) */
-        /* depending on the exact font rendering and image size. */
-        margin-top: 0px; /* Start with 0, adjust if logo is too high/low */
+        margin-top: 0px; /* Adjust this if logo is too high/low relative to text top */
     }
     .hero-logo { height: 56px; }
     .logo-circle {
@@ -537,29 +532,37 @@
     .hero-nav-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end; /* Keeps title/subtitle aligned right */
+        /* CHANGE: Align the whole column of text to the right, this is for the title/subtitle *block* */
+        align-items: flex-end;
         flex-grow: 1;
         width: auto;
+        /* NEW: Set a defined width for the text column to allow justification to work */
+        /* This will define the "perfect column" width for your titles. */
+        /* You will need to fine-tune this percentage (e.g., 60%, 70%, 80%) */
+        width: 65%; /* Use width instead of max-width for more control over justification */
         margin: 0;
         padding: 0;
-        /* NEW: Add a small top margin to the nav column if the text is too low relative to the logo */
-        /* If the logo appears too high, you can add positive margin-top here. */
-        /* If the text appears too high, you can add negative margin-top here. */
-        margin-top: 0px; /* Start with 0, adjust if text is too high/low */
+        margin-top: 0px; /* Adjust this if text is too high/low relative to logo top */
     }
     .hero-nav-title {
-        text-align: right;
-        width: 100%;
+        /* CHANGE: Apply justify to title */
+        text-align: justify; /* This makes both left and right edges align */
+        /* This is important for text justification to work */
+        width: 100%; /* Make the title take up the full width of .hero-nav-col */
         font-size: 1.2rem;
         -webkit-text-stroke: 1px #000;
         text-stroke: 1.3px #000;
-        /* REMOVED: margin-top: 0; (because we're now aligning the parent flex item) */
         margin-bottom: 8px;
-        word-break: break-word;
+        word-break: break-word; /* Allows long words to break and wrap */
         line-height: 1;
+        /* NEW: Add hyphenation for better justification if words are long */
+        hyphens: auto; /* Helps in breaking words for better justification */
+        overflow-wrap: break-word; /* Modern property for word breaking */
     }
     .hero-nav-subtitle {
-        text-align: right;
+        /* CHANGE: Apply justify to subtitle */
+        text-align: justify; /* This makes both left and right edges align */
+        width: 100%; /* Make the subtitle take up the full width of .hero-nav-col */
         font-size: 1.5rem;
         text-shadow:
             -1.5px -1.5px 0 #000,
@@ -571,21 +574,24 @@
             -1.5px 0px 0 #000,
             1.5px 0px 0 #000;
         margin-bottom: 18px;
-        margin-top: 0; /* Keep this to ensure it stacks right below the title */
+        margin-top: 0;
         line-height: 1;
+        /* NEW: Add hyphenation for better justification if words are long */
+        hyphens: auto; /* Helps in breaking words for better justification */
+        overflow-wrap: break-word; /* Modern property for word breaking */
     }
 
     .main-links {
         flex-direction: column;
-        align-items: center; /* Keeps buttons centered */
+        align-items: center; /* Keeps buttons centered relative to their parent (.hero-nav-col) */
         gap: 8px;
-        width: 100%;
+        width: 100%; /* Takes full width of its parent (.hero-nav-col) */
         margin: 8px 0 0 0;
         padding: 0;
     }
     .main-links a {
         font-size: 0.95rem;
-        width: 90%;
+        width: 90%; /* Buttons will be 90% width of the parent */
         justify-content: center;
         padding: 0.5em 0;
         border-radius: 10px;
