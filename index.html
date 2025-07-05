@@ -58,7 +58,7 @@
         .hero-nav-col {
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: flex-end; /* Keeps desktop alignment */
             justify-content: flex-end;
             min-width: 0;
             min-height: 0;
@@ -80,7 +80,7 @@
             text-stroke: 2px #000;         /* Bolder 2px black outline for standard browsers */
             font-weight: normal;
             word-break: break-word;
-            text-align: right;
+            text-align: right; /* Desktop alignment */
             margin-bottom: 4px;
         }
         /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
@@ -88,7 +88,7 @@
             font-family: 'DotGothic16', monospace !important;
             font-size: 3rem;
             color: #fff;
-            text-align: right; /* Current desktop alignment */
+            text-align: right; /* Desktop alignment */
             margin-bottom: 18px;
             margin-top: -6px;
             letter-spacing: 0.04em;
@@ -510,10 +510,10 @@
                 font-size: 15px;
             }
             .hero-header {
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                padding: 0 2vw;
+                flex-direction: row; /* Change to row for side-by-side */
+                align-items: flex-start; /* Align logo to the top-left */
+                justify-content: space-between; /* Push logo left, text column right */
+                padding: 0 2vw; /* Keep existing mobile padding */
                 margin-top: 14px;
                 width: 100vw;
                 max-width: 100vw;
@@ -521,17 +521,18 @@
             .hero-logo { height: 56px; }
             .logo-circle { 
                 padding: 8px; 
-                margin-bottom: 18px;
+                margin-bottom: 0; /* No margin-bottom needed as it's row layout */
             }
             .hero-nav-col {
-                align-items: center;
-                width: 100%;
+                align-items: flex-end; /* Align contents of this column to the right */
+                width: auto; /* Allow it to shrink to content width initially */
+                flex-shrink: 1; /* Allow it to shrink if space is constrained */
                 margin: 0;
                 padding: 0;
             }
             .hero-nav-title {
-                text-align: center;
-                width: 100%;
+                text-align: right; /* Align title text to the right */
+                width: 100%; /* Ensure it takes full available width in its flex item */
                 font-size: 1.2rem; /* Slightly reduced font size for mobile */
                 -webkit-text-stroke: 1px #000; /* Adjusted outline for mobile */
                 text-stroke: 1.3px #000;         /* Adjusted outline for mobile */
@@ -539,9 +540,9 @@
                 margin-top: 0;
                 word-break: break-word;
             }
-            /* Subtitle text aligned to center on mobile */
-          .hero-nav-subtitle {
-                text-align: center;
+            /* Subtitle text aligned to right on mobile */
+            .hero-nav-subtitle {
+                text-align: right; /* Align subtitle text to the right */
                 font-size: 1.5rem; /* Reduced font size for mobile */
                 text-shadow:
                     -1.5px -1.5px 0 #000,
@@ -551,7 +552,7 @@
                     0px -1.5px 0 #000,
                     0px 1.5px 0 #000,
                     -1.5px 0px 0 #000,
-                    1.5px 0px 0 #000; /* Reduced text-shadow to 1px for sharpness on mobile */
+                    1.5px 0px 0 #000; /* Reduced text-shadow for sharpness on mobile */
             }
             
             .main-links {
@@ -593,403 +594,4 @@
                 height: 18px;
             }
             .hero-image-row {
-                flex-direction: column !important; /* This rule will now only apply if desktop-banner-container is somehow visible on mobile */
-                width: 100vw;
-                align-items: center;
-            }
-            .hero-image-box {
-                width: 96vw;
-                max-width: 100vw;
-                margin: 0 auto 8px auto;
-                aspect-ratio: 1/1;
-            }
-            .gallery-grid {
-                grid-template-columns: 1fr;
-                gap: 18px;
-                padding: 10px 2vw 30px 2vw;
-            }
-            .gallery-item img {
-                border-radius: 8px;
-            }
-            .footer-social-links {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .footer-social-link {
-                font-size: 0.8rem;
-            }
-            body, html {
-                overflow-x: hidden;
-                max-width: 100vw;
-            }
-            /* Frog animation sizing tweaks for mobile */
-            .hero-nav-subtitle .frog-peep,
-            .hero-nav-subtitle .frog-wrap {
-                width: 1.2em;
-                min-width: 1em;
-            }
-            .hero-nav-subtitle .frog-peep {
-                height: 1.2em;
-                min-height: 1.2em;
-            }
-            .hero-nav-subtitle .frog-wrap {
-                height: 0.8em;
-            }
-            .hero-nav-subtitle .frog-wrap.fully-raised {
-                height: 1.2em;
-            }
-        }
-        /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
-        @media (max-width: 700px) {
-            body .hero-nav-subtitle {
-                font-family: 'DotGothic16', monospace !important;
-            }
-        }
-    </style>
-</head>
-<body>
-    <section class="hero" id="hero">
-      <div class="hero-header">
-        <div class="hero-logo-col">
-          <div class="logo-circle">
-            <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
-          </div>
-        </div>
-        <div class="hero-nav-col">
-          <div class="hero-nav-title">LAZY TOAD STUDIOS</div>
-          <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
-          <nav class="main-links">
-            <a href="/shop.html" class="shop" title="Shop">
-              <span class="icon" aria-hidden="true"></span>
-              Shop
-            </a>
-            <a href="/contact.html" class="contact" title="Contact">
-              <span class="icon" aria-hidden="true"></span>
-              Contact
-            </a>
-            <a href="/about.html" class="about" title="About">
-              <span class="icon" aria-hidden="true"></span>
-              About
-            </a>
-            <a href="/work.html" class="work" title="Work">
-              <span class="icon" aria-hidden="true"></span>
-              Work
-            </a>
-          </nav>
-        </div>
-      </div>
-      <div class="nav-hero-separator">
-        <svg viewBox="0 0 100 56" preserveAspectRatio="none">
-          <path
-            d="M2,28 Q20,20 38,29 Q52,36 70,26 Q85,34 98,28"
-            stroke="#fff"
-            stroke-width="19"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.97"
-          />
-        </svg>
-      </div>
-
-      <div class="desktop-banner-container">
-          <div class="hero-images-spacing"></div>
-          <div class="hero-image-row">
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/walking temple website.jpg" alt="After the War" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/the botanist a4 website.jpg" alt="Ramen Battleship" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/3 Joe Shenton - Reunion.jpg" alt="PTSD Machine" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/5 Joe Shenton - Remnants.jpg" alt="Transporter" class="hero-image">
-            </div>
-          </div>
-          <div class="banner-images-spacing"></div>
-      </div>
-
-      <div class="mobile-banner-container">
-          <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
-      </div>
-
-      <div class="banner-hero-separator">
-        <svg viewBox="0 0 100 56" preserveAspectRatio="none">
-          <path
-            d="M2,28 Q25,39 50,28 Q75,16 98,28"
-            stroke="#fff"
-            stroke-width="19"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.97"
-          />
-        </svg>
-      </div>
-    </section>
-    <section class="main-content hidden" id="mainContent">
-        <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
-            <h2>Gallery</h2>
-        </div>
-        <div class="gallery-grid">
-            <div class="gallery-item">
-                <a href="gallery/after-the-war.html">
-                    <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Respite</div>
-                        <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/transporter.html">
-                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Transporter</div>
-                        <div class="gallery-overlay-meta">Digital illustration · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ramen-battleship.html">
-                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Ramen Battleship</div>
-                        <div class="gallery-overlay-meta">Watercolor · 2020</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/walking-temple.html">
-                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Quiet day at the beach</div>
-                        <div class="gallery-overlay-meta">Digital painting · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/demons.html">
-                    <img src="images/demons website.jpg" alt="Waiting for the bus in the desert">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Waiting for the bus in the desert</div>
-                        <div class="gallery-overlay-meta">Ink · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/mountain.html">
-                    <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Nature again.. At its finest!</div>
-                        <div class="gallery-overlay-meta">Acrylic · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/osaka.html">
-                    <img src="images/osaka wesbite.jpg" alt="Canoeing again">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Canoeing again</div>
-                        <div class="gallery-overlay-meta">Gouache · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/girl-train.html">
-                    <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">A girl, and a train passing</div>
-                        <div class="gallery-overlay-meta">Mixed media · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/closegirl.html">
-                    <img src="images/wanderer website.jpg" alt="What a beautiful day!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">What a beautiful day!</div>
-                        <div class="gallery-overlay-meta">Digital · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-    <div id="imgModal" class="modal" onclick="event.target === this && closeModal()">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()" aria-label="Close">&times;</button>
-            <img id="modalImg" class="modal-img" src="" alt="">
-            <div id="modalCaption" class="modal-caption"></div>
-        </div>
-    </div>
-    <footer class="footer-social">
-        <div class="footer-social-links">
-            <a class="footer-social-link" href="mailto:contact@lazytoadstudios.com" target="_blank" rel="noopener" title="Contact Email">
-                <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2v.01L12 13 4 6.01V6h16zm-16 12V8.08l7.29 6.29a1 1 0 0 0 1.42 0L20 8.08V18H4z"/></svg>
-                Contact
-            </a>
-            <a class="footer-social-link" href="https://instagram.com/lazytoadstudios" target="_blank" rel="noopener" title="Instagram">
-                <svg viewBox="0 0 24 24"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm6.13.38a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg>
-                Instagram
-            </a>
-            <a class="footer-social-link" href="https://twitter.com/lazytoadstudios" target="_blank" rel="noopener" title="Twitter">
-                <svg viewBox="0 0 24 24"><path d="M22.46 5.94c-.8.36-1.67.6-2.58.72a4.48 4.48 0 0 0 1.96-2.48c-.88.52-1.85.9-2.88 1.1a4.47 4.47 0 0 0-7.62 4.08c-3.72-.19-7.02-1.97-9.23-4.68A4.47 4.47 0 0 0 3.22 9.7a4.47 4.47 0 0 1-2.02-.56v.06a4.47 4.47 0 0 0 3.58 4.38 4.47 4.47 0 0 1-2.01.08 4.47 4.47 0 0 0 4.18 3.11A8.95 8.95 0 0 1 2 19.54a12.66 12.66 0 0 0 6.88 2.02c8.26 0 12.79-6.84 12.79-12.77 0-.19 0-.39-.01-.58a9.33 9.33 0 0 0 2.3-2.37z"/></svg>
-                Twitter
-            </a>
-            <a class="footer-social-link" href="https://facebook.com/lazytoadstudios" target="_blank" rel="noopener" title="Facebook">
-                <svg viewBox="0 0 24 24"><path d="M17.525 8.998h-3.025v-1.55c0-.7.463-.863.788-.863h2.202V4.11l-3.032-.012C11.21 4.098 10 5.338 10 7.32v1.678H7.5V12h2.5v7h3v-7h2.025l.5-3.002z"/></svg>
-                Facebook
-            </a>
-        </div>
-        <div class="footer-social-label">
-            &copy; 2025 Lazy Toad Studios &mdash; Connect with us!
-        </div>
-    </footer>
-    <script>
-    // Modal & scroll logic (unchanged)
-    function openModal(img) {
-        var modal = document.getElementById('imgModal');
-        var modalImg = document.getElementById('modalImg');
-        var modalCaption = document.getElementById('modalCaption');
-        modalImg.src = img.src;
-        modalImg.alt = img.alt;
-        modalCaption.textContent = img.alt;
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    function closeModal() {
-        var modal = document.getElementById('imgModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    document.addEventListener('keydown', function(e) {
-        if(e.key === 'Escape') closeModal();
-    });
-    function scrollToMain() {
-        document.getElementById('mainContent').classList.remove('hidden');
-        window.scrollTo({ top: window.innerHeight + 1, behavior: 'smooth' });
-    }
-    window.addEventListener('scroll', function() {
-        if(window.scrollY > window.innerHeight * 0.7) {
-            document.getElementById('mainContent').classList.remove('hidden');
-        }
-    });
-
-    // FROG "PEEP" ANIMATION SCRIPT
-    document.addEventListener("DOMContentLoaded", function() {
-        const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
-        const originalText = subtitle.textContent.trim();
-        subtitle.innerHTML = '';
-
-        for (const c of originalText) {
-            const wrap = document.createElement('span');
-            wrap.className = 'char-frog-wrap';
-
-            // Letter span (never clipped)
-            const letterWrap = document.createElement('span');
-            letterWrap.className = 'letter-wrap';
-            const letter = document.createElement('span');
-            letter.className = 'the-letter';
-            letter.textContent = c;
-            letterWrap.appendChild(letter);
-
-            // Frog mask span (absolutely positioned, clipped)
-            const frogWrap = document.createElement('span');
-            frogWrap.className = 'frog-wrap';
-            const frog = document.createElement('img');
-            frog.src = frogImgSrc;
-            frog.alt = "🐸";
-            frog.className = 'frog-peep';
-            frog.style.height = '1.2em';
-            frog.style.width = '1.2em';
-            frogWrap.appendChild(frog);
-
-            wrap.appendChild(letterWrap);
-            wrap.appendChild(frogWrap);
-            subtitle.appendChild(wrap);
-        }
-        const wraps = subtitle.querySelectorAll('.char-frog-wrap');
-
-        let animationCount = 0;
-        let nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7
-
-        function randomDelay() {
-            return Math.floor(Math.random() * 20000) + 10000;
-        }
-
-        function doFrogAnimation() {
-            animationCount++;
-            const idx = Math.floor(Math.random() * wraps.length);
-            const wrap = wraps[idx];
-            const letter = wrap.querySelector('.the-letter');
-            const frog = wrap.querySelector('.frog-peep');
-            const frogWrap = wrap.querySelector('.frog-wrap');
-
-            frog.classList.remove('fully-raised');
-            frog.classList.remove('peeping');
-            frogWrap.classList.remove('fully-raised');
-            letter.classList.remove('lifted');
-            letter.classList.remove('raised');
-
-            // Step 1: Frog peeps up behind letter (top part shows)
-            setTimeout(() => {
-                frog.classList.add('peeping');
-                letter.classList.add('raised');
-            }, 100);
-
-            const doFullRaise = animationCount === nextFullRaise;
-
-            // Step 2: After 1.2s, either drop back or fully raise
-            setTimeout(() => {
-                if (doFullRaise) {
-                    frog.classList.remove('peeping');
-                    frog.classList.add('fully-raised');
-                    frogWrap.classList.add('fully-raised');
-                    letter.classList.remove('raised');
-                    letter.classList.add('lifted');
-                } else {
-                    frog.classList.remove('peeping');
-                    letter.classList.remove('raised');
-                }
-            }, 1500);
-
-            // Step 3: After 5 seconds, reset everything and possibly set up next full raise
-            setTimeout(() => {
-                frog.classList.remove('peeping', 'fully-raised');
-                frogWrap.classList.remove('fully-raised');
-                letter.classList.remove('lifted','raised');
-                if (doFullRaise) {
-                    animationCount = 0;
-                    nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7 again
-                }
-                setTimeout(doFrogAnimation, randomDelay());
-            }, 5000);
-        }
-
-        setTimeout(doFrogAnimation, randomDelay());
-    });
-    </script>
-</body>
-</html>
+                flex-direction: column
