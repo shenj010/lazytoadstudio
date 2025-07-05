@@ -507,7 +507,7 @@
        /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
-        font-size: 15px;
+        font-size: 15px; /* Keep this as it is or adjust as needed for overall sizing */
     }
     .hero-header {
         display: flex;
@@ -523,7 +523,7 @@
     .hero-logo-col {
         flex: 0 0 auto;
         margin-right: 10px;
-        margin-top: 0px; /* Adjust as needed for vertical alignment with text top */
+        margin-top: 0px;
     }
     .hero-logo { height: 56px; }
     .logo-circle {
@@ -532,37 +532,34 @@
     }
     .hero-nav-col {
         display: flex;
-        flex-direction: column; /* Stacks title, subtitle, nav vertically */
-        /* REMOVED: align-items from here so it doesn't affect main-links */
+        flex-direction: column;
+        align-items: flex-end; /* CRITICAL: This right-aligns the title, subtitle, and nav within this column */
         flex-grow: 1;
-        /* CRITICAL: Define the width of the column for justified text */
-        /* You WILL need to tune this percentage (e.g., 60%, 70%, 80%) */
-        width: 70%; /* Start with this, adjust for visual appeal */
-        max-width: 250px; /* Optional: cap the max width for larger mobile screens */
+        /* Adjust width to control where text breaks. This is key for the multiline English title */
+        width: 70%; /* You may need to tune this (e.g., 65%, 75%) based on screen size and text breaks */
+        max-width: 250px; /* Keep this if you want to cap the maximum width */
         margin: 0;
         padding: 0;
-        margin-top: 0px; /* Adjust as needed for vertical alignment with logo top */
+        margin-top: 0px;
     }
     .hero-nav-title {
-        /* NEW/REVISED: For perfectly aligned left and right sides (justified) */
-        text-align: justify;
-        width: 100%; /* Must take up full width of .hero-nav-col for justify to work */
-        font-size: 1.2rem;
+        /* REVISED: Right align instead of justify */
+        text-align: right;
+        width: 100%; /* Allow it to take full width to enforce breaks if content is long */
+        font-size: 1.2rem; /* Keep this for size */
         -webkit-text-stroke: 1px #000;
         text-stroke: 1.3px #000;
         margin-bottom: 8px;
-        /* Crucial for good justification with word wrapping */
-        word-break: break-word;
-        hyphens: auto; /* Helps with cleaner line breaks for justification */
-        line-height: 1;
-        /* New: Ensure the last line also justifies (common issue with justify) */
-        text-justify: inter-word; /* For older browsers/specific rendering */
+        word-break: break-word; /* Helps with breaking long words, but `width` is more important for phrases */
+        hyphens: auto;
+        line-height: 1; /* Keep compact line height */
+        /* REMOVED: text-justify: inter-word; as it's not relevant for right-align */
     }
     .hero-nav-subtitle {
-        /* NEW/REVISED: For perfectly aligned left and right sides (justified) */
-        text-align: justify;
-        width: 100%; /* Must take up full width of .hero-nav-col for justify to work */
-        font-size: 1.5rem;
+        /* REVISED: Right align instead of justify */
+        text-align: right;
+        width: 100%; /* Allow it to take full width */
+        font-size: 1.5rem; /* Keep this for size */
         text-shadow:
             -1.5px -1.5px 0 #000,
             1.5px -1.5px 0 #000,
@@ -574,27 +571,31 @@
             1.5px 0px 0 #000;
         margin-bottom: 18px;
         margin-top: 0;
-        /* Crucial for good justification with word wrapping */
         word-break: break-word;
-        hyphens: auto; /* Helps with cleaner line breaks for justification */
+        hyphens: auto;
         line-height: 1;
-        /* New: Ensure the last line also justifies (common issue with justify) */
-        text-justify: inter-word; /* For older browsers/specific rendering */
+        /* REMOVED: text-justify: inter-word; */
     }
 
+    /* ... rest of your mobile CSS ... */
+
+    /* IMPORTANT: Re-check your .main-links alignment */
     .main-links {
         display: flex;
         flex-direction: column;
-        align-items: center; /* Center the links within main-links */
+        align-items: flex-end; /* Changed from center to flex-end to align with text */
         gap: 8px;
-        width: 100%; /* Take full width of its parent (.hero-nav-col) */
+        width: 100%;
         margin: 8px 0 0 0;
         padding: 0;
     }
     .main-links a {
         font-size: 0.95rem;
-        width: 90%;
-        justify-content: center;
+        /* Adjust width or remove fixed width if you want it to shrink-wrap content and align right */
+        /* If you want the buttons to align right AND be fixed width, keep width: 90%; */
+        /* If you want them to shrink to content and align right, set width: auto; */
+        width: 90%; /* Keep this if you want buttons to stretch most of the column width */
+        justify-content: center; /* This will center content INSIDE the button */
         padding: 0.5em 0;
         border-radius: 10px;
     }
