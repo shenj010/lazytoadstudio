@@ -266,16 +266,19 @@
 
         .banner-image-mobile {
             display: block;
-            width: 100vw;
-            aspect-ratio: 1 / 0.5;
-            object-fit: cover;
-            object-position: center; /* Or use 'top', 'bottom', '20% 30%', etc. */
-            margin: 0 0 10px 0;
-            border-radius: 0;
-            max-width: 100vw;
-
+            width: 100%; /* Make the image fill 100% of its parent's width */
+            height: 100%; /* Make the image fill 100% of its parent's height */
+            object-fit: cover; /* Ensures the image initially covers the container, cropping as needed */
+            object-position: center; /* Adjust this to control which part of the image is shown */
+            
             /* ADD THIS FOR ADDITIONAL ZOOM */
-            transform: scale(1.5); /* Adjust this value (e.g., 1.2, 1.5) for more zoom */
+            transform: scale(1.5); /* Adjust this value (e.g., 1.1, 1.3, 1.5) for more zoom */
+            transition: transform 0.3s ease; /* Optional: for a smooth transition if you change scale */
+
+            /* Remove old properties that are now handled by the container or are no longer needed */
+            margin: 0; 
+            border-radius: 0;
+            max-width: none; /* Allow it to scale beyond 100% */
         }
 
         .hero-images-spacing, .banner-images-spacing {
@@ -618,7 +621,12 @@
     }
     .mobile-banner-container {
         display: block;
-        width: 100%;
+        width: 100vw; /* Make the container span the full viewport width */
+        aspect-ratio: 1 / 1; /* Make the container a perfect square */
+        overflow: hidden; /* CRUCIAL: This hides the parts of the image that are zoomed outside the square */
+        margin: 0 0 10px 0; /* Add bottom margin, remove any side margins */
+        border-radius: 0; /* Ensure the container itself has sharp corners if desired */
+        /* You can add a background color here if you want a fallback or border */
     }
 
     .banner-images-spacing {
