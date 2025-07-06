@@ -513,98 +513,34 @@
         }
 
        /* MOBILE OPTIMIZATION (only for mobile) */
-@media (max-width: 700px) {
-    html, body {
-        font-size: 15px;
-    }
-    .hero-header {
-        display: flex;
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: space-between;
-        padding: 0 4vw 0 2vw;
-        margin-top: 14px;
-        width: 100vw;
-        max-width: 100vw;
-        box-sizing: border-box;
-        position: relative;
-    }
-    .hero-logo-col {
-        flex: 0 0 auto;
-        margin-right: 0px;
-        margin-top: 0px;
-    }
-    .hero-logo { height: 160px; }
-    .logo-circle {
-        padding: 8px;
-        margin-bottom: 0;
-    }
-    .hero-nav-col {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        flex-grow: 1;
-        width: 70%;
-        max-width: 250px;
-        margin: 0;
-        padding: 0;
-        margin-top: 0px;
-    }
-    .hero-nav-title {
-        text-align: right;
-        width: 90%;
-        font-size: 3rem;
-        -webkit-text-stroke: 1px #000;
-        text-stroke: 1.3px #000;
-        margin-bottom: 8px;
-        word-break: break-word;
-        hyphens: auto;
-        line-height: 1;
-    }
-    .hero-nav-subtitle {
-        text-align: right;
-        width: 90%;
-        font-size: 3rem;
-        text-shadow:
-            -1.5px -1.5px 0 #000,
-            1.5px -1.5px 0 #000,
-            -1.5px 1.5px 0 #000,
-            1.5px 1.5px 0 #000,
-            0px -1.5px 0 #000,
-            0px 1.5px 0 #000,
-            -1.5px 0px 0 #000,
-            1.5px 0px 0 #000;
-        margin-bottom: 18px;
-        margin-top: 0;
-        word-break: break-word;
-        hyphens: auto;
-        line-height: 1.2;
-    }
-
+@media (max-width: 700px) { /* IMPORTANT: This ensures these styles only apply on screens up to 700px wide */
     .main-links {
         position: absolute;
-        top: 200px;
+        top: 200px; /* Note: This 'top' value positions the menu. Adjust if needed for your mobile header. */
         left: 2vw;
         width: fit-content;
         min-width: 180px;
-        
+
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease-out;
-        
+        transition: max-height 0.3s ease-out; /* This maintains your existing cascade animation */
+
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        
+
         background-color: #FDEDF4;
         padding-bottom: 10px;
         box-sizing: border-box;
         z-index: 10;
+        
+        gap: 5px; /* Adjust this value to your desired gap (e.g., 5px, 0px, etc.) */
     }
 
     .main-links.active {
-        max-height: 500px;
+        max-height: 500px; /* This works with max-height to show the menu */
     }
+
     .main-links a {
         display: flex;
         align-items: center;
@@ -615,70 +551,61 @@
         width: auto;
         box-sizing: border-box;
         padding: 0.5em 1em;
-        border-radius: 0px;
-        border: 1px solid transparent;
-        margin: 0 0 8px 0;
+        border-radius: 0px; /* Ensures a perfectly rectangular shape */
+
+        border: 2px solid #181818; /* Solid black border for the rectangle (adjust thickness if desired) */
+        background-color: #FFFFFF; /* White background fill for the button */
+
+        margin: 0; /* This removes all external margins from the buttons */
+
         text-decoration: none;
-        color: #181818;
+        color: #181818; /* Default text color */
 
         background-color: transparent;
         position: relative;
         overflow: hidden;
         z-index: 0;
-        
+
         transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Pseudo-element for the pixelated border SVG in mobile */
     .main-links a::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-image: url('./images/pixel-border.svg');
-        background-repeat: no-repeat;
-        background-size: 250% 150%;
-        background-position: 0% center; /* Mobile specific background-position */
-        background-origin: border-box;
-        background-clip: border-box;
-        z-index: -1;
-        transition: filter 0.2s ease;
+        content: none; /* This completely removes the SVG pseudo-element */
+        background-image: none; /* Ensures no background image from it */
     }
 
     .main-links .icon {
-    display: inline-block;
-    width: 24px; /* Adjust based on your icon's desired size */
-    height: 24px; /* Adjust based on your icon's desired size */
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    vertical-align: middle;
-    background-image: url("./images/toad icon static.png"); /* This is the missing default image */
-}
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        vertical-align: middle;
+        background-image: url("./images/toad icon static.png"); /* Your default static toad icon */
+    }
 
-/* Your existing hover styles for the toad icons */
-.main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
-.main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
-.main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
-.main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
+    .main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
+    .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+    .main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
+    .main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
 
-/* The filter for hover is already defined for .main-links a:hover .icon */
-.main-links a:hover .icon {
-    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
-}
+    .main-links a:hover .icon {
+        filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+    }
 
-    /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        background-color: #181818 !important;
-        color: #FDEDF4 !important;
+        background-color: #181818 !important; /* Background becomes black on hover */
+        color: #FDEDF4 !important; /* Text becomes white on hover */
         opacity: 1 !important;
         text-decoration: none !important;
     }
 
-    /* Hover styles for mobile pseudo-element to invert the SVG */
     .main-links a:hover::before {
-        filter: brightness(0) invert(1) !important;
+        filter: none; /* No filter needed as ::before content is gone */
     }
+}
     /* Hover styles for mobile icon */
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
