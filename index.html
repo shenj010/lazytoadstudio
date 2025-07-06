@@ -518,151 +518,208 @@
         font-size: 15px;
     }
     .hero-header {
-        flex-direction: row; /* Ensure logo and toggle are side-by-side */
-        align-items: center;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
         justify-content: space-between;
-        padding-left: 5vw;
-        padding-right: 5vw;
-        height: 60px; /* Adjust header height for mobile */
-        margin-top: 0;
+        padding: 0 4vw 0 2vw;
+        margin-top: 14px;
+        width: 100vw;
+        max-width: 100vw;
+        box-sizing: border-box;
+        position: relative;
     }
-
     .hero-logo-col {
-        flex: none; /* Don't let it grow */
+        flex: 0 0 auto;
+        margin-right: 0px;
+        margin-top: 0px;
     }
-
+    .hero-logo { height: 160px; }
     .logo-circle {
-        width: 48px; /* Adjust logo size for mobile */
-        height: 48px;
-        min-width: 48px;
-        min-height: 48px;
-        line-height: 48px;
-        font-size: 1.5rem; /* Adjust font size inside logo */
-        border-width: 2px; /* Adjust border thickness */
+        padding: 8px;
+        margin-bottom: 0;
+    }
+    .hero-nav-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        flex-grow: 1;
+        width: 70%;
+        max-width: 250px;
+        margin: 0;
+        padding: 0;
+        margin-top: 0px;
+    }
+    .hero-nav-title {
+        text-align: right;
+        width: 90%;
+        font-size: 3rem;
+        -webkit-text-stroke: 1px #000;
+        text-stroke: 1.3px #000;
+        margin-bottom: 8px;
+        word-break: break-word;
+        hyphens: auto;
+        line-height: 1;
+    }
+    .hero-nav-subtitle {
+        text-align: right;
+        width: 90%;
+        font-size: 3rem;
+        text-shadow:
+            -1.5px -1.5px 0 #000,
+            1.5px -1.5px 0 #000,
+            -1.5px 1.5px 0 #000,
+            1.5px 1.5px 0 #000,
+            0px -1.5px 0 #000,
+            0px 1.5px 0 #000,
+            -1.5px 0px 0 #000,
+            1.5px 0px 0 #000;
+        margin-bottom: 18px;
+        margin-top: 0;
+        word-break: break-word;
+        hyphens: auto;
+        line-height: 1.2;
     }
 
-    /* --- Mobile Navigation Container --- */
-    /* This container holds your links and is toggled by JavaScript */
     .main-links {
-        flex-direction: column; /* Stack links vertically */
         position: absolute;
-        top: 60px; /* Below the header */
-        right: 0;
-        width: 100%;
-        height: calc(100vh - 60px); /* Fill remaining viewport height */
-        background-color: #FDEDF4; /* Background for the mobile menu */
-        display: none; /* Hidden by default (will be shown by JS) */
-        align-items: center; /* Center items horizontally */
-        justify-content: flex-start; /* Start items from the top */
-        padding-top: 20px; /* Space from the top */
-        overflow-y: auto; /* Enable scrolling for many links */
-        z-index: 100; /* Ensure it's on top of other content */
-        gap: 10px; /* Space between links */
+        top: 200px;
+        left: 2vw;
+        width: fit-content;
+        min-width: 180px;
+        
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        
+        background-color: #FDEDF4;
+        padding-bottom: 10px;
+        box-sizing: border-box;
+        z-index: 10;
     }
 
-    /* --- Mobile Navigation Container when Active --- */
     .main-links.active {
-        display: flex; /* Show the menu when the 'active' class is added by JS */
+        max-height: 500px;
     }
-
-    /* --- Mobile Button Styles (Rectangles) --- */
     .main-links a {
-        font-size: 1.2rem; /* Adjust font size for mobile buttons */
-        padding: 10px 20px; /* Adjust padding for mobile buttons */
-        border-radius: 0; /* Ensures a perfectly rectangular shape */
-        border: 2px solid #181818; /* Solid border for the rectangle (adjust thickness if needed) */
-        background-color: #FFFFFF; /* White infill for the button */
-        color: #181818; /* Default text color */
-
-        width: calc(100% - 40px); /* Full width with padding on sides */
-        max-width: 300px; /* Max width to prevent overly wide buttons on larger mobile screens */
-        margin: 5px auto; /* Center buttons horizontally */
-
-        /* Maintain text and icon positioning */
         display: flex;
         align-items: center;
-        justify-content: flex-start; /* Align content to the left, maintaining icon/text position */
-        gap: 0.5em;
+        justify-content: flex-start;
+        gap: 8px;
 
-        /* Keep existing transitions */
-        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+        font-size: 0.95rem;
+        width: auto;
+        box-sizing: border-box;
+        padding: 0.5em 1em;
+        border-radius: 0px;
+        border: 1px solid transparent;
+        margin: 0 0 8px 0;
+        text-decoration: none;
+        color: #181818;
+
+        background-color: transparent;
+        position: relative;
+        overflow: hidden;
+        z-index: 0;
+        
+        transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* --- Remove SVG Pseudo-element for Mobile Buttons --- */
+    /* Pseudo-element for the pixelated border SVG in mobile */
     .main-links a::before {
-        content: none; /* This completely removes the ::before pseudo-element */
-        background-image: none; /* Ensure no background image from the pseudo-element */
-    }
-
-    /* --- Mobile Icon Styles --- */
-    .main-links .icon {
-        display: inline-block;
-        width: 24px;
-        height: 24px;
-        background-size: contain;
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
-        background-position: center;
-        vertical-align: middle;
-        background-image: url("./images/toad icon static.png"); /* Your default static toad icon */
+        background-size: 250% 150%;
+        background-position: 0% center; /* Mobile specific background-position */
+        background-origin: border-box;
+        background-clip: border-box;
+        z-index: -1;
+        transition: filter 0.2s ease;
     }
 
-    /* --- Mobile Hover Styles --- */
+    .main-links .icon {
+    display: inline-block;
+    width: 24px; /* Adjust based on your icon's desired size */
+    height: 24px; /* Adjust based on your icon's desired size */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: middle;
+    background-image: url("./images/toad icon static.png"); /* This is the missing default image */
+}
+
+/* Your existing hover styles for the toad icons */
+.main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
+.main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+.main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
+.main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
+
+/* The filter for hover is already defined for .main-links a:hover .icon */
+.main-links a:hover .icon {
+    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+}
+
+    /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        background-color: #181818 !important; /* Background becomes black */
-        color: #FDEDF4 !important; /* Text color becomes white */
+        background-color: #181818 !important;
+        color: #FDEDF4 !important;
         opacity: 1 !important;
         text-decoration: none !important;
-        border-color: #FDEDF4 !important; /* Invert border color */
     }
 
-    /* Remove the hover filter for ::before as ::before is now removed */
+    /* Hover styles for mobile pseudo-element to invert the SVG */
     .main-links a:hover::before {
-        filter: none;
+        filter: brightness(0) invert(1) !important;
+    }
+    /* Hover styles for mobile icon */
+    .main-links a:hover .icon {
+        filter: brightness(0) invert(1) !important;
+    }
+    .nav-hero-separator, .banner-hero-separator {
+        width: 98vw;
+        min-width: 0;
+        max-width: 100vw;
+        height: 36px;
+    }
+    .nav-hero-separator svg, .banner-hero-separator svg {
+        height: 36px;
+        min-height: 36px;
     }
 
-    /* --- Separator for Mobile --- */
-    .nav-hero-separator,
-    .banner-hero-separator {
-        width: 90vw; /* Adjust width for mobile */
-        max-width: none;
-        height: 40px; /* Adjust height for mobile */
-    }
-    .nav-hero-separator svg,
-    .banner-hero-separator svg {
-        height: 40px; /* Adjust SVG height for mobile */
-    }
-    .nav-hero-separator {
-        margin-top: 5px; /* Adjust spacing */
-    }
-    .banner-hero-separator {
-        margin-top: 0;
-    }
-
-    /* --- Banner Image Containers for Mobile --- */
     .desktop-banner-container {
-        display: none; /* Hide desktop banner on mobile */
+        display: none;
     }
     .mobile-banner-container {
-        display: block; /* Show mobile banner on mobile */
+        display: block;
+        width: 100vw;
+        aspect-ratio: 1 / 0.9;
+        overflow: hidden;
+        margin: 0 0 10px 0;
+        border-radius: 0;
     }
 
-    /* --- Hero Images for Mobile --- */
-    .hero-images-spacing, .banner-images-spacing {
-        height: 20px; /* Adjust spacing for mobile */
+    .banner-images-spacing {
+        height: 18px;
     }
     .hero-image-row {
-        flex-direction: column; /* Stack hero images vertically on mobile */
+        flex-direction: column !important;
+        width: 100vw;
+        align-items: center;
     }
     .hero-image-box {
-        aspect-ratio: 16/9; /* Adjust aspect ratio for mobile hero images */
-        border-bottom: 2px solid #181818; /* Add borders between stacked images */
-        border-right: none !important; /* Remove right border if present */
+        width: 96vw;
+        max-width: 100vw;
+        margin: 0 auto 8px auto;
+        aspect-ratio: 1/1;
     }
-    .hero-image-box:last-child {
-        border-bottom: none; /* No border on the last image */
-    }
-}
     .gallery-grid {
         grid-template-columns: 1fr;
         gap: 18px;
