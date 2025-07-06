@@ -598,12 +598,26 @@
         z-index: 10; /* Ensure it's on top of other content */
     }
     .main-links a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px; /* Optional: Adds space between the icon and text */
+
         font-size: 0.95rem;
-        width: 90%; /* Allow buttons to shrink-wrap content */
-        justify-content: flex-start; /* Align content INSIDE button to the left */
-        padding: 0.5em 1em; /* Adjust padding for better button appearance */
+        width: 90%; /* Keep this if you want fixed-width buttons */
+        padding: 0.5em 0;
         border-radius: 20px;
-        margin: 0; /* Ensure no horizontal margin on buttons */
+        margin: 0;
+        text-decoration: none;
+        color: inherit;
+
+        /* ADD/CONFIRM THESE FOR THE PIXELATED OVAL BACKGROUND */
+        background-image: url('./images/pixel-border.svg'); /* Ensure the correct path */
+        background-repeat: no-repeat;
+        background-size: 150% 100%; /* Make sure it's applied for mobile */
+        background-position: center; /* THIS WILL CENTER THE OVAL OUTLINE */
+        background-origin: border-box; /* Good practice to include */
+        background-clip: border-box; /* Good practice to include */
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
