@@ -587,19 +587,21 @@
         left: 2vw;
         width: fit-content;
         min-width: 180px;
-        
+
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-out;
-        
+
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        
+
         background-color: #FDEDF4;
         padding-bottom: 10px;
         box-sizing: border-box;
         z-index: 10;
+        /* --- MODIFIED: Reduce gap between buttons --- */
+        gap: 5px; /* Adjust this value (e.g., 0px, 2px, etc.) to your desired spacing */
     }
 
     .main-links.active {
@@ -616,55 +618,51 @@
         box-sizing: border-box;
         padding: 0.5em 1em;
         border-radius: 0px;
-        border: 1px solid transparent;
-        margin: 0 0 8px 0;
+
+        /* --- MODIFIED: Rectangular button style --- */
+        border: 2px solid #181818; /* Solid black border */
+        background-color: #FFFFFF; /* White background fill */
+
+        /* --- MODIFIED: Remove margin to let 'gap' control spacing --- */
+        margin: 0; /* This removes the 8px bottom margin */
+
         text-decoration: none;
         color: #181818;
 
-        background-color: transparent;
         position: relative;
         overflow: hidden;
         z-index: 0;
-        
+
         transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Pseudo-element for the pixelated border SVG in mobile */
+    /* --- MODIFIED: Remove SVG pseudo-element --- */
     .main-links a::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-image: url('./images/pixel-border.svg');
-        background-repeat: no-repeat;
-        background-size: 250% 150%;
-        background-position: 0% center; /* Mobile specific background-position */
-        background-origin: border-box;
-        background-clip: border-box;
-        z-index: -1;
-        transition: filter 0.2s ease;
+        content: none; /* This completely removes the SVG */
+        background-image: none; /* Ensures no background image is rendered */
     }
 
     .main-links .icon {
-    display: inline-block;
-    width: 24px; /* Adjust based on your icon's desired size */
-    height: 24px; /* Adjust based on your icon's desired size */
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    vertical-align: middle;
-    background-image: url("./images/toad icon static.png"); /* This is the missing default image */
-}
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        vertical-align: middle;
+        background-image: url("./images/toad icon static.png");
+    }
 
-/* Your existing hover styles for the toad icons */
-.main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
-.main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
-.main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
-.main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
+    /* Your existing hover styles for the toad icons */
+    .main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
+    .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+    .main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
+    .main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
 
-/* The filter for hover is already defined for .main-links a:hover .icon */
-.main-links a:hover .icon {
-    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
-}
+    /* The filter for hover is already defined for .main-links a:hover .icon */
+    .main-links a:hover .icon {
+        filter: brightness(0) invert(1) !important;
+    }
 
     /* Hover styles for mobile links */
     .main-links a:hover,
@@ -675,14 +673,11 @@
         text-decoration: none !important;
     }
 
-    /* Hover styles for mobile pseudo-element to invert the SVG */
+    /* --- MODIFIED: Remove hover filter for the now-removed SVG pseudo-element --- */
     .main-links a:hover::before {
-        filter: brightness(0) invert(1) !important;
+        filter: none; /* No filter needed as ::before content is gone */
     }
-    /* Hover styles for mobile icon */
-    .main-links a:hover .icon {
-        filter: brightness(0) invert(1) !important;
-    }
+}
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
         min-width: 0;
