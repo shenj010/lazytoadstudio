@@ -524,9 +524,27 @@
         display: flex; /* Make it a flex container */
         flex-direction: column; /* Stack logo and nav links vertically */
         align-items: flex-start; /* Align contents to the left */
-        flex: 0 0 auto;
-        margin-right: 1px;
-        margin-top: 0px;
+        /* ... (rest of hero-logo-col mobile CSS) ... */
+    }
+
+    /* ... (hero-nav-col and title/subtitle CSS, which remain the same) ... */
+
+    /* This CSS will now correctly style the main-links *within* hero-logo-col */
+    .main-links {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Align links themselves to the left */
+        gap: 8px;
+        width: auto;
+        margin: 18px 0 0 0; /* Add margin-top to separate from logo */
+        padding: 0;
+    }
+    .main-links a {
+        font-size: 0.95rem;
+        width: auto;
+        justify-content: flex-start;
+        padding: 0.5em 1em;
+        border-radius: 20px;
     }
     .hero-logo { height: 160px; }
     .logo-circle {
@@ -574,24 +592,7 @@
         hyphens: auto;
         line-height: 1.2;
     }
-
-    /* Updated .main-links for placement under logo */
-    .main-links {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Align links themselves to the left */
-        gap: 8px;
-        width: auto; /* Allow links to size based on content or padding */
-        margin: 18px 0 0 0; /* Add margin-top to separate from logo */
-        padding: 0;
-    }
-    .main-links a {
-        font-size: 0.95rem;
-        width: auto; /* Allow buttons to shrink-wrap content */
-        justify-content: flex-start; /* Align content inside button to the left */
-        padding: 0.5em 1em; /* Adjust padding as needed */
-        border-radius: 20px;
-    }
+    
     /* ... rest of your mobile CSS ... */
 }
     .nav-hero-separator, .banner-hero-separator {
