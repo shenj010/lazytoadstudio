@@ -587,28 +587,37 @@
     .main-links {
         position: absolute; /* ADDED: Breaks it from normal flow */
         top: 200px; /* ADJUST THIS VALUE: Place it below the logo (logo height 160px + some space) */
-        left: 5vw; /* Align with the left edge of the header's padding */
+        left: 2vw; /* Align with the left edge of the header's padding */
         display: flex;
         flex-direction: column; /* Stack nav items vertically */
-        align-items: left; /* Align nav items to the left */
+        align-items: flex-start; /* Align nav items to the left */
         gap: 8px;
-        width: 100%; /* Let width adjust to content */
+        width: auto; /* Let width adjust to content */
         margin: 0; /* REMOVED: Old margins, not needed with absolute positioning */
         padding: 0; /* REMOVED: Old padding */
         z-index: 10; /* Ensure it's on top of other content */
     }
     .main-links a {
-        /* ... other properties ... */
-        padding: 0.5em 0; /* Keep your existing padding */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px; /* Optional: Adds space between the icon and text */
+
+        font-size: 0.95rem;
+        width: 100%; /* Keep this if you want fixed-width buttons */
+        padding: 0.5em 0;
         border-radius: 20px;
-        border: 1px solid transparent; /* ADDED: Small transparent border */
         margin: 0;
-        /* ... other background properties ... */
-        background-size: 100% 110%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
-        background-position: center;
-        background-origin: border-box;
-        background-clip: border-box;
-        /* ... other properties ... */
+        text-decoration: none;
+        color: inherit;
+
+        /* ADD/CONFIRM THESE FOR THE PIXELATED OVAL BACKGROUND */
+        background-image: url('./images/pixel-border.svg'); /* Ensure the correct path */
+        background-repeat: no-repeat;
+        background-size: 100% 100%; /* Make sure it's applied for mobile */
+        background-position: center; /* THIS WILL CENTER THE OVAL OUTLINE */
+        background-origin: border-box; /* Good practice to include */
+        background-clip: border-box; /* Good practice to include */
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
