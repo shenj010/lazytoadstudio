@@ -631,8 +631,26 @@
     }
 
     .main-links .icon {
-        transition: background-image 0.15s, filter 0.2s ease;
-    }
+    display: inline-block;
+    width: 24px; /* Adjust based on your icon's desired size */
+    height: 24px; /* Adjust based on your icon's desired size */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: middle;
+    background-image: url("./images/toad icon static.png"); /* This is the missing default image */
+}
+
+/* Your existing hover styles for the toad icons */
+.main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
+.main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+.main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
+.main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
+
+/* The filter for hover is already defined for .main-links a:hover .icon */
+.main-links a:hover .icon {
+    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+}
 
     /* Hover styles for mobile links */
     .main-links a:hover,
