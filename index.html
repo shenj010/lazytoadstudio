@@ -217,15 +217,15 @@
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
         .main-links a:focus {
-            background-color: #181818; /* Background becomes black */
-            color: #FDEDF4; /* Text color becomes white */
-            opacity: 1;
-            text-decoration: none;
+            background-color: #181818 !important; /* Background becomes black */
+            color: #FDEDF4 !important; /* Text color becomes white */
+            opacity: 1 !important;
+            text-decoration: none !important;
         }
 
         /* Hover styles for the pseudo-element to invert the SVG */
         .main-links a:hover::before {
-            filter: brightness(0) invert(1); /* Invert the pixelated oval to white */
+            filter: brightness(0) invert(1) !important; /* Invert the pixelated oval to white */
         }
 
         .main-links .icon {
@@ -246,7 +246,7 @@
         /* Hover styles for the toad icon within the button */
         .main-links a:hover .icon {
             /* Filter to invert the black toad PNG to white */
-            filter: brightness(0) invert(1);
+            filter: brightness(0) invert(1) !important;
         }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
@@ -672,19 +672,19 @@
     /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        background-color: #181818;
-        color: #FDEDF4;
-        opacity: 1;
-        text-decoration: none;
+        background-color: #181818 !important;
+        color: #FDEDF4 !important;
+        opacity: 1 !important;
+        text-decoration: none !important;
     }
 
     /* Hover styles for mobile pseudo-element to invert the SVG */
     .main-links a:hover::before {
-        filter: brightness(0) invert(1);
+        filter: brightness(0) invert(1) !important;
     }
     /* Hover styles for mobile icon */
     .main-links a:hover .icon {
-        filter: brightness(0) invert(1);
+        filter: brightness(0) invert(1) !important;
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
