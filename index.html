@@ -44,7 +44,6 @@
             border-radius: 50%;
             padding: 18px;
             box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
-            cursor: pointer; /* Added for mobile menu trigger */
         }
         .hero-logo {
             display: block;
@@ -175,13 +174,12 @@
         }
         .main-links a {
             font-size: 1rem;
-            color: #000; /* Set default text color to pure black */
+            color: #181818; /* Default text color: Black */
             text-decoration: none;
             opacity: 0.90;
             font-weight: normal;
             display: flex; 
             align-items: center;
-            justify-content: flex-start; /* Keep text left-aligned as per user's preference */
             gap: 0.5em;
             
             box-sizing: border-box; 
@@ -195,8 +193,8 @@
             background-color: transparent; 
             background-image: url('./images/pixel-border.svg'); 
             background-repeat: no-repeat;
-            background-size: 200% 120%; /* Keep this size as user wants it wider */
-            background-position: 0% center; /* ADJUSTED: Shift SVG all the way to the left */
+            background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
+            background-position: center; /* Ensures it stays centered */
             background-origin: border-box;
             background-clip: border-box; 
 
@@ -207,10 +205,16 @@
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
         .main-links a:focus {
-            filter: invert(100%); 
-            color: #fff !important; /* RECONFIRMED AND ADDED !important for text color */
+            background-color: #181818; /* Background becomes black */
+            color: #FDEDF4; /* Text color becomes white */
+            
+            /* Filter to invert the black pixelated oval background SVG to white */
+            /* This transforms black elements of the background-image to white */
+            filter: brightness(0) invert(1);
+            
             opacity: 1;
             text-decoration: none;
+            /* Removed: filter: none; and text-shadow: none; and --button-fill-color */
         }
         .main-links .icon {
             display: inline-block;
@@ -225,7 +229,13 @@
             background-repeat: no-repeat;
             background-position: center;
             image-rendering: auto;
-            transition: background-image 0.15s; 
+            transition: background-image 0.15s, filter 0.2s ease; /* ADDED filter transition */
+        }
+        /* Hover styles for the toad icon within the button */
+        .main-links a:hover .icon {
+            /* Filter to invert the black toad PNG to white */
+            /* This transforms black elements of the background-image to white */
+            filter: brightness(0) invert(1);
         }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
@@ -587,9 +597,8 @@
     .main-links {
         position: absolute; /* Place it outside the normal flow */
         top: 200px; /* Adjust this value based on your logo's height and desired spacing */
-        left: 2vw; /* FIXED: Align with the left edge of the main header */
-        width: auto; /* FIXED: Allow width to be determined by content, not full screen */
-        max-width: 250px; /* FIXED: Set a max-width to control overall menu width */
+        left: 2vw; /* Align with the left edge of the main header */
+        width: calc(100% - 4vw); /* Span almost full width */
         
         max-height: 0; /* Initially hidden */
         overflow: hidden; /* Hide content when max-height is 0 */
@@ -612,7 +621,7 @@
     .main-links a {
         display: flex;
         align-items: center;
-        justify-content: flex-start; /* Keep text left-aligned as per user's preference */
+        justify-content: flex-start; /* Left-align content within button */
         gap: 8px; /* Space between icon and text */
 
         font-size: 0.95rem;
@@ -623,13 +632,13 @@
         border: 1px solid transparent; /* ADDED: 1px transparent border for buffer */
         margin: 0 0 8px 0; /* Add bottom margin for spacing between buttons */
         text-decoration: none;
-        color: #000; /* Set default text color to pure black */
+        color: #181818; /* Default text color: Black */
 
         /* PIXELATED OVAL BACKGROUND */
         background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
-        background-size: 200% 120%; /* Keep this size as user wants it wider */
-        background-position: 0% center; /* ADJUSTED: Shift SVG all the way to the left for mobile */
+        background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
+        background-position: center;
         background-origin: border-box;
         background-clip: border-box;
 
@@ -639,19 +648,23 @@
 
     /* Add this for mobile icon transition, if not inheriting correctly */
     .main-links .icon {
-        transition: background-image 0.15s; 
+        transition: background-image 0.15s, filter 0.2s ease;
     }
 
     /* ADDED: Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        filter: invert(100%); 
-        color: #fff !important; /* RECONFIRMED AND ADDED !important for text color */
+        background-color: #181818; /* Background becomes black */
+        color: #FDEDF4; /* Text color becomes white */
+        filter: brightness(0) invert(1); /* Invert pixelated oval and icon colors */
         opacity: 1;
         text-decoration: none;
     }
 
-    /* ... rest of your mobile styles ... */
+    /* ADDED: Hover styles for mobile icon */
+    .main-links a:hover .icon {
+        filter: brightness(0) invert(1); /* Invert icon color */
+    }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
         min-width: 0;
@@ -757,7 +770,6 @@
             <a href="/about.html" class="about" title="About">
               <span class="icon" aria-hidden="true"></span>
               About
-
             </a>
             <a href="/work.html" class="work" title="Work">
               <span class="icon" aria-hidden="true"></span>
@@ -816,6 +828,113 @@
           />
         </svg>
       </div>
+    </section>
+    <section class="main-content hidden" id="mainContent">
+        <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
+            <h2>Gallery</h2>
+        </div>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <a href="gallery/after-the-war.html">
+                    <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Respite</div>
+                        <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/ptsd-machine.html">
+                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">PTSD Machine</div>
+                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/transporter.html">
+                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Transporter</div>
+                        <div class="gallery-overlay-meta">Digital illustration · 2021</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/ramen-battleship.html">
+                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Ramen Battleship</div>
+                        <div class="gallery-overlay-meta">Watercolor · 2020</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/walking-temple.html">
+                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Quiet day at the beach</div>
+                        <div class="gallery-overlay-meta">Digital painting · 2023</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/demons.html">
+                    <img src="images/demons website.jpg" alt="Waiting for the bus in the desert">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Waiting for the bus in the desert</div>
+                        <div class="gallery-overlay-meta">Ink · 2022</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/mountain.html">
+                    <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Nature again.. At its finest!</div>
+                        <div class="gallery-overlay-meta">Acrylic · 2021</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/osaka.html">
+                    <img src="images/osaka wesbite.jpg" alt="Canoeing again">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">Canoeing again</div>
+                        <div class="gallery-overlay-meta">Gouache · 2022</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/girl-train.html">
+                    <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">A girl, and a train passing</div>
+                        <div class="gallery-overlay-meta">Mixed media · 2023</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+            <div class="gallery-item">
+                <a href="gallery/closegirl.html">
+                    <img src="images/wanderer website.jpg" alt="What a beautiful day!">
+                    <div class="gallery-overlay">
+                        <div class="gallery-overlay-title">What a beautiful day!</div>
+                        <div class="gallery-overlay-meta">Digital · 2022</div>
+                        <span class="gallery-overlay-view">View details</span>
+                    </div>
+                </a>
+            </div>
+        </div>
     </section>
     <div id="imgModal" class="modal" onclick="event.target === this && closeModal()">
         <div class="modal-content">
