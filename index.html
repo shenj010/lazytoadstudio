@@ -175,7 +175,7 @@
         }
         .main-links a {
             font-size: 1rem;
-            color: #000; /* CHANGED: Set default text color to pure black */
+            color: #000; /* Set default text color to pure black */
             text-decoration: none;
             opacity: 0.90;
             font-weight: normal;
@@ -196,7 +196,7 @@
             background-image: url('./images/pixel-border.svg'); 
             background-repeat: no-repeat;
             background-size: 200% 120%; /* Keep this size as user wants it wider */
-            background-position: 10% center; /* ADJUSTED: Shift SVG further to the left */
+            background-position: 0% center; /* ADJUSTED: Shift SVG all the way to the left */
             background-origin: border-box;
             background-clip: border-box; 
 
@@ -208,7 +208,7 @@
         .main-links a:hover,
         .main-links a:focus {
             filter: invert(100%); 
-            color: #fff; /* ADDED: Explicitly set text color to white on hover */
+            color: #fff !important; /* RECONFIRMED AND ADDED !important for text color */
             opacity: 1;
             text-decoration: none;
         }
@@ -623,13 +623,13 @@
         border: 1px solid transparent; /* ADDED: 1px transparent border for buffer */
         margin: 0 0 8px 0; /* Add bottom margin for spacing between buttons */
         text-decoration: none;
-        color: #000; /* CHANGED: Set default text color to pure black */
+        color: #000; /* Set default text color to pure black */
 
         /* PIXELATED OVAL BACKGROUND */
         background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
         background-size: 200% 120%; /* Keep this size as user wants it wider */
-        background-position: 5% center; /* ADJUSTED: Shift SVG further to the left for mobile */
+        background-position: 0% center; /* ADJUSTED: Shift SVG all the way to the left for mobile */
         background-origin: border-box;
         background-clip: border-box;
 
@@ -646,7 +646,7 @@
     .main-links a:hover,
     .main-links a:focus {
         filter: invert(100%); 
-        color: #fff; /* ADDED: Explicitly set text color to white on hover */
+        color: #fff !important; /* RECONFIRMED AND ADDED !important for text color */
         opacity: 1;
         text-decoration: none;
     }
