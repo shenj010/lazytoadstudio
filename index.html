@@ -208,13 +208,10 @@
             background-color: #181818; /* Background becomes black */
             color: #FDEDF4; /* Text color becomes white */
             
-            /* Filter to invert the black pixelated oval background SVG to white */
-            /* This transforms black elements of the background-image to white */
-            filter: brightness(0) invert(1);
+            /* REMOVED: filter: brightness(0) invert(1); */
             
             opacity: 1;
             text-decoration: none;
-            /* Removed: filter: none; and text-shadow: none; and --button-fill-color */
         }
         .main-links .icon {
             display: inline-block;
@@ -598,7 +595,8 @@
         position: absolute; /* Place it outside the normal flow */
         top: 200px; /* Adjust this value based on your logo's height and desired spacing */
         left: 2vw; /* Align with the left edge of the main header */
-        width: calc(100% - 4vw); /* Span almost full width */
+        width: fit-content; /* ADJUSTED: Allow width to be determined by content */
+        min-width: 180px; /* ADDED: Ensure buttons aren't too small */
         
         max-height: 0; /* Initially hidden */
         overflow: hidden; /* Hide content when max-height is 0 */
@@ -625,7 +623,7 @@
         gap: 8px; /* Space between icon and text */
 
         font-size: 0.95rem;
-        width: 100%; /* Make each button fill the available width of the main-links container */
+        width: auto; /* ADJUSTED: Make each button auto-size */
         box-sizing: border-box; /* Include padding in width */
         padding: 0.5em 1em; /* Adjusted padding for mobile links */
         border-radius: 0px;
@@ -638,7 +636,7 @@
         background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
         background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
-        background-position: center;
+        background-position: 0% center; /* ADJUSTED: Align SVG to the left */
         background-origin: border-box;
         background-clip: border-box;
 
