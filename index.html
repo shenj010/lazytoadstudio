@@ -519,13 +519,15 @@
         width: 100vw;
         max-width: 100vw;
         box-sizing: border-box;
+        position: relative; /* ADDED: Makes this a reference for absolute positioning */
     }
     .hero-logo-col {
         flex: 0 0 auto;
         margin-right: 0px;
         margin-top: 0px;
+        /* No change needed here for this approach */
     }
-    .hero-logo { height: 175px; }
+    .hero-logo { height: 160px; }
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
@@ -533,33 +535,29 @@
     .hero-nav-col {
         display: flex;
         flex-direction: column;
-        align-items: left; /* CRITICAL: This right-aligns the title, subtitle, and nav within this column */
+        align-items: flex-end; /* CORRECTED: Use flex-end for right-alignment */
         flex-grow: 1;
-        /* Adjust width to control where text breaks. This is key for the multiline English title */
-        width: 70%; /* You may need to tune this (e.g., 65%, 75%) based on screen size and text breaks */
-        max-width: 250px; /* Keep this if you want to cap the maximum width */
+        width: 70%;
+        max-width: 250px;
         margin: 0;
         padding: 0;
         margin-top: 0px;
     }
     .hero-nav-title {
-        /* REVISED: Right align instead of justify */
         text-align: right;
-        width: 90%; /* Allow it to take full width to enforce breaks if content is long */
-        font-size: 3rem; /* Keep this for size */
+        width: 90%;
+        font-size: 3rem;
         -webkit-text-stroke: 1px #000;
         text-stroke: 1.3px #000;
         margin-bottom: 8px;
-        word-break: break-word; /* Helps with breaking long words, but `width` is more important for phrases */
+        word-break: break-word;
         hyphens: auto;
-        line-height: 1; /* Keep compact line height */
-        /* REMOVED: text-justify: inter-word; as it's not relevant for right-align */
+        line-height: 1;
     }
     .hero-nav-subtitle {
-        /* REVISED: Right align instead of justify */
         text-align: right;
-        width: 90%; /* Allow it to take full width */
-        font-size: 3rem; /* Keep this for size */
+        width: 90%;
+        font-size: 3rem;
         text-shadow:
             -1.5px -1.5px 0 #000,
             1.5px -1.5px 0 #000,
@@ -574,30 +572,29 @@
         word-break: break-word;
         hyphens: auto;
         line-height: 1.2;
-        /* REMOVED: text-justify: inter-word; */
     }
 
-    /* ... rest of your mobile CSS ... */
-
-    /* IMPORTANT: Re-check your .main-links alignment */
+    /* IMPORTANT: Changes for .main-links to move it */
     .main-links {
+        position: absolute; /* ADDED: Breaks it from normal flow */
+        top: 175px; /* ADJUST THIS VALUE: Place it below the logo (logo height 160px + some space) */
+        left: 2vw; /* Align with the left edge of the header's padding */
         display: flex;
-        flex-direction: column;
-        align-items: centre; /* Changed from center to flex-end to align with text */
+        flex-direction: column; /* Stack nav items vertically */
+        align-items: flex-start; /* Align nav items to the left */
         gap: 8px;
-        width: 100%;
-        margin: 8px 0 0 0;
-        padding: 0;
+        width: auto; /* Let width adjust to content */
+        margin: 0; /* REMOVED: Old margins, not needed with absolute positioning */
+        padding: 0; /* REMOVED: Old padding */
+        z-index: 10; /* Ensure it's on top of other content */
     }
     .main-links a {
         font-size: 0.95rem;
-        /* Adjust width or remove fixed width if you want it to shrink-wrap content and align right */
-        /* If you want the buttons to align right AND be fixed width, keep width: 90%; */
-        /* If you want them to shrink to content and align right, set width: auto; */
-        width: 90%; /* Keep this if you want buttons to stretch most of the column width */
-        justify-content: center; /* This will center content INSIDE the button */
-        padding: 0.5em 0;
+        width: auto; /* Allow buttons to shrink-wrap content */
+        justify-content: flex-start; /* Align content INSIDE button to the left */
+        padding: 0.5em 1em; /* Adjust padding for better button appearance */
         border-radius: 20px;
+        margin: 0; /* Ensure no horizontal margin on buttons */
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
