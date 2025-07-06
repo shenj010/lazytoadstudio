@@ -521,23 +521,30 @@
         box-sizing: border-box;
     }
     .hero-logo-col {
-        flex: 0 0 auto;
-        margin-right: 2px;
+        display: flex;
+        flex-direction: column; /* Stack logo above nav links */
+        align-items: flex-start; /* <--- NEW: LEFT-ALIGN logo and nav links within this column */
+        flex: 0 0 auto; /* Allow it to shrink to content, but not grow */
+        margin-right: 10px; /* <--- Space between logo/nav column and title column */
         margin-top: 0px;
     }
-    .hero-logo { height: 140px; }
+
     .logo-circle {
         padding: 8px;
-        margin-bottom: 0;
+        margin-bottom: 8px; /* Space between logo and nav links */
     }
+
+    .hero-logo {
+        height: 125px; /* Keep your desired logo size */
+    }
+
     .hero-nav-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end; /* CRITICAL: This right-aligns the title, subtitle, and nav within this column */
-        flex-grow: 1;
-        /* Adjust width to control where text breaks. This is key for the multiline English title */
-        width: 70%; /* You may need to tune this (e.g., 65%, 75%) based on screen size and text breaks */
-        max-width: 250px; /* Keep this if you want to cap the maximum width */
+        align-items: flex-end; /* <--- CRITICAL: Keeps titles and subtitles RIGHT-ALIGNED */
+        flex-grow: 1; /* Allow it to take up available space, pushing it left from right edge */
+        width: auto; /* Let content define width */
+        max-width: 250px; /* Adjust this to control title/subtitle wrapping */
         margin: 0;
         padding: 0;
         margin-top: 0px;
@@ -582,22 +589,19 @@
     /* IMPORTANT: Re-check your .main-links alignment */
     .main-links {
         display: flex;
-        flex-direction: column;
-        align-items: centre; /* Changed from center to flex-end to align with text */
+        flex-direction: column; /* Stack links vertically */
+        align-items: flex-start; /* <--- NEW: LEFT-ALIGN individual links horizontally within this container */
         gap: 8px;
-        width: 100%;
-        margin: 8px 0 0 0;
+        width: auto; /* Let it shrink to content width */
+        margin: 0;
         padding: 0;
     }
     .main-links a {
         font-size: 0.95rem;
-        /* Adjust width or remove fixed width if you want it to shrink-wrap content and align right */
-        /* If you want the buttons to align right AND be fixed width, keep width: 90%; */
-        /* If you want them to shrink to content and align right, set width: auto; */
-        width: 90%; /* Keep this if you want buttons to stretch most of the column width */
-        justify-content: center; /* This will center content INSIDE the button */
-        padding: 0.5em 0;
-        border-radius: 5px;
+        width: auto; /* <--- NEW: Let buttons shrink to content width */
+        justify-content: flex-start; /* <--- NEW: Left-align content inside the button */
+        padding: 0.5em 1em; /* Adjust padding for desired button width/shape */
+        border-radius: 10px;
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
