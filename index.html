@@ -590,9 +590,9 @@
         left: 5vw; /* Align with the left edge of the header's padding */
         display: flex;
         flex-direction: column; /* Stack nav items vertically */
-        align-items: flex-start; /* Align nav items to the left */
+        align-items: left; /* Align nav items to the left */
         gap: 8px;
-        width: 100; /* Let width adjust to content */
+        width: 100%; /* Let width adjust to content */
         margin: 0; /* REMOVED: Old margins, not needed with absolute positioning */
         padding: 0; /* REMOVED: Old padding */
         z-index: 10; /* Ensure it's on top of other content */
@@ -604,7 +604,7 @@
         border: 1px solid transparent; /* ADDED: Small transparent border */
         margin: 0;
         /* ... other background properties ... */
-        background-size: 100% 120%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
+        background-size: 100% 110%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
         background-position: center;
         background-origin: border-box;
         background-clip: border-box;
