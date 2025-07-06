@@ -199,7 +199,21 @@
 
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
-
+.main-links .icon {
+    display: inline-block; /* Or flex/grid depending on layout */
+    width: 1.7em; /* Or whatever size your default icons should be */
+    height: 1.7em;
+    min-width: 1.7em;
+    min-height: 1.7em;
+    vertical-align: middle;
+    margin-right: 0.1em;
+    background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: auto;
+    transition: background-image 0.15s, filter 0.2s ease;
+}
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
 .main-links a:focus {
