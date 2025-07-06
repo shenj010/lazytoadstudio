@@ -266,13 +266,16 @@
 
         .banner-image-mobile {
             display: block;
-            width: 100vw; /* Extends to the edges of the viewport */
-            aspect-ratio: 1 / 0.5; /* Forces the image into a perfect square */
-            object-fit: cover; /* Ensures the image covers the entire square, cropping if necessary */
-            object-position: center; /* Keeps the center of the image visible */
-            margin: 0 0 10px 0; /* Sets bottom margin, removes side margins */
-            border-radius: 0; /* Removes rounded corners for sharp edges */
-            max-width: 100vw; /* Ensures it doesn't exceed viewport width */
+            width: 100vw;
+            aspect-ratio: 1 / 0.5;
+            object-fit: cover;
+            object-position: center; /* Or use 'top', 'bottom', '20% 30%', etc. */
+            margin: 0 0 10px 0;
+            border-radius: 0;
+            max-width: 100vw;
+
+            /* ADD THIS FOR ADDITIONAL ZOOM */
+            transform: scale(1.5); /* Adjust this value (e.g., 1.2, 1.5) for more zoom */
         }
 
         .hero-images-spacing, .banner-images-spacing {
