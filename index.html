@@ -587,12 +587,12 @@
     .main-links {
         position: absolute; /* ADDED: Breaks it from normal flow */
         top: 200px; /* ADJUST THIS VALUE: Place it below the logo (logo height 160px + some space) */
-        left: 2vw; /* Align with the left edge of the header's padding */
+        left: 5vw; /* Align with the left edge of the header's padding */
         display: flex;
         flex-direction: column; /* Stack nav items vertically */
         align-items: flex-start; /* Align nav items to the left */
         gap: 8px;
-        width: auto; /* Let width adjust to content */
+        width: 100; /* Let width adjust to content */
         margin: 0; /* REMOVED: Old margins, not needed with absolute positioning */
         padding: 0; /* REMOVED: Old padding */
         z-index: 10; /* Ensure it's on top of other content */
@@ -604,7 +604,7 @@
         border: 1px solid transparent; /* ADDED: Small transparent border */
         margin: 0;
         /* ... other background properties ... */
-        background-size: 100% 105%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
+        background-size: 100% 120%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
         background-position: center;
         background-origin: border-box;
         background-clip: border-box;
@@ -627,7 +627,7 @@
     .mobile-banner-container {
         display: block;
         width: 100vw; /* Make the container span the full viewport width */
-        aspect-ratio: 1 / 0.7; /* Make the container a perfect square */
+        aspect-ratio: 1 / 0.9; /* Make the container a perfect square */
         overflow: hidden; /* CRUCIAL: This hides the parts of the image that are zoomed outside the square */
         margin: 0 0 10px 0; /* Add bottom margin, remove any side margins */
         border-radius: 0; /* Ensure the container itself has sharp corners if desired */
