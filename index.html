@@ -44,6 +44,7 @@
             border-radius: 50%;
             padding: 18px;
             box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+            cursor: pointer; /* Added for mobile menu trigger */
         }
         .hero-logo {
             display: block;
@@ -180,6 +181,7 @@
             font-weight: normal;
             display: flex; 
             align-items: center;
+            justify-content: flex-start; /* REVERTED: Keep text left-aligned as per user's preference */
             gap: 0.5em;
             
             box-sizing: border-box; 
@@ -193,8 +195,8 @@
             background-color: transparent; 
             background-image: url('./images/pixel-border.svg'); 
             background-repeat: no-repeat;
-            background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
-            background-position: center; /* Ensures it stays centered */
+            background-size: 200% 120%; /* Keep this size as user wants it wider */
+            background-position: 30% center; /* ADJUSTED: Shift SVG to the left to align with content */
             background-origin: border-box;
             background-clip: border-box; 
 
@@ -205,16 +207,12 @@
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
         .main-links a:focus {
-            background-color: #181818; /* Background becomes black */
-            color: #FDEDF4; /* Text color becomes white */
-            
-            /* Filter to invert the black pixelated oval background SVG to white */
-            /* This transforms black elements of the background-image to white */
-            filter: brightness(0) invert(1);
+            /* FIXED: Use invert(100%) for full inversion, remove explicit color/background */
+            filter: invert(100%); 
             
             opacity: 1;
             text-decoration: none;
-            /* Removed: filter: none; and text-shadow: none; and --button-fill-color */
+            /* Removed: background-color, color, text-shadow, --button-fill-color, filter: none */
         }
         .main-links .icon {
             display: inline-block;
@@ -229,14 +227,11 @@
             background-repeat: no-repeat;
             background-position: center;
             image-rendering: auto;
-            transition: background-image 0.15s, filter 0.2s ease; /* ADDED filter transition */
+            /* FIXED: Removed filter transition as parent handles it now */
+            transition: background-image 0.15s; 
         }
-        /* Hover styles for the toad icon within the button */
-        .main-links a:hover .icon {
-            /* Filter to invert the black toad PNG to white */
-            /* This transforms black elements of the background-image to white */
-            filter: brightness(0) invert(1);
-        }
+        /* REMOVED: .main-links a:hover .icon rule as filter on parent handles it */
+
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
         .main-links a.about:hover .icon   { background-image: url("./images/toad about.png"); }
@@ -597,8 +592,9 @@
     .main-links {
         position: absolute; /* Place it outside the normal flow */
         top: 200px; /* Adjust this value based on your logo's height and desired spacing */
-        left: 2vw; /* Align with the left edge of the main header */
-        width: calc(100% - 4vw); /* Span almost full width */
+        left: 2vw; /* FIXED: Align with the left edge of the main header */
+        width: auto; /* FIXED: Allow width to be determined by content, not full screen */
+        max-width: 250px; /* FIXED: Set a max-width to control overall menu width */
         
         max-height: 0; /* Initially hidden */
         overflow: hidden; /* Hide content when max-height is 0 */
@@ -621,7 +617,7 @@
     .main-links a {
         display: flex;
         align-items: center;
-        justify-content: flex-start; /* Left-align content within button */
+        justify-content: flex-start; /* REVERTED: Keep text left-aligned as per user's preference */
         gap: 8px; /* Space between icon and text */
 
         font-size: 0.95rem;
@@ -637,8 +633,8 @@
         /* PIXELATED OVAL BACKGROUND */
         background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
-        background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
-        background-position: center;
+        background-size: 200% 120%; /* Keep this size as user wants it wider */
+        background-position: 20% center; /* ADJUSTED: Shift SVG to the left for mobile */
         background-origin: border-box;
         background-clip: border-box;
 
@@ -648,23 +644,22 @@
 
     /* Add this for mobile icon transition, if not inheriting correctly */
     .main-links .icon {
-        transition: background-image 0.15s, filter 0.2s ease;
+        /* FIXED: Removed filter transition as parent handles it now */
+        transition: background-image 0.15s; 
     }
 
     /* ADDED: Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        background-color: #181818; /* Background becomes black */
-        color: #FDEDF4; /* Text color becomes white */
-        filter: brightness(0) invert(1); /* Invert pixelated oval and icon colors */
+        /* FIXED: Use invert(100%) for full inversion, remove explicit color/background */
+        filter: invert(100%); 
         opacity: 1;
         text-decoration: none;
     }
 
-    /* ADDED: Hover styles for mobile icon */
-    .main-links a:hover .icon {
-        filter: brightness(0) invert(1); /* Invert icon color */
-    }
+    /* REMOVED: .main-links a:hover .icon rule as filter on parent handles it */
+
+    /* ... rest of your mobile styles ... */
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
         min-width: 0;
@@ -770,6 +765,7 @@
             <a href="/about.html" class="about" title="About">
               <span class="icon" aria-hidden="true"></span>
               About
+
             </a>
             <a href="/work.html" class="work" title="Work">
               <span class="icon" aria-hidden="true"></span>
