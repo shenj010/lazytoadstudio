@@ -173,81 +173,46 @@
             padding: 0;
         }
         .main-links a {
-            font-size: 1rem;
-            color: #181818; /* Default text color: Black */
-            text-decoration: none;
-            opacity: 0.90;
-            font-weight: normal;
-            display: flex; 
-            align-items: center;
-            gap: 0.5em;
-            
-            box-sizing: border-box; 
-            
-            padding: 12px 80px;
-            
-            border-radius: 0; 
-            border: 1px solid transparent; 
-            margin: 0 0.1em;
+    /* Keep existing styles like font-size, text-decoration, display, align-items, gap, box-sizing */
+    font-size: 1rem;
+    color: #181818; /* Black text */
+    text-decoration: none;
+    opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
+    font-weight: normal;
+    display: flex;
+    align-items: center; /* Aligns toad icon and text vertically */
+    justify-content: flex-start; /* Aligns content to the left */
+    gap: 0.5em; /* Spacing between icon and text */
 
-            background-color: transparent; /* Default transparent background */
-            position: relative; /* Needed for pseudo-element positioning */
-            overflow: hidden; /* Ensure pseudo-element doesn't bleed out */
-            z-index: 0; /* Ensures content is above pseudo-element */
-            
-            /* Transition for main element properties (background-color, color) */
-            transition: background-color 0.2s ease, color 0.2s ease; 
-        }
+    box-sizing: border-box;
 
-        /* Pseudo-element for the pixelated border SVG */
-        .main-links a::before {
-            content: '';
-            position: absolute;
-            inset: 0; /* top, right, bottom, left set to 0 */
-            background-image: url('./images/pixel-border.svg');
-            background-repeat: no-repeat;
-            background-size: 250% 150%;
-            background-position: center;
-            background-origin: border-box;
-            background-clip: border-box;
-            z-index: -1; /* Place behind content */
-            transition: filter 0.2s ease; /* Transition for filter on pseudo-element */
-        }
+    padding: 12px 25px; /* Adjust padding to your preference for rectangular shape */
+
+    border-radius: 0; /* Ensures a perfectly rectangular shape */
+    border: 1px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
+    margin: 0 0.1em; /* Keep current margins */
+
+    background-color: #FFFFFF; /* White infill for the button */
+    position: relative; /* Needed for z-index if other elements overlap */
+    overflow: hidden; /* Ensures content stays within boundaries */
+    z-index: 0;
+
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
 
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
-        .main-links a:focus {
-            background-color: #181818 !important; /* Background becomes black */
-            color: #FDEDF4 !important; /* Text color becomes white */
-            opacity: 1 !important;
-            text-decoration: none !important;
-        }
-
-        /* Hover styles for the pseudo-element to invert the SVG */
-        .main-links a:hover::before {
-            filter: brightness(0) invert(1) !important; /* Invert the pixelated oval to white */
-        }
-
-        .main-links .icon {
-            display: inline-block;
-            width: 1.7em;
-            height: 1.7em;
-            min-width: 1.7em;
-            min-height: 1.7em;
-            vertical-align: middle;
-            margin-right: 0.1em;
-            background-image: url("./images/toad icon static.png");
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: auto;
-            transition: background-image 0.15s, filter 0.2s ease;
-        }
+.main-links a:focus {
+    background-color: #181818 !important; /* Background becomes black */
+    color: #FDEDF4 !important; /* Text color becomes white */
+    opacity: 1 !important;
+    text-decoration: none !important;
+    border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
+}
         /* Hover styles for the toad icon within the button */
-        .main-links a:hover .icon {
-            /* Filter to invert the black toad PNG to white */
-            filter: brightness(0) invert(1) !important;
-        }
+       .main-links a:hover .icon {
+    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+}
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
         .main-links a.about:hover .icon   { background-image: url("./images/toad about.png"); }
