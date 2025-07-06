@@ -184,50 +184,35 @@
             
             box-sizing: border-box; 
             
-            padding: 12px 80px;
+            padding: 12px 80px; /* Keep your adjusted padding */
             
             border-radius: 0; 
-            border: 1px solid transparent; 
+            border: 1px solid transparent; /* Changed from 2px to 1px transparent border for buffer */
             margin: 0 0.1em;
 
-            background-color: transparent; /* Default transparent background */
-            position: relative; /* Needed for pseudo-element positioning */
-            overflow: hidden; /* Ensure pseudo-element doesn't bleed out */
-            z-index: 0; /* Ensures content is above pseudo-element */
-            
-            /* Transition for main element properties (background-color, color) */
-            transition: background-color 0.2s ease, color 0.2s ease; 
-        }
-
-        /* Pseudo-element for the pixelated border SVG */
-        .main-links a::before {
-            content: '';
-            position: absolute;
-            inset: 0; /* top, right, bottom, left set to 0 */
-            background-image: url('./images/pixel-border.svg');
+            background-color: transparent; 
+            background-image: url('./images/pixel-border.svg'); 
             background-repeat: no-repeat;
-            background-size: 250% 150%;
-            background-position: center;
+            background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
+            background-position: center; /* Ensures it stays centered */
             background-origin: border-box;
-            background-clip: border-box;
-            z-index: -1; /* Place behind content */
-            transition: filter 0.2s ease; /* Transition for filter on pseudo-element */
+            background-clip: border-box; 
+
+            /* ADDED: Transitions for smooth hover effect on background, text, and filters */
+            transition: background-color 0.2s ease, color 0.2s ease, filter 0.2s ease; 
         }
 
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
         .main-links a:focus {
-            background-color: #181818 !important; /* Background becomes black */
-            color: #FDEDF4 !important; /* Text color becomes white */
-            opacity: 1 !important;
-            text-decoration: none !important;
+            background-color: #181818; /* Background becomes black */
+            color: #FDEDF4; /* Text color becomes white */
+            
+            /* REMOVED: filter: brightness(0) invert(1); */
+            
+            opacity: 1;
+            text-decoration: none;
         }
-
-        /* Hover styles for the pseudo-element to invert the SVG */
-        .main-links a:hover::before {
-            filter: brightness(0) invert(1) !important; /* Invert the pixelated oval to white */
-        }
-
         .main-links .icon {
             display: inline-block;
             width: 1.7em;
@@ -241,12 +226,13 @@
             background-repeat: no-repeat;
             background-position: center;
             image-rendering: auto;
-            transition: background-image 0.15s, filter 0.2s ease;
+            transition: background-image 0.15s, filter 0.2s ease; /* ADDED filter transition */
         }
         /* Hover styles for the toad icon within the button */
         .main-links a:hover .icon {
             /* Filter to invert the black toad PNG to white */
-            filter: brightness(0) invert(1) !important;
+            /* This transforms black elements of the background-image to white */
+            filter: brightness(0) invert(1);
         }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
@@ -288,17 +274,19 @@
 
         .banner-image-mobile {
             display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
+            width: 100%; /* Make the image fill 100% of its parent's width */
+            height: 100%; /* Make the image fill 100% of its parent's height */
+            object-fit: cover; /* Ensures the image initially covers the container, cropping as needed */
+            object-position: center; /* Adjust this to control which part of the image is shown */
             
-            transform: scale(1.3);
-            transition: transform 0.3s ease;
+            /* ADD THIS FOR ADDITIONAL ZOOM */
+            transform: scale(1.3); /* Adjust this value (e.g., 1.1, 1.3, 1.5) for more zoom */
+            transition: transform 0.3s ease; /* Optional: for a smooth transition if you change scale */
 
+            /* Remove old properties that are now handled by the container or are no longer needed */
             margin: 0; 
             border-radius: 0;
-            max-width: none;
+            max-width: none; /* Allow it to scale beyond 100% */
         }
 
         .hero-images-spacing, .banner-images-spacing {
@@ -536,24 +524,25 @@
        /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
-        font-size: 15px;
+        font-size: 15px; /* Keep this as it is or adjust as needed for overall sizing */
     }
     .hero-header {
         display: flex;
         flex-direction: row;
-        align-items: flex-start;
+        align-items: flex-start; /* Aligns the very top of logo and nav-col */
         justify-content: space-between;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
         box-sizing: border-box;
-        position: relative;
+        position: relative; /* ADDED: Makes this a reference for absolute positioning */
     }
     .hero-logo-col {
         flex: 0 0 auto;
         margin-right: 0px;
         margin-top: 0px;
+        /* No change needed here for this approach */
     }
     .hero-logo { height: 160px; }
     .logo-circle {
@@ -563,7 +552,7 @@
     .hero-nav-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: flex-end; /* CORRECTED: Use flex-end for right-alignment */
         flex-grow: 1;
         width: 70%;
         max-width: 250px;
@@ -603,88 +592,76 @@
     }
 
     .main-links {
-        position: absolute;
-        top: 200px;
-        left: 2vw;
-        width: fit-content;
-        min-width: 180px;
+        position: absolute; /* Place it outside the normal flow */
+        top: 200px; /* Adjust this value based on your logo's height and desired spacing */
+        left: 2vw; /* Align with the left edge of the main header */
+        width: fit-content; /* ADJUSTED: Allow width to be determined by content */
+        min-width: 180px; /* ADDED: Ensure buttons aren't too small */
         
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
+        max-height: 0; /* Initially hidden */
+        overflow: hidden; /* Hide content when max-height is 0 */
+        transition: max-height 0.3s ease-out; /* Smooth transition for slide down/up */
         
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex; /* Make it a flex container */
+        flex-direction: column; /* Stack links vertically */
+        align-items: flex-start; /* Align links to the left within this container */
         
-        background-color: #FDEDF4;
-        padding-bottom: 10px;
-        box-sizing: border-box;
-        z-index: 10;
+        background-color: #FDEDF4; /* Match your body background for a seamless look */
+        padding-bottom: 10px; /* Small padding at the bottom when open */
+        box-sizing: border-box; /* Include padding in width calculations */
+        z-index: 10; /* Ensure it's on top */
     }
 
+    /* ADDED: This class will be toggled by JavaScript to show/hide the menu */
     .main-links.active {
-        max-height: 500px;
+        max-height: 500px; /* A value larger than the total height of all expanded links */
     }
     .main-links a {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
+        justify-content: flex-start; /* Left-align content within button */
+        gap: 8px; /* Space between icon and text */
 
         font-size: 0.95rem;
-        width: auto;
-        box-sizing: border-box;
-        padding: 0.5em 1em;
+        width: auto; /* ADJUSTED: Make each button auto-size */
+        box-sizing: border-box; /* Include padding in width */
+        padding: 0.5em 1em; /* Adjusted padding for mobile links */
         border-radius: 0px;
-        border: 1px solid transparent;
-        margin: 0 0 8px 0;
+        border: 1px solid transparent; /* ADDED: 1px transparent border for buffer */
+        margin: 0 0 8px 0; /* Add bottom margin for spacing between buttons */
         text-decoration: none;
-        color: #181818;
+        color: #181818; /* Default text color: Black */
 
-        background-color: transparent;
-        position: relative;
-        overflow: hidden;
-        z-index: 0;
-        
-        transition: background-color 0.2s ease, color 0.2s ease;
-    }
-
-    /* Pseudo-element for the pixelated border SVG in mobile */
-    .main-links a::before {
-        content: '';
-        position: absolute;
-        inset: 0;
+        /* PIXELATED OVAL BACKGROUND */
         background-image: url('./images/pixel-border.svg');
         background-repeat: no-repeat;
-        background-size: 250% 150%;
-        background-position: 0% center; /* Mobile specific background-position */
+        background-size: 250% 150%; /* INCREASED: Make SVG wider (250%) and taller (150%) */
+        background-position: 0% center; /* ADJUSTED: Align SVG to the left */
         background-origin: border-box;
         background-clip: border-box;
-        z-index: -1;
-        transition: filter 0.2s ease;
+
+        /* ADDED: Transitions for smooth hover effect on mobile */
+        transition: background-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
     }
 
+    /* Add this for mobile icon transition, if not inheriting correctly */
     .main-links .icon {
         transition: background-image 0.15s, filter 0.2s ease;
     }
 
-    /* Hover styles for mobile links */
+    /* ADDED: Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
-        background-color: #181818 !important;
-        color: #FDEDF4 !important;
-        opacity: 1 !important;
-        text-decoration: none !important;
+        background-color: #181818; /* Background becomes black */
+        color: #FDEDF4; /* Text color becomes white */
+        filter: brightness(0) invert(1); /* Invert pixelated oval and icon colors */
+        opacity: 1;
+        text-decoration: none;
     }
 
-    /* Hover styles for mobile pseudo-element to invert the SVG */
-    .main-links a:hover::before {
-        filter: brightness(0) invert(1) !important;
-    }
-    /* Hover styles for mobile icon */
+    /* ADDED: Hover styles for mobile icon */
     .main-links a:hover .icon {
-        filter: brightness(0) invert(1) !important;
+        filter: brightness(0) invert(1); /* Invert icon color */
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
@@ -702,11 +679,12 @@
     }
     .mobile-banner-container {
         display: block;
-        width: 100vw;
-        aspect-ratio: 1 / 0.9;
-        overflow: hidden;
-        margin: 0 0 10px 0;
-        border-radius: 0;
+        width: 100vw; /* Make the container span the full viewport width */
+        aspect-ratio: 1 / 0.9; /* Make the container a perfect square */
+        overflow: hidden; /* CRUCIAL: This hides the parts of the image that are zoomed outside the square */
+        margin: 0 0 10px 0; /* Add bottom margin, remove any side margins */
+        border-radius: 0; /* Ensure the container itself has sharp corners if desired */
+        /* You can add a background color here if you want a fallback or border */
     }
 
     .banner-images-spacing {
@@ -1019,7 +997,7 @@
     // FROG "PEEP" ANIMATION SCRIPT
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png';
+        const frogImgSrc = 'images/toad icon static.png'; // <-- update path if needed
         const originalText = subtitle.textContent.trim();
         subtitle.innerHTML = '';
 
