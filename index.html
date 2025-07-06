@@ -598,26 +598,17 @@
         z-index: 10; /* Ensure it's on top of other content */
     }
     .main-links a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px; /* Optional: Adds space between the icon and text */
-
-        font-size: 0.95rem;
-        width: 120%; /* Keep this if you want fixed-width buttons */
-        padding: 0.5em 0;
-        border-radius: 20px;
+        /* ... other properties ... */
+        padding: 0.5em 0; /* Keep your existing padding */
+        border-radius: 0;
+        border: 1px solid transparent; /* ADDED: Small transparent border */
         margin: 0;
-        text-decoration: none;
-        color: inherit;
-
-        /* ADD/CONFIRM THESE FOR THE PIXELATED OVAL BACKGROUND */
-        background-image: url('./images/pixel-border.svg'); /* Ensure the correct path */
-        background-repeat: no-repeat;
-        background-size: 200% 150%; /* Make sure it's applied for mobile */
-        background-position: center; /* THIS WILL CENTER THE OVAL OUTLINE */
-        background-origin: border-box; /* Good practice to include */
-        background-clip: border-box; /* Good practice to include */
+        /* ... other background properties ... */
+        background-size: 250% 150%; /* INCREASE THESE VALUES (e.g., 250% width, 150% height) */
+        background-position: center;
+        background-origin: border-box;
+        background-clip: border-box;
+        /* ... other properties ... */
     }
     .nav-hero-separator, .banner-hero-separator {
         width: 98vw;
