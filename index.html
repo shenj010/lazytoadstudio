@@ -630,11 +630,11 @@
         font-size: 15px;
     }
    .hero-header {
-        /* This creates the two main columns (left: logo+toads, right: title/subtitle) */
-        display: flex; /* Use flexbox for the main 2-column layout */
-        flex-direction: row; /* Keep content side-by-side */
-        align-items: flex-start; /* Align columns to the top */
-        justify-content: space-between; /* Space between logo column and nav column */
+        /* This sets up the main two columns (left: logo+toads, right: title/subtitle) */
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
         
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
@@ -642,19 +642,20 @@
         max-width: 100vw;
         box-sizing: border-box;
         position: relative;
-        min-height: auto; /* Let content define height now */
+        min-height: auto;
     }
 
     .hero-logo-col {
-        /* NEW: This column now stacks its contents (logo and toads) vertically */
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Center logo and toads horizontally within this left column */
-        
+        /* *** IMPORTANT FIX HERE *** */
+        /* This makes the logo and the toad container stack vertically */
+        display: flex;         /* Make it a flex container */
+        flex-direction: column; /* Stack children vertically */
+        align-items: center;   /* Center children horizontally within this column */
+        /* ************************** */
+
         flex: 0 0 auto;
         margin-right: 0px;
         margin-top: 0px;
-        /* margin-bottom handled by logo-circle now */
     }
 
     .logo-circle {
@@ -665,10 +666,10 @@
     .hero-nav-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end; /* Keep title/subtitle aligned to the right */
-        align-self: center; /* Vertically center this column within the header */
+        align-items: flex-end;
+        align-self: center;
         flex-grow: 1;
-        width: 100%; /* Take full width of its container */
+        width: 100%;
         max-width: none;
         margin: 0;
         padding: 0;
@@ -707,21 +708,21 @@
     }
 
     #hoppedToadContainer {
-        /* These styles make the toads stack in rows of 4 */
-        position: static; /* Ensure it's in normal flow within .hero-logo-col */
+        /* These styles make the toads stack in rows of 4 within their container */
+        position: static;
         display: flex;
         flex-wrap: wrap;
-        justify-content: center; /* Center the toads within their rows */
-        width: 100%; /* Take full width of its parent (.hero-logo-col) */
-        margin-top: 0; /* No top margin needed, spacing handled by logo-circle margin-bottom */
+        justify-content: center;
+        width: 100%;
+        margin-top: 0;
         transform: none;
         box-sizing: border-box;
-        padding: 0 5px; /* Small horizontal padding inside the container */
-        gap: 5px; /* Gap between toads */
+        padding: 0 5px;
+        gap: 5px;
         z-index: 5;
     }
     .hopped-toad {
-        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
+        flex: 0 0 25%;
         max-width: 25%;
         height: auto;
     }
@@ -788,7 +789,7 @@
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
     }
-}
+    
     /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
