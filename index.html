@@ -14,12 +14,12 @@
             font-family: 'Press Start 2P', 'DotGothic16', monospace;
             width: 100vw;
             overflow-x: hidden;
-            /* ADDED: Padding to account for the fixed news banner */
-            padding-top: 40px; /* Adjust this value if the banner height changes */
+            /* UPDATED: Reduced padding to lessen space between banner and main content */
+            padding-top: 30px; /* Adjust this value if the banner height changes */
         }
         body { min-height: 100vh; }
 
-        /* NEW: News Banner Styles */
+        /* News Banner Styles */
         .news-banner {
             background-color: #FFFFFF; /* White background as requested */
             color: #181818; /* Dark text for contrast */
@@ -34,7 +34,7 @@
             align-items: center; /* Vertically center items */
             justify-content: center; /* Horizontally center text (initially) */
             gap: 15px; /* Space between text and close button */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
+            /* UPDATED: Removed box-shadow */
             transition: opacity 0.3s ease-in-out; /* For smooth hide/show */
         }
 
@@ -69,7 +69,7 @@
         .close-banner-btn:hover {
             color: #555;
         }
-        /* END NEW: News Banner Styles */
+        /* END News Banner Styles */
 
         .hero-header {
             width: 100vw;
@@ -1173,6 +1173,26 @@
             });
         }
         // END OF NEW JAVASCRIPT CODE
+
+        // News Banner Close Button JavaScript
+        const newsBanner = document.getElementById('newsBanner');
+        const closeBannerBtn = document.querySelector('.close-banner-btn');
+
+        if (newsBanner && closeBannerBtn) {
+            // Optional: Check if banner has been closed before (using localStorage)
+            // You can uncomment these lines if you want the banner to stay hidden after closing
+            // const bannerClosed = localStorage.getItem('newsBannerClosed');
+            // if (bannerClosed === 'true') {
+            //     newsBanner.classList.add('hidden');
+            // }
+
+            closeBannerBtn.addEventListener('click', function() {
+                newsBanner.classList.add('hidden');
+                // Optional: Save state to localStorage so it stays hidden on subsequent visits
+                // localStorage.setItem('newsBannerClosed', 'true');
+            });
+        }
+        // END News Banner Close Button JavaScript
     });
     </script>
 </body>
