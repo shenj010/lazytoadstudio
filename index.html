@@ -1127,7 +1127,7 @@
         </div>
     </footer>
     <script>
-    // Modal & scroll logic (unchanged)
+    // Modal & scroll logic
     function openModal(img) {
         var modal = document.getElementById('imgModal');
         var modalImg = document.getElementById('modalImg');
@@ -1159,9 +1159,8 @@
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        // Ensure this path is correct, previously it was 'images/toad mini.png'
-        // If 'toad icon static.png' is the correct one for peeping toads, keep it.
-        const frogImgSrc = 'images/toad icon static.png';
+        // IMPORTANT: Verify this image path is correct relative to your HTML file
+        const frogImgSrc = 'images/toad icon static.png'; // Make sure this path is correct
         const originalText = subtitle.textContent.trim();
         const hoppedToadContainer = document.getElementById('hoppedToadContainer');
         let hoppedToadCount = 0;
@@ -1196,84 +1195,116 @@
         }
 
         const frogPeeps = subtitle.querySelectorAll('.frog-peep'); // Get all frog-peep elements
-        // Use a Map to store timeout IDs for each frog, for better management
-        const frogTimeouts = new Map();
+        const frogTimeouts = new Map(); // Map to store timeout IDs and state for each frog
 
-        // Function to reset and start a single frog's peep animation
+        // Function to reset and start a single frog's peep animation cycle
         function startSingleFrogAnimation(frogElement) {
             const wrap = frogElement.closest('.char-frog-wrap');
             const letter = wrap.querySelector('.the-letter');
             const frogWrap = wrap.querySelector('.frog-wrap');
 
+            // Get current state or initialize for a new peep cycle
+            let frogState = frogTimeouts.get(frogElement) || { currentPeepCount: 0, peepTargetCount: 0 };
+
             // Clear any existing timeouts for this specific frog to prevent conflicts
-            if (frogTimeouts.has(frogElement)) {
-                const ids = frogTimeouts.get(frogElement);
-                clearTimeout(ids.peepTimeoutId);
-                clearTimeout(ids.actionTimeoutId);
-                clearTimeout(ids.resetTimeoutId);
-                frogTimeouts.delete(frogElement); // Remove from map
+            if (frogState.peepTimeoutId) clearTimeout(frogState.peepTimeoutId);
+            if (frogState.actionTimeoutId) clearTimeout(frogState.actionTimeoutId);
+            if (frogState.resetTimeoutId) clearTimeout(frogState.resetTimeoutId);
+
+            // If it's starting a brand new set of peeps (not continuing a sequence)
+            if (frogState.currentPeepCount === 0) {
+                frogState.peepTargetCount = Math.floor(Math.random() * 4) + 4; // Random 4 to 7 peeps
+                
+                // Ensure initial state is reset for a new sequence
+                frogElement.classList.remove('fully-raised', 'peeping');
+                frogWrap.classList.remove('fully-raised');
+                letter.classList.remove('lifted', 'raised');
+                frogElement.style.opacity = '1'; // Ensure toad is visible for peeking
+                frogElement.style.pointerEvents = 'auto'; // Make it clickable again
             }
+            
+            frogState.currentPeepCount++; // Increment peep count for this specific peep
 
-            // Reset classes and styles for a fresh animation cycle
-            frogElement.classList.remove('fully-raised', 'peeping');
-            frogWrap.classList.remove('fully-raised');
-            letter.classList.remove('lifted', 'raised');
-            frogElement.style.opacity = '1'; // Ensure toad is visible for peeking
-            frogElement.style.pointerEvents = 'auto'; // Make it clickable again
-
+            // 1. Initial peep animation
             const peepTimeoutId = setTimeout(() => {
                 frogElement.classList.add('peeping');
                 letter.classList.add('raised');
-            }, 100); // Small delay before peeping starts
+            }, 100);
 
+            // 2. Decide next action after this peep
             const actionTimeoutId = setTimeout(() => {
-                // Only transition if the toad wasn't clicked away during peep
-                if (frogElement.style.opacity !== '0') {
+                // If toad was clicked and collected during its peep, stop this sequence
+                if (frogElement.style.opacity === '0') {
+                    frogState.currentPeepCount = 0; // Reset count
+                    frogState.peepTargetCount = 0;
+                    frogTimeouts.delete(frogElement); // Remove from map
+                    return; // Exit this sequence
+                }
+
+                if (frogState.currentPeepCount < frogState.peepTargetCount) {
+                    // Not enough peeps yet, reset visual state and schedule another quick peep for THIS frog
                     frogElement.classList.remove('peeping');
-                    frogElement.classList.add('fully-raised');
+                    letter.classList.remove('raised');
+                    
+                    frogState.resetTimeoutId = setTimeout(() => { // Re-using resetTimeoutId for next peep
+                        startSingleFrogAnimation(frogElement); // Re-call for the same frog
+                    }, Math.random() * 1000 + 500); // Quick turn-around (0.5 to 1.5 seconds)
+                } else {
+                    // Peep count reached, proceed with full raise (disappearance from subtitle)
+                    frogElement.classList.remove('peeping');
+                    frogElement.classList.add('fully-raised'); // CSS will animate it out
                     frogWrap.classList.add('fully-raised');
                     letter.classList.remove('raised');
                     letter.classList.add('lifted');
-                }
-            }, 1500); // How long the toad stays in 'peeping' state before fully raising
 
-            const resetTimeoutId = setTimeout(() => {
-                // Only reset if it wasn't clicked and still visible
-                if (frogElement.style.opacity !== '0') {
-                    frogElement.classList.remove('peeping', 'fully-raised');
-                    frogWrap.classList.remove('fully-raised');
-                    letter.classList.remove('lifted', 'raised');
-                }
-                // After resetting, schedule this frog (or another random one) for a future peep
-                scheduleNextRandomPeep();
-            }, 3000); // Total duration before toad resets and potentially peeks again
+                    // Schedule the full reset after being fully raised
+                    frogState.resetTimeoutId = setTimeout(() => {
+                        frogElement.classList.remove('peeping', 'fully-raised');
+                        frogWrap.classList.remove('fully-raised');
+                        letter.classList.remove('lifted', 'raised');
+                        frogElement.style.opacity = '0'; // Ensure it becomes invisible after its sequence
+                        frogElement.style.pointerEvents = 'none'; // Make it unclickable
 
-            frogTimeouts.set(frogElement, { peepTimeoutId, actionTimeoutId, resetTimeoutId });
+                        // Reset peep counters for next time it's picked by random scheduler
+                        frogState.currentPeepCount = 0; 
+                        frogState.peepTargetCount = 0;
+                        frogTimeouts.delete(frogElement); // Remove from map after its full cycle
+
+                        // Schedule the next overall random peep (for any frog that's available)
+                        scheduleNextRandomPeep(); 
+                    }, 3000); // How long the toad stays fully raised/animating out before truly resetting.
+                }
+            }, 1500); // Time spent in 'peeping' state before deciding next action
+
+            // Store current timeout IDs and state
+            frogState.peepTimeoutId = peepTimeoutId;
+            frogState.actionTimeoutId = actionTimeoutId;
+            frogTimeouts.set(frogElement, frogState);
         }
 
         // Function to schedule a random frog to peep after a random delay
         function scheduleNextRandomPeep() {
-            // Filter out frogs that have been "collected" (opacity 0)
-            const availableFrogs = Array.from(frogPeeps).filter(frog => frog.style.opacity !== '0');
+            // Filter out frogs that are currently invisible (collected) OR already in an active peep cycle (currentPeepCount > 0)
+            const availableFrogs = Array.from(frogPeeps).filter(frog => {
+                const frogState = frogTimeouts.get(frog);
+                return frog.style.opacity !== '0' && (!frogState || frogState.currentPeepCount === 0);
+            });
             
             if (availableFrogs.length === 0) {
-                console.log("All frogs collected! No more to peep.");
-                // Optionally, you could add logic here to reset all frogs after a certain time
-                // or display a "game over" message.
-                return;
+                console.log("No available frogs to peep right now.");
+                return; // No frogs to animate
             }
 
             const idx = Math.floor(Math.random() * availableFrogs.length);
             const frogToAnimate = availableFrogs[idx];
             
-            // Schedule the animation for a randomly chosen frog
+            // Schedule the animation for a randomly chosen frog (10-30 seconds delay)
             setTimeout(() => {
                 startSingleFrogAnimation(frogToAnimate);
-            }, Math.random() * 5000 + 1000); // Peep after 1-6 seconds
+            }, Math.random() * 20000 + 10000); 
         }
 
         // Initial kick-off: Start a few frog animations to populate the screen
-        // Adjust the '3' to start with more or fewer concurrent peeps.
         for(let i = 0; i < Math.min(3, frogPeeps.length); i++) {
             scheduleNextRandomPeep();
         }
@@ -1283,15 +1314,19 @@
             frog.onclick = function(event) {
                 // Ensure the frog is currently peeking/raised AND clickable before processing click
                 if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
-                    event.stopPropagation(); // Prevent other click handlers (like modal) if any overlap
+                    event.stopPropagation();
 
                     // Immediately clear any pending animations for this specific frog
+                    // and reset its internal state as it's being collected
                     if (frogTimeouts.has(frog)) {
                         const ids = frogTimeouts.get(frog);
                         clearTimeout(ids.peepTimeoutId);
                         clearTimeout(ids.actionTimeoutId);
                         clearTimeout(ids.resetTimeoutId);
-                        frogTimeouts.delete(frog); // Remove from map as it's being "collected"
+                        // Reset peep counts for this frog immediately upon collection
+                        ids.currentPeepCount = 0; 
+                        ids.peepTargetCount = 0;
+                        frogTimeouts.delete(frog); // Remove from map as it's collected
                     }
 
                     // Make the original frog disappear immediately from the subtitle
@@ -1299,81 +1334,73 @@
                     frog.style.pointerEvents = 'none'; // Make it unclickable
 
                     // --- Start Hop Animation Logic ---
-                    const frogRect = frog.getBoundingClientRect(); // Get original frog's position
+                    const frogRect = frog.getBoundingClientRect();
 
                     const hoppingToad = document.createElement('img');
-                    hoppingToad.src = frogImgSrc; // Use the same image source
-                    hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
-                    document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
+                    hoppingToad.src = frogImgSrc;
+                    hoppingToad.classList.add('hopping-toad');
+                    document.body.appendChild(hoppingToad);
 
-                    // Set initial position of the hopping toad (same as the clicked frog)
                     hoppingToad.style.left = frogRect.left + 'px';
                     hoppingToad.style.top = frogRect.top + 'px';
-                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
+                    hoppingToad.style.width = frogRect.width + 'px';
                     hoppingToad.style.height = frogRect.height + 'px';
 
-                    // Calculate target position (relative to viewport) in the hoppedToadContainer
                     const containerRect = hoppedToadContainer.getBoundingClientRect();
                     const targetX = containerRect.left;
                     const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
 
-                    // Trigger hopping animation after initial positioning is rendered
                     requestAnimationFrame(() => {
-                        requestAnimationFrame(() => { // Double rAF for smoother transition start
+                        requestAnimationFrame(() => {
                             const translateX = targetX - frogRect.left;
                             const translateY = targetY - frogRect.top;
 
-                            // Apply transform for the hop (with an upward arc) and fade out
                             hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
                             hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                            hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                            hoppingToad.style.opacity = '0';
                         });
                     });
 
-                    // Clean up the hopping toad and add the final static toad
                     hoppingToad.addEventListener('transitionend', () => {
-                        hoppingToad.remove(); // Remove the temporary hopping toad element
+                        hoppingToad.remove();
 
-                        // Create and append the final static toad to the header container
                         const finalToad = document.createElement('img');
-                        finalToad.src = frogImgSrc; // Use the same image
-                        finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                        finalToad.src = frogImgSrc;
+                        finalToad.classList.add('hopped-toad');
                         hoppedToadContainer.appendChild(finalToad);
 
-                        hoppedToadCount++; // Increment collected toad count
+                        hoppedToadCount++;
 
-                        // Crucial: Reset the original subtitle frog's classes.
-                        // It will be picked up by scheduleNextRandomPeep() in a future iteration.
+                        // Crucially: Reset the original subtitle frog's visual classes.
+                        // It's already opacity:0 and pointer-events:none
                         frog.classList.remove('fully-raised', 'peeping');
                         frog.closest('.char-frog-wrap').querySelector('.frog-wrap').classList.remove('fully-raised');
                         frog.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('lifted', 'raised');
-                        // Opacity and pointer-events are NOT reset here; startSingleFrogAnimation will handle that
-                        // when this frog is randomly selected for its next peep.
+                        // No need to call startSingleFrogAnimation or scheduleNextRandomPeep directly here for *this* frog.
+                        // It will be picked up by the general scheduleNextRandomPeep loop when it's next available.
 
                         // Schedule another random peep to keep the animation going (if not all frogs are collected)
                         scheduleNextRandomPeep();
 
-                    }, { once: true }); // Ensure this listener runs only once per hop
-                    // --- End Hop Animation Logic ---
+                    }, { once: true });
                 }
             };
         });
 
-        // Mobile Navigation Toggle (existing code, if any)
+        // Mobile Navigation Toggle (existing code)
         const logoElement = document.querySelector('.logo-circle');
         const navLinksContainer = document.querySelector('.main-links');
 
         if (logoElement && navLinksContainer) {
-            logoElement.style.cursor = 'pointer'; // Optional: Add a pointer cursor
+            logoElement.style.cursor = 'pointer';
 
             logoElement.addEventListener('click', () => {
-                // Only toggle on mobile
                 if (window.innerWidth <= 700) {
                     navLinksContainer.classList.toggle('active');
                 }
             });
         }
-        // News Banner Close Button (existing code, if any)
+        // News Banner Close Button (existing code)
         const newsBanner = document.getElementById('newsBanner');
         const closeBannerBtn = document.querySelector('.close-banner-btn');
 
