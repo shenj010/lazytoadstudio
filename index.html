@@ -592,7 +592,23 @@
             text-align: center;
         }
 
-        /* Styles for the "hopped" toads */
+        .hopping-toad {
+            position: fixed; /* Important for absolute positioning relative to viewport */
+            z-index: 9999; /* Ensure it's on top during the hop */
+            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s;
+            opacity: 1; /* Start visible */
+        }
+
+        /* Styles for the static toads collected in the header (consolidated) */
+        .hopped-toad {
+            width: 1.5em; /* Using 1.5em for potentially better responsiveness relative to text */
+            height: 1.5em;
+            object-fit: contain; /* Ensures the image fits without distortion */
+            /* Removed 'transition' here as this is the static toad */
+            /* Removed 'filter: none;' unless explicitly needed */
+        }
+
+        /* Styles for the "hopped" toads container */
         .hopped-toad-container {
             position: absolute; /* Position relative to .hero-header */
             /* Calculate 'left' to be just right of the logo circle */
@@ -606,13 +622,6 @@
             z-index: 5; /* Ensure it's above other elements if necessary */
             white-space: nowrap; /* Keep toads on one line */
             pointer-events: none; /* Make it non-interactive, only for visual display */
-        }
-        .hopped-toad {
-            width: 1.5em; /* Adjust size to match the title's font size */
-            height: 1.5em;
-            object-fit: contain;
-            transition: transform 0.5s ease-out; /* For the "hop" animation */
-            filter: none;
         }
 
        /* MOBILE OPTIMIZATION (only for mobile) */
