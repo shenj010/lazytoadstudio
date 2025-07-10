@@ -128,7 +128,7 @@
         /* MAIN TITLE FONT & OUTLINE */
         .hero-nav-title {
             color: #fff; /* White text */
-            font-size: 2rem; /* Made smaller */
+            font-size: 2.5rem; /* Made smaller */
             -webkit-text-stroke: 2px #000; /* Bolder 2px black outline for Webkit browsers */
             text-stroke: 2px #000;         /* Bolder 2px black outline for standard browsers */
             font-weight: normal;
@@ -141,7 +141,7 @@
         /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
-            font-size: 2.5rem; /* Made smaller */
+            font-size: 3rem; /* Made smaller */
             color: #fff;
             text-align: right; /* Current desktop alignment */
             margin-bottom: 18px;
@@ -275,7 +275,7 @@
         }
         /* Hover styles for the toad icon within the button */
         .main-links a:hover .icon {
-            filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+            filter: none; /* Inverts the black toad PNG to white */
         }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
@@ -651,7 +651,7 @@
     .hero-nav-title {
         text-align: right;
         width: 90%;
-        font-size: 2.5rem; /* Made smaller for mobile */
+        font-size: 3rem; /* Made smaller for mobile */
         -webkit-text-stroke: 1.5px #000;
         text-stroke: 1.5px #000;
         margin-bottom: 8px;
@@ -663,7 +663,7 @@
     .hero-nav-subtitle {
         text-align: right;
         width: 90%;
-        font-size: 2.5rem; /* Made smaller for mobile */
+        font-size: 3rem; /* Made smaller for mobile */
         text-shadow:
             -1.5px -1.5px 0 #000,
             1.5px -1.5px 0 #000,
@@ -979,8 +979,8 @@
     </section>
     <section class="main-content hidden" id="mainContent">
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
-            <h2 id="galleryHeader">Gallery</h2>
-        </div>
+    <h2 id="galleryHeader" class="gallery-section-header">Gallery</h2>
+</div>
         <div class="gallery-grid">
             <div class="gallery-item">
                 <a href="gallery/after-the-war.html">
