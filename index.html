@@ -1189,13 +1189,20 @@
 
         let animationCount = 0;
         let nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7
+        let globalAnimationTimeout; // Declare a variable to hold the global timeout ID
 
         function randomDelay() {
             return Math.floor(Math.random() * 20000) + 10000;
         }
 
+        // Function to schedule the next overall frog animation cycle
+        function startNextFrogAnimationCycle() {
+            clearTimeout(globalAnimationTimeout); // Clear any existing scheduled animation
+            globalAnimationTimeout = setTimeout(doFrogAnimation, randomDelay());
+        }
+
         function doFrogAnimation() {
-            animationCount++;
+            // Select a random frog
             const idx = Math.floor(Math.random() * wraps.length);
             const wrap = wraps[idx];
             const letter = wrap.querySelector('.the-letter');
@@ -1209,8 +1216,9 @@
             frogWrap.classList.remove('fully-raised');
             letter.classList.remove('lifted');
             letter.classList.remove('raised');
-            frog.style.opacity = '1'; // Ensure toad is visible for peeking
+            frog.style.opacity = '1';       // Ensure toad is visible for peeking
             frog.style.pointerEvents = 'auto'; // Make it clickable again
+            frog.style.visibility = 'visible'; // Ensure it's visible again
 
             // Store timeout IDs directly on the frog element
             frog.peepTimeoutId = setTimeout(() => {
@@ -1241,8 +1249,12 @@
                     animationCount = 0;
                     nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7 again
                 }
-                setTimeout(doFrogAnimation, randomDelay());
+                // Important: Do NOT schedule the next doFrogAnimation call here.
+                // It's now handled by startNextFrogAnimationCycle.
             }, 5000);
+
+            // Schedule the next overall frog animation immediately after this one starts
+            startNextFrogAnimationCycle();
 
             // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
             frog.onclick = function(event) {
@@ -1262,6 +1274,7 @@
                     // Make the original frog disappear immediately to prevent visual overlap
                     frog.style.opacity = '0';
                     frog.style.pointerEvents = 'none'; // Make it unclickable
+                    frog.style.visibility = 'hidden'; // Force it to disappear
 
                     // --- Start Hop Animation Logic ---
                     const frogRect = frog.getBoundingClientRect(); // Get original frog's position
@@ -1312,18 +1325,20 @@
                             document.querySelector('.hero-nav-title').style.paddingLeft = `${30 + (hoppedToadCount * 25)}px`;
                         }
 
-                        // *** IMPORTANT ADDITION: Reset the original frog to allow it to peep again ***
+                        // *** IMPORTANT: Reset the original frog to allow it to peep again ***
                         // Remove inline opacity and pointer-events styles
-                        frog.style.opacity = ''; // This makes the frog visible again (controlled by CSS)
+                        frog.style.opacity = '';       // This makes the frog visible again (controlled by CSS)
                         frog.style.pointerEvents = ''; // This makes the frog clickable again
-                        // The doFrogAnimation loop will now pick this frog up for another peep cycle
+                        frog.style.visibility = '';    // Reset visibility as well
+                        // The doFrogAnimation loop (scheduled by startNextFrogAnimationCycle) will now pick this frog up for another peep cycle when its turn comes.
                     }, { once: true }); // Ensure listener runs only once
                     // --- End Hop Animation Logic ---
                 }
             };
         }
 
-        setTimeout(doFrogAnimation, randomDelay());
+        // Initial call to start the animation loop
+        startNextFrogAnimationCycle();
 
         // ADDED JAVASCRIPT CODE FOR MOBILE NAV TOGGLE (unchanged from your file)
         const logoElement = document.querySelector('.logo-circle');
