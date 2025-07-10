@@ -14,56 +14,55 @@
             font-family: 'Press Start 2P', 'DotGothic16', monospace;
             width: 100vw;
             overflow-x: hidden;
-            /* UPDATED: Reduced padding to lessen space between banner and main content */
-            padding-top: 30px; /* Adjust this value if the banner height changes */
+            /* INITIAL PADDING: Space for the banner when visible */
+            padding-top: 30px; 
         }
         body { min-height: 100vh; }
 
         /* News Banner Styles */
         .news-banner {
-            background-color: #FFFFFF; /* White background as requested */
-            color: #181818; /* Dark text for contrast */
-            padding: 8px 20px; /* Vertical and horizontal padding */
+            background-color: #FFFFFF;
+            color: #181818;
+            padding: 8px 20px;
             width: 100vw;
             box-sizing: border-box;
-            z-index: 1000; /* Ensures it's on top of other content */
+            z-index: 1000;
             position: fixed; /* Makes it stick to the top */
             top: 0;
             left: 0;
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically center items */
-            justify-content: center; /* Horizontally center text (initially) */
-            gap: 15px; /* Space between text and close button */
-            /* UPDATED: Removed box-shadow */
-            transition: opacity 0.3s ease-in-out; /* For smooth hide/show */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: opacity 0.3s ease-in-out;
         }
 
         .news-banner.hidden {
             opacity: 0;
-            pointer-events: none; /* Prevent interaction when hidden */
+            pointer-events: none;
         }
 
         .news-banner p {
-            font-family: 'Press Start 2P', monospace !important; /* Font from your nav links */
-            font-size: 0.9rem; /* Adjust size as needed */
-            margin: 0; /* Remove default paragraph margin */
+            font-family: 'Press Start 2P', monospace !important;
+            font-size: 0.9rem;
+            margin: 0;
             line-height: 1.2;
             letter-spacing: 0.04em;
-            text-transform: uppercase; /* Makes the text uppercase */
-            flex-grow: 1; /* Allows text to take available space */
-            text-align: center; /* Centers the text within its flexible space */
+            text-transform: uppercase;
+            flex-grow: 1;
+            text-align: center;
         }
 
         .close-banner-btn {
             background: none;
             border: none;
             color: #181818;
-            font-size: 1.5rem; /* Size of the 'X' */
+            font-size: 1.5rem;
             cursor: pointer;
-            padding: 0 5px; /* Padding around the 'X' */
-            line-height: 1; /* Ensures 'X' is centered vertically */
+            padding: 0 5px;
+            line-height: 1;
             transition: color 0.2s ease;
-            flex-shrink: 0; /* Prevent button from shrinking */
+            flex-shrink: 0;
         }
 
         .close-banner-btn:hover {
@@ -1174,25 +1173,28 @@
         }
         // END OF NEW JAVASCRIPT CODE
 
-        // News Banner Close Button JavaScript
+         // News Banner Close Button JavaScript
         const newsBanner = document.getElementById('newsBanner');
         const closeBannerBtn = document.querySelector('.close-banner-btn');
 
         if (newsBanner && closeBannerBtn) {
             // Optional: Check if banner has been closed before (using localStorage)
-            // You can uncomment these lines if you want the banner to stay hidden after closing
             // const bannerClosed = localStorage.getItem('newsBannerClosed');
             // if (bannerClosed === 'true') {
             //     newsBanner.classList.add('hidden');
+            //     document.body.style.paddingTop = '0'; // Apply padding reduction on load if previously closed
             // }
 
             closeBannerBtn.addEventListener('click', function() {
                 newsBanner.classList.add('hidden');
+                // NEW: Reduce body padding when banner is hidden
+                document.body.style.paddingTop = '0'; // Reduces padding to 0px
+                // If you want a small gap instead, change '0' to for example '10px'
+                
                 // Optional: Save state to localStorage so it stays hidden on subsequent visits
                 // localStorage.setItem('newsBannerClosed', 'true');
             });
         }
-        // END News Banner Close Button JavaScript
     });
     </script>
 </body>
