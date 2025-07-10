@@ -14,8 +14,62 @@
             font-family: 'Press Start 2P', 'DotGothic16', monospace;
             width: 100vw;
             overflow-x: hidden;
+            /* ADDED: Padding to account for the fixed news banner */
+            padding-top: 40px; /* Adjust this value if the banner height changes */
         }
         body { min-height: 100vh; }
+
+        /* NEW: News Banner Styles */
+        .news-banner {
+            background-color: #FFFFFF; /* White background as requested */
+            color: #181818; /* Dark text for contrast */
+            padding: 8px 20px; /* Vertical and horizontal padding */
+            width: 100vw;
+            box-sizing: border-box;
+            z-index: 1000; /* Ensures it's on top of other content */
+            position: fixed; /* Makes it stick to the top */
+            top: 0;
+            left: 0;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically center items */
+            justify-content: center; /* Horizontally center text (initially) */
+            gap: 15px; /* Space between text and close button */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
+            transition: opacity 0.3s ease-in-out; /* For smooth hide/show */
+        }
+
+        .news-banner.hidden {
+            opacity: 0;
+            pointer-events: none; /* Prevent interaction when hidden */
+        }
+
+        .news-banner p {
+            font-family: 'Press Start 2P', monospace !important; /* Font from your nav links */
+            font-size: 0.9rem; /* Adjust size as needed */
+            margin: 0; /* Remove default paragraph margin */
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+            text-transform: uppercase; /* Makes the text uppercase */
+            flex-grow: 1; /* Allows text to take available space */
+            text-align: center; /* Centers the text within its flexible space */
+        }
+
+        .close-banner-btn {
+            background: none;
+            border: none;
+            color: #181818;
+            font-size: 1.5rem; /* Size of the 'X' */
+            cursor: pointer;
+            padding: 0 5px; /* Padding around the 'X' */
+            line-height: 1; /* Ensures 'X' is centered vertically */
+            transition: color 0.2s ease;
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+
+        .close-banner-btn:hover {
+            color: #555;
+        }
+        /* END NEW: News Banner Styles */
 
         .hero-header {
             width: 100vw;
@@ -758,6 +812,10 @@
     </style>
 </head>
 <body>
+    <div class="news-banner" id="newsBanner">
+        <p>NEW STICKERS AVAILABLE!</p>
+        <button class="close-banner-btn" aria-label="Close banner">&times;</button>
+    </div>
     <section class="hero" id="hero">
       <div class="hero-header">
         <div class="hero-logo-col">
