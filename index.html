@@ -12,8 +12,10 @@
         /* ... existing html, body styles ... */
         width: 100vw;
         overflow-x: hidden;
-        /* THIS WILL BE MODIFIED IN THE NEXT STEP */
-    }
+        /* ADDED: Padding to account for the fixed news banner */
+        padding-top: 40px; /* Adjust this value to match the exact height of your banner */
+    } /* <--- THIS CLOSING CURLY BRACE WAS MISSING! */
+
     body { min-height: 100vh; }
 
     /* ADDED: News Banner Styles */
