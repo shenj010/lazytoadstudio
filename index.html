@@ -310,33 +310,39 @@
             margin-top: 0;
         }
 
-        /* NEW SOLID SEPARATOR STYLES */
+        /* UPDATED SOLID SEPARATOR STYLES */
         .solid-separator-top,
         .solid-separator-bottom {
             width: 100vw;
             height: 10px; /* Adjust thickness as desired, e.g., 5px, 15px */
             background-color: #181818; /* Black color from your button borders */
-            margin: 20px 0; /* Add some space above and below the separator */
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            /* REMOVE ALL MARGINS FROM SEPARATORS THEMSELVES */
+            margin: 0;
+            box-sizing: border-box;
         }
 
-        .solid-separator-top {
-            margin-top: 30px; /* More space above the top separator */
-            margin-bottom: 30px;
+        /* Adjust spacing on elements *around* the separators */
+        .hero-header {
+            /* Keep existing styles */
+            margin-bottom: 0; /* Ensure no bottom margin pushes the separator */
+            padding-bottom: 20px; /* Add padding to the bottom of the header */
         }
 
-        .solid-separator-bottom {
-            margin-top: 30px;
-            margin-bottom: 30px; /* More space below the bottom separator */
-        }
-        /* END NEW SOLID SEPARATOR STYLES */
-        
-        /* New containers for desktop/mobile banner content */
-        .desktop-banner-container {
-            display: block; /* Default for desktop */
-        }
+        .desktop-banner-container,
         .mobile-banner-container {
-            display: none; /* Hidden by default for desktop */
+            /* Ensure these containers have no extra space below them */
+            margin-bottom: 0;
+        }
+
+        /* Add padding to the section *above* the bottom separator */
+        .hero #section-that-contains-banners-and-spacing { /* You might need to add a wrapper div around the hero-images-spacing, hero-image-row, banner-images-spacing, mobile-banner-container to apply this or apply directly to hero section */
+            padding-bottom: 20px; /* Add padding to create space below banners and above separator */
+        }
+        /* Alternative: Add top padding to the gallery section */
+        .gallery-grid {
+            padding-top: 20px; /* Add space *above* the gallery */
+            /* Keep existing padding-bottom */
+            padding-bottom: 60px;
         }
 
         .banner-image-mobile {
