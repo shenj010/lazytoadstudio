@@ -600,31 +600,29 @@
         }
 
         /* Styles for the static toads collected in the header (consolidated) */
-       .hopped-toad {
-    width: 1.5em; /* Using 1.5em for potentially better responsiveness relative to text */
-    height: 1.5em;
-    object-fit: contain; /* Ensures the image fits without distortion */
-    /* Add any other desktop-specific styles here if needed */
-}
+        .hopped-toad {
+            width: 1.5em; /* Using 1.5em for potentially better responsiveness relative to text */
+            height: 1.5em;
+            object-fit: contain; /* Ensures the image fits without distortion */
+            /* Removed 'transition' here as this is the static toad */
+            /* Removed 'filter: none;' unless explicitly needed */
+        }
 
-/* Styles for the "hopped" toads container (DESKTOP DEFAULT) */
-.hopped-toad-container {
-    position: absolute; /* Position relative to .hero-header */
-    /* Calculate 'left' to be just right of the logo circle */
-    /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
-    left: calc(2vw + 150px + (18px * 2) + 10px);
-    top: 50%; /* Vertically center within hero-header */
-    transform: translateY(-50%);
-    display: flex; /* Flexbox for horizontal layout */
-    flex-direction: row; /* Default for desktop: row */
-    align-items: center; /* Align items vertically if they have different heights */
-    gap: 5px; /* Space between hopped toads */
-    z-index: 5; /* Ensure it's above other elements if necessary */
-    white-space: nowrap; /* Keep toads on one line */
-    pointer-events: none; /* Make it non-interactive, only for visual display */
-    width: auto; /* Allow width to be determined by content */
-    height: auto; /* Allow height to be determined by content */
-}
+        /* Styles for the "hopped" toads container */
+        .hopped-toad-container {
+            position: absolute; /* Position relative to .hero-header */
+            /* Calculate 'left' to be just right of the logo circle */
+            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
+            left: calc(2vw + 150px + (18px * 2) + 10px);
+            top: 50%; /* Vertically center within hero-header */
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center; /* Align items vertically if they have different heights */
+            gap: 5px; /* Space between hopped toads */
+            z-index: 5; /* Ensure it's above other elements if necessary */
+            white-space: nowrap; /* Keep toads on one line */
+            pointer-events: none; /* Make it non-interactive, only for visual display */
+        }
 
        /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
@@ -710,28 +708,24 @@
 
     #hoppedToadContainer {
         grid-area: toads; /* Assign this to the 'toads' area in the grid */
-        position: static; /* Force it to flow within the grid, not absolutely positioned */
+        /* It will now naturally position under the 'logo' grid area */
+        position: static; /* Ensure it flows within the grid, not absolutely positioned */
         display: flex;
         flex-wrap: wrap; /* Allow toads to wrap into rows */
-        flex-direction: row; /* Keep as row for wrapped grid of toads */
         justify-content: center; /* Center the toads within their rows */
-        align-items: flex-start; /* Aligns items to the start of the cross-axis (top) */
         width: 100%; /* Take full width of its grid cell */
-        margin-top: 0; /* Adjust spacing from logo if needed, currently 0 */
+        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
         transform: none; /* Reset any desktop transforms */
         box-sizing: border-box; /* Include padding in width calculation */
-        padding: 0 5px; /* Keep padding for aesthetic spacing inside the grid cell */
-        gap: 5px; /* Gap between hopped toads */
-        z-index: 5;
-        height: auto; /* Allow height to grow with content */
+        padding: 0 5px; /* Small horizontal padding inside the container */
+        gap: 5px; /* Add gap between toads */
+        z-index: 5; /* Adjust z-index if toads are overlapping other content */
     }
     .hopped-toad {
-        /* Adjusted to account for gap: (container_width - (num_gaps * gap_size)) / num_items */
-        /* For 4 items and 3 gaps of 5px: (100% - 15px) / 4 = 25% - 3.75px */
-        flex: 0 0 calc(25% - 3.75px);
-        max-width: calc(25% - 3.75px);
+        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
+        max-width: 25%; /* Ensures it doesn't exceed 25% */
         height: auto; /* Maintain aspect ratio */
-        object-fit: contain;
+        /* Removed fixed width/height like 1.2em as flex-basis will control it */
     }
 
     /* Your existing .main-links and .news-banner styles (unchanged) */
@@ -1405,47 +1399,13 @@
                     // Set initial position of the hopping toad (same as the clicked frog)
                     hoppingToad.style.left = frogRect.left + 'px';
                     hoppingToad.style.top = frogRect.top + 'px';
-                    // Initial size of hopping toad should match the peeping frog
-                    hoppingToad.style.width = frogRect.width + 'px';
+                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
                     hoppingToad.style.height = frogRect.height + 'px';
 
                     // Calculate target position in the hoppedToadContainer
                     const containerRect = hoppedToadContainer.getBoundingClientRect();
-                    let targetX, targetY;
-
-                    if (window.innerWidth <= 700) { // Mobile-specific target calculation
-                        const maxToadsPerRow = 4; // Matches CSS flex: 0 0 25% for mobile
-                        const gap = 5; // Matches CSS gap for #hoppedToadContainer
-                        const containerWidth = containerRect.width;
-
-                        // Calculate estimated toad width based on container width and CSS flex-basis calc
-                        // This approximates the final width of a collected toad in the mobile container.
-                        const estimatedToadWidth = (containerWidth / maxToadsPerRow) - (gap * (maxToadsPerRow - 1) / maxToadsPerRow);
-                        const estimatedToadHeight = estimatedToadWidth; // Assuming square aspect ratio
-
-                        const row = Math.floor(hoppedToadCount / maxToadsPerRow);
-                        const column = hoppedToadCount % maxToadsPerRow;
-
-                        // Calculate horizontal offset for centering the current row
-                        const toadsInTargetRow = (hoppedToadCount % maxToadsPerRow) + 1; // Number of toads in this target row *including the one being added*
-                        const rowContentWidth = (toadsInTargetRow * estimatedToadWidth) + ((toadsInTargetRow - 1) * gap);
-                        const rowHorizontalOffset = (containerWidth - rowContentWidth) / 2;
-
-                        // Calculate target X and Y for the center of the next toad's slot
-                        targetX = containerRect.left + rowHorizontalOffset + (column * (estimatedToadWidth + gap)) + (estimatedToadWidth / 2);
-                        targetY = containerRect.top + (row * (estimatedToadHeight + gap)) + (estimatedToadHeight / 2);
-
-                        // Adjust hopping toad's target size to match the collected toad's size
-                        hoppingToad.style.width = estimatedToadWidth + 'px';
-                        hoppingToad.style.height = estimatedToadHeight + 'px';
-
-                    } else { // Desktop target calculation (unchanged)
-                        targetX = containerRect.left;
-                        targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
-                        // Ensure the hopping toad maintains its initial size for desktop
-                        hoppingToad.style.width = frogRect.width + 'px';
-                        hoppingToad.style.height = frogRect.height + 'px';
-                    }
+                    const targetX = containerRect.left;
+                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
 
                     // Trigger hopping animation after initial positioning is rendered
                     requestAnimationFrame(() => {
@@ -1474,7 +1434,7 @@
 
                         // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
                         resetFrogVisuals(frog);
-
+                        
                         // Start the next overall peep sequence after collection
                         startNextPeepSequence();
 
