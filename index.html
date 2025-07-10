@@ -707,26 +707,43 @@
     }
 
     #hoppedToadContainer {
-        grid-area: toads; /* Assign this to the 'toads' area in the grid */
-        /* It will now naturally position under the 'logo' grid area */
-        position: static; /* Ensure it flows within the grid, not absolutely positioned */
-        display: flex;
-        flex-wrap: wrap; /* Allow toads to wrap into rows */
-        justify-content: center; /* Center the toads within their rows */
-        width: 100%; /* Take full width of its grid cell */
-        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
-        transform: none; /* Reset any desktop transforms */
-        box-sizing: border-box; /* Include padding in width calculation */
-        padding: 0 5px; /* Small horizontal padding inside the container */
-        gap: 5px; /* Add gap between toads */
-        z-index: 5; /* Adjust z-index if toads are overlapping other content */
-    }
-    .hopped-toad {
-        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
-        max-width: 25%; /* Ensures it doesn't exceed 25% */
-        height: auto; /* Maintain aspect ratio */
-        /* Removed fixed width/height like 1.2em as flex-basis will control it */
-    }
+    grid-area: toads;
+    position: static; /* Important: It should flow within the grid */
+    display: flex;
+    flex-wrap: wrap; /* Allow toads to wrap into rows */
+    flex-direction: row; /* Keep as row to allow wrapping first, then adjust item sizing */
+    justify-content: center; /* Center the toads within their rows */
+    width: 100%; /* Take full width of its grid cell */
+    margin-top: 0;
+    transform: none;
+    box-sizing: border-box;
+    padding: 0 5px;
+    gap: 5px; /* Add gap between toads */
+    z-index: 5;
+    /* NEW: Add align-items to control vertical alignment within the row */
+    align-items: flex-start; /* Aligns items to the start of the cross-axis (top) */
+}
+.hopped-toad {
+    /* For column stacking under the logo, we need to rethink flex basis.
+       If you want a column, the container should be flex-direction: column;
+       Let's assume you want 4 across, as implied by the original flex: 0 0 25% for '4 per row'.
+       If you truly want a column (one toad per row, stacking vertically),
+       then the container needs to be 'flex-direction: column;'.
+       Let's stick to the current request of "stack in a column of 4 from top down"
+       which implies *within* the toad container, they form a column.
+       This would mean the container needs `flex-direction: column;` and `align-items: center;`
+       if you want them centered.
+    */
+    /* If you want 4 per row, keep: */
+    flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
+    max-width: 25%; /* Ensures it doesn't exceed 25% */
+    height: auto; /* Maintain aspect ratio */
+
+    /* If you want them to literally stack vertically in a column (1 per row): */
+    /* flex: 0 0 100%; */ /* Each toad takes 100% width, forcing new line */
+    /* max-width: 100%; */
+    /* height: auto; */
+}
 
     /* Your existing .main-links and .news-banner styles (unchanged) */
     .main-links {
@@ -1404,8 +1421,122 @@
 
                     // Calculate target position in the hoppedToadContainer
                     const containerRect = hoppedToadContainer.getBoundingClientRect();
-                    const targetX = containerRect.left;
-                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
+                    
+                    let targetX, targetY;
+
+                    if (window.innerWidth <= 700) { // Mobile-specific target calculation
+                        // For mobile, place under the logo, stacking in a column
+                        // We need to calculate the position based on the existing toads in the container.
+                        const existingToads = hoppedToadContainer.querySelectorAll('.hopped-toad').length;
+                        const toadWidth = frogRect.width; // Or a fixed size you expect the collected toad to be
+                        const toadHeight = frogRect.height; // Or a fixed height
+                        const gap = 5; // The gap you defined in CSS for .hopped-toad-container
+
+                        // Calculate column and row for 4 toads per row
+                        const maxToadsPerRow = 4;
+                        const row = Math.floor(existingToads / maxToadsPerRow);
+                        const column = existingToads % maxToadsPerRow;
+
+                        // Calculate targetX and targetY based on column and row
+                        // We need the container's *client coordinates* for this.
+                        // containerRect.left is the left edge of the container
+                        // containerRect.top is the top edge of the container
+                        
+                        // Centering logic for toads within the container if it's less than 4
+                        let rowOffset = 0;
+                        if (existingToads % maxToadsPerRow === 0 && existingToads > 0) {
+                            // This means a new row is starting, so existingToads count reflects the *start* of the new row.
+                            // If we had 4 toads (existingToads = 4), we're starting a new row (row=1, column=0).
+                            // The `justify-content: center` in CSS for `hoppedToadContainer` handles horizontal centering.
+                            // We just need to worry about the Y position for stacking.
+                            targetX = containerRect.left + (containerRect.width / 2) - (toadWidth / 2); // Center horizontally
+                        } else {
+                            // If not starting a new row, calculate based on column
+                            // This gets more complex if you want perfect horizontal centering with variable items per row
+                            // due to flex-wrap. A simpler approach for *hopping* target is to use a fixed starting point.
+                            // Let's assume you want them generally aligned to the left under the logo,
+                            // and then rely on flex-wrap and justify-content: center to distribute them.
+                            // For the hop animation, let's just aim for the top-left of where the *next* toad will appear.
+                            
+                            // For consistent hopping target, calculate based on the first slot, and let flex handle final layout
+                            // or calculate explicitly for each slot.
+                            // For "stack in a column of 4 from top down", if you literally mean a single vertical column
+                            // regardless of screen width, then `flex-direction: column` on the container is key.
+                            
+                            // Given your CSS `flex: 0 0 25%;` implies 4 across, let's aim for that layout.
+                            // For the hopping animation, calculate the exact spot for the *next* toad.
+                            
+                            // Calculate the starting X for the current row (adjust for centering if needed)
+                            const itemsInCurrentRow = existingToads % maxToadsPerRow;
+                            const totalRowWidth = (toadWidth * maxToadsPerRow) + (gap * (maxToadsPerRow - 1));
+                            
+                            // This is tricky because the container is `justify-content: center`.
+                            // The most reliable way is to let the browser place the new toad, then get its position.
+                            // However, for the *animation target*, we have to predict.
+                            // Let's simplify: always aim for the center of the container's top, and then
+                            // adjust the Y based on `hoppedToadCount`.
+                            
+                            // Option 1: Simplest (might not perfectly match final flex layout during hop)
+                            // targetX = containerRect.left + (containerRect.width / 2);
+                            // targetY = containerRect.top + (existingToads * (toadHeight + gap));
+
+                            // Option 2: More precise for 4-column layout
+                            targetX = containerRect.left + (column * (toadWidth + gap)) + (toadWidth / 2);
+                            targetY = containerRect.top + (row * (toadHeight + gap)) + (toadHeight / 2);
+
+                            // Adjust targetX for the overall centering of the row if you want to aim accurately
+                            // This is complex because we don't know how many items will be in the *last* row before the hop.
+                            // Let's assume for the *hop* we're aiming for a general "under the logo" area.
+                            // A better approach might be to just place it and let CSS handle the positioning instantly,
+                            // rather than animating its exact final spot.
+
+                            // For "directly under the logo and stack in a column of 4 from top down"
+                            // If `flex-direction: column` on `#hoppedToadContainer` (CSS change required)
+                            // targetX = containerRect.left + (containerRect.width / 2) - (toadWidth / 2); // Center horizontally
+                            // targetY = containerRect.top + (existingToads * (toadHeight + gap)); // Stack vertically
+                            
+                            // Since your CSS currently has `flex-direction: row` (implicitly) and `flex-wrap: wrap`,
+                            // and `flex: 0 0 25%;` for `.hopped-toad`, it will arrange in up to 4 columns.
+                            // "stack in a column of 4 from top down" is a bit ambiguous with this setup.
+                            // If you mean a single vertical column regardless of `flex-wrap`, then change the container to `flex-direction: column;`
+
+                            // Let's assume "stack in a column of 4 from top down" means
+                            // you want the hopping animation to go to the *next available slot* in the 4-column layout.
+                            // This is the tricky part. For now, let's just make it hop to the *center* of the
+                            // `hoppedToadContainer` and rely on the CSS `transitionend` to immediately place it correctly.
+
+                            // Simpler approach for hop animation target on mobile: aim for the center of the container
+                            targetX = containerRect.left + (containerRect.width / 2); // Center horizontally
+                            targetY = containerRect.top + (containerRect.height / 2); // Center vertically within the container
+                            
+                            // To make them appear "under the logo" and stack vertically,
+                            // the `hoppedToadContainer` needs to be positioned correctly,
+                            // and its `flex-direction` should be `column`.
+                            // If you change `#hoppedToadContainer` to `flex-direction: column;` in mobile CSS:
+                            // targetX = containerRect.left + (containerRect.width / 2) - (toadWidth / 2);
+                            // targetY = containerRect.top + (existingToads * (toadHeight + gap));
+                        }
+
+                        // Let's refine the target based on a direct column under the logo.
+                        // Assuming the logo is roughly centered at 2vw + 150px/2 (logo width) for its x-coordinate.
+                        // And for Y, it's just below the logo.
+                        // Since `hoppedToadContainer` is grid-area: toads, its top is already under the logo.
+                        // So we just need to place it relative to its container.
+
+                        // Corrected mobile target calculation for a vertical column:
+                        // This requires the `hoppedToadContainer` to have `flex-direction: column` and `align-items: center` in CSS.
+                        const toadCollectHeight = 40; // Approximate collected toad height, adjust as needed
+                        const toadCollectGap = 5; // Gap between collected toads
+                        targetX = containerRect.left + (containerRect.width / 2); // Center horizontally in its grid area
+                        targetY = containerRect.top + (hoppedToadCount * (toadCollectHeight + toadCollectGap));
+
+                    } else { // Desktop target calculation (unchanged)
+                        // Calculate target position in the hoppedToadContainer
+                        const containerRect = hoppedToadContainer.getBoundingClientRect();
+                        targetX = containerRect.left; // Desktop calculation for left-aligned row
+                        targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2); // Desktop vertical center
+                    }
+
 
                     // Trigger hopping animation after initial positioning is rendered
                     requestAnimationFrame(() => {
@@ -1414,6 +1545,7 @@
                             const translateY = targetY - frogRect.top;
 
                             // Apply transform for the hop (with an upward arc) and fade out
+                            // The Y offset `translateY(-50px)` creates the arc.
                             hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
                             hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
                             hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
