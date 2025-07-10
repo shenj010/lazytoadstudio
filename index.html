@@ -505,10 +505,21 @@
         .gallery-item .caption {
             margin-top: 8px;
             font-size: 1rem;
-            color: #333;
+            /* Applying button-like styles here: */
+            background-color: #FFFFFF; /* White background */
+            color: #181818; /* Black text */
+            border: 4px solid #181818; /* Black border (similar to desktop nav links) */
+            padding: 8px 15px; /* Padding for the box */
+            border-radius: 0; /* Rectangular corners */
+            display: inline-block; /* Allow padding/border and fit content */
+            width: fit-content; /* Make the box fit its content */
+            margin-left: auto; /* For horizontal centering */
+            margin-right: auto; /* For horizontal centering */
+            box-sizing: border-box; /* Include padding/border in width */
+            /* End of new styles */
+
             font-family: 'Press Start 2P', cursive, monospace;
             text-align: center;
-            background: none;
         }
         .footer-social {
             width: 100vw;
