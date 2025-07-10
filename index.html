@@ -14,8 +14,33 @@
             font-family: 'Press Start 2P', 'DotGothic16', monospace;
             width: 100vw;
             overflow-x: hidden;
+            /* ADDED: Padding to account for the fixed news banner */
+            padding-top: 40px; /* Adjust this value to match the exact height of your banner */
         }
         body { min-height: 100vh; }
+
+        /* ADDED: News Banner Styles */
+        .news-banner {
+            background-color: #FFFFFF;
+            color: #181818;
+            padding: 10px 20px; /* Adjust padding as needed */
+            text-align: center;
+            width: 100vw;
+            box-sizing: border-box;
+            z-index: 100;
+            position: fixed; /* Makes it stick to the top */
+            top: 0;
+            left: 0;
+        }
+
+        .news-banner p {
+            font-family: 'Press Start 2P', monospace !important;
+            font-size: 1rem; /* Adjust if needed */
+            margin: 0;
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+        }
+        /* END ADDED: News Banner Styles */
 
         .hero-header {
             width: 100vw;
