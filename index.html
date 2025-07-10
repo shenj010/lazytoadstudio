@@ -1134,7 +1134,7 @@
         const frogImgSrc = 'images/toad icon static.png';
         const originalText = subtitle.textContent.trim();
         const hoppedToadContainer = document.getElementById('hoppedToadContainer');
-        let hoppedToadCount = 0;
+        let hoppedToadCount = 0; // Initialize hoppedToadCount here
 
         subtitle.innerHTML = ''; // Clear original content
 
@@ -1187,17 +1187,17 @@
             letter.classList.remove('lifted');
             letter.classList.remove('raised');
             frog.style.opacity = '1'; // Ensure toad is visible for peeking
+            frog.style.pointerEvents = 'auto'; // Make it clickable again
 
-            // Step 1: Frog peeps up behind letter (top part shows)
-            const peepTimeout = setTimeout(() => {
+            // Store timeout IDs directly on the frog element
+            frog.peepTimeoutId = setTimeout(() => {
                 frog.classList.add('peeping');
                 letter.classList.add('raised');
             }, 100);
 
             const doFullRaise = animationCount === nextFullRaise;
 
-            // Step 2: After 1.2s, either drop back or fully raise
-            const actionTimeout = setTimeout(() => {
+            frog.actionTimeoutId = setTimeout(() => {
                 if (doFullRaise) {
                     frog.classList.remove('peeping');
                     frog.classList.add('fully-raised');
@@ -1210,8 +1210,7 @@
                 }
             }, 1500);
 
-            // Step 3: After 5 seconds, reset everything and possibly set up next full raise
-            const resetTimeout = setTimeout(() => {
+            frog.resetTimeoutId = setTimeout(() => {
                 frog.classList.remove('peeping', 'fully-raised');
                 frogWrap.classList.remove('fully-raised');
                 letter.classList.remove('lifted','raised');
@@ -1222,34 +1221,71 @@
                 setTimeout(doFrogAnimation, randomDelay());
             }, 5000);
 
-            // GAME LOGIC: Click handler for the peeking frog
+            // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
             frog.onclick = function(event) {
                 // Check if the frog is currently peeking (either peeping or fully-raised)
                 if (frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) {
                     event.stopPropagation(); // Prevent modal from opening if it's on the same element
 
-                    // Clear existing timeouts for this specific frog to stop its animation
-                    clearTimeout(peepTimeout);
-                    clearTimeout(actionTimeout);
-                    clearTimeout(resetTimeout);
+                    // Clear existing timeouts for THIS specific frog
+                    clearTimeout(frog.peepTimeoutId);
+                    clearTimeout(frog.actionTimeoutId);
+                    clearTimeout(frog.resetTimeoutId);
 
-                    // Make the original frog disappear immediately
+                    // Make the original frog disappear immediately to prevent visual overlap
                     frog.style.opacity = '0';
                     frog.style.pointerEvents = 'none'; // Make it unclickable
 
-                    // Create a new toad image for the "hopped" animation
-                    const hoppedToad = document.createElement('img');
-                    hoppedToad.src = frogImgSrc;
-                    hoppedToad.classList.add('hopped-toad');
+                    // --- Start Hop Animation Logic ---
+                    const frogRect = frog.getBoundingClientRect(); // Get original frog's position
 
-                    // Append to the container
-                    hoppedToadContainer.appendChild(hoppedToad);
+                    const hoppingToad = document.createElement('img');
+                    hoppingToad.src = frogImgSrc;
+                    hoppingToad.classList.add('hopping-toad'); // New class for hopping animation
+                    document.body.appendChild(hoppingToad); // Append to body for fixed positioning
 
-                    // Increment count and update padding if needed (for desktop)
-                    hoppedToadCount++;
-                    if (window.innerWidth > 700) {
-                        document.querySelector('.hero-nav-title').style.paddingLeft = `${30 + (hoppedToadCount * 25)}px`; // Adjust padding based on toad count
-                    }
+                    // Set initial position of the hopping toad (same as the clicked frog)
+                    hoppingToad.style.left = frogRect.left + 'px';
+                    hoppingToad.style.top = frogRect.top + 'px';
+                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
+                    hoppingToad.style.height = frogRect.height + 'px';
+
+                    // Calculate target position (relative to viewport)
+                    const containerRect = hoppedToadContainer.getBoundingClientRect();
+                    // Target the left edge of the container, vertically centered with frog's height
+                    const targetX = containerRect.left;
+                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
+
+                    // Trigger animation after initial positioning is rendered
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => { // Double rAF for smooth transition start
+                            // Calculate translation values
+                            const translateX = targetX - frogRect.left;
+                            const translateY = targetY - frogRect.top;
+
+                            // Apply transform for the hop, including a vertical jump component
+                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`; // Hop to target, with an upward arc
+                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s'; // Smooth transition
+                            hoppingToad.style.opacity = '0'; // Fade out at the end of hop
+                        });
+                    });
+
+                    hoppingToad.addEventListener('transitionend', () => {
+                        hoppingToad.remove(); // Remove the temporary hopping toad
+
+                        // Append the final static toad to the container
+                        const finalToad = document.createElement('img');
+                        finalToad.src = frogImgSrc;
+                        finalToad.classList.add('hopped-toad'); // Use the existing hopped-toad class for static ones
+                        hoppedToadContainer.appendChild(finalToad);
+
+                        // Increment count and update padding if needed (for desktop)
+                        hoppedToadCount++;
+                        if (window.innerWidth > 700) {
+                            document.querySelector('.hero-nav-title').style.paddingLeft = `${30 + (hoppedToadCount * 25)}px`;
+                        }
+                    }, { once: true }); // Ensure listener runs only once
+                    // --- End Hop Animation Logic ---
                 }
             };
         }
