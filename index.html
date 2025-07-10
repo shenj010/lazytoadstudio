@@ -5,43 +5,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: #FDEDF4;
-            color: #222;
-            font-family: 'Press Start 2P', 'DotGothic16', monospace;
-            width: 100vw;
-            overflow-x: hidden;
-            /* ADDED: Padding to account for the fixed news banner */
-            padding-top: 40px; /* Adjust this value to match the exact height of your banner */
-        }
-        body { min-height: 100vh; }
+   <style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        /* ... existing html, body styles ... */
+        width: 100vw;
+        overflow-x: hidden;
+        /* THIS WILL BE MODIFIED IN THE NEXT STEP */
+    }
+    body { min-height: 100vh; }
 
-        /* ADDED: News Banner Styles */
-        .news-banner {
-            background-color: #FFFFFF;
-            color: #181818;
-            padding: 10px 20px; /* Adjust padding as needed */
-            text-align: center;
-            width: 100vw;
-            box-sizing: border-box;
-            z-index: 100;
-            position: fixed; /* Makes it stick to the top */
-            top: 0;
-            left: 0;
-        }
+    /* ADDED: News Banner Styles */
+    .news-banner {
+        background-color: #FFFFFF;
+        color: #181818;
+        padding: 10px 20px;
+        text-align: center;
+        width: 100vw;
+        box-sizing: border-box;
+        z-index: 100;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
 
-        .news-banner p {
-            font-family: 'Press Start 2P', monospace !important;
-            font-size: 1rem; /* Adjust if needed */
-            margin: 0;
-            line-height: 1.2;
-            letter-spacing: 0.04em;
-        }
-        /* END ADDED: News Banner Styles */
-
+    .news-banner p {
+        font-family: 'Press Start 2P', monospace !important;
+        font-size: 1rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: 0.04em;
+    }
+    /* END ADDED: News Banner Styles */
+       
         .hero-header {
             width: 100vw;
             display: flex;
