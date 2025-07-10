@@ -1216,7 +1216,7 @@
             frogWrap.classList.remove('fully-raised');
             letter.classList.remove('lifted');
             letter.classList.remove('raised');
-            frog.style.opacity = '1';       // Ensure toad is visible for peeking
+            frog.style.opacity = '1';        // Ensure toad is visible for peeking
             frog.style.pointerEvents = 'auto'; // Make it clickable again
             frog.style.visibility = 'visible'; // Ensure it's visible again
 
@@ -1327,9 +1327,9 @@
 
                         // *** IMPORTANT: Reset the original frog to allow it to peep again ***
                         // Remove inline opacity and pointer-events styles
-                        frog.style.opacity = '';       // This makes the frog visible again (controlled by CSS)
-                        frog.style.pointerEvents = ''; // This makes the frog clickable again
-                        frog.style.visibility = '';    // Reset visibility as well
+                        frog.style.opacity = '';         // This makes the frog visible again (controlled by CSS)
+                        frog.style.pointerEvents = '';   // This makes the frog clickable again
+                        frog.style.visibility = '';      // Reset visibility as well
                         // The doFrogAnimation loop (scheduled by startNextFrogAnimationCycle) will now pick this frog up for another peep cycle when its turn comes.
                     }, { once: true }); // Ensure listener runs only once
                     // --- End Hop Animation Logic ---
