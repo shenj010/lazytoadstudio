@@ -755,44 +755,56 @@
     .main-links a:hover::before {
         filter: none; /* No filter needed as ::before content is gone */
     }
-    .nav-hero-separator, .banner-hero-separator {
-        width: 98vw;
-        min-width: 0;
-        max-width: 100vw;
-        height: 36px;
+    .nav-hero-separator,
+    .banner-hero-separator {
+        display: none; /* Hides both SVG separators on mobile */
     }
-    .nav-hero-separator svg, .banner-hero-separator svg {
-        height: 36px;
-        min-height: 36px;
+    .nav-hero-separator svg,
+    .banner-hero-separator svg {
+        display: none; /* Ensure the SVG content is also hidden */
     }
 
-    /* NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
-    .solid-separator-top,
-    .solid-separator-bottom {
-        height: 10px; /* Thinner on mobile */
-        margin: 15px 0; /* Less space on mobile */
-    }
-    .solid-separator-top {
-        margin-top: 20px;
-        margin-bottom: 1px;
-    }
-    .solid-separator-bottom {
-        margin-top: 1px;
-        margin-bottom: 20px;
-    }
-    /* END NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
-
-    .desktop-banner-container {
-        display: none;
-    }
     .mobile-banner-container {
+        /* Keep existing styles like display, width, aspect-ratio, overflow */
         display: block;
         width: 100vw;
         aspect-ratio: 1 / 0.9;
         overflow: hidden;
-        margin: 0 0 10px 0;
+        margin: 0 auto 10px auto; /* Centered with bottom margin */
         border-radius: 0;
+        
+        /* Add padding to create space for the border within the container */
+        padding: 5px; /* Adjust padding if you want more space between border and image edge */
+        box-sizing: border-box; /* Include padding in the element's total width and height */
     }
+
+    .banner-image-mobile {
+        /* Keep existing styles like display, width, height, object-fit, object-position */
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        
+        /* Add the white border */
+        border: 5px solid #FFFFFF; /* 5px solid white border */
+
+        /* Remove original transform scale */
+        transform: none; /* Remove any previous scaling */
+        transition: none; /* Remove any previous transitions related to transform */
+
+        margin: 0;
+        border-radius: 0;
+        max-width: none;
+    }
+    
+    /* Remove banner images spacing which is no longer needed after removing separators */
+    .banner-images-spacing {
+        height: 0; /* No spacing needed between banner and separator if separator is gone */
+    }
+
+    /* ... (rest of your mobile CSS below this point) ... */
+}
     .banner-images-spacing {
         height: 18px;
     }
