@@ -314,10 +314,15 @@
         .solid-separator-top,
         .solid-separator-bottom {
             width: 100vw;
-            height: 15px; /* Adjust thickness as desired, e.g., 5px, 15px */
-            background-color: #FFFFFF; /* Black color from your button borders */
-            margin: 20px 0; /* Add some space above and below the separator */
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            height: 10px; /* This height will contain the pixel dots */
+            /* New background for pixel dotted line (white dots on transparent) */
+            background-image: repeating-linear-gradient(to right, #FFFFFF 0px, #FFFFFF 2px, transparent 2px, transparent 6px);
+            background-size: 8px 100%; /* Each dot + space pattern is 8px wide, and fills the height */
+            /* If you want the dots to be on a specific background color instead of transparent over page background: */
+            /* background-color: #FDEDF4; /* Or your desired background color */
+
+            margin: 0;
+            box-sizing: border-box;
         }
 
         .solid-separator-top {
