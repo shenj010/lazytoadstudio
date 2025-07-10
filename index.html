@@ -74,14 +74,14 @@
             width: 100vw;
             display: flex;
             flex-direction: row;
-            align-items: flex-end;
+            align-items: flex-end; /* Keep align-items to flex-end for general header alignment */
             justify-content: space-between;
             margin-top: 36px;
             margin-bottom: 0;
             box-sizing: border-box;
             padding-left: 2vw;
             padding-right: 4vw;
-            position: relative;
+            position: relative; /* Ensure hero-header is positioned relative */
         }
         .hero-logo-col {
             display: flex;
@@ -136,7 +136,7 @@
             text-align: right;
             margin-bottom: 4px;
             position: relative; /* For positioning hopped toads */
-            padding-left: 30px; /* Space for hopped toads */
+            padding-left: 0; /* REMOVE THIS PADDING as toads are now outside */
         }
         /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
         .hero-nav-subtitle {
@@ -594,14 +594,18 @@
 
         /* Styles for the "hopped" toads */
         .hopped-toad-container {
-            position: absolute;
-            left: 0;
-            top: 50%;
+            position: absolute; /* Position relative to .hero-header */
+            /* Calculate 'left' to be just right of the logo circle */
+            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
+            left: calc(2vw + 150px + (18px * 2) + 10px);
+            top: 50%; /* Vertically center within hero-header */
             transform: translateY(-50%);
             display: flex;
-            align-items: center;
+            align-items: center; /* Align items vertically if they have different heights */
             gap: 5px; /* Space between hopped toads */
-            z-index: 5; /* Above the title text */
+            z-index: 5; /* Ensure it's above other elements if necessary */
+            white-space: nowrap; /* Keep toads on one line */
+            pointer-events: none; /* Make it non-interactive, only for visual display */
         }
         .hopped-toad {
             width: 1.5em; /* Adjust size to match the title's font size */
@@ -924,9 +928,8 @@
             <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
           </div>
         </div>
-        <div class="hero-nav-col">
+        <div class="hopped-toad-container" id="hoppedToadContainer"></div> <div class="hero-nav-col">
           <div class="hero-nav-title">
-            <div class="hopped-toad-container" id="hoppedToadContainer"></div>
             LAZY TOAD STUDIOS
           </div>
           <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
@@ -1302,9 +1305,6 @@
 
                         // Increment count and update padding if needed (for desktop)
                         hoppedToadCount++;
-                        if (window.innerWidth > 700) {
-                            document.querySelector('.hero-nav-title').style.paddingLeft = `${30 + (hoppedToadCount * 25)}px`;
-                        }
                     }, { once: true }); // Ensure listener runs only once
                     // --- End Hop Animation Logic ---
                 }
