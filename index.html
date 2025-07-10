@@ -309,6 +309,27 @@
         .banner-hero-separator {
             margin-top: 0;
         }
+
+        /* NEW SOLID SEPARATOR STYLES */
+        .solid-separator-top,
+        .solid-separator-bottom {
+            width: 100vw;
+            height: 10px; /* Adjust thickness as desired, e.g., 5px, 15px */
+            background-color: #181818; /* Black color from your button borders */
+            margin: 20px 0; /* Add some space above and below the separator */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        .solid-separator-top {
+            margin-top: 30px; /* More space above the top separator */
+            margin-bottom: 30px;
+        }
+
+        .solid-separator-bottom {
+            margin-top: 30px;
+            margin-bottom: 30px; /* More space below the bottom separator */
+        }
+        /* END NEW SOLID SEPARATOR STYLES */
         
         /* New containers for desktop/mobile banner content */
         .desktop-banner-container {
@@ -740,6 +761,22 @@
         min-height: 36px;
     }
 
+    /* NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
+    .solid-separator-top,
+    .solid-separator-bottom {
+        height: 5px; /* Thinner on mobile */
+        margin: 15px 0; /* Less space on mobile */
+    }
+    .solid-separator-top {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .solid-separator-bottom {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    /* END NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
+
     .desktop-banner-container {
         display: none;
     }
@@ -751,7 +788,6 @@
         margin: 0 0 10px 0;
         border-radius: 0;
     }
-
     .banner-images-spacing {
         height: 18px;
     }
@@ -845,6 +881,7 @@
           </nav>
         </div>
       </div>
+      <div class="solid-separator-top"></div>
 
       <div class="desktop-banner-container">
           <div class="hero-images-spacing"></div>
@@ -869,6 +906,7 @@
           <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
       </div>
 
+      <div class="solid-separator-bottom"></div>
     </section>
     <section class="main-content hidden" id="mainContent">
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
