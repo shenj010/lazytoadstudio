@@ -630,58 +630,70 @@
         font-size: 15px;
     }
     .hero-header {
-        /* Changed to column to stack logo and navigation vertically */
-        flex-direction: column;
-        /* Centered horizontally when items are stacked vertically */
-        align-items: center;
-        /* Remove space-between as it's for row distribution */
+        display: grid; /* Changed to CSS Grid for precise area positioning */
+        /* Define grid areas for logo, navigation, and toads */
+        grid-template-columns: auto 1fr; /* First column (logo) auto-width, second (nav) takes rest */
+        grid-template-rows: auto auto; /* First row for logo/nav, second row for toads */
+        grid-template-areas:
+            "logo nav"    /* Top row: logo on left, nav on right */
+            "toads .";    /* Bottom row: toads under logo, empty cell next to it */
+        
+        /* Remove original flex properties that conflict with grid */
+        /* display: flex; */
+        /* flex-direction: row; */
+        /* align-items: flex-start; */
         /* justify-content: space-between; */
-        padding: 0 4vw 0 2vw; /* Keep padding values, but consider if they still make sense vertically */
+        
+        padding: 0 4vw 0 2vw; /* Keep your existing padding */
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
         box-sizing: border-box;
         position: relative;
+        min-height: 150px; /* Ensure enough height for both logo/nav and stacked toads */
     }
+
     .hero-logo-col {
-        flex: 0 0 auto;
-        margin-right: 0px; /* Reset margin */
+        grid-area: logo; /* Assign this to the 'logo' area in the grid */
+        flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
+        margin-right: 0px;
         margin-top: 0px;
-        margin-bottom: 10px; /* Added space below the logo */
+        margin-bottom: 10px; /* Add space below the logo before the toads */
     }
+
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
     }
+
     .hero-nav-col {
+        grid-area: nav; /* Assign this to the 'nav' area in the grid */
         display: flex;
         flex-direction: column;
-        /* Changed to center to align title/subtitle under the logo */
-        align-items: center;
+        align-items: flex-end; /* Keep alignment to the right for title/subtitle */
         flex-grow: 1;
-        width: 90%; /* Adjust width to better fit centered content */
-        max-width: 300px; /* Allow wider than 250px if content is centered */
+        width: 100%; /* Take full width of its grid cell */
+        max-width: none; /* Remove max-width that might constrain in grid */
         margin: 0;
         padding: 0;
         margin-top: 0px;
-        text-align: center; /* Ensure text alignment is centered within its column */
     }
     .hero-nav-title {
-        text-align: center; /* Changed to center */
-        width: 100%; /* Take full width of its column */
-        font-size: 2rem; /* Made smaller for mobile */
+        text-align: right; /* Keep text aligned to the right */
+        width: 90%;
+        font-size: 1.5rem;
         -webkit-text-stroke: 1.5px #000;
         text-stroke: 1.5px #000;
         margin-bottom: 8px;
         word-break: break-word;
         hyphens: auto;
         line-height: 1;
-        padding-left: 0; /* Reset padding for mobile */
+        padding-left: 0;
     }
     .hero-nav-subtitle {
-        text-align: center; /* Changed to center */
-        width: 100%; /* Take full width of its column */
-        font-size: 2rem; /* Made smaller for mobile */
+        text-align: right; /* Keep text aligned to the right */
+        width: 90%;
+        font-size: 1.5rem;
         text-shadow:
             -1.5px -1.5px 0 #000,
             1.5px -1.5px 0 #000,
@@ -698,51 +710,47 @@
         line-height: 1.2;
     }
 
-    .hopped-toad-container {
-        position: static; /* Adjust positioning for mobile */
+    #hoppedToadContainer {
+        grid-area: toads; /* Assign this to the 'toads' area in the grid */
+        /* It will now naturally position under the 'logo' grid area */
+        position: static; /* Ensure it flows within the grid, not absolutely positioned */
         display: flex;
-        flex-wrap: wrap; /* NEW: Allows toads to wrap to the next line */
-        justify-content: center; /* NEW: Centers the toads within each row */
-        width: 100%; /* Ensures the container takes full width for wrapping */
-        margin-top: 10px; /* Space below the title/subtitle */
-        transform: none; /* Reset any previous transforms */
-        padding: 0 2vw; /* Add some horizontal padding to the container itself */
-        box-sizing: border-box; /* Include padding in the width calculation */
-        gap: 5px; /* NEW: Adds spacing between toads */
+        flex-wrap: wrap; /* Allow toads to wrap into rows */
+        justify-content: center; /* Center the toads within their rows */
+        width: 100%; /* Take full width of its grid cell */
+        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
+        transform: none; /* Reset any desktop transforms */
+        box-sizing: border-box; /* Include padding in width calculation */
+        padding: 0 5px; /* Small horizontal padding inside the container */
+        gap: 5px; /* Add gap between toads */
+        z-index: 5; /* Adjust z-index if toads are overlapping other content */
     }
     .hopped-toad {
-        /* NEW: Each toad takes 25% of the container width, for 4 per row */
-        flex: 0 0 25%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 25% */
+        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
         max-width: 25%; /* Ensures it doesn't exceed 25% */
         height: auto; /* Maintain aspect ratio */
-        /* Removed fixed width/height like 1.2em as flex-basis now controls sizing */
-        /* padding: 2px; /* You can add internal padding if 'gap' isn't enough */
-        /* box-sizing: border-box; */
+        /* Removed fixed width/height like 1.2em as flex-basis will control it */
     }
 
+    /* Your existing .main-links and .news-banner styles (unchanged) */
     .main-links {
         position: absolute;
         top: 200px;
         left: 2vw;
         width: fit-content;
         min-width: 180px;
-
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-out;
-
         display: flex;
         flex-direction: column;
         align-items: stretch;
-
         background-color: #FDEDF4;
         padding-bottom: 10px;
         box-sizing: border-box;
         z-index: 10;
-        /* --- MODIFIED: Reduce gap between buttons --- */
-        gap: 5px; /* Adjust this value (e.g., 0px, 2px, etc.) to your desired spacing */
+        gap: 5px;
     }
-
     .main-links.active {
         max-height: 500px;
     }
@@ -751,36 +759,25 @@
         align-items: center;
         justify-content: flex-start;
         gap: 8px;
-
         font-size: 0.95rem;
         width: 100%;
         box-sizing: border-box;
         padding: 0.5em 1em;
         border-radius: 0px;
-
-        /* --- MODIFIED: Rectangular button style --- */
-        border: 2px solid #181818; /* Solid black border */
-        background-color: #FFFFFF; /* White background fill */
-
-        /* --- MODIFIED: Remove margin to let 'gap' control spacing --- */
-        margin: 0; /* This removes the 8px bottom margin */
-
+        border: 2px solid #181818;
+        background-color: #FFFFFF;
+        margin: 0;
         text-decoration: none;
         color: #181818;
-
         position: relative;
         overflow: hidden;
         z-index: 0;
-
         transition: background-color 0.2s ease, color 0.2s ease;
     }
-
-    /* --- MODIFIED: Remove SVG pseudo-element --- */
     .main-links a::before {
-        content: none; /* This completely removes the SVG */
-        background-image: none; /* Ensures no background image is rendered */
+        content: none;
+        background-image: none;
     }
-
     .main-links .icon {
         display: inline-block;
         width: 24px;
@@ -790,17 +787,14 @@
         background-position: center;
         background-image: url("./images/toad icon static.png");
     }
-
-    /* Your existing hover styles for the toad icons */
     .main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
     .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
     .main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
     .main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
-
-    /* The filter for hover is already defined for .main-links a:hover .icon */
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
     }
+}
 
     /* Hover styles for mobile links */
     .main-links a:hover,
