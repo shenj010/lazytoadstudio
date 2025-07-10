@@ -394,6 +394,26 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Style for the main gallery section header */
+        .gallery-section-header {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 2rem; /* Adjust size as needed */
+            letter-spacing: 0.04em;
+            text-align: center;
+            color: #181818;
+            background-color: #FFFFFF;
+            border: 4px solid #181818;
+            padding: 12px 25px; /* Similar padding to nav links */
+            border-radius: 0;
+            display: block; /* Ensures it takes full width for centering */
+            width: fit-content; /* Makes the box fit the text content */
+            margin: 40px auto 30px auto; /* Centers horizontally and adds vertical spacing */
+            text-decoration: none; /* In case it's ever wrapped in a link */
+            font-weight: normal;
+            box-sizing: border-box;
+        }
+
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -505,19 +525,16 @@
         .gallery-item .caption {
             margin-top: 8px;
             font-size: 1rem;
-            /* Applying button-like styles here: */
-            background-color: #FFFFFF !important; /* White background */
-            color: #181818 !important; /* Black text */
-            border: 4px solid #181818 !important; /* Black border (similar to desktop nav links) */
-            padding: 8px 15px !important; /* Padding for the box */
-            border-radius: 0 !important; /* Rectangular corners */
-            display: inline-block !important; /* Allow padding/border and fit content */
-            width: fit-content !important; /* Make the box fit its content */
-            margin-left: auto !important; /* For horizontal centering */
-            margin-right: auto !important; /* For horizontal centering */
-            box-sizing: border-box !important; /* Include padding/border in width */
-            /* End of new styles */
-
+            background-color: #FFFFFF; /* White background */
+            color: #181818; /* Black text */
+            border: 4px solid #181818; /* Black border (similar to desktop nav links) */
+            padding: 8px 15px; /* Padding for the box */
+            border-radius: 0; /* Rectangular corners */
+            display: inline-block; /* Allow padding/border and fit content */
+            width: fit-content; /* Make the box fit its content */
+            margin-left: auto; /* For horizontal centering */
+            margin-right: auto; /* For horizontal centering */
+            box-sizing: border-box; /* Include padding/border in width */
             font-family: 'Press Start 2P', cursive, monospace;
             text-align: center;
         }
@@ -927,7 +944,7 @@
     </section>
     <section class="main-content hidden" id="mainContent">
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
-            <h2>Gallery</h2>
+            <h2 class="gallery-section-header">Gallery</h2>
         </div>
         <div class="gallery-grid">
             <div class="gallery-item">
