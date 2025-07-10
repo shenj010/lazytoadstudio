@@ -14,21 +14,74 @@
             font-family: 'Press Start 2P', 'DotGothic16', monospace;
             width: 100vw;
             overflow-x: hidden;
+            /* INITIAL PADDING: Space for the banner when visible */
+            padding-top: 30px;
         }
         body { min-height: 100vh; }
+
+        /* News Banner Styles */
+        .news-banner {
+            background-color: #FFFFFF;
+            color: #181818;
+            padding: 8px 20px;
+            width: 100vw;
+            box-sizing: border-box;
+            z-index: 1000;
+            position: fixed; /* Makes it stick to the top */
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .news-banner.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .news-banner p {
+            font-family: 'Press Start 2P', monospace !important;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .close-banner-btn {
+            background: none;
+            border: none;
+            color: #181818;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .close-banner-btn:hover {
+            color: #555;
+        }
+        /* END News Banner Styles */
 
         .hero-header {
             width: 100vw;
             display: flex;
             flex-direction: row;
-            align-items: flex-end;
+            align-items: flex-end; /* Keep align-items to flex-end for general header alignment */
             justify-content: space-between;
             margin-top: 36px;
             margin-bottom: 0;
             box-sizing: border-box;
             padding-left: 2vw;
             padding-right: 4vw;
-            position: relative;
+            position: relative; /* Ensure hero-header is positioned relative */
         }
         .hero-logo-col {
             display: flex;
@@ -42,8 +95,8 @@
             justify-content: center;
             background: #fff;
             border-radius: 50%;
-            padding: 18px;
             box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+            padding: 18px;
         }
         .hero-logo {
             display: block;
@@ -65,9 +118,9 @@
             padding: 0;
             margin-right: 0;
         }
-        .hero-nav-title, 
-        .main-links a, 
-        .footer-social-link, 
+        .hero-nav-title,
+        .main-links a,
+        .footer-social-link,
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Press Start 2P', monospace !important;
             letter-spacing: 0.04em;
@@ -75,18 +128,20 @@
         /* MAIN TITLE FONT & OUTLINE */
         .hero-nav-title {
             color: #fff; /* White text */
-            font-size: 2.5rem; /* Made larger */
+            font-size: 2.5rem; /* Made smaller */
             -webkit-text-stroke: 2px #000; /* Bolder 2px black outline for Webkit browsers */
             text-stroke: 2px #000;         /* Bolder 2px black outline for standard browsers */
             font-weight: normal;
             word-break: break-word;
             text-align: right;
             margin-bottom: 4px;
+            position: relative; /* For positioning hopped toads */
+            padding-left: 0; /* REMOVE THIS PADDING as toads are now outside */
         }
         /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
-            font-size: 3rem;
+            font-size: 3rem; /* Made smaller */
             color: #fff;
             text-align: right; /* Current desktop alignment */
             margin-bottom: 18px;
@@ -143,6 +198,7 @@
             will-change: transform;
             display: block;
             transform: translateY(100%);
+            cursor: pointer; /* Make toads clickable */
         }
         .hero-nav-subtitle .frog-peep.peeping {
             transform: translateY(30%);
@@ -173,60 +229,54 @@
             padding: 0;
         }
         .main-links a {
-    /* Keep existing styles like font-size, text-decoration, display, align-items, gap, box-sizing */
-    font-size: 1rem;
-    color: #181818; /* Black text */
-    text-decoration: none;
-    opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
-    font-weight: normal;
-    display: flex;
-    align-items: center; /* Aligns toad icon and text vertically */
-    justify-content: flex-start; /* Aligns content to the left */
-    gap: 0.5em; /* Spacing between icon and text */
-
-    box-sizing: border-box;
-
-    padding: 12px 25px; /* Adjust padding to your preference for rectangular shape */
-
-    border-radius: 0; /* Ensures a perfectly rectangular shape */
-    border: 3px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
-    margin: 0 0.1em; /* Keep current margins */
-
-    background-color: #FFFFFF; /* White infill for the button */
-    position: relative; /* Needed for z-index if other elements overlap */
-    overflow: hidden; /* Ensures content stays within boundaries */
-    z-index: 0;
-
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-}
-.main-links .icon {
-    display: inline-block; /* Or flex/grid depending on layout */
-    width: 1.7em; /* Or whatever size your default icons should be */
-    height: 1.7em;
-    min-width: 1.7em;
-    min-height: 1.7em;
-    vertical-align: middle;
-    margin-right: 0.1em;
-    background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    image-rendering: auto;
-    transition: background-image 0.15s, filter 0.2s ease;
-}
+            font-size: 1rem;
+            color: #181818; /* Black text */
+            text-decoration: none;
+            opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
+            font-weight: normal;
+            display: flex;
+            align-items: center; /* Aligns toad icon and text vertically */
+            justify-content: flex-start; /* Aligns content to the left */
+            gap: 0.5em; /* Spacing between icon and text */
+            box-sizing: border-box;
+            padding: 12px 25px; /* Adjust padding to your preference for rectangular shape */
+            border-radius: 0; /* Ensures a perfectly rectangular shape */
+            border: 4px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
+            margin: 0 0.1em; /* Keep current margins */
+            background-color: #FFFFFF; /* White infill for the button */
+            position: relative; /* Needed for z-index if other elements overlap */
+            overflow: hidden; /* Ensures content stays within boundaries */
+            z-index: 0;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+        }
+        .main-links .icon {
+            display: inline-block; /* Or flex/grid depending on layout */
+            width: 1.7em; /* Or whatever size your default icons should be */
+            height: 1.7em;
+            min-width: 1.7em;
+            min-height: 1.7em;
+            vertical-align: middle;
+            margin-right: 0.1em;
+            background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: auto;
+            transition: background-image 0.15s, filter 0.2s ease;
+        }
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
-.main-links a:focus {
-    background-color: #181818 !important; /* Background becomes black */
-    color: #FDEDF4 !important; /* Text color becomes white */
-    opacity: 1 !important;
-    text-decoration: none !important;
-    border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
-}
+        .main-links a:focus {
+            background-color: #181818 !important; /* Background becomes black */
+            color: #FDEDF4 !important; /* Text color becomes white */
+            opacity: 1 !important;
+            text-decoration: none !important;
+            border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
+        }
         /* Hover styles for the toad icon within the button */
-       .main-links a:hover .icon {
-    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
-}
+        .main-links a:hover .icon {
+            filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+        }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
         .main-links a.about:hover .icon   { background-image: url("./images/toad about.png"); }
@@ -256,7 +306,7 @@
         .banner-hero-separator {
             margin-top: 0;
         }
-        
+
         /* New containers for desktop/mobile banner content */
         .desktop-banner-container {
             display: block; /* Default for desktop */
@@ -271,11 +321,11 @@
             height: 100%;
             object-fit: cover;
             object-position: center;
-            
+
             transform: scale(1.3);
             transition: transform 0.3s ease;
 
-            margin: 0; 
+            margin: 0;
             border-radius: 0;
             max-width: none;
         }
@@ -340,6 +390,25 @@
         .main-content.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+
+        /* Style for the main gallery section header */
+        .gallery-section-header {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1.5rem; /* Adjust size as needed */
+            letter-spacing: 0.04em;
+            text-align: center;
+            color: #181818;
+            background-color: #FFFFFF;
+            border: 4px solid #181818;
+            padding: 12px 25px; /* Similar padding to nav links */
+            border-radius: 0;
+            display: block; /* Ensures it takes full width for centering */
+            width: fit-content; /* Makes the box fit the text content */
+            margin: 40px auto 30px auto; /* Centers horizontally and adds vertical spacing */
+            text-decoration: none; /* In case it's ever wrapped in a link */
+            font-weight: normal;
+            box-sizing: border-box;
         }
         .gallery-grid {
             display: grid;
@@ -452,10 +521,21 @@
         .gallery-item .caption {
             margin-top: 8px;
             font-size: 1rem;
-            color: #333;
+            /* Applying button-like styles here: */
+            background-color: #FFFFFF !important; /* White background */
+            color: #181818 !important; /* Black text */
+            border: 4px solid #181818 !important; /* Black border (similar to desktop nav links) */
+            padding: 8px 15px !important; /* Padding for the box */
+            border-radius: 0 !important; /* Rectangular corners */
+            display: inline-block !important; /* Allow padding/border and fit content */
+            width: fit-content !important; /* Make the box fit its content */
+            margin-left: auto !important; /* For horizontal centering */
+            margin-right: auto !important; /* For horizontal centering */
+            box-sizing: border-box !important; /* Include padding/border in width */
+            /* End of new styles */
+
             font-family: 'Press Start 2P', cursive, monospace;
             text-align: center;
-            background: none;
         }
         .footer-social {
             width: 100vw;
@@ -511,46 +591,91 @@
             letter-spacing: 0.07em;
             text-align: center;
         }
+
+        .hopping-toad {
+            position: fixed; /* Important for absolute positioning relative to viewport */
+            z-index: 9999; /* Ensure it's on top during the hop */
+            transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s;
+            opacity: 1; /* Start visible */
+        }
+
+        /* Styles for the static toads collected in the header (consolidated) */
+        .hopped-toad {
+            width: 1.5em; /* Using 1.5em for potentially better responsiveness relative to text */
+            height: 1.5em;
+            object-fit: contain; /* Ensures the image fits without distortion */
+            /* Removed 'transition' here as this is the static toad */
+            /* Removed 'filter: none;' unless explicitly needed */
+        }
+
+        /* Styles for the "hopped" toads container */
+        .hopped-toad-container {
+            position: absolute; /* Position relative to .hero-header */
+            /* Calculate 'left' to be just right of the logo circle */
+            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
+            left: calc(2vw + 150px + (18px * 2) + 10px);
+            top: 50%; /* Vertically center within hero-header */
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center; /* Align items vertically if they have different heights */
+            gap: 5px; /* Space between hopped toads */
+            z-index: 5; /* Ensure it's above other elements if necessary */
+            white-space: nowrap; /* Keep toads on one line */
+            pointer-events: none; /* Make it non-interactive, only for visual display */
+        }
+
        /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
         font-size: 15px;
     }
-    .hero-header {
-        display: flex;
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: space-between;
+   .hero-header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "logo nav"
+            "toads .";
+        align-items: start;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
         box-sizing: border-box;
         position: relative;
+        /* NEW: Set a minimum height for the header */
+        min-height: 120px; /* Adjust this value as needed */
+        /* This min-height should be enough to contain your logo and
+           the maximum expected height of your title/subtitle without pushing the logo down. */
     }
+
     .hero-logo-col {
-        flex: 0 0 auto;
+        grid-area: logo; /* Assign this to the 'logo' area in the grid */
+        flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
         margin-right: 0px;
         margin-top: 0px;
+        margin-bottom: 10px; /* Add space below the logo before the toads */
     }
-    .hero-logo { height: 160px; }
+
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
     }
+
     .hero-nav-col {
+        grid-area: nav; /* Assign this to the 'nav' area in the grid */
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: flex-end; /* Keep alignment to the right for title/subtitle */
         flex-grow: 1;
-        width: 70%;
-        max-width: 250px;
+        width: 100%; /* Take full width of its grid cell */
+        max-width: none; /* Remove max-width that might constrain in grid */
         margin: 0;
         padding: 0;
         margin-top: 0px;
     }
     .hero-nav-title {
-        text-align: right;
+        text-align: right; /* Keep text aligned to the right */
         width: 90%;
         font-size: 3rem;
         -webkit-text-stroke: 1.5px #000;
@@ -559,9 +684,10 @@
         word-break: break-word;
         hyphens: auto;
         line-height: 1;
+        padding-left: 0;
     }
     .hero-nav-subtitle {
-        text-align: right;
+        text-align: right; /* Keep text aligned to the right */
         width: 90%;
         font-size: 3rem;
         text-shadow:
@@ -580,29 +706,47 @@
         line-height: 1.2;
     }
 
+    #hoppedToadContainer {
+        grid-area: toads; /* Assign this to the 'toads' area in the grid */
+        /* It will now naturally position under the 'logo' grid area */
+        position: static; /* Ensure it flows within the grid, not absolutely positioned */
+        display: flex;
+        flex-wrap: wrap; /* Allow toads to wrap into rows */
+        justify-content: center; /* Center the toads within their rows */
+        width: 100%; /* Take full width of its grid cell */
+        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
+        transform: none; /* Reset any desktop transforms */
+        box-sizing: border-box; /* Include padding in width calculation */
+        padding: 0 5px; /* Small horizontal padding inside the container */
+        gap: 5px; /* Add gap between toads */
+        z-index: 5; /* Adjust z-index if toads are overlapping other content */
+    }
+    .hopped-toad {
+        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
+        max-width: 25%; /* Ensures it doesn't exceed 25% */
+        height: auto; /* Maintain aspect ratio */
+        /* Removed fixed width/height like 1.2em as flex-basis will control it */
+    }
+
+    /* Your existing .main-links and .news-banner styles (unchanged) */
     .main-links {
         position: absolute;
         top: 200px;
         left: 2vw;
         width: fit-content;
         min-width: 180px;
-
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-out;
-
         display: flex;
         flex-direction: column;
         align-items: stretch;
-
         background-color: #FDEDF4;
         padding-bottom: 10px;
         box-sizing: border-box;
         z-index: 10;
-        /* --- MODIFIED: Reduce gap between buttons --- */
-        gap: 5px; /* Adjust this value (e.g., 0px, 2px, etc.) to your desired spacing */
+        gap: 5px;
     }
-
     .main-links.active {
         max-height: 500px;
     }
@@ -611,36 +755,25 @@
         align-items: center;
         justify-content: flex-start;
         gap: 8px;
-
         font-size: 0.95rem;
         width: 100%;
         box-sizing: border-box;
         padding: 0.5em 1em;
         border-radius: 0px;
-
-        /* --- MODIFIED: Rectangular button style --- */
-        border: 2px solid #181818; /* Solid black border */
-        background-color: #FFFFFF; /* White background fill */
-
-        /* --- MODIFIED: Remove margin to let 'gap' control spacing --- */
-        margin: 0; /* This removes the 8px bottom margin */
-
+        border: 2px solid #181818;
+        background-color: #FFFFFF;
+        margin: 0;
         text-decoration: none;
         color: #181818;
-
         position: relative;
         overflow: hidden;
         z-index: 0;
-
         transition: background-color 0.2s ease, color 0.2s ease;
     }
-
-    /* --- MODIFIED: Remove SVG pseudo-element --- */
     .main-links a::before {
-        content: none; /* This completely removes the SVG */
-        background-image: none; /* Ensures no background image is rendered */
+        content: none;
+        background-image: none;
     }
-
     .main-links .icon {
         display: inline-block;
         width: 24px;
@@ -648,20 +781,16 @@
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
-        vertical-align: middle;
         background-image: url("./images/toad icon static.png");
     }
-
-    /* Your existing hover styles for the toad icons */
     .main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
     .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
     .main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
     .main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
-
-    /* The filter for hover is already defined for .main-links a:hover .icon */
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
     }
+}
 
     /* Hover styles for mobile links */
     .main-links a:hover,
@@ -676,32 +805,75 @@
     .main-links a:hover::before {
         filter: none; /* No filter needed as ::before content is gone */
     }
+
+    /* MODIFICATIONS START HERE for banner and separators */
     .nav-hero-separator, .banner-hero-separator {
-        width: 98vw;
-        min-width: 0;
-        max-width: 100vw;
-        height: 36px;
+        /* Force hide separators on mobile, removing all their space */
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        /* Also ensure their original width/min-width/max-width/height are overridden */
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
     }
     .nav-hero-separator svg, .banner-hero-separator svg {
-        height: 36px;
-        min-height: 36px;
+        display: none !important; /* Also hide SVG content directly */
+        height: 0 !important;
+        min-height: 0 !important;
     }
 
     .desktop-banner-container {
-        display: none;
+        display: none; /* Keep hidden on mobile */
     }
     .mobile-banner-container {
-        display: block;
-        width: 100vw;
+        display: block; /* Show on mobile */
+        width: 100vw; /* Take full viewport width */
         aspect-ratio: 1 / 0.9;
         overflow: hidden;
-        margin: 0 0 10px 0;
+        margin: 0 0 10px 0; /* Align to edge, add bottom margin */
         border-radius: 0;
+
+        /* APPLY THE WHITE BORDER HERE (to the container) */
+        border: 10px solid #FFFFFF;
+        /* Crucial: border is included *within* the 100vw width/height of the container */
+        box-sizing: border-box;
+
+        /* Ensure no padding here, as border is now on container */
+        padding: 0;
     }
 
     .banner-images-spacing {
-        height: 18px;
+        /* Ensure any old spacing elements are also completely removed */
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
+
+    .banner-image-mobile {
+        display: block;
+        width: 100%; /* Image fills the container's *inner* space */
+        height: 100%; /* Image fills the container's *inner* space */
+        object-fit: cover; /* Ensures image covers the area, cropping if needed */
+        object-position: center;
+
+        /* IMPORTANT: Remove 'border' and 'box-sizing' from the image itself */
+        border: none; /* Make sure no border is on the image itself */
+        box-sizing: content-box; /* Revert to default for image */
+
+        /* IMPORTANT: Do NOT set transform: none; here. This allows the global transform: scale(1.3); to apply for the "zoomed in" effect */
+        /* If you want a specific zoom, you can explicitly set it here, e.g., transform: scale(1.3); */
+
+        margin: 0;
+        border-radius: 0;
+        max-width: none;
+    }
+    /* END MODIFICATIONS for banner and separators */
+
     .hero-image-row {
         flex-direction: column !important;
         width: 100vw;
@@ -758,6 +930,10 @@
     </style>
 </head>
 <body>
+    <div class="news-banner" id="newsBanner">
+        <p>NEW STICKERS AVAILABLE!</p>
+        <button class="close-banner-btn" aria-label="Close banner">&times;</button>
+    </div>
     <section class="hero" id="hero">
       <div class="hero-header">
         <div class="hero-logo-col">
@@ -765,8 +941,10 @@
             <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
           </div>
         </div>
-        <div class="hero-nav-col">
-          <div class="hero-nav-title">LAZY TOAD STUDIOS</div>
+        <div class="hopped-toad-container" id="hoppedToadContainer"></div> <div class="hero-nav-col">
+          <div class="hero-nav-title">
+            LAZY TOAD STUDIOS
+          </div>
           <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
           <nav class="main-links">
             <a href="/shop.html" class="shop" title="Shop">
@@ -788,19 +966,7 @@
           </nav>
         </div>
       </div>
-      <div class="nav-hero-separator">
-        <svg viewBox="0 0 100 56" preserveAspectRatio="none">
-          <path
-            d="M2,28 Q20,20 38,29 Q52,36 70,26 Q85,34 98,28"
-            stroke="#fff"
-            stroke-width="19"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.97"
-          />
-        </svg>
-      </div>
+      <div class="solid-separator-top"></div>
 
       <div class="desktop-banner-container">
           <div class="hero-images-spacing"></div>
@@ -825,24 +991,12 @@
           <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
       </div>
 
-      <div class="banner-hero-separator">
-        <svg viewBox="0 0 100 56" preserveAspectRatio="none">
-          <path
-            d="M2,28 Q25,39 50,28 Q75,16 98,28"
-            stroke="#fff"
-            stroke-width="19"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.97"
-          />
-        </svg>
-      </div>
+      <div class="solid-separator-bottom"></div>
     </section>
     <section class="main-content hidden" id="mainContent">
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
-            <h2>Gallery</h2>
-        </div>
+    <h2 id="galleryHeader" class="gallery-section-header">Gallery</h2>
+</div>
         <div class="gallery-grid">
             <div class="gallery-item">
                 <a href="gallery/after-the-war.html">
@@ -977,7 +1131,7 @@
         </div>
     </footer>
     <script>
-    // Modal & scroll logic (unchanged)
+    // Modal & scroll logic
     function openModal(img) {
         var modal = document.getElementById('imgModal');
         var modalImg = document.getElementById('modalImg');
@@ -1006,18 +1160,21 @@
         }
     });
 
-    // FROG "PEEP" ANIMATION SCRIPT
+    // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png';
+        const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
         const originalText = subtitle.textContent.trim();
-        subtitle.innerHTML = '';
+        const hoppedToadContainer = document.getElementById('hoppedToadContainer');
+        let hoppedToadCount = 0;
 
+        subtitle.innerHTML = ''; // Clear original content
+
+        // Create character spans and frog elements
         for (const c of originalText) {
             const wrap = document.createElement('span');
             wrap.className = 'char-frog-wrap';
 
-            // Letter span (never clipped)
             const letterWrap = document.createElement('span');
             letterWrap.className = 'letter-wrap';
             const letter = document.createElement('span');
@@ -1025,7 +1182,6 @@
             letter.textContent = c;
             letterWrap.appendChild(letter);
 
-            // Frog mask span (absolutely positioned, clipped)
             const frogWrap = document.createElement('span');
             frogWrap.className = 'frog-wrap';
             const frog = document.createElement('img');
@@ -1040,82 +1196,277 @@
             wrap.appendChild(frogWrap);
             subtitle.appendChild(wrap);
         }
-        const wraps = subtitle.querySelectorAll('.char-frog-wrap');
 
-        let animationCount = 0;
-        let nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7
+        const frogPeeps = subtitle.querySelectorAll('.frog-peep');
 
-        function randomDelay() {
-            return Math.floor(Math.random() * 20000) + 10000;
-        }
+        // Global State for the current peep sequence
+        let peepSequenceActive = false;
+        let currentPeepsInSequence = 0; // How many individual peeps have occurred in the current 4-7 sequence
+        let targetPeepsInSequence = 0;  // The random total (4-7) for the current sequence
+        let mainSequenceSchedulerId = null; // Timeout for the 10-30 sec delay before a new sequence starts
+        let individualPeepSchedulerId = null; // Timeout for the 0.5-1.5 sec delay between individual peeps
+        let currentlyPeepingFrog = null; // Reference to the frog DOM element currently visible/animating its peep
 
-        function doFrogAnimation() {
-            animationCount++;
-            const idx = Math.floor(Math.random() * wraps.length);
-            const wrap = wraps[idx];
+        // Helper to reset a frog's visual state (classes and styles)
+        function resetFrogVisuals(frogElement) {
+            if (!frogElement) return;
+            const wrap = frogElement.closest('.char-frog-wrap');
             const letter = wrap.querySelector('.the-letter');
-            const frog = wrap.querySelector('.frog-peep');
             const frogWrap = wrap.querySelector('.frog-wrap');
 
-            frog.classList.remove('fully-raised');
-            frog.classList.remove('peeping');
+            frogElement.classList.remove('fully-raised', 'peeping');
             frogWrap.classList.remove('fully-raised');
-            letter.classList.remove('lifted');
-            letter.classList.remove('raised');
-
-            // Step 1: Frog peeps up behind letter (top part shows)
-            setTimeout(() => {
-                frog.classList.add('peeping');
-                letter.classList.add('raised');
-            }, 100);
-
-            const doFullRaise = animationCount === nextFullRaise;
-
-            // Step 2: After 1.2s, either drop back or fully raise
-            setTimeout(() => {
-                if (doFullRaise) {
-                    frog.classList.remove('peeping');
-                    frog.classList.add('fully-raised');
-                    frogWrap.classList.add('fully-raised');
-                    letter.classList.remove('raised');
-                    letter.classList.add('lifted');
-                } else {
-                    frog.classList.remove('peeping');
-                    letter.classList.remove('raised');
-                }
-            }, 1500);
-
-            // Step 3: After 5 seconds, reset everything and possibly set up next full raise
-            setTimeout(() => {
-                frog.classList.remove('peeping', 'fully-raised');
-                frogWrap.classList.remove('fully-raised');
-                letter.classList.remove('lifted','raised');
-                if (doFullRaise) {
-                    animationCount = 0;
-                    nextFullRaise = 4 + Math.floor(Math.random() * 4); // 4~7 again
-                }
-                setTimeout(doFrogAnimation, randomDelay());
-            }, 5000);
+            letter.classList.remove('lifted', 'raised');
+            // Keep opacity as is; opacity 0 means collected, opacity 1 means available.
+            // pointerEvents as is; none for collected, auto for available.
         }
 
-        setTimeout(doFrogAnimation, randomDelay());
+        // Function to perform a single peep animation on a specific frog
+        // This function does NOT manage sequence counts or overall timing, just the visual peep.
+        function doPeepAnimation(frogElement, shouldFullyRaise, callback) {
+            if (!frogElement || frogElement.style.opacity === '0') { // Ensure frog exists and is not collected
+                if (callback) callback();
+                return;
+            }
 
-        // ADDED JAVASCRIPT CODE FOR MOBILE NAV TOGGLE
-        const logoElement = document.querySelector('.logo-circle'); 
+            // If there's a frog still active from the previous peep, instantly retract it
+            if (currentlyPeepingFrog && currentlyPeepingFrog !== frogElement) {
+                resetFrogVisuals(currentlyPeepingFrog);
+                currentlyPeepingFrog.style.opacity = '1'; // Ensure it's visible if it was just retracted from peep
+                currentlyPeepingFrog.style.pointerEvents = 'auto'; // Make it clickable again
+            }
+            currentlyPeepingFrog = frogElement; // Set the current frog that is about to peep
+
+            // Reset visual state before starting the new peep (if it was from a previous peep)
+            resetFrogVisuals(frogElement);
+            frogElement.style.opacity = '1'; // Ensure it's fully visible before starting its peep
+            frogElement.style.pointerEvents = 'auto'; // Make it clickable
+
+            // Peep animation steps
+            // Small delay to ensure CSS classes are applied for transitions to begin smoothly
+            setTimeout(() => {
+                frogElement.classList.add('peeping');
+                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('raised');
+            }, 50); 
+
+            // After initial peep animation completes
+            setTimeout(() => {
+                if (frogElement.style.opacity === '0') { // Check if the frog was clicked and collected during its peep
+                    if (callback) callback(); // Call completion callback if collected
+                    return;
+                }
+                
+                if (shouldFullyRaise) {
+                    // Animate to fully raised state
+                    frogElement.classList.remove('peeping');
+                    frogElement.classList.add('fully-raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.frog-wrap').classList.add('fully-raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('lifted');
+
+                    // After fully raised, make it disappear (collected animation will handle opacity 0)
+                    // The duration of this timeout depends on your CSS transition for 'fully-raised'
+                    setTimeout(() => {
+                        if (frogElement.style.opacity !== '0') { // Only modify if not clicked/collected already
+                           frogElement.style.opacity = '0';
+                           frogElement.style.pointerEvents = 'none';
+                        }
+                        currentlyPeepingFrog = null; // Clear reference as this frog is no longer peeping
+                        resetFrogVisuals(frogElement); // Reset classes
+                        if (callback) callback(); // Call completion callback
+                    }, 1500); // How long the toad stays fully raised before disappearing/cleanup
+
+                } else {
+                    // Just peep and retract
+                    frogElement.classList.remove('peeping'); // Remove peeping class to retract
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
+                    
+                    setTimeout(() => {
+                        currentlyPeepingFrog = null; // Clear reference as this peep is done
+                        resetFrogVisuals(frogElement); // Ensure fully retracted classes are removed
+                        if (callback) callback(); // Call completion callback
+                    }, 700); // Duration for retract animation
+                }
+            }, 1000); // Duration of the initial 'peeping' state before deciding next action (fully raise or retract)
+        }
+
+        // Schedules an individual peep within the current 4-7 peep sequence
+        function scheduleIndividualRandomPeep() {
+            // If the sequence is completed or not active, stop scheduling individual peeps
+            if (!peepSequenceActive || currentPeepsInSequence >= targetPeepsInSequence) {
+                peepSequenceActive = false; // Mark current sequence as finished
+                startNextPeepSequence(); // Schedule the next overall sequence (10-30 sec delay)
+                return;
+            }
+
+            currentPeepsInSequence++; // Increment count for this individual peep
+
+            const availableFrogs = Array.from(frogPeeps).filter(frog => frog.style.opacity !== '0');
+            if (availableFrogs.length === 0) {
+                console.log("No frogs available to peep!");
+                peepSequenceActive = false;
+                startNextPeepSequence(); // Still schedule next overall sequence even if no frogs
+                return;
+            }
+
+            // Select a random frog. Ensure it's not the same as the immediately previous one if possible.
+            let frogToAnimate;
+            let attempts = 0;
+            const maxAttempts = 10; // Prevent infinite loop if only one frog left
+            do {
+                const idx = Math.floor(Math.random() * availableFrogs.length);
+                frogToAnimate = availableFrogs[idx];
+                attempts++;
+            } while (frogToAnimate === currentlyPeepingFrog && availableFrogs.length > 1 && attempts < maxAttempts);
+
+
+            // Determine if this frog should fully raise (become collectible)
+            let shouldFullyRaise = false;
+            // It can only fully raise after the 4th peep
+            if (currentPeepsInSequence >= 4) {
+                // 50% chance to fully raise OR it MUST fully raise if this is the very last peep in the sequence
+                shouldFullyRaise = (Math.random() < 0.5) || (currentPeepsInSequence === targetPeepsInSequence);
+            }
+
+            // Perform the animation for this single peep
+            doPeepAnimation(frogToAnimate, shouldFullyRaise, () => {
+                // Callback function executed after doPeepAnimation completes its visual part
+                if (shouldFullyRaise) {
+                    // If this frog fully raised, it means the player either caught it or missed it.
+                    // The current 4-7 peep sequence is considered complete.
+                    peepSequenceActive = false; // Mark sequence as finished
+                    startNextPeepSequence(); // Schedule the next overall sequence (10-30 sec delay)
+                } else {
+                    // If it just peeped and retracted, schedule the next individual peep in this sequence
+                    individualPeepSchedulerId = setTimeout(() => {
+                        scheduleIndividualRandomPeep();
+                    }, Math.random() * 1000 + 500); // Short random delay between individual peeps (0.5 to 1.5 seconds)
+                }
+            });
+        }
+
+        // Starts the overall 10-30 second sequence timer
+        function startNextPeepSequence() {
+            // Clear any existing sequence timers to prevent duplicates or conflicts
+            if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+            if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+            
+            // Ensure any frog that might have been peeping from a previous sequence/click is fully reset
+            if (currentlyPeepingFrog) {
+                resetFrogVisuals(currentlyPeepingFrog);
+                currentlyPeepingFrog.style.opacity = '1';
+                currentlyPeepingFrog.style.pointerEvents = 'auto';
+                currentlyPeepingFrog = null;
+            }
+
+            // Schedule the start of the next 4-7 peep sequence
+            mainSequenceSchedulerId = setTimeout(() => {
+                peepSequenceActive = true;
+                currentPeepsInSequence = 0; // Reset counter for the new sequence
+                targetPeepsInSequence = Math.floor(Math.random() * 4) + 4; // Determine new random target (4 to 7)
+                scheduleIndividualRandomPeep(); // Start the first individual peep of the new sequence
+            }, Math.random() * 20000 + 10000); // 10 to 30 seconds delay before starting a new sequence
+        }
+
+        // Initial kick-off: Start the very first sequence
+        startNextPeepSequence();
+
+        // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
+        frogPeeps.forEach(frog => {
+            frog.onclick = function(event) {
+                // Ensure the frog is currently peeping/raised AND clickable before processing click
+                if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
+                    event.stopPropagation(); // Prevent event bubbling
+
+                    // Clear all pending timers related to the current sequence immediately
+                    if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+                    if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+                    peepSequenceActive = false; // End current sequence prematurely upon collection
+                    currentlyPeepingFrog = null; // No frog is currently peeping after collection
+
+                    // Make the original frog disappear immediately from the subtitle
+                    frog.style.opacity = '0';
+                    frog.style.pointerEvents = 'none'; // Make it unclickable
+
+                    // --- Start Hop Animation Logic ---
+                    const frogRect = frog.getBoundingClientRect(); // Get original frog's position
+
+                    const hoppingToad = document.createElement('img');
+                    hoppingToad.src = frogImgSrc; // Use the same image source
+                    hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
+                    document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
+
+                    // Set initial position of the hopping toad (same as the clicked frog)
+                    hoppingToad.style.left = frogRect.left + 'px';
+                    hoppingToad.style.top = frogRect.top + 'px';
+                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
+                    hoppingToad.style.height = frogRect.height + 'px';
+
+                    // Calculate target position in the hoppedToadContainer
+                    const containerRect = hoppedToadContainer.getBoundingClientRect();
+                    const targetX = containerRect.left;
+                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
+
+                    // Trigger hopping animation after initial positioning is rendered
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => { // Double rAF for smoother transition start
+                            const translateX = targetX - frogRect.left;
+                            const translateY = targetY - frogRect.top;
+
+                            // Apply transform for the hop (with an upward arc) and fade out
+                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
+                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                            hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                        });
+                    });
+
+                    // Clean up the hopping toad and add the final static toad
+                    hoppingToad.addEventListener('transitionend', () => {
+                        hoppingToad.remove(); // Remove the temporary hopping toad element
+
+                        // Create and append the final static toad to the header container
+                        const finalToad = document.createElement('img');
+                        finalToad.src = frogImgSrc; // Use the same image
+                        finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                        hoppedToadContainer.appendChild(finalToad);
+
+                        hoppedToadCount++; // Increment collected toad count
+
+                        // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
+                        resetFrogVisuals(frog);
+                        
+                        // Start the next overall peep sequence after collection
+                        startNextPeepSequence();
+
+                    }, { once: true }); // Ensure this listener runs only once per hop
+                }
+            };
+        });
+
+        // Mobile Navigation Toggle (existing code, unchanged)
+        const logoElement = document.querySelector('.logo-circle');
         const navLinksContainer = document.querySelector('.main-links');
 
         if (logoElement && navLinksContainer) {
-            logoElement.style.cursor = 'pointer'; // Optional: Add a pointer cursor
+            logoElement.style.cursor = 'pointer';
 
             logoElement.addEventListener('click', () => {
-                // Only toggle on mobile
-                if (window.innerWidth <= 700) { 
+                if (window.innerWidth <= 700) {
                     navLinksContainer.classList.toggle('active');
                 }
             });
         }
-        // END OF NEW JAVASCRIPT CODE
+        // News Banner Close Button (existing code, unchanged)
+        const newsBanner = document.getElementById('newsBanner');
+        const closeBannerBtn = document.querySelector('.close-banner-btn');
+
+        if (newsBanner && closeBannerBtn) {
+            closeBannerBtn.addEventListener('click', function() {
+                newsBanner.classList.add('hidden');
+                document.body.style.paddingTop = '0';
+            });
+        }
     });
-    </script>
+</script>
 </body>
 </html>
