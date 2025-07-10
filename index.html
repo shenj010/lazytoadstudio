@@ -751,46 +751,70 @@
         filter: none; /* No filter needed as ::before content is gone */
     }
     .nav-hero-separator, .banner-hero-separator {
-        width: 98vw;
-        min-width: 0;
-        max-width: 100vw;
-        height: 36px;
+        /* Force hide separators on mobile, removing all their space */
+        display: none !important;
+        visibility: hidden !important; 
+        height: 0 !important;        
+        margin: 0 !important;         
+        padding: 0 !important;        
+        border: none !important;      
+        overflow: hidden !important;  
+        /* Also ensure their original width/min-width/max-width/height are overridden */
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
     }
     .nav-hero-separator svg, .banner-hero-separator svg {
-        height: 36px;
-        min-height: 36px;
+        display: none !important; /* Also hide SVG content directly */
+        height: 0 !important;
+        min-height: 0 !important;
     }
-
-    /* NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
-    .solid-separator-top,
-    .solid-separator-bottom {
-        height: 5px; /* Thinner on mobile */
-        margin: 15px 0; /* Less space on mobile */
-    }
-    .solid-separator-top {
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-    .solid-separator-bottom {
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-    /* END NEW SOLID SEPARATOR MOBILE ADJUSTMENTS */
 
     .desktop-banner-container {
-        display: none;
+        display: none; /* Keep hidden on mobile */
     }
     .mobile-banner-container {
-        display: block;
-        width: 100vw;
+        display: block; /* Show on mobile */
+        width: 100vw; /* Take full viewport width */
         aspect-ratio: 1 / 0.9;
         overflow: hidden;
-        margin: 0 0 10px 0;
+        margin: 0 0 10px 0; /* Align to edge, add bottom margin */
         border-radius: 0;
+        
+        /* Ensure no padding here, border will be directly on the image */
+        padding: 0; 
+        box-sizing: border-box; /* Good practice for containers */
     }
+
     .banner-images-spacing {
-        height: 18px;
+        /* Ensure any old spacing elements are also completely removed */
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
+
+    .banner-image-mobile {
+        display: block;
+        width: 100%; /* Image fills the container's width (which is 100vw) */
+        height: 100%; /* Image fills the container's height */
+        object-fit: cover; /* Ensures image covers the area, cropping if needed */
+        object-position: center; /* Centers the image content */
+        
+        /* Apply the white border directly to the image */
+        border: 5px solid #FFFFFF; /* Your white border: 5 pixels thick, solid, white */
+        
+        /* Crucial for 100vw fit without overflow: border is included *within* the 100% width/height */
+        box-sizing: border-box; 
+
+        /* Remove any conflicting transformations or transitions if they exist */
+        transform: none; 
+        transition: none; 
+
+        margin: 0;
+        border-radius: 0;
+        max-width: none;
+    }
+    /* END MODIFICATIONS for banner and separators */
     .hero-image-row {
         flex-direction: column !important;
         width: 100vw;
