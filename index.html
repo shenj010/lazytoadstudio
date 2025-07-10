@@ -391,8 +391,24 @@
             opacity: 0;
             pointer-events: none;
         }
-        #galleryHeader { /* New style for the gallery header */
-            font-size: 1.5rem; /* Reduced font size */
+
+        /* Style for the main gallery section header */
+        .gallery-section-header {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1.5rem; /* Adjust size as needed */
+            letter-spacing: 0.04em;
+            text-align: center;
+            color: #181818;
+            background-color: #FFFFFF;
+            border: 4px solid #181818;
+            padding: 12px 25px; /* Similar padding to nav links */
+            border-radius: 0;
+            display: block; /* Ensures it takes full width for centering */
+            width: fit-content; /* Makes the box fit the text content */
+            margin: 40px auto 30px auto; /* Centers horizontally and adds vertical spacing */
+            text-decoration: none; /* In case it's ever wrapped in a link */
+            font-weight: normal;
+            box-sizing: border-box;
         }
         .gallery-grid {
             display: grid;
@@ -1133,7 +1149,7 @@
         const subtitle = document.querySelector('.hero-nav-subtitle');
         const frogImgSrc = 'images/toad icon static.png';
         const originalText = subtitle.textContent.trim();
-        const hoppedToadContainer = document.getElementById('hoppedToadContainer');
+        const hoppedToadContainer = document.getElementById('hoppedToadContainer'); // Now correctly declared
         let hoppedToadCount = 0; // Initialize hoppedToadCount here
 
         subtitle.innerHTML = ''; // Clear original content
@@ -1231,6 +1247,11 @@
                     clearTimeout(frog.peepTimeoutId);
                     clearTimeout(frog.actionTimeoutId);
                     clearTimeout(frog.resetTimeoutId);
+
+                    // --- FIX: Reset letter and frogWrap immediately when clicked ---
+                    letter.classList.remove('lifted', 'raised');
+                    frogWrap.classList.remove('fully-raised');
+                    // --- END FIX ---
 
                     // Make the original frog disappear immediately to prevent visual overlap
                     frog.style.opacity = '0';
