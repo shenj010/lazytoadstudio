@@ -1147,10 +1147,16 @@
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
         const subtitle = document.querySelector('.hero-nav-subtitle');
-        const frogImgSrc = 'images/toad icon static.png';
+        const frogImgSrc = 'images/toad icon static.png'; // Verify this path is correct!
         const originalText = subtitle.textContent.trim();
-        const hoppedToadContainer = document.getElementById('hoppedToadContainer'); // Now correctly declared
-        let hoppedToadCount = 0; // Initialize hoppedToadCount here
+        const hoppedToadContainer = document.getElementById('hoppedToadContainer');
+        let hoppedToadCount = 0;
+
+        // Error check for the container (important!)
+        if (!hoppedToadContainer) {
+            console.error("Error: hoppedToadContainer element not found. Hopping animation will not work.");
+            return;
+        }
 
         subtitle.innerHTML = ''; // Clear original content
 
@@ -1196,7 +1202,8 @@
             const frog = wrap.querySelector('.frog-peep');
             const frogWrap = wrap.querySelector('.frog-wrap');
 
-            // Reset classes for the current animation cycle
+            // Reset classes and inline styles for the current animation cycle
+            // This ensures a previously hopped frog can peep again
             frog.classList.remove('fully-raised');
             frog.classList.remove('peeping');
             frogWrap.classList.remove('fully-raised');
@@ -1248,10 +1255,9 @@
                     clearTimeout(frog.actionTimeoutId);
                     clearTimeout(frog.resetTimeoutId);
 
-                    // --- FIX: Reset letter and frogWrap immediately when clicked ---
+                    // Reset letter and frogWrap immediately when clicked
                     letter.classList.remove('lifted', 'raised');
                     frogWrap.classList.remove('fully-raised');
-                    // --- END FIX ---
 
                     // Make the original frog disappear immediately to prevent visual overlap
                     frog.style.opacity = '0';
@@ -1305,6 +1311,12 @@
                         if (window.innerWidth > 700) {
                             document.querySelector('.hero-nav-title').style.paddingLeft = `${30 + (hoppedToadCount * 25)}px`;
                         }
+
+                        // *** IMPORTANT ADDITION: Reset the original frog to allow it to peep again ***
+                        // Remove inline opacity and pointer-events styles
+                        frog.style.opacity = ''; // This makes the frog visible again (controlled by CSS)
+                        frog.style.pointerEvents = ''; // This makes the frog clickable again
+                        // The doFrogAnimation loop will now pick this frog up for another peep cycle
                     }, { once: true }); // Ensure listener runs only once
                     // --- End Hop Animation Logic ---
                 }
@@ -1313,7 +1325,7 @@
 
         setTimeout(doFrogAnimation, randomDelay());
 
-        // ADDED JAVASCRIPT CODE FOR MOBILE NAV TOGGLE
+        // ADDED JAVASCRIPT CODE FOR MOBILE NAV TOGGLE (unchanged from your file)
         const logoElement = document.querySelector('.logo-circle');
         const navLinksContainer = document.querySelector('.main-links');
 
@@ -1329,26 +1341,14 @@
         }
         // END OF NEW JAVASCRIPT CODE
 
-         // News Banner Close Button JavaScript
+         // News Banner Close Button JavaScript (unchanged from your file)
         const newsBanner = document.getElementById('newsBanner');
         const closeBannerBtn = document.querySelector('.close-banner-btn');
 
         if (newsBanner && closeBannerBtn) {
-            // Optional: Check if banner has been closed before (using localStorage)
-            // const bannerClosed = localStorage.getItem('newsBannerClosed');
-            // if (bannerClosed === 'true') {
-            //     newsBanner.classList.add('hidden');
-            //     document.body.style.paddingTop = '0'; // Apply padding reduction on load if previously closed
-            // }
-
             closeBannerBtn.addEventListener('click', function() {
                 newsBanner.classList.add('hidden');
-                // NEW: Reduce body padding when banner is hidden
-                document.body.style.paddingTop = '0'; // Reduces padding to 0px
-                // If you want a small gap instead, change '0' to for example '10px'
-
-                // Optional: Save state to localStorage so it stays hidden on subsequent visits
-                // localStorage.setItem('newsBannerClosed', 'true');
+                document.body.style.paddingTop = '0';
             });
         }
     });
