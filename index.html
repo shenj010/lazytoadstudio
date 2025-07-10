@@ -15,7 +15,7 @@
             width: 100vw;
             overflow-x: hidden;
             /* INITIAL PADDING: Space for the banner when visible */
-            padding-top: 30px; 
+            padding-top: 30px;
         }
         body { min-height: 100vh; }
 
@@ -118,9 +118,9 @@
             padding: 0;
             margin-right: 0;
         }
-        .hero-nav-title, 
-        .main-links a, 
-        .footer-social-link, 
+        .hero-nav-title,
+        .main-links a,
+        .footer-social-link,
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Press Start 2P', monospace !important;
             letter-spacing: 0.04em;
@@ -128,18 +128,20 @@
         /* MAIN TITLE FONT & OUTLINE */
         .hero-nav-title {
             color: #fff; /* White text */
-            font-size: 2.5rem; /* Made larger */
+            font-size: 2rem; /* Made smaller */
             -webkit-text-stroke: 2px #000; /* Bolder 2px black outline for Webkit browsers */
             text-stroke: 2px #000;         /* Bolder 2px black outline for standard browsers */
             font-weight: normal;
             word-break: break-word;
             text-align: right;
             margin-bottom: 4px;
+            position: relative; /* For positioning hopped toads */
+            padding-left: 30px; /* Space for hopped toads */
         }
         /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
         .hero-nav-subtitle {
             font-family: 'DotGothic16', monospace !important;
-            font-size: 3rem;
+            font-size: 2.5rem; /* Made smaller */
             color: #fff;
             text-align: right; /* Current desktop alignment */
             margin-bottom: 18px;
@@ -196,6 +198,7 @@
             will-change: transform;
             display: block;
             transform: translateY(100%);
+            cursor: pointer; /* Make toads clickable */
         }
         .hero-nav-subtitle .frog-peep.peeping {
             transform: translateY(30%);
@@ -226,60 +229,54 @@
             padding: 0;
         }
         .main-links a {
-    /* Keep existing styles like font-size, text-decoration, display, align-items, gap, box-sizing */
-    font-size: 1rem;
-    color: #181818; /* Black text */
-    text-decoration: none;
-    opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
-    font-weight: normal;
-    display: flex;
-    align-items: center; /* Aligns toad icon and text vertically */
-    justify-content: flex-start; /* Aligns content to the left */
-    gap: 0.5em; /* Spacing between icon and text */
-
-    box-sizing: border-box;
-
-    padding: 12px 25px; /* Adjust padding to your preference for rectangular shape */
-
-    border-radius: 0; /* Ensures a perfectly rectangular shape */
-    border: 4px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
-    margin: 0 0.1em; /* Keep current margins */
-
-    background-color: #FFFFFF; /* White infill for the button */
-    position: relative; /* Needed for z-index if other elements overlap */
-    overflow: hidden; /* Ensures content stays within boundaries */
-    z-index: 0;
-
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-}
-.main-links .icon {
-    display: inline-block; /* Or flex/grid depending on layout */
-    width: 1.7em; /* Or whatever size your default icons should be */
-    height: 1.7em;
-    min-width: 1.7em;
-    min-height: 1.7em;
-    vertical-align: middle;
-    margin-right: 0.1em;
-    background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    image-rendering: auto;
-    transition: background-image 0.15s, filter 0.2s ease;
-}
+            font-size: 1rem;
+            color: #181818; /* Black text */
+            text-decoration: none;
+            opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
+            font-weight: normal;
+            display: flex;
+            align-items: center; /* Aligns toad icon and text vertically */
+            justify-content: flex-start; /* Aligns content to the left */
+            gap: 0.5em; /* Spacing between icon and text */
+            box-sizing: border-box;
+            padding: 12px 25px; /* Adjust padding to your preference for rectangular shape */
+            border-radius: 0; /* Ensures a perfectly rectangular shape */
+            border: 4px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
+            margin: 0 0.1em; /* Keep current margins */
+            background-color: #FFFFFF; /* White infill for the button */
+            position: relative; /* Needed for z-index if other elements overlap */
+            overflow: hidden; /* Ensures content stays within boundaries */
+            z-index: 0;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+        }
+        .main-links .icon {
+            display: inline-block; /* Or flex/grid depending on layout */
+            width: 1.7em; /* Or whatever size your default icons should be */
+            height: 1.7em;
+            min-width: 1.7em;
+            min-height: 1.7em;
+            vertical-align: middle;
+            margin-right: 0.1em;
+            background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: auto;
+            transition: background-image 0.15s, filter 0.2s ease;
+        }
         /* Hover styles for the button (link) itself */
         .main-links a:hover,
-.main-links a:focus {
-    background-color: #181818 !important; /* Background becomes black */
-    color: #FDEDF4 !important; /* Text color becomes white */
-    opacity: 1 !important;
-    text-decoration: none !important;
-    border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
-}
+        .main-links a:focus {
+            background-color: #181818 !important; /* Background becomes black */
+            color: #FDEDF4 !important; /* Text color becomes white */
+            opacity: 1 !important;
+            text-decoration: none !important;
+            border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
+        }
         /* Hover styles for the toad icon within the button */
-       .main-links a:hover .icon {
-    filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
-}
+        .main-links a:hover .icon {
+            filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+        }
         .main-links a.shop:hover .icon    { background-image: url("./images/toad shop.png"); }
         .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
         .main-links a.about:hover .icon   { background-image: url("./images/toad about.png"); }
@@ -309,7 +306,7 @@
         .banner-hero-separator {
             margin-top: 0;
         }
-        
+
         /* New containers for desktop/mobile banner content */
         .desktop-banner-container {
             display: block; /* Default for desktop */
@@ -324,11 +321,11 @@
             height: 100%;
             object-fit: cover;
             object-position: center;
-            
+
             transform: scale(1.3);
             transition: transform 0.3s ease;
 
-            margin: 0; 
+            margin: 0;
             border-radius: 0;
             max-width: none;
         }
@@ -394,26 +391,9 @@
             opacity: 0;
             pointer-events: none;
         }
-
-        /* Style for the main gallery section header */
-        .gallery-section-header {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1.5rem; /* Adjust size as needed */
-            letter-spacing: 0.04em;
-            text-align: center;
-            color: #181818;
-            background-color: #FFFFFF;
-            border: 4px solid #181818;
-            padding: 12px 25px; /* Similar padding to nav links */
-            border-radius: 0;
-            display: block; /* Ensures it takes full width for centering */
-            width: fit-content; /* Makes the box fit the text content */
-            margin: 40px auto 30px auto; /* Centers horizontally and adds vertical spacing */
-            text-decoration: none; /* In case it's ever wrapped in a link */
-            font-weight: normal;
-            box-sizing: border-box;
+        #galleryHeader { /* New style for the gallery header */
+            font-size: 1.5rem; /* Reduced font size */
         }
-
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -525,16 +505,19 @@
         .gallery-item .caption {
             margin-top: 8px;
             font-size: 1rem;
-            background-color: #FFFFFF; /* White background */
-            color: #181818; /* Black text */
-            border: 4px solid #181818; /* Black border (similar to desktop nav links) */
-            padding: 8px 15px; /* Padding for the box */
-            border-radius: 0; /* Rectangular corners */
-            display: inline-block; /* Allow padding/border and fit content */
-            width: fit-content; /* Make the box fit its content */
-            margin-left: auto; /* For horizontal centering */
-            margin-right: auto; /* For horizontal centering */
-            box-sizing: border-box; /* Include padding/border in width */
+            /* Applying button-like styles here: */
+            background-color: #FFFFFF !important; /* White background */
+            color: #181818 !important; /* Black text */
+            border: 4px solid #181818 !important; /* Black border (similar to desktop nav links) */
+            padding: 8px 15px !important; /* Padding for the box */
+            border-radius: 0 !important; /* Rectangular corners */
+            display: inline-block !important; /* Allow padding/border and fit content */
+            width: fit-content !important; /* Make the box fit its content */
+            margin-left: auto !important; /* For horizontal centering */
+            margin-right: auto !important; /* For horizontal centering */
+            box-sizing: border-box !important; /* Include padding/border in width */
+            /* End of new styles */
+
             font-family: 'Press Start 2P', cursive, monospace;
             text-align: center;
         }
@@ -592,6 +575,26 @@
             letter-spacing: 0.07em;
             text-align: center;
         }
+
+        /* Styles for the "hopped" toads */
+        .hopped-toad-container {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Space between hopped toads */
+            z-index: 5; /* Above the title text */
+        }
+        .hopped-toad {
+            width: 1.5em; /* Adjust size to match the title's font size */
+            height: 1.5em;
+            object-fit: contain;
+            transition: transform 0.5s ease-out; /* For the "hop" animation */
+            filter: brightness(0) invert(1); /* Make them white */
+        }
+
        /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
@@ -614,7 +617,6 @@
         margin-right: 0px;
         margin-top: 0px;
     }
-    .hero-logo { height: 160px; }
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
@@ -633,18 +635,19 @@
     .hero-nav-title {
         text-align: right;
         width: 90%;
-        font-size: 3rem;
+        font-size: 2.5rem; /* Made smaller for mobile */
         -webkit-text-stroke: 1.5px #000;
         text-stroke: 1.5px #000;
         margin-bottom: 8px;
         word-break: break-word;
         hyphens: auto;
         line-height: 1;
+        padding-left: 0; /* Reset padding for mobile */
     }
     .hero-nav-subtitle {
         text-align: right;
         width: 90%;
-        font-size: 3rem;
+        font-size: 2.5rem; /* Made smaller for mobile */
         text-shadow:
             -1.5px -1.5px 0 #000,
             1.5px -1.5px 0 #000,
@@ -659,6 +662,19 @@
         word-break: break-word;
         hyphens: auto;
         line-height: 1.2;
+    }
+
+    .hopped-toad-container {
+        position: static; /* Adjust positioning for mobile */
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+        margin-top: 10px; /* Space below the title */
+        transform: none;
+    }
+    .hopped-toad {
+        width: 1.2em;
+        height: 1.2em;
     }
 
     .main-links {
@@ -756,17 +772,17 @@
     .main-links a:hover::before {
         filter: none; /* No filter needed as ::before content is gone */
     }
-    
+
     /* MODIFICATIONS START HERE for banner and separators */
     .nav-hero-separator, .banner-hero-separator {
         /* Force hide separators on mobile, removing all their space */
         display: none !important;
-        visibility: hidden !important; 
-        height: 0 !important;        
-        margin: 0 !important;         
-        padding: 0 !important;        
-        border: none !important;      
-        overflow: hidden !important;  
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
         /* Also ensure their original width/min-width/max-width/height are overridden */
         width: 0 !important;
         min-width: 0 !important;
@@ -788,14 +804,14 @@
         overflow: hidden;
         margin: 0 0 10px 0; /* Align to edge, add bottom margin */
         border-radius: 0;
-        
+
         /* APPLY THE WHITE BORDER HERE (to the container) */
-        border: 20px solid #FFFFFF; 
+        border: 10px solid #FFFFFF;
         /* Crucial: border is included *within* the 100vw width/height of the container */
-        box-sizing: border-box; 
+        box-sizing: border-box;
 
         /* Ensure no padding here, as border is now on container */
-        padding: 0; 
+        padding: 0;
     }
 
     .banner-images-spacing {
@@ -810,8 +826,8 @@
         width: 100%; /* Image fills the container's *inner* space */
         height: 100%; /* Image fills the container's *inner* space */
         object-fit: cover; /* Ensures image covers the area, cropping if needed */
-        object-position: center; /* Centers the image content */
-        
+        object-position: center;
+
         /* IMPORTANT: Remove 'border' and 'box-sizing' from the image itself */
         border: none; /* Make sure no border is on the image itself */
         box-sizing: content-box; /* Revert to default for image */
