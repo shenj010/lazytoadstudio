@@ -661,11 +661,11 @@
         /* --- Changes for Expanding Box Style --- */
         /* REMOVE: height: 190px; (or whatever fixed height you had) */
         height: auto; /* Allow the box to expand/contract based on content */
-        min-height: 70px; /* Minimum height, enough for one row of toads (adjust this value as needed) */
+        /* REMOVE: min-height: 70px; (as it will be handled by content and align-content) */
 
         /* --- Changes for Top Alignment --- */
         /* REMOVE: margin-top: 1px; (this would create an offset from the very top) */
-        align-self: start; /* Aligns the box to the very top of its grid row in .hero-header */
+        /* align-self: start; (changed in media query) */
 
         /* --- Revert to Solid Box Appearance --- */
         border: 10px solid #FFFFFF; /* White border for a solid box */
@@ -681,19 +681,20 @@
         grid-template-columns: auto 400px 1fr;
         grid-template-areas:
             "logo desktop-toads-box nav";
-        align-items: center;
+        align-items: end; /* CHANGED: Align items to the bottom */
     }
 
     /* Add/modify this section for the desktop grid */
    #desktopToadsGrid {
         display: grid;
         grid-template-columns: repeat(6, 1fr); /* Your 8 columns */
-        /* REMOVE: grid-template-rows: repeat(8, 1fr); (or whatever fixed rows you had) */
-        grid-auto-rows: 70px; /* Each new row will automatically be 40px tall (match min-height above) */
+        /* REMOVED: grid-template-rows: repeat(8, 1fr); */
+        /* REMOVED: grid-auto-rows: 70px; */
         gap: 2px; /* Adjust gap if needed */
         width: 100%;
         height: auto; /* Allow the grid's height to be determined by its rows */
         overflow: hidden; /* Prevents scrollbars if content overflows */
+        align-content: end; /* ADDED: Aligns grid content to the bottom, causing it to grow upwards */
     }
 
     /* --- Styles for individual toad images within the grid --- */
@@ -716,6 +717,7 @@
             display: block; /* Show the new desktop box on desktop */
             grid-area: desktop-toads-box; /* Place it in the defined grid area */
             margin: 0 20px; /* Add horizontal margin for spacing on desktop */
+            align-self: end; /* CHANGED: Aligns the box to the very bottom of its grid row in .hero-header */
         }
 
         .hero-nav-col {
@@ -1551,21 +1553,31 @@
                     // Calculate target position in the currentCollectedToadsGrid (THIS IS THE KEY CHANGE)
                     if (currentCollectedToadsGrid) { // Ensure the grid exists
                         const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
-                        const toadWidth = gridRect.width / 4;
-                        const toadHeight = gridRect.height / 4;
+                        // For 6 columns, 2 rows (max 12 toads)
+                        const cols = 6;
+                        const rows = Math.ceil(maxToads / cols); // Max 2 rows for 12 toads
+                        const toadWidthInGrid = gridRect.width / cols;
+                        const toadHeightInGrid = gridRect.height / rows; // This will be dynamic
 
                         // Calculate target column and row for stacking in columns
-                        const targetColumn = Math.floor(collectedToadCount / 4); // 0-3
-                        const targetRow = collectedToadCount % 4; // 0-3
+                        const targetColumn = collectedToadCount % cols; // 0-5
+                        const targetRow = Math.floor(collectedToadCount / cols); // 0-1
 
-                        const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
-                        const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
+                        // Calculate target X and Y for the center of the target grid cell
+                        const targetX = gridRect.left + (targetColumn * toadWidthInGrid) + (toadWidthInGrid / 2);
+                        // For upward expansion, calculate Y from the bottom of the grid
+                        const targetY = gridRect.bottom - ((targetRow + 0.5) * toadHeightInGrid);
+
+                        // Adjust targetX, targetY to align the hopping toad's top-left with the calculated center
+                        const finalTargetX = targetX - (frogRect.width / 2);
+                        const finalTargetY = targetY - (frogRect.height / 2);
+
 
                         // Trigger hopping animation after initial positioning is rendered
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => { // Double rAF for smoother transition start
-                                const translateX = targetX - frogRect.left;
-                                const translateY = targetY - frogRect.top;
+                                const translateX = finalTargetX - frogRect.left;
+                                const translateY = finalTargetY - frogRect.top;
 
                                 // Apply transform for the hop (with an upward arc) and fade out
                                 hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
