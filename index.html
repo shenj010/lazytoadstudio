@@ -130,7 +130,7 @@
     /* MAIN TITLE FONT & OUTLINE */
     .hero-nav-title {
         color: #fff; /* White text */
-        font-size: 2.5rem; /* Made smaller */
+        font-size: 2.5rem; /* Default for larger mobile/small desktop */
         -webkit-text-stroke: 2px #000; /* Bolder 2px black outline for Webkit browsers */
         text-stroke: 2px #000;          /* Bolder 2px black outline for standard browsers */
         font-weight: normal;
@@ -143,7 +143,7 @@
     /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
     .hero-nav-subtitle {
         font-family: 'DotGothic16', monospace !important;
-        font-size: 3rem; /* Made smaller */
+        font-size: 3rem; /* Default for larger mobile/small desktop */
         color: #fff;
         text-align: right; /* Current desktop alignment */
         margin-bottom: 18px;
@@ -676,10 +676,11 @@
     @media (min-width: 701px) { /* NEW MEDIA QUERY: Applies ONLY to desktop screens */
     .hero-header {
         display: grid;
-        grid-template-columns: auto 400px 1fr;
+        /* CHANGED: Flexible grid columns for better responsiveness */
+        grid-template-columns: auto minmax(200px, 380px) minmax(300px, 1fr);
         grid-template-areas:
             "logo desktop-toads-box nav";
-        align-items: end; /* CHANGED: Align items to the bottom */
+        align-items: end; /* Align items to the bottom */
     }
 
     /* Add/modify this section for the desktop grid */
@@ -692,7 +693,7 @@
         width: 100%;
         height: auto; /* Allow the grid's height to be determined by its rows */
         overflow: hidden; /* Prevents scrollbars if content overflows */
-        align-content: end; /* ADDED: Aligns grid content to the bottom, causing it to grow upwards */
+        align-content: end; /* Aligns grid content to the bottom, causing it to grow upwards */
     }
 
     /* --- Styles for individual toad images within the grid --- */
@@ -715,7 +716,7 @@
             display: block; /* Show the new desktop box on desktop */
             grid-area: desktop-toads-box; /* Place it in the defined grid area */
             margin: 0 20px; /* Add horizontal margin for spacing on desktop */
-            align-self: end; /* CHANGED: Aligns the box to the very bottom of its grid row in .hero-header */
+            align-self: end; /* Aligns the box to the very bottom of its grid row in .hero-header */
         }
 
         .hero-nav-col {
@@ -726,7 +727,26 @@
         #collectedToadsBox {
             display: none;
         }
+
+        /* Adjusted font sizes for smaller desktop screens */
+        .hero-nav-title {
+            font-size: 2rem; /* Slightly smaller for medium desktops */
+        }
+        .hero-nav-subtitle {
+            font-size: 2.5rem; /* Slightly smaller for medium desktops */
+        }
     }
+
+    /* NEW MEDIA QUERY: For larger desktop screens, restore original font sizes */
+    @media (min-width: 1201px) {
+        .hero-nav-title {
+            font-size: 2.5rem; /* Original size for large desktops */
+        }
+        .hero-nav-subtitle {
+            font-size: 3rem; /* Original size for large desktops */
+        }
+    }
+
 
     @media (max-width: 700px) {
         /* Hides the new desktop box on mobile screens */
@@ -971,10 +991,6 @@
         height: 100%; /* Image fills the container's *inner* space */
         object-fit: cover; /* Ensures image covers the area, cropping if needed */
         object-position: center;
-
-        /* IMPORTANT: Remove 'border' and 'box-sizing' from the image itself */
-        border: none; /* Make sure no border is on the image itself */
-        box-sizing: content-box; /* Revert to default for image */
 
         /* IMPORTANT: Do NOT set transform: none; here. This allows the global transform: scale(1.3); to apply for the "zoomed in" effect */
         /* If you want a specific zoom, you can explicitly set it here, e.g., transform: scale(1.3); */
@@ -1346,7 +1362,7 @@
         frogWrap.className = 'frog-wrap';
         const frog = document.createElement('img');
         frog.src = frogImgSrc;
-        frog.alt = "�";
+        frog.alt = "🐸";
         frog.className = 'frog-peep';
         frog.style.height = '1.2em';
         frog.style.width = '1.2em';
@@ -1665,4 +1681,3 @@
 </script>
 </body>
 </html>
-�
