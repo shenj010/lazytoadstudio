@@ -651,7 +651,7 @@
     /* NEW: Base styles for the new desktop box - Add this after the above .collected-toads-box */
     .desktop-collected-toads-box {
         display: none; /* Keep hidden by default, will be shown via JS */
-        width: 380px; /* Fixed width as you desired */
+        width: 380px; /* Default fixed width for wide desktop */
         box-sizing: border-box;
         padding: 5px; /* Inner padding */
         margin-left: 10px; /* Maintains your horizontal margin */
@@ -660,10 +660,7 @@
 
         /* --- Changes for Expanding Box Style --- */
         height: auto; /* Allow the box to expand/contract based on content */
-        /* Removed min-height from CSS, now set dynamically by JS */
-
-        /* --- Changes for Top Alignment --- */
-        /* align-self: start; (changed in media query) */
+        /* min-height is now controlled by JS for wide desktop, and CSS for shrunk desktop */
 
         /* --- Revert to Solid Box Appearance --- */
         border: 10px solid #FFFFFF; /* White border for a solid box */
@@ -673,51 +670,26 @@
         /* E.g., remove any &::before, &::after rules if they are present for this selector */
     }
 
-    @media (min-width: 701px) { /* NEW MEDIA QUERY: Applies ONLY to desktop screens */
-    .hero-header {
-        display: grid;
-        /* CHANGED: Flexible grid columns for better responsiveness */
-        grid-template-columns: auto minmax(200px, 380px) minmax(300px, 1fr);
-        grid-template-areas:
-            "logo desktop-toads-box nav";
-        align-items: start; /* CHANGED: Align items to the top */
-    }
-
-    /* Add/modify this section for the desktop grid */
-   #desktopToadsGrid {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr); /* Your 8 columns */
-        /* REMOVED: grid-template-rows: repeat(8, 1fr); */
-        /* REMOVED: grid-auto-rows: 70px; */
-        gap: 2px; /* Adjust gap if needed */
-        width: 100%;
-        height: auto; /* Allow the grid's height to be determined by its rows */
-        overflow: hidden; /* Prevents scrollbars if content overflows */
-        align-content: end; /* Aligns grid content to the bottom, causing it to grow upwards */
-    }
-
-    /* --- Styles for individual toad images within the grid --- */
-    #desktopToadsGrid .hopped-toad {
-        width: 70%;   /* Keep the toads smaller within cells */
-        height: auto;
-        object-fit: contain;
-        image-rendering: crisp-edges;
-        image-rendering: -webkit-optimize-contrast;
-        display: block;
-        margin: auto;   /* Centers the image */
-    }
+    @media (min-width: 701px) { /* Applies to all desktop screens (701px and wider) */
+        .hero-header {
+            display: grid;
+            grid-template-columns: auto minmax(200px, 380px) minmax(300px, 1fr);
+            grid-template-areas:
+                "logo desktop-toads-box nav";
+            align-items: end; /* CHANGED: Align items to the bottom, as requested */
+        }
 
         /* Assign existing elements to their grid areas on desktop */
         .hero-logo-col {
             grid-area: logo;
-            margin-top: 0; /* ADDED: Ensure logo column starts at the top */
+            margin-top: 0; /* Ensure logo column starts at the top of its grid area */
         }
 
         .desktop-collected-toads-box {
             display: block; /* Show the new desktop box on desktop */
             grid-area: desktop-toads-box; /* Place it in the defined grid area */
             margin: 0 20px; /* Add horizontal margin for spacing on desktop */
-            align-self: start; /* CHANGED: Aligns the box to the very TOP of its grid row in .hero-header */
+            align-self: end; /* CHANGED: Aligns the box to the very BOTTOM of its grid row in .hero-header */
         }
 
         .hero-nav-col {
@@ -729,17 +701,36 @@
             display: none;
         }
 
-        /* Adjusted font sizes for smaller desktop screens */
+        /* Adjusted font sizes for smaller desktop screens (default for 701px to 999px) */
         .hero-nav-title {
-            font-size: 2rem; /* Slightly smaller for medium desktops */
+            font-size: 2rem;
         }
         .hero-nav-subtitle {
-            font-size: 2.5rem; /* Slightly smaller for medium desktops */
+            font-size: 2.5rem;
         }
     }
 
-    /* NEW MEDIA QUERY: For larger desktop screens, restore original font sizes */
-    @media (min-width: 1201px) {
+    /* Specific breakpoint for "shrunk" desktop where toad box becomes 180x180 */
+    @media (min-width: 701px) and (max-width: 999px) {
+        .desktop-collected-toads-box {
+            width: 180px; /* Fixed width for shrunk desktop */
+            min-height: 180px; /* Fixed min-height for shrunk desktop */
+        }
+        /* Potentially adjust font sizes further for this narrow desktop range if needed */
+        .hero-nav-title {
+            font-size: 1.8rem;
+        }
+        .hero-nav-subtitle {
+            font-size: 2.2rem;
+        }
+    }
+
+    /* For larger desktop screens (1000px and wider), restore original sizes */
+    @media (min-width: 1000px) {
+        .desktop-collected-toads-box {
+            width: 380px; /* Restore original width for larger desktops */
+            min-height: auto; /* Let JS handle or content dictate */
+        }
         .hero-nav-title {
             font-size: 2.5rem; /* Original size for large desktops */
         }
@@ -1313,11 +1304,11 @@
 
     // Function to adjust the desktop toad box height
     function adjustDesktopToadsBoxHeight() {
-        if (window.innerWidth > 700 && mainLinks && desktopToadsBox) {
-            // Set min-height of desktop toad box to match main links height
+        // Only apply dynamic height for large desktop screens (>= 1000px)
+        if (window.innerWidth >= 1000 && mainLinks && desktopToadsBox) {
             desktopToadsBox.style.minHeight = `${mainLinks.offsetHeight}px`;
         } else if (desktopToadsBox) {
-            // Reset min-height if not on desktop or if elements are missing
+            // Reset min-height for smaller desktop or mobile, where CSS media queries will control it
             desktopToadsBox.style.minHeight = 'auto';
         }
     }
@@ -1587,7 +1578,7 @@
                         const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
                         // For 6 columns, 2 rows (max 12 toads)
                         const cols = 6;
-                        const rows = Math.ceil(maxToads / cols); // Max 2 rows for 12 toads
+                        const rows = Math.ceil(maxToadCount / cols); // Max 2 rows for 12 toads (use maxToadCount here)
                         const toadWidthInGrid = gridRect.width / cols;
                         const toadHeightInGrid = gridRect.height / rows; // This will be dynamic
 
