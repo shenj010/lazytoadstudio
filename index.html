@@ -650,18 +650,61 @@
 
     /* NEW: Base styles for the new desktop box - Add this after the above .collected-toads-box */
     .desktop-collected-toads-box {
-        display: none; /* Hidden by default, will be shown only on desktop */
-        width: 380px; /* Fixed width for the box */
-        height: 190px; /* Fixed height for the box */
-        border: 10px solid #FFFFFF; /* White border */
-        position: relative;
-        box-sizing: border-box;
-        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-        padding: 5px; /* Inner padding for the grid */
-        margin-top: 1px;    /* Pushes it down 10px from the top of its cell */
-        margin-left: 10px;    /* Pushes it right 5px from the left of its cell */
-    /* You can use negative margins too for very small overlaps */
-        }
+    display: none;
+    width: 380px; /* Your desired width */
+    height: 190px; /* Your desired height */
+    position: relative; /* CRUCIAL for positioning pseudo-elements */
+    box-sizing: border-box;
+    padding: 5px; /* Inner padding for your content */
+    margin-top: 1px;
+    margin-left: 10px;
+    overflow: hidden; /* Ensures content/toads stay within the visible box */
+
+    /* --- CORE BRACKET LINES --- */
+    background-color: transparent; /* No background fill */
+    border: none; /* Remove any existing full borders */
+
+    /* Vertical lines of the bracket */
+    border-left: 10px solid #FFFFFF; /* Left vertical line */
+    border-right: 10px solid #FFFFFF; /* Right vertical line */
+
+    /* --- HORIZONTAL "FEET" USING PSEUDO-ELEMENTS --- */
+
+    /* Top "feet" */
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0; /* Align to the top of the box */
+        left: -10px; /* Start just outside the left border */
+        width: calc(100% + 20px); /* Span across the entire box width plus border thickness on both sides */
+        height: 10px; /* Thickness of the foot */
+        background-color: #FFFFFF; /* Color of the feet */
+        /* Create two segments using a linear gradient or mask, but simpler to use two pseudo elements,
+           or use transform to pull parts of the pseudo-element in. */
+        /* A common trick is to use a background gradient to simulate two short lines */
+        background-image: linear-gradient(to right, #FFFFFF 0px, #FFFFFF 30px, transparent 30px, transparent calc(100% - 30px), #FFFFFF calc(100% - 30px), #FFFFFF 100%);
+        background-size: 100% 100%; /* Ensure gradient covers the full width */
+        background-repeat: no-repeat;
+    }
+
+    /* Bottom "feet" */
+    &::after {
+        content: "";
+        position: absolute;
+        bottom: 0; /* Align to the bottom of the box */
+        left: -10px; /* Start just outside the left border */
+        width: calc(100% + 20px); /* Span across the entire box width plus border thickness on both sides */
+        height: 10px; /* Thickness of the foot */
+        background-color: #FFFFFF; /* Color of the feet */
+        background-image: linear-gradient(to right, #FFFFFF 0px, #FFFFFF 30px, transparent 30px, transparent calc(100% - 30px), #FFFFFF calc(100% - 30px), #FFFFFF 100%);
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+    }
+
+    /* Ensure this is also applied within the media query if .desktop-collected-toads-box is only for desktop */
+    /* If .desktop-collected-toads-box itself is defined within the media query, then all these styles apply only there. */
+    /* If it's a global class, make sure these styles are ALSO within the desktop media query. */
+}
 
     @media (min-width: 701px) { /* NEW MEDIA QUERY: Applies ONLY to desktop screens */
     .hero-header {
