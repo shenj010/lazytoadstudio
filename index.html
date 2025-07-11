@@ -671,7 +671,7 @@
         display: flex;
         flex-direction: column; /* Stack logo and new box */
         align-items: flex-start; /* Align logo and box to the left */
-        justify-content: flex-end; /* Push logo and box to the bottom of this column */
+        justify-content: flex-start; /* Keep logo at the top of its column */
         flex: 0 0 50%; /* Set logo column to 50% */
         max-width: 50%; /* Ensure it doesn't grow beyond this */
         margin-right: 0px;
@@ -681,7 +681,7 @@
 
     .logo-circle {
         padding: 8px;
-        margin-bottom: 10px; /* Space between logo and new box */
+        margin-bottom: 10px; /* Retain space between logo and the box */
     }
 
     /* Show the collected toads box on mobile */
@@ -689,7 +689,7 @@
         display: block; /* Show on mobile */
         width: 150px; /* Keeping width at 150px as before */
         height: 150px; /* Keeping height at 150px as before */
-        margin-top: 0; /* Margin handled by logo-circle's margin-bottom */
+        margin-top: auto; /* Pushes the box to the bottom of the flex column */
         margin-left: 0; /* Align to the left of the logo column */
         margin-right: auto; /* Keep it aligned left */
     }
@@ -1215,7 +1215,7 @@
             frogWrap.className = 'frog-wrap';
             const frog = document.createElement('img');
             frog.src = frogImgSrc;
-            frog.alt = "�";
+            frog.alt = "🐸";
             frog.className = 'frog-peep';
             frog.style.height = '1.2em';
             frog.style.width = '1.2em';
@@ -1435,7 +1435,7 @@
                         hoppingToad.style.height = frogRect.height + 'px';
 
                         // Calculate target position in the collectedToadsGrid
-                        const gridRect = collectedToadsGrid.getBoundingClientRect();
+                        const gridRect = collectedToadsToadGrid.getBoundingClientRect();
                         const toadWidth = gridRect.width / 4;
                         const toadHeight = gridRect.height / 4;
 
