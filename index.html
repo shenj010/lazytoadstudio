@@ -1464,105 +1464,93 @@
         updateToadCounter(); // Initialize counter display
 
         // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
-frogs.forEach(frog => {
-    frog.onclick = function(event) {
-        // Ensure the frog is currently peeping/raised AND clickable before processing click
-        if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
-            event.stopPropagation(); // Prevent event bubbling
+        frogPeeps.forEach(frog => {
+            frog.onclick = function(event) {
+                // Ensure the frog is currently peeping/raised AND clickable before processing click
+                if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
+                    event.stopPropagation(); // Prevent event bubbling
 
-            // Only collect if there's space in the box
-            if (collectedToadCount < maxToads) {
-                // Clear all pending timers related to the current sequence immediately
-                if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-                if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-                peepSequenceActive = false; // End current sequence prematurely upon collection
-                currentlyPeepingFrog = null; // No frog is currently peeping after collection
+                    // Only collect if there's space in the box
+                    if (collectedToadCount < maxToads) {
+                        // Clear all pending timers related to the current sequence immediately
+                        if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+                        if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+                        peepSequenceActive = false; // End current sequence prematurely upon collection
+                        currentlyPeepingFrog = null; // No frog is currently peeping after collection
 
-                // Make the original frog disappear immediately from the subtitle
-                frog.style.opacity = '0';
-                frog.style.pointerEvents = 'none'; // Make it unclickable
+                        // Make the original frog disappear immediately from the subtitle
+                        frog.style.opacity = '0';
+                        frog.style.pointerEvents = 'none'; // Make it unclickable
 
-                // --- Start Hop Animation Logic ---
-                const frogRect = frog.getBoundingClientRect(); // Get original frog's position
+                        // --- Start Hop Animation Logic ---
+                        const frogRect = frog.getBoundingClientRect(); // Get original frog's position
 
-                const hoppingToad = document.createElement('img');
-                hoppingToad.src = frogImgSrc; // Use the same image source
-                hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
-                document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
+                        const hoppingToad = document.createElement('img');
+                        hoppingToad.src = frogImgSrc; // Use the same image source
+                        hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
+                        document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
 
-                // Set initial position of the hopping toad (same as the clicked frog)
-                hoppingToad.style.left = frogRect.left + 'px';
-                hoppingToad.style.top = frogRect.top + 'px';
-                hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
-                hoppingToad.style.height = frogRect.height + 'px';
+                        // Set initial position of the hopping toad (same as the clicked frog)
+                        hoppingToad.style.left = frogRect.left + 'px';
+                        hoppingToad.style.top = frogRect.top + 'px';
+                        hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
+                        hoppingToad.style.height = frogRect.height + 'px';
 
-                // Calculate target position in the collectedToadsGrid
-                const gridRect = collectedToadsGrid.getBoundingClientRect();
-                const toadWidth = gridRect.width / 4;
-                const toadHeight = gridRect.height / 4;
+                        // Calculate target position in the collectedToadsGrid
+                        const gridRect = collectedToadsGrid.getBoundingClientRect();
+                        const toadWidth = gridRect.width / 4;
+                        const toadHeight = gridRect.height / 4;
 
-                // --- START OF MODIFIED CODE ---
-                let targetColumn;
-                let targetRow;
+                        // Calculate target column and row for stacking in columns
+                        const targetColumn = Math.floor(collectedToadCount / 4); // 0-3
+                        const targetRow = collectedToadCount % 4; // 0-3
 
-                // Apply the fix only for desktop (screen width > 700px)
-                if (window.innerWidth > 700) {
-                    // Desktop: Use the corrected logic
-                    targetRow = Math.floor(collectedToadCount / 4); // Determines the row
-                    targetColumn = collectedToadCount % 4; // Determines the column
-                } else {
-                    // Mobile: Keep the original logic (as it's working fine)
-                    targetColumn = Math.floor(collectedToadCount / 4); // 0-3
-                    targetRow = collectedToadCount % 4; // 0-3
+                        const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
+                        const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
+
+                        // Trigger hopping animation after initial positioning is rendered
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => { // Double rAF for smoother transition start
+                                const translateX = targetX - frogRect.left;
+                                const translateY = targetY - frogRect.top;
+
+                                // Apply transform for the hop (with an upward arc) and fade out
+                                hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
+                                hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                                hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                            });
+                        });
+
+                        // Clean up the hopping toad and add the final static toad
+                        hoppingToad.addEventListener('transitionend', () => {
+                            hoppingToad.remove(); // Remove the temporary hopping toad element
+
+                            // Create and append the final static toad to the grid
+                            const finalToad = document.createElement('img');
+                            finalToad.src = frogImgSrc; // Use the same image
+                            finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                            collectedToadsGrid.appendChild(finalToad);
+
+                            collectedToadCount++; // Increment collected toad count
+                            updateToadCounter(); // Update counter display
+
+                            // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
+                            resetFrogVisuals(frog);
+                            
+                            // Start the next overall peep sequence after collection
+                            startNextPeepSequence();
+
+                        }, { once: true }); // Ensure this listener runs only once per hop
+                    } else {
+                        // If box is full, just reset the frog without collecting
+                        resetFrogVisuals(frog);
+                        frog.style.opacity = '1';
+                        frog.style.pointerEvents = 'auto';
+                        startNextPeepSequence(); // Start next sequence
+                    }
                 }
-                // --- END OF MODIFIED CODE ---
-
-                const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
-                const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
-
-                // Trigger hopping animation after initial positioning is rendered
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => { // Double rAF for smoother transition start
-                        const translateX = targetX - frogRect.left;
-                        const translateY = targetY - frogRect.top;
-
-                        // Apply transform for the hop (with an upward arc) and fade out
-                        hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
-                        hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                        hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
-                    });
-                });
-
-                // Clean up the hopping toad and add the final static toad
-                hoppingToad.addEventListener('transitionend', () => {
-                    hoppingToad.remove(); // Remove the temporary hopping toad element
-
-                    // Create and append the final static toad to the grid
-                    const finalToad = document.createElement('img');
-                    finalToad.src = frogImgSrc; // Use the same image
-                    finalToad.classList.add('hopped-toad'); // Class for static collected toads
-                    collectedToadsGrid.appendChild(finalToad);
-
-                    collectedToadCount++; // Increment collected toad count
-                    updateToadCounter(); // Update counter display
-
-                    // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
-                    resetFrogVisuals(frog);
-
-                    // Start the next overall peep sequence after collection
-                    startNextPeepSequence();
-
-                }, { once: true }); // Ensure this listener runs only once per hop
-            } else {
-                // If box is full, just reset the frog without collecting
-                resetFrogVisuals(frog);
-                frog.style.opacity = '1';
-                frog.style.pointerEvents = 'auto';
-                startNextPeepSequence(); // Start next sequence
-            }
-        }
-    };
-});
+            };
+        });
 
         // Mobile Navigation Toggle (existing code, unchanged)
         const logoElement = document.querySelector('.logo-circle');
