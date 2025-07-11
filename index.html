@@ -673,11 +673,13 @@
     @media (min-width: 1025px) { /* Changed from 701px */
         .hero-header {
             display: grid;
-            grid-template-columns: auto 200px 1fr;
+            /* Ensure these two lines are changed exactly as below: */
+            grid-template-columns: auto 1fr 200px; /* This defines the column widths for logo, nav, and toad box */
             grid-template-areas:
-                "logo desktop-toads-box nav";
+                "logo nav desktop-toads-box"; /* This reorders the areas */
             align-items: end;
         }
+        /* ... (other styles in this media query) ... */
 
         #desktopToadsGrid {
             display: grid;
