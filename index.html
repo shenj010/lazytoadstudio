@@ -608,67 +608,74 @@
             /* Removed 'filter: none;' unless explicitly needed */
         }
 
-/* MOBILE OPTIMIZATION (only for mobile) */
+        /* Styles for the "hopped" toads container */
+        .hopped-toad-container {
+            position: absolute; /* Position relative to .hero-header */
+            /* Calculate 'left' to be just right of the logo circle */
+            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
+            left: calc(2vw + 150px + (18px * 2) + 10px);
+            top: 50%; /* Vertically center within hero-header */
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center; /* Align items vertically if they have different heights */
+            gap: 5px; /* Space between hopped toads */
+            z-index: 5; /* Ensure it's above other elements if necessary */
+            white-space: nowrap; /* Keep toads on one line */
+            pointer-events: none; /* Make it non-interactive, only for visual display */
+        }
+
+       /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
         font-size: 15px;
     }
-    .hero-header {
-        display: grid; /* Use CSS Grid for flexible 2-column layout */
-        /* Define two columns:
-           - First column (`auto`): width will fit content (logo and toad box)
-           - Second column (`1fr`): takes up remaining available space for nav content */
+   .hero-header {
+        display: grid;
         grid-template-columns: auto 1fr;
-        /* Define a single row for the main header content. Vertical stacking will be handled by flexbox within columns. */
-        grid-template-rows: auto;
-        /* Assign grid areas: 'logo' for the left column, 'nav' for the right column */
-        grid-template-areas: "logo nav";
-        align-items: start; /* Align content to the top of the grid cells */
-        padding: 0 4vw 0 2vw; /* Responsive padding */
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "logo nav"
+            "toads .";
+        align-items: start;
+        padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
-        box-sizing: border-box; /* Include padding and border in the element's total width and height */
-        position: relative; /* Essential for containing absolutely positioned children if any */
-        min-height: 120px; /* Minimum height to accommodate content */
+        box-sizing: border-box;
+        position: relative;
+        /* NEW: Set a minimum height for the header */
+        min-height: 120px; /* Adjust this value as needed */
+        /* This min-height should be enough to contain your logo and
+           the maximum expected height of your title/subtitle without pushing the logo down. */
     }
 
-    /* Left column of the header: contains logo and collected toads box */
     .hero-logo-col {
-        grid-area: logo; /* Assign to the 'logo' grid area */
-        display: flex; /* Use flexbox to stack its children vertically */
-        flex-direction: column; /* Stack logo and collected-toads-box */
-        align-items: center; /* Center items horizontally within this column */
-        justify-content: space-between; /* Push logo to the top, collected-toads-box to the bottom */
-        height: 100%; /* Crucial: Ensure it takes full height of its grid cell to utilize space-between */
+        grid-area: logo; /* Assign this to the 'logo' area in the grid */
+        flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
         margin-right: 0px;
         margin-top: 0px;
-        margin-bottom: 0px;
+        margin-bottom: 10px; /* Add space below the logo before the toads */
     }
 
-    /* Logo circle styling */
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
     }
 
-    /* Right column of the header: contains main title and subtitle */
     .hero-nav-col {
-        grid-area: nav; /* Assign to the 'nav' grid area */
-        display: flex; /* Use flexbox to stack its children vertically */
-        flex-direction: column; /* Stack title and subtitle */
-        align-items: flex-end; /* Align title/subtitle to the right */
-        flex-grow: 1; /* Allow it to grow and take available space */
-        width: 100%;
-        max-width: none;
+        grid-area: nav; /* Assign this to the 'nav' area in the grid */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end; /* Keep alignment to the right for title/subtitle */
+        flex-grow: 1;
+        width: 100%; /* Take full width of its grid cell */
+        max-width: none; /* Remove max-width that might constrain in grid */
         margin: 0;
         padding: 0;
         margin-top: 0px;
     }
-
-    /* Main title styling */
     .hero-nav-title {
-        text-align: right;
+        text-align: right; /* Keep text aligned to the right */
         width: 90%;
         font-size: 3rem;
         -webkit-text-stroke: 1.5px #000;
@@ -679,17 +686,19 @@
         line-height: 1;
         padding-left: 0;
     }
-
-    /* Subtitle styling, remains under the main title on the right */
     .hero-nav-subtitle {
-        text-align: right;
+        text-align: right; /* Keep text aligned to the right */
         width: 90%;
         font-size: 3rem;
         text-shadow:
-            -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000,
-            -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000,
-            0px -1.5px 0 #000, 0px 1.5px 0 #000,
-            -1.5px 0px 0 #000, 1.5px 0px 0 #000;
+            -1.5px -1.5px 0 #000,
+            1.5px -1.5px 0 #000,
+            -1.5px 1.5px 0 #000,
+            1.5px 1.5px 0 #000,
+            0px -1.5px 0 #000,
+            0px 1.5px 0 #000,
+            -1.5px 0px 0 #000,
+            1.5px 0px 0 #000;
         margin-bottom: 18px;
         margin-top: 0;
         word-break: break-word;
@@ -697,66 +706,39 @@
         line-height: 1.2;
     }
 
-    /* collected-toads-box: Now visible and correctly positioned under the logo on mobile */
-    .collected-toads-box {
-        display: flex; /* Make the box visible on mobile */
-        width: 120px; /* Set a fixed width, adjust as needed */
-        height: 120px; /* Set a fixed height, adjust as needed (make it square for the grid) */
-        border: 2px solid #FFFFFF;
-        box-sizing: border-box;
-        position: relative; /* Essential for positioning the counter absolutely within it */
-        flex-direction: column; /* Stack the grid and counter vertically inside the box */
-        justify-content: space-between; /* Push grid to top, counter to bottom within the box */
-        align-items: center; /* Center grid and counter horizontally */
-        margin-top: auto; /* This crucial rule pushes the box to the bottom within .hero-logo-col */
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    /* #hoppedToadContainer (the actual 4x4 grid): visible and active on mobile */
     #hoppedToadContainer {
-        display: grid; /* Make it a grid on mobile */
-        grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
-        grid-template-rows: repeat(4, 1fr); /* 4 equal rows */
-        width: 100%; /* Fill its parent (.collected-toads-box) */
-        height: 100%; /* Fill its parent (.collected-toads-box) */
-        gap: 2px; /* Small gap between grid items (toads) */
-        padding: 5px; /* Padding inside the grid container */
-        box-sizing: border-box;
-        position: static; /* Ensure it flows normally within its flex parent */
+        grid-area: toads; /* Assign this to the 'toads' area in the grid */
+        /* It will now naturally position under the 'logo' grid area */
+        position: static; /* Ensure it flows within the grid, not absolutely positioned */
+        display: flex;
+        flex-wrap: wrap; /* Allow toads to wrap into rows */
+        justify-content: center; /* Center the toads within their rows */
+        width: 100%; /* Take full width of its grid cell */
+        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
         transform: none; /* Reset any desktop transforms */
+        box-sizing: border-box; /* Include padding in width calculation */
+        padding: 0 5px; /* Small horizontal padding inside the container */
+        gap: 5px; /* Add gap between toads */
+        z-index: 5; /* Adjust z-index if toads are overlapping other content */
+    }
+    .hopped-toad {
+        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
+        max-width: 25%; /* Ensures it doesn't exceed 25% */
+        height: auto; /* Maintain aspect ratio */
+        /* Removed fixed width/height like 1.2em as flex-basis will control it */
     }
 
-    /* toad-counter: visible and positioned within the collected-toads-box on mobile */
-    .toad-counter {
-        display: block; /* Make the counter visible on mobile */
-        position: absolute; /* Position it absolutely within its parent (.collected-toads-box) */
-        bottom: 5px; /* 5px from the bottom */
-        right: 5px; /* 5px from the right */
-        color: #FFFFFF;
-        font-family: 'Press Start 2P', monospace !important;
-        font-size: 0.7rem;
-        z-index: 10;
-        text-shadow: 1px 1px 0 #000;
-    }
-
-    /* main-links (Cascade Box): Positioned to cascade from under the logo */
-    /* Its position is relative to the viewport or its closest positioned ancestor (body/html). */
+    /* Your existing .main-links and .news-banner styles (unchanged) */
     .main-links {
         position: absolute;
-        /* Calculate 'top' based on the height of the elements in the left column:
-           header's top margin (14px)
-           + logo-circle's approximate height (e.g., 150px)
-           + collected-toads-box's height (120px)
-           + some additional spacing (e.g., 20px)
-           Adjust these values if your logo/box sizes differ or you need more/less space. */
-        top: calc(14px + 150px + 120px + 20px);
-        left: 2vw; /* Align with the header's left padding */
+        top: 200px;
+        left: 2vw;
         width: fit-content;
         min-width: 180px;
-        max-height: 0; /* For the expanding/collapsing animation */
-        overflow: hidden; /* Hide content when collapsed */
-        transition: max-height 0.3s ease-out; /* Smooth transition for height */
-        display: flex; /* Use flexbox for internal link layout */
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        display: flex;
         flex-direction: column;
         align-items: stretch;
         background-color: #FDEDF4;
@@ -808,6 +790,7 @@
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
     }
+
     /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
@@ -952,22 +935,14 @@
     </div>
     <section class="hero" id="hero">
       <div class="hero-header">
-          <div class="hero-logo-col">
-            <div class="logo-circle">
-              <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
-            </div>
-            <div class="collected-toads-box" id="collectedToadsBox">
-              <div class="hopped-toad-grid" id="hoppedToadContainer"></div>
-              <div class="toad-counter">
-                <span id="currentToadCount">0</span>/<span id="maxToadCount">16</span>
-              </div>
-            </div>
+        <div class="hero-logo-col">
+          <div class="logo-circle">
+            <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
           </div>
-          <div class="hero-nav-col">
-            <div class="hero-nav-title">
-              LAZY TOAD STUDIOS
-            </div>
-            </div>
+        </div>
+        <div class="hopped-toad-container" id="hoppedToadContainer"></div> <div class="hero-nav-col">
+          <div class="hero-nav-title">
+            LAZY TOAD STUDIOS
           </div>
           <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
           <nav class="main-links">
@@ -1186,380 +1161,311 @@
 
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
-    const subtitle = document.querySelector('.hero-nav-subtitle');
-    const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
-    const originalText = subtitle.textContent.trim();
-    const hoppedToadContainer = document.getElementById('hoppedToadContainer');
+        const subtitle = document.querySelector('.hero-nav-subtitle');
+        const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
+        const originalText = subtitle.textContent.trim();
+        const hoppedToadContainer = document.getElementById('hoppedToadContainer');
+        let hoppedToadCount = 0;
 
-    // NEW: Counter elements and variables
-    const currentToadCountSpan = document.getElementById('currentToadCount');
-    const maxToadCountSpan = document.getElementById('maxToadCount');
-    const maxToads = 16; // Maximum toads for a 4x4 grid
-    let hoppedToadCount = 0;
+        subtitle.innerHTML = ''; // Clear original content
 
-    // NEW: Update the max count display initially
-    if (maxToadCountSpan) {
-        maxToadCountSpan.textContent = maxToads;
-    }
+        // Create character spans and frog elements
+        for (const c of originalText) {
+            const wrap = document.createElement('span');
+            wrap.className = 'char-frog-wrap';
 
-    subtitle.innerHTML = ''; // Clear original content
+            const letterWrap = document.createElement('span');
+            letterWrap.className = 'letter-wrap';
+            const letter = document.createElement('span');
+            letter.className = 'the-letter';
+            letter.textContent = c;
+            letterWrap.appendChild(letter);
 
-    // Create character spans and frog elements
-    for (const c of originalText) {
-        const wrap = document.createElement('span');
-        wrap.className = 'char-frog-wrap';
+            const frogWrap = document.createElement('span');
+            frogWrap.className = 'frog-wrap';
+            const frog = document.createElement('img');
+            frog.src = frogImgSrc;
+            frog.alt = "🐸";
+            frog.className = 'frog-peep';
+            frog.style.height = '1.2em';
+            frog.style.width = '1.2em';
+            frogWrap.appendChild(frog);
 
-        const letterWrap = document.createElement('span');
-        letterWrap.className = 'letter-wrap';
-        const letter = document.createElement('span');
-        letter.className = 'the-letter';
-        letter.textContent = c;
-        letterWrap.appendChild(letter);
-
-        const frogWrap = document.createElement('span');
-        frogWrap.className = 'frog-wrap';
-        const frog = document.createElement('img');
-        frog.src = frogImgSrc;
-        frog.alt = "🐸";
-        frog.className = 'frog-peep';
-        frog.style.height = '1.2em';
-        frog.style.width = '1.2em';
-        frogWrap.appendChild(frog);
-
-        wrap.appendChild(letterWrap);
-        wrap.appendChild(frogWrap);
-        subtitle.appendChild(wrap);
-    }
-
-    const frogPeeps = subtitle.querySelectorAll('.frog-peep');
-
-    // Global State for the current peep sequence
-    let peepSequenceActive = false;
-    let currentPeepsInSequence = 0; // How many individual peeps have occurred in the current 4-7 sequence
-    let targetPeepsInSequence = 0;  // The random total (4-7) for the current sequence
-    let mainSequenceSchedulerId = null; // Timeout for the 10-30 sec delay before a new sequence starts
-    let individualPeepSchedulerId = null; // Timeout for the 0.5-1.5 sec delay between individual peeps
-    let currentlyPeepingFrog = null; // Reference to the frog DOM element currently visible/animating its peep
-
-    // Helper to reset a frog's visual state (classes and styles)
-    function resetFrogVisuals(frogElement) {
-        if (!frogElement) return;
-        const wrap = frogElement.closest('.char-frog-wrap');
-        const letter = wrap.querySelector('.the-letter');
-        const frogWrap = wrap.querySelector('.frog-wrap');
-
-        frogElement.classList.remove('fully-raised', 'peeping');
-        frogWrap.classList.remove('fully-raised');
-        letter.classList.remove('lifted', 'raised');
-        // Keep opacity as is; opacity 0 means collected, opacity 1 means available.
-        // pointerEvents as is; none for collected, auto for available.
-    }
-
-    // Function to perform a single peep animation on a specific frog
-    // This function does NOT manage sequence counts or overall timing, just the visual peep.
-    function doPeepAnimation(frogElement, shouldFullyRaise, callback) {
-        if (!frogElement || frogElement.style.opacity === '0') { // Ensure frog exists and is not collected
-            if (callback) callback();
-            return;
+            wrap.appendChild(letterWrap);
+            wrap.appendChild(frogWrap);
+            subtitle.appendChild(wrap);
         }
 
-        // If there's a frog still active from the previous peep, instantly retract it
-        if (currentlyPeepingFrog && currentlyPeepingFrog !== frogElement) {
-            resetFrogVisuals(currentlyPeepingFrog);
-            currentlyPeepingFrog.style.opacity = '1'; // Ensure it's visible if it was just retracted from peep
-            currentlyPeepingFrog.style.pointerEvents = 'auto'; // Make it clickable again
+        const frogPeeps = subtitle.querySelectorAll('.frog-peep');
+
+        // Global State for the current peep sequence
+        let peepSequenceActive = false;
+        let currentPeepsInSequence = 0; // How many individual peeps have occurred in the current 4-7 sequence
+        let targetPeepsInSequence = 0;  // The random total (4-7) for the current sequence
+        let mainSequenceSchedulerId = null; // Timeout for the 10-30 sec delay before a new sequence starts
+        let individualPeepSchedulerId = null; // Timeout for the 0.5-1.5 sec delay between individual peeps
+        let currentlyPeepingFrog = null; // Reference to the frog DOM element currently visible/animating its peep
+
+        // Helper to reset a frog's visual state (classes and styles)
+        function resetFrogVisuals(frogElement) {
+            if (!frogElement) return;
+            const wrap = frogElement.closest('.char-frog-wrap');
+            const letter = wrap.querySelector('.the-letter');
+            const frogWrap = wrap.querySelector('.frog-wrap');
+
+            frogElement.classList.remove('fully-raised', 'peeping');
+            frogWrap.classList.remove('fully-raised');
+            letter.classList.remove('lifted', 'raised');
+            // Keep opacity as is; opacity 0 means collected, opacity 1 means available.
+            // pointerEvents as is; none for collected, auto for available.
         }
-        currentlyPeepingFrog = frogElement; // Set the current frog that is about to peep
 
-        // Reset visual state before starting the new peep (if it was from a previous peep)
-        resetFrogVisuals(frogElement);
-        frogElement.style.opacity = '1'; // Ensure it's fully visible before starting its peep
-        frogElement.style.pointerEvents = 'auto'; // Make it clickable
-
-        // Peep animation steps
-        // Small delay to ensure CSS classes are applied for transitions to begin smoothly
-        setTimeout(() => {
-            frogElement.classList.add('peeping');
-            frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('raised');
-        }, 50);
-
-        // After initial peep animation completes
-        setTimeout(() => {
-            if (frogElement.style.opacity === '0') { // Check if the frog was clicked and collected during its peep
-                if (callback) callback(); // Call completion callback if collected
+        // Function to perform a single peep animation on a specific frog
+        // This function does NOT manage sequence counts or overall timing, just the visual peep.
+        function doPeepAnimation(frogElement, shouldFullyRaise, callback) {
+            if (!frogElement || frogElement.style.opacity === '0') { // Ensure frog exists and is not collected
+                if (callback) callback();
                 return;
             }
 
-            if (shouldFullyRaise) {
-                // Animate to fully raised state
-                frogElement.classList.remove('peeping');
-                frogElement.classList.add('fully-raised');
-                frogElement.closest('.char-frog-wrap').querySelector('.frog-wrap').classList.add('fully-raised');
-                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
-                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('lifted');
-
-                // After fully raised, make it disappear (collected animation will handle opacity 0)
-                // The duration of this timeout depends on your CSS transition for 'fully-raised'
-                setTimeout(() => {
-                    if (frogElement.style.opacity !== '0') { // Only modify if not clicked/collected already
-                        frogElement.style.opacity = '0';
-                        frogElement.style.pointerEvents = 'none';
-                    }
-                    currentlyPeepingFrog = null; // Clear reference as this frog is no longer peeping
-                    resetFrogVisuals(frogElement); // Reset classes
-                    if (callback) callback(); // Call completion callback
-                }, 1500); // How long the toad stays fully raised before disappearing/cleanup
-
-            } else {
-                // Just peep and retract
-                frogElement.classList.remove('peeping'); // Remove peeping class to retract
-                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
-
-                setTimeout(() => {
-                    currentlyPeepingFrog = null; // Clear reference as this peep is done
-                    resetFrogVisuals(frogElement); // Ensure fully retracted classes are removed
-                    if (callback) callback(); // Call completion callback
-                }, 700); // Duration for retract animation
+            // If there's a frog still active from the previous peep, instantly retract it
+            if (currentlyPeepingFrog && currentlyPeepingFrog !== frogElement) {
+                resetFrogVisuals(currentlyPeepingFrog);
+                currentlyPeepingFrog.style.opacity = '1'; // Ensure it's visible if it was just retracted from peep
+                currentlyPeepingFrog.style.pointerEvents = 'auto'; // Make it clickable again
             }
-        }, 1000); // Duration of the initial 'peeping' state before deciding next action (fully raise or retract)
-    }
+            currentlyPeepingFrog = frogElement; // Set the current frog that is about to peep
 
-    // Schedules an individual peep within the current 4-7 peep sequence
-    function scheduleIndividualRandomPeep() {
-        // If the sequence is completed or not active, stop scheduling individual peeps
-        if (!peepSequenceActive || currentPeepsInSequence >= targetPeepsInSequence) {
-            peepSequenceActive = false; // Mark current sequence as finished
-            startNextPeepSequence(); // Schedule the next overall sequence (10-30 sec delay)
-            return;
+            // Reset visual state before starting the new peep (if it was from a previous peep)
+            resetFrogVisuals(frogElement);
+            frogElement.style.opacity = '1'; // Ensure it's fully visible before starting its peep
+            frogElement.style.pointerEvents = 'auto'; // Make it clickable
+
+            // Peep animation steps
+            // Small delay to ensure CSS classes are applied for transitions to begin smoothly
+            setTimeout(() => {
+                frogElement.classList.add('peeping');
+                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('raised');
+            }, 50); 
+
+            // After initial peep animation completes
+            setTimeout(() => {
+                if (frogElement.style.opacity === '0') { // Check if the frog was clicked and collected during its peep
+                    if (callback) callback(); // Call completion callback if collected
+                    return;
+                }
+                
+                if (shouldFullyRaise) {
+                    // Animate to fully raised state
+                    frogElement.classList.remove('peeping');
+                    frogElement.classList.add('fully-raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.frog-wrap').classList.add('fully-raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('lifted');
+
+                    // After fully raised, make it disappear (collected animation will handle opacity 0)
+                    // The duration of this timeout depends on your CSS transition for 'fully-raised'
+                    setTimeout(() => {
+                        if (frogElement.style.opacity !== '0') { // Only modify if not clicked/collected already
+                           frogElement.style.opacity = '0';
+                           frogElement.style.pointerEvents = 'none';
+                        }
+                        currentlyPeepingFrog = null; // Clear reference as this frog is no longer peeping
+                        resetFrogVisuals(frogElement); // Reset classes
+                        if (callback) callback(); // Call completion callback
+                    }, 1500); // How long the toad stays fully raised before disappearing/cleanup
+
+                } else {
+                    // Just peep and retract
+                    frogElement.classList.remove('peeping'); // Remove peeping class to retract
+                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
+                    
+                    setTimeout(() => {
+                        currentlyPeepingFrog = null; // Clear reference as this peep is done
+                        resetFrogVisuals(frogElement); // Ensure fully retracted classes are removed
+                        if (callback) callback(); // Call completion callback
+                    }, 700); // Duration for retract animation
+                }
+            }, 1000); // Duration of the initial 'peeping' state before deciding next action (fully raise or retract)
         }
 
-        currentPeepsInSequence++; // Increment count for this individual peep
-
-        const availableFrogs = Array.from(frogPeeps).filter(frog => frog.style.opacity !== '0');
-        if (availableFrogs.length === 0) {
-            console.log("No frogs available to peep!");
-            peepSequenceActive = false;
-            startNextPeepSequence(); // Still schedule next overall sequence even if no frogs
-            return;
-        }
-
-        // Select a random frog. Ensure it's not the same as the immediately previous one if possible.
-        let frogToAnimate;
-        let attempts = 0;
-        const maxAttempts = 10; // Prevent infinite loop if only one frog left
-        do {
-            const idx = Math.floor(Math.random() * availableFrogs.length);
-            frogToAnimate = availableFrogs[idx];
-            attempts++;
-        } while (frogToAnimate === currentlyPeepingFrog && availableFrogs.length > 1 && attempts < maxAttempts);
-
-
-        // Determine if this frog should fully raise (become collectible)
-        let shouldFullyRaise = false;
-        // It can only fully raise after the 4th peep
-        if (currentPeepsInSequence >= 4) {
-            // 50% chance to fully raise OR it MUST fully raise if this is the very last peep in the sequence
-            shouldFullyRaise = (Math.random() < 0.5) || (currentPeepsInSequence === targetPeepsInSequence);
-        }
-
-        // Perform the animation for this single peep
-        doPeepAnimation(frogToAnimate, shouldFullyRaise, () => {
-            // Callback function executed after doPeepAnimation completes its visual part
-            if (shouldFullyRaise) {
-                // If this frog fully raised, it means the player either caught it or missed it.
-                // The current 4-7 peep sequence is considered complete.
-                peepSequenceActive = false; // Mark sequence as finished
+        // Schedules an individual peep within the current 4-7 peep sequence
+        function scheduleIndividualRandomPeep() {
+            // If the sequence is completed or not active, stop scheduling individual peeps
+            if (!peepSequenceActive || currentPeepsInSequence >= targetPeepsInSequence) {
+                peepSequenceActive = false; // Mark current sequence as finished
                 startNextPeepSequence(); // Schedule the next overall sequence (10-30 sec delay)
-            } else {
-                // If it just peeped and retracted, schedule the next individual peep in this sequence
-                individualPeepSchedulerId = setTimeout(() => {
-                    scheduleIndividualRandomPeep();
-                }, Math.random() * 1000 + 500); // Short random delay between individual peeps (0.5 to 1.5 seconds)
+                return;
             }
-        });
-    }
 
-    // Starts the overall 10-30 second sequence timer
-    function startNextPeepSequence() {
-        // Clear any existing sequence timers to prevent duplicates or conflicts
-        if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-        if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+            currentPeepsInSequence++; // Increment count for this individual peep
 
-        // Ensure any frog that might have been peeping from a previous sequence/click is fully reset
-        if (currentlyPeepingFrog) {
-            resetFrogVisuals(currentlyPeepingFrog);
-            currentlyPeepingFrog.style.opacity = '1';
-            currentlyPeepingFrog.style.pointerEvents = 'auto';
-            currentlyPeepingFrog = null;
+            const availableFrogs = Array.from(frogPeeps).filter(frog => frog.style.opacity !== '0');
+            if (availableFrogs.length === 0) {
+                console.log("No frogs available to peep!");
+                peepSequenceActive = false;
+                startNextPeepSequence(); // Still schedule next overall sequence even if no frogs
+                return;
+            }
+
+            // Select a random frog. Ensure it's not the same as the immediately previous one if possible.
+            let frogToAnimate;
+            let attempts = 0;
+            const maxAttempts = 10; // Prevent infinite loop if only one frog left
+            do {
+                const idx = Math.floor(Math.random() * availableFrogs.length);
+                frogToAnimate = availableFrogs[idx];
+                attempts++;
+            } while (frogToAnimate === currentlyPeepingFrog && availableFrogs.length > 1 && attempts < maxAttempts);
+
+
+            // Determine if this frog should fully raise (become collectible)
+            let shouldFullyRaise = false;
+            // It can only fully raise after the 4th peep
+            if (currentPeepsInSequence >= 4) {
+                // 50% chance to fully raise OR it MUST fully raise if this is the very last peep in the sequence
+                shouldFullyRaise = (Math.random() < 0.5) || (currentPeepsInSequence === targetPeepsInSequence);
+            }
+
+            // Perform the animation for this single peep
+            doPeepAnimation(frogToAnimate, shouldFullyRaise, () => {
+                // Callback function executed after doPeepAnimation completes its visual part
+                if (shouldFullyRaise) {
+                    // If this frog fully raised, it means the player either caught it or missed it.
+                    // The current 4-7 peep sequence is considered complete.
+                    peepSequenceActive = false; // Mark sequence as finished
+                    startNextPeepSequence(); // Schedule the next overall sequence (10-30 sec delay)
+                } else {
+                    // If it just peeped and retracted, schedule the next individual peep in this sequence
+                    individualPeepSchedulerId = setTimeout(() => {
+                        scheduleIndividualRandomPeep();
+                    }, Math.random() * 1000 + 500); // Short random delay between individual peeps (0.5 to 1.5 seconds)
+                }
+            });
         }
 
-        // Schedule the start of the next 4-7 peep sequence
-        mainSequenceSchedulerId = setTimeout(() => {
-            peepSequenceActive = true;
-            currentPeepsInSequence = 0; // Reset counter for the new sequence
-            targetPeepsInSequence = Math.floor(Math.random() * 4) + 4; // Determine new random target (4 to 7)
-            scheduleIndividualRandomPeep(); // Start the first individual peep of the new sequence
-        }, Math.random() * 20000 + 10000); // 10 to 30 seconds delay before starting a new sequence
-    }
+        // Starts the overall 10-30 second sequence timer
+        function startNextPeepSequence() {
+            // Clear any existing sequence timers to prevent duplicates or conflicts
+            if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+            if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+            
+            // Ensure any frog that might have been peeping from a previous sequence/click is fully reset
+            if (currentlyPeepingFrog) {
+                resetFrogVisuals(currentlyPeepingFrog);
+                currentlyPeepingFrog.style.opacity = '1';
+                currentlyPeepingFrog.style.pointerEvents = 'auto';
+                currentlyPeepingFrog = null;
+            }
 
-    // Initial kick-off: Start the very first sequence
-    startNextPeepSequence();
+            // Schedule the start of the next 4-7 peep sequence
+            mainSequenceSchedulerId = setTimeout(() => {
+                peepSequenceActive = true;
+                currentPeepsInSequence = 0; // Reset counter for the new sequence
+                targetPeepsInSequence = Math.floor(Math.random() * 4) + 4; // Determine new random target (4 to 7)
+                scheduleIndividualRandomPeep(); // Start the first individual peep of the new sequence
+            }, Math.random() * 20000 + 10000); // 10 to 30 seconds delay before starting a new sequence
+        }
 
-    // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
-    frogPeeps.forEach(frog => {
-        frog.onclick = function(event) {
-            // Ensure the frog is currently peeping/raised AND clickable before processing click
-            if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
-                event.stopPropagation(); // Prevent event bubbling
+        // Initial kick-off: Start the very first sequence
+        startNextPeepSequence();
 
-                // NEW: Check if the box is full
-                if (hoppedToadCount >= maxToads) {
-                    console.log("Collected toads box is full!");
-                    // Optionally, play a "box full" sound or show a message
-                    // Reset the frog if the box is full and it was clicked
-                    resetFrogVisuals(frog);
-                    frog.style.opacity = '1'; // Make it visible again if not collected
-                    frog.style.pointerEvents = 'auto'; // Make it clickable again
-                    startNextPeepSequence(); // Continue the peep sequence
-                    return; // Stop processing this click
-                }
+        // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
+        frogPeeps.forEach(frog => {
+            frog.onclick = function(event) {
+                // Ensure the frog is currently peeping/raised AND clickable before processing click
+                if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
+                    event.stopPropagation(); // Prevent event bubbling
 
-                // Clear all pending timers related to the current sequence immediately
-                if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-                if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-                peepSequenceActive = false; // End current sequence prematurely upon collection
-                currentlyPeepingFrog = null; // No frog is currently peeping after collection
+                    // Clear all pending timers related to the current sequence immediately
+                    if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+                    if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+                    peepSequenceActive = false; // End current sequence prematurely upon collection
+                    currentlyPeepingFrog = null; // No frog is currently peeping after collection
 
-                // Make the original frog disappear immediately from the subtitle
-                frog.style.opacity = '0';
-                frog.style.pointerEvents = 'none'; // Make it unclickable
+                    // Make the original frog disappear immediately from the subtitle
+                    frog.style.opacity = '0';
+                    frog.style.pointerEvents = 'none'; // Make it unclickable
 
-                // --- Start Hop Animation Logic ---
-                const frogRect = frog.getBoundingClientRect(); // Get original frog's position
+                    // --- Start Hop Animation Logic ---
+                    const frogRect = frog.getBoundingClientRect(); // Get original frog's position
 
-                const hoppingToad = document.createElement('img');
-                hoppingToad.src = frogImgSrc; // Use the same image source
-                hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
-                document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
+                    const hoppingToad = document.createElement('img');
+                    hoppingToad.src = frogImgSrc; // Use the same image source
+                    hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
+                    document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
 
-                // Set initial position of the hopping toad (same as the clicked frog)
-                hoppingToad.style.left = frogRect.left + 'px';
-                hoppingToad.style.top = frogRect.top + 'px';
-
-                // Calculate target position in the hoppedToadContainer (the grid)
-                const containerRect = hoppedToadContainer.getBoundingClientRect();
-
-                let targetX, targetY;
-                let finalToadWidth, finalToadHeight; // NEW: Declare variables for final toad size
-
-                if (window.innerWidth <= 700) { // NEW: Mobile-specific target calculation (4x4 grid, stacking in columns)
-                    const gridCols = 4;
-                    const gridRows = 4;
-                    const gridGap = 2; // Matches CSS .hopped-toad-grid gap
-                    const gridPadding = 5; // Matches CSS .hopped-toad-grid padding
-
-                    // Calculate the target column and row for the *next* toad
-                    // Stacking in columns:
-                    // column = Math.floor(hoppedToadCount / gridRows)
-                    // row = hoppedToadCount % gridRows
-
-                    const targetColumn = Math.floor(hoppedToadCount / gridRows);
-                    const targetRow = hoppedToadCount % gridRows;
-
-                    // Calculate the size of a single grid cell (including padding and gaps)
-                    const availableWidth = containerRect.width - (gridPadding * 2);
-                    const availableHeight = containerRect.height - (gridPadding * 2);
-
-                    finalToadWidth = (availableWidth - (gridCols - 1) * gridGap) / gridCols;
-                    finalToadHeight = (availableHeight - (gridRows - 1) * gridGap) / gridRows;
-
-                    // Calculate target X and Y for the center of the target grid cell
-                    targetX = containerRect.left + gridPadding + (targetColumn * (finalToadWidth + gridGap)) + (finalToadWidth / 2);
-                    targetY = containerRect.top + gridPadding + (targetRow * (finalToadHeight + gridGap)) + (finalToadHeight / 2);
-
-                    // NEW: Adjust hopping toad's target size to match the collected toad's size for mobile
-                    hoppingToad.style.width = finalToadWidth + 'px';
-                    hoppingToad.style.height = finalToadHeight + 'px';
-
-                } else { // Desktop target calculation (original logic for desktop)
-                    targetX = containerRect.left;
-                    targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
-                    // Ensure the hopping toad maintains its initial size for desktop
-                    hoppingToad.style.width = frogRect.width + 'px';
+                    // Set initial position of the hopping toad (same as the clicked frog)
+                    hoppingToad.style.left = frogRect.left + 'px';
+                    hoppingToad.style.top = frogRect.top + 'px';
+                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
                     hoppingToad.style.height = frogRect.height + 'px';
-                }
 
-                // Trigger hopping animation after initial positioning is rendered
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => { // Double rAF for smoother transition start
-                        const translateX = targetX - frogRect.left;
-                        const translateY = targetY - frogRect.top;
+                    // Calculate target position in the hoppedToadContainer
+                    const containerRect = hoppedToadContainer.getBoundingClientRect();
+                    const targetX = containerRect.left;
+                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
 
-                        // Apply transform for the hop (with an upward arc) and fade out
-                        hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
-                        hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                        hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                    // Trigger hopping animation after initial positioning is rendered
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => { // Double rAF for smoother transition start
+                            const translateX = targetX - frogRect.left;
+                            const translateY = targetY - frogRect.top;
+
+                            // Apply transform for the hop (with an upward arc) and fade out
+                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
+                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                            hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                        });
                     });
-                });
 
-                // Clean up the hopping toad and add the final static toad
-                hoppingToad.addEventListener('transitionend', () => {
-                    hoppingToad.remove(); // Remove the temporary hopping toad element
+                    // Clean up the hopping toad and add the final static toad
+                    hoppingToad.addEventListener('transitionend', () => {
+                        hoppingToad.remove(); // Remove the temporary hopping toad element
 
-                    // Create and append the final static toad to the header container
-                    const finalToad = document.createElement('img');
-                    finalToad.src = frogImgSrc; // Use the same image
-                    finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                        // Create and append the final static toad to the header container
+                        const finalToad = document.createElement('img');
+                        finalToad.src = frogImgSrc; // Use the same image
+                        finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                        hoppedToadContainer.appendChild(finalToad);
 
-                    // NEW: Set the size of the final toad to match the calculated cell size for mobile
-                    if (window.innerWidth <= 700) {
-                        finalToad.style.width = finalToadWidth + 'px';
-                        finalToad.style.height = finalToadHeight + 'px';
-                    }
+                        hoppedToadCount++; // Increment collected toad count
 
-                    hoppedToadContainer.appendChild(finalToad);
+                        // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
+                        resetFrogVisuals(frog);
+                        
+                        // Start the next overall peep sequence after collection
+                        startNextPeepSequence();
 
-                    hoppedToadCount++; // Increment collected toad count
-                    // NEW: Update counter display
-                    if (currentToadCountSpan) {
-                        currentToadCountSpan.textContent = hoppedToadCount;
-                    }
+                    }, { once: true }); // Ensure this listener runs only once per hop
+                }
+            };
+        });
 
-                    // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
-                    resetFrogVisuals(frog);
+        // Mobile Navigation Toggle (existing code, unchanged)
+        const logoElement = document.querySelector('.logo-circle');
+        const navLinksContainer = document.querySelector('.main-links');
 
-                    // Start the next overall peep sequence after collection
-                    startNextPeepSequence();
+        if (logoElement && navLinksContainer) {
+            logoElement.style.cursor = 'pointer';
 
-                }, { once: true }); // Ensure this listener runs only once per hop
-            }
-        };
+            logoElement.addEventListener('click', () => {
+                if (window.innerWidth <= 700) {
+                    navLinksContainer.classList.toggle('active');
+                }
+            });
+        }
+        // News Banner Close Button (existing code, unchanged)
+        const newsBanner = document.getElementById('newsBanner');
+        const closeBannerBtn = document.querySelector('.close-banner-btn');
+
+        if (newsBanner && closeBannerBtn) {
+            closeBannerBtn.addEventListener('click', function() {
+                newsBanner.classList.add('hidden');
+                document.body.style.paddingTop = '0';
+            });
+        }
     });
-
-    // Mobile Navigation Toggle (existing code, unchanged)
-    const logoElement = document.querySelector('.logo-circle');
-    const navLinksContainer = document.querySelector('.main-links');
-
-    if (logoElement && navLinksContainer) {
-        logoElement.style.cursor = 'pointer';
-
-        logoElement.addEventListener('click', () => {
-            if (window.innerWidth <= 700) {
-                navLinksContainer.classList.toggle('active');
-            }
-        });
-    }
-    // News Banner Close Button (existing code, unchanged)
-    const newsBanner = document.getElementById('newsBanner');
-    const closeBannerBtn = document.querySelector('.close-banner-btn');
-
-    if (newsBanner && closeBannerBtn) {
-        closeBannerBtn.addEventListener('click', function() {
-            newsBanner.classList.add('hidden');
-            document.body.style.paddingTop = '0';
-        });
-    }
-});
 </script>
 </body>
 </html>
