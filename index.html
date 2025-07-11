@@ -610,32 +610,42 @@
 
         /* Styles for the "hopped" toads container */
         .hopped-toad-container {
-            position: absolute; /* Position relative to .hero-header */
-            /* Calculate 'left' to be just right of the logo circle */
-            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
-            left: calc(2vw + 150px + (18px * 2) + 10px);
-            top: 50%; /* Vertically center within hero-header */
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center; /* Align items vertically if they have different heights */
-            gap: 5px; /* Space between hopped toads */
-            z-index: 5; /* Ensure it's above other elements if necessary */
-            white-space: nowrap; /* Keep toads on one line */
-            pointer-events: none; /* Make it non-interactive, only for visual display */
-        }
+    position: absolute; /* Position relative to .hero-header */
+    /* Calculate 'left' to be just right of the logo circle */
+    /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
+    left: calc(2vw + 150px + (18px * 2) + 10px);
+    top: 50%; /* Vertically center within hero-header */
+    transform: translateY(-50%);
+    display: flex; /* Keep as flex for desktop */
+    align-items: center; /* Align items vertically if they have different heights */
+    gap: 5px; /* Space between hopped toads */
+    z-index: 5; /* Ensure it's above other elements if necessary */
+    white-space: nowrap; /* Keep toads on one line */
+    pointer-events: none; /* Make it non-interactive, only for visual display */
+    /* NEW: Ensure it's hidden on desktop if it's meant to be replaced by the grid on mobile */
+    /* If this is the *desktop* container, and the grid is *mobile only*, then this is fine as is.
+       If hoppedToadContainer is used for *both* and switches its display, we need to adjust.
+       Assuming it's the element whose display mode changes. */
+}
 
-       /* MOBILE OPTIMIZATION (only for mobile) */
+/* Base styles for the counter, hidden by default */
+.toad-counter {
+    display: none; /* Hidden on desktop by default */
+}
+
+
+/* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
         font-size: 15px;
     }
-   .hero-header {
+    .hero-header {
         display: grid;
         grid-template-columns: auto 1fr;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto auto; /* Auto for logo/nav, auto for toads box row */
         grid-template-areas:
             "logo nav"
-            "toads .";
+            "logo toads"; /* NEW: 'logo' spans two rows on the left, 'toads' is in the bottom right */
         align-items: start;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
@@ -643,20 +653,19 @@
         max-width: 100vw;
         box-sizing: border-box;
         position: relative;
-        /* NEW: Set a minimum height for the header */
         min-height: 120px; /* Adjust this value as needed */
-        /* This min-height should be enough to contain your logo and
-           the maximum expected height of your title/subtitle without pushing the logo down. */
     }
 
     .hero-logo-col {
-        grid-area: logo;
-        display: flex; /* Make it a flex container to stack logo and new box */
-        flex-direction: column; /* Stack vertically */
+        grid-area: logo; /* This column occupies the 'logo' grid area */
+        display: flex;
+        flex-direction: column; /* Stack logo and collected-toads-box vertically */
         align-items: center; /* Center items horizontally within the column */
         margin-right: 0px;
         margin-top: 0px;
         margin-bottom: 10px; /* Space below the logo column */
+        /* NEW: Set max-width here if you want to constrain the logo column */
+        /* max-width: 150px; /* Example: If logo and box should not exceed certain width */
     }
 
     .logo-circle {
@@ -671,13 +680,13 @@
         align-items: flex-end; /* Keep alignment to the right for title/subtitle */
         flex-grow: 1;
         width: 100%; /* Take full width of its grid cell */
-        max-width: none; /* Remove max-width that might constrain in grid */
+        max-width: none;
         margin: 0;
         padding: 0;
         margin-top: 0px;
     }
     .hero-nav-title {
-        text-align: right; /* Keep text aligned to the right */
+        text-align: right;
         width: 90%;
         font-size: 3rem;
         -webkit-text-stroke: 1.5px #000;
@@ -689,7 +698,7 @@
         padding-left: 0;
     }
     .hero-nav-subtitle {
-        text-align: right; /* Keep text aligned to the right */
+        text-align: right;
         width: 90%;
         font-size: 3rem;
         text-shadow:
@@ -708,29 +717,33 @@
         line-height: 1.2;
     }
 
+    /* IMPORTANT: The .collected-toads-box must be a direct child of .hero-header to use grid-area 'toads' */
+    /* If you want it below the logo, it should be within .hero-logo-col (as per your current structure),
+       and then it won't use a grid-area. It will simply flow within flex-direction: column.
+       Let's assume it's *within* hero-logo-col for now. */
     .collected-toads-box {
         width: 120px; /* Adjust size as needed, ensure it's square for 4x4 */
         height: 120px; /* Adjust size as needed, ensure it's square for 4x4 */
-        border: 2px solid #FFFFFF; /* Solid white line */
-        box-sizing: border-box; /* Include padding/border in dimensions */
-        position: relative; /* For positioning the counter and grid items */
+        border: 2px solid #FFFFFF;
+        box-sizing: border-box;
+        position: relative; /* For positioning the counter absolutely within it */
         display: flex; /* Use flex to position the grid and counter */
         flex-direction: column; /* Stack grid and counter */
         justify-content: space-between; /* Push grid to top, counter to bottom */
         align-items: center; /* Center content horizontally */
         margin-top: 10px; /* Space between logo and box */
-        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
+        background-color: rgba(255, 255, 255, 0.1);
+        /* If this box is intended to be in the 'toads' grid-area, it needs to be
+           a direct child of .hero-header and have: grid-area: toads; */
     }
 
-    /* MODIFIED: Styles for the Collected Toads Grid (formerly hopped-toad-container) */
-    /* This targets the ID, which is now on the inner div inside .collected-toads-box */
-    #hoppedToadContainer { /* This ID refers to the div with class .hopped-toad-grid */
-        grid-area: toads; /* This will actually *not* work here directly because it's inside another grid area.
-                           * Instead, it should just fill its parent (.collected-toads-box)
-                           * We'll remove grid-area here, as it's not a direct child of .hero-header grid. */
-        display: grid; /* CHANGE THIS from flex to GRID */
-        grid-template-columns: repeat(4, 1fr); /* 4 columns */
-        grid-template-rows: repeat(4, 1fr); /* 4 rows */
+    /* MODIFIED: Styles for the Collected Toads Grid (ID #hoppedToadContainer) */
+    /* This element is now a child of .collected-toads-box */
+    #hoppedToadContainer {
+        /* REMOVED: grid-area: toads; -- as it's not a direct child of the main grid */
+        display: grid; /* Correctly set to GRID */
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
         width: 100%; /* Fill the bounding box */
         height: 100%; /* Fill the bounding box */
         gap: 2px; /* Small gap between grid items */
@@ -738,7 +751,6 @@
         box-sizing: border-box;
         position: static; /* Ensure it flows within its parent box */
         transform: none; /* Reset any desktop transforms */
-        /* Remove: flex-wrap, justify-content, margin-top, padding */
     }
 
     /* MODIFIED: Styles for individual collected toads within the grid */
@@ -747,19 +759,19 @@
         height: 100%; /* Fill grid cell */
         object-fit: contain; /* Ensure toad fits in cell */
         display: block;
-        /* REMOVE: flex, max-width, height: auto if they conflict */
     }
 
-    /* NEW: Styles for the Counter */
+    /* NEW: Styles for the Counter (show on mobile) */
     .toad-counter {
+        display: block; /* Show on mobile */
         position: absolute;
         bottom: 5px; /* Adjust from bottom */
         right: 5px; /* Adjust from right */
-        color: #FFFFFF; /* White text */
-        font-family: 'Press Start 2P', monospace !important; /* Same font as nav links */
-        font-size: 0.7rem; /* Adjust size as needed */
-        z-index: 10; /* Ensure it's above toads */
-        text-shadow: 1px 1px 0 #000; /* Optional: for better readability */
+        color: #FFFFFF;
+        font-family: 'Press Start 2P', monospace !important;
+        font-size: 0.7rem;
+        z-index: 10;
+        text-shadow: 1px 1px 0 #000;
     }
 
     /* Your existing .main-links and .news-banner styles (unchanged) */
