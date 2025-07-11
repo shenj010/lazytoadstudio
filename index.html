@@ -659,12 +659,10 @@
         position: relative; /* Keep for potential future use or if needed by your JS */
 
         /* --- Changes for Expanding Box Style --- */
-        /* REMOVE: height: 190px; (or whatever fixed height you had) */
         height: auto; /* Allow the box to expand/contract based on content */
-        /* REMOVE: min-height: 70px; (as it will be handled by content and align-content) */
+        /* Removed min-height from CSS, now set dynamically by JS */
 
         /* --- Changes for Top Alignment --- */
-        /* REMOVE: margin-top: 1px; (this would create an offset from the very top) */
         /* align-self: start; (changed in media query) */
 
         /* --- Revert to Solid Box Appearance --- */
@@ -1293,6 +1291,19 @@
     // Conditionally select the correct grid and counter based on screen size
     let currentCollectedToadsGrid;
     let currentToadCounter;
+    const mainLinks = document.querySelector('.main-links'); // Get main links for height calculation
+    const desktopToadsBox = document.getElementById('desktopToadsBox'); // Get desktop toad box
+
+    // Function to adjust the desktop toad box height
+    function adjustDesktopToadsBoxHeight() {
+        if (window.innerWidth > 700 && mainLinks && desktopToadsBox) {
+            // Set min-height of desktop toad box to match main links height
+            desktopToadsBox.style.minHeight = `${mainLinks.offsetHeight}px`;
+        } else if (desktopToadsBox) {
+            // Reset min-height if not on desktop or if elements are missing
+            desktopToadsBox.style.minHeight = 'auto';
+        }
+    }
 
     if (window.innerWidth > 700) { // Assuming 700px is your mobile breakpoint
         currentCollectedToadsGrid = document.getElementById('desktopToadsGrid');
@@ -1301,6 +1312,10 @@
         currentCollectedToadsGrid = document.getElementById('collectedToadsGrid');
         currentToadCounter = document.getElementById('toadCounter');
     }
+
+    // Call on load and resize to maintain height
+    adjustDesktopToadsBoxHeight();
+    window.addEventListener('resize', adjustDesktopToadsBoxHeight);
     // --- MODIFICATION END ---
 
     let collectedToadCount = 0;
@@ -1331,7 +1346,7 @@
         frogWrap.className = 'frog-wrap';
         const frog = document.createElement('img');
         frog.src = frogImgSrc;
-        frog.alt = "🐸";
+        frog.alt = "�";
         frog.className = 'frog-peep';
         frog.style.height = '1.2em';
         frog.style.width = '1.2em';
@@ -1650,3 +1665,4 @@
 </script>
 </body>
 </html>
+�
