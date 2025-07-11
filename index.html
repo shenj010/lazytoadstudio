@@ -1502,8 +1502,25 @@
                         const toadHeight = gridRect.height / 4;
 
                         // Calculate target column and row for stacking in columns
-                        const targetColumn = Math.floor(collectedToadCount / 4); // 0-3
-                        const targetRow = collectedToadCount % 4; // 0-3
+                        const gridRect = collectedToadsGrid.getBoundingClientRect();
+
+                        // Calculate target position based on collected toads count
+                        let targetColumn;
+                        let targetRow;
+
+                        // Apply the fix only for desktop (screen width > 700px)
+                        if (window.innerWidth > 700) {
+                            // Desktop: Use the corrected logic
+                            targetRow = Math.floor(collectedToadCount / 4); // Determines the row
+                            targetColumn = collectedToadCount % 4; // Determines the column
+                        } else {
+                            // Mobile: Keep the original logic (as it's working fine)
+                            targetColumn = Math.floor(collectedToadCount / 4); // 0-3
+                            targetRow = collectedToadCount % 4; // 0-3
+                        }
+
+                        const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
+                        const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
 
                         const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
                         const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
