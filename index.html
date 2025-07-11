@@ -608,83 +608,65 @@
             /* Removed 'filter: none;' unless explicitly needed */
         }
 
-        /* Styles for the "hopped" toads container */
-        .hopped-toad-container {
-    position: absolute; /* Position relative to .hero-header */
-    /* Calculate 'left' to be just right of the logo circle */
-    /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
-    left: calc(2vw + 150px + (18px * 2) + 10px);
-    top: 50%; /* Vertically center within hero-header */
-    transform: translateY(-50%);
-    display: flex; /* Keep as flex for desktop */
-    align-items: center; /* Align items vertically if they have different heights */
-    gap: 5px; /* Space between hopped toads */
-    z-index: 5; /* Ensure it's above other elements if necessary */
-    white-space: nowrap; /* Keep toads on one line */
-    pointer-events: none; /* Make it non-interactive, only for visual display */
-    /* NEW: Ensure it's hidden on desktop if it's meant to be replaced by the grid on mobile */
-    /* If this is the *desktop* container, and the grid is *mobile only*, then this is fine as is.
-       If hoppedToadContainer is used for *both* and switches its display, we need to adjust.
-       Assuming it's the element whose display mode changes. */
-}
-
-/* Base styles for the counter, hidden by default */
-.toad-counter {
-    display: none; /* Hidden on desktop by default */
-}
-
-
 /* MOBILE OPTIMIZATION (only for mobile) */
 @media (max-width: 700px) {
     html, body {
         font-size: 15px;
     }
     .hero-header {
-        display: grid;
+        display: grid; /* Use CSS Grid for flexible 2-column layout */
+        /* Define two columns:
+           - First column (`auto`): width will fit content (logo and toad box)
+           - Second column (`1fr`): takes up remaining available space for nav content */
         grid-template-columns: auto 1fr;
-        grid-template-rows: auto auto; /* Auto for logo/nav, auto for toads box row */
-        grid-template-areas:
-            "logo nav"
-            "logo toads"; /* NEW: 'logo' spans two rows on the left, 'toads' is in the bottom right */
-        align-items: start;
-        padding: 0 4vw 0 2vw;
+        /* Define a single row for the main header content. Vertical stacking will be handled by flexbox within columns. */
+        grid-template-rows: auto;
+        /* Assign grid areas: 'logo' for the left column, 'nav' for the right column */
+        grid-template-areas: "logo nav";
+        align-items: start; /* Align content to the top of the grid cells */
+        padding: 0 4vw 0 2vw; /* Responsive padding */
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
-        box-sizing: border-box;
-        position: relative;
-        min-height: 120px; /* Adjust this value as needed */
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        position: relative; /* Essential for containing absolutely positioned children if any */
+        min-height: 120px; /* Minimum height to accommodate content */
     }
 
+    /* Left column of the header: contains logo and collected toads box */
     .hero-logo-col {
-        grid-area: logo; /* This column occupies the 'logo' grid area */
-        display: flex;
-        flex-direction: column; /* Stack logo and collected-toads-box vertically */
-        align-items: center; /* Center items horizontally within the column */
+        grid-area: logo; /* Assign to the 'logo' grid area */
+        display: flex; /* Use flexbox to stack its children vertically */
+        flex-direction: column; /* Stack logo and collected-toads-box */
+        align-items: center; /* Center items horizontally within this column */
+        justify-content: space-between; /* Push logo to the top, collected-toads-box to the bottom */
+        height: 100%; /* Crucial: Ensure it takes full height of its grid cell to utilize space-between */
         margin-right: 0px;
         margin-top: 0px;
-        margin-bottom: 10px; /* Space below the logo column */
-        /* NEW: Set max-width here if you want to constrain the logo column */
-        /* max-width: 150px; /* Example: If logo and box should not exceed certain width */
+        margin-bottom: 0px;
     }
 
+    /* Logo circle styling */
     .logo-circle {
         padding: 8px;
         margin-bottom: 0;
     }
 
+    /* Right column of the header: contains main title and subtitle */
     .hero-nav-col {
-        grid-area: nav; /* Assign this to the 'nav' area in the grid */
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end; /* Keep alignment to the right for title/subtitle */
-        flex-grow: 1;
-        width: 100%; /* Take full width of its grid cell */
+        grid-area: nav; /* Assign to the 'nav' grid area */
+        display: flex; /* Use flexbox to stack its children vertically */
+        flex-direction: column; /* Stack title and subtitle */
+        align-items: flex-end; /* Align title/subtitle to the right */
+        flex-grow: 1; /* Allow it to grow and take available space */
+        width: 100%;
         max-width: none;
         margin: 0;
         padding: 0;
         margin-top: 0px;
     }
+
+    /* Main title styling */
     .hero-nav-title {
         text-align: right;
         width: 90%;
@@ -697,19 +679,17 @@
         line-height: 1;
         padding-left: 0;
     }
+
+    /* Subtitle styling, remains under the main title on the right */
     .hero-nav-subtitle {
         text-align: right;
         width: 90%;
         font-size: 3rem;
         text-shadow:
-            -1.5px -1.5px 0 #000,
-            1.5px -1.5px 0 #000,
-            -1.5px 1.5px 0 #000,
-            1.5px 1.5px 0 #000,
-            0px -1.5px 0 #000,
-            0px 1.5px 0 #000,
-            -1.5px 0px 0 #000,
-            1.5px 0px 0 #000;
+            -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000,
+            -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000,
+            0px -1.5px 0 #000, 0px 1.5px 0 #000,
+            -1.5px 0px 0 #000, 1.5px 0px 0 #000;
         margin-bottom: 18px;
         margin-top: 0;
         word-break: break-word;
@@ -717,56 +697,41 @@
         line-height: 1.2;
     }
 
-    /* IMPORTANT: The .collected-toads-box must be a direct child of .hero-header to use grid-area 'toads' */
-    /* If you want it below the logo, it should be within .hero-logo-col (as per your current structure),
-       and then it won't use a grid-area. It will simply flow within flex-direction: column.
-       Let's assume it's *within* hero-logo-col for now. */
+    /* collected-toads-box: Now visible and correctly positioned under the logo on mobile */
     .collected-toads-box {
-        width: 120px; /* Adjust size as needed, ensure it's square for 4x4 */
-        height: 120px; /* Adjust size as needed, ensure it's square for 4x4 */
+        display: flex; /* Make the box visible on mobile */
+        width: 120px; /* Set a fixed width, adjust as needed */
+        height: 120px; /* Set a fixed height, adjust as needed (make it square for the grid) */
         border: 2px solid #FFFFFF;
         box-sizing: border-box;
-        position: relative; /* For positioning the counter absolutely within it */
-        display: flex; /* Use flex to position the grid and counter */
-        flex-direction: column; /* Stack grid and counter */
-        justify-content: space-between; /* Push grid to top, counter to bottom */
-        align-items: center; /* Center content horizontally */
-        margin-top: 10px; /* Space between logo and box */
+        position: relative; /* Essential for positioning the counter absolutely within it */
+        flex-direction: column; /* Stack the grid and counter vertically inside the box */
+        justify-content: space-between; /* Push grid to top, counter to bottom within the box */
+        align-items: center; /* Center grid and counter horizontally */
+        margin-top: auto; /* This crucial rule pushes the box to the bottom within .hero-logo-col */
         background-color: rgba(255, 255, 255, 0.1);
-        /* If this box is intended to be in the 'toads' grid-area, it needs to be
-           a direct child of .hero-header and have: grid-area: toads; */
     }
 
-    /* MODIFIED: Styles for the Collected Toads Grid (ID #hoppedToadContainer) */
-    /* This element is now a child of .collected-toads-box */
+    /* #hoppedToadContainer (the actual 4x4 grid): visible and active on mobile */
     #hoppedToadContainer {
-        /* REMOVED: grid-area: toads; -- as it's not a direct child of the main grid */
-        display: grid; /* Correctly set to GRID */
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(4, 1fr);
-        width: 100%; /* Fill the bounding box */
-        height: 100%; /* Fill the bounding box */
-        gap: 2px; /* Small gap between grid items */
-        padding: 5px; /* Padding inside the grid */
+        display: grid; /* Make it a grid on mobile */
+        grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+        grid-template-rows: repeat(4, 1fr); /* 4 equal rows */
+        width: 100%; /* Fill its parent (.collected-toads-box) */
+        height: 100%; /* Fill its parent (.collected-toads-box) */
+        gap: 2px; /* Small gap between grid items (toads) */
+        padding: 5px; /* Padding inside the grid container */
         box-sizing: border-box;
-        position: static; /* Ensure it flows within its parent box */
+        position: static; /* Ensure it flows normally within its flex parent */
         transform: none; /* Reset any desktop transforms */
     }
 
-    /* MODIFIED: Styles for individual collected toads within the grid */
-    .hopped-toad {
-        width: 100%; /* Fill grid cell */
-        height: 100%; /* Fill grid cell */
-        object-fit: contain; /* Ensure toad fits in cell */
-        display: block;
-    }
-
-    /* NEW: Styles for the Counter (show on mobile) */
+    /* toad-counter: visible and positioned within the collected-toads-box on mobile */
     .toad-counter {
-        display: block; /* Show on mobile */
-        position: absolute;
-        bottom: 5px; /* Adjust from bottom */
-        right: 5px; /* Adjust from right */
+        display: block; /* Make the counter visible on mobile */
+        position: absolute; /* Position it absolutely within its parent (.collected-toads-box) */
+        bottom: 5px; /* 5px from the bottom */
+        right: 5px; /* 5px from the right */
         color: #FFFFFF;
         font-family: 'Press Start 2P', monospace !important;
         font-size: 0.7rem;
@@ -774,17 +739,24 @@
         text-shadow: 1px 1px 0 #000;
     }
 
-    /* Your existing .main-links and .news-banner styles (unchanged) */
+    /* main-links (Cascade Box): Positioned to cascade from under the logo */
+    /* Its position is relative to the viewport or its closest positioned ancestor (body/html). */
     .main-links {
         position: absolute;
-        top: 200px;
-        left: 2vw;
+        /* Calculate 'top' based on the height of the elements in the left column:
+           header's top margin (14px)
+           + logo-circle's approximate height (e.g., 150px)
+           + collected-toads-box's height (120px)
+           + some additional spacing (e.g., 20px)
+           Adjust these values if your logo/box sizes differ or you need more/less space. */
+        top: calc(14px + 150px + 120px + 20px);
+        left: 2vw; /* Align with the header's left padding */
         width: fit-content;
         min-width: 180px;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
-        display: flex;
+        max-height: 0; /* For the expanding/collapsing animation */
+        overflow: hidden; /* Hide content when collapsed */
+        transition: max-height 0.3s ease-out; /* Smooth transition for height */
+        display: flex; /* Use flexbox for internal link layout */
         flex-direction: column;
         align-items: stretch;
         background-color: #FDEDF4;
@@ -836,7 +808,6 @@
     .main-links a:hover .icon {
         filter: brightness(0) invert(1) !important;
     }
-
     /* Hover styles for mobile links */
     .main-links a:hover,
     .main-links a:focus {
