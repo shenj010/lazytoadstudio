@@ -654,54 +654,55 @@
         font-size: 15px;
     }
    .hero-header {
-        display: flex; /* Changed from grid to flex for better alignment control */
-        flex-direction: row;
-        align-items: flex-end; /* Align bottoms of logo-col and nav-col */
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "logo nav"
+            "toads-box ."; /* Changed to 'toads-box' for the new container */
+        align-items: start;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
         max-width: 100vw;
         box-sizing: border-box;
         position: relative;
-        min-height: auto; /* Let content define height */
+        /* NEW: Set a minimum height for the header */
+        min-height: 120px; /* Adjust this value as needed */
+        /* This min-height should be enough to contain your logo and
+           the maximum expected height of your title/subtitle without pushing the logo down. */
     }
 
     .hero-logo-col {
-        /* Removed grid-area: logo; as hero-header is now flex */
-        display: flex;
-        flex-direction: column; /* Stack logo and new box */
-        align-items: flex-start; /* Align logo and box to the left */
-        justify-content: flex-end; /* Push logo and box to the bottom of this column */
-        flex: 0 0 auto;
+        grid-area: logo; /* Assign this to the 'logo' area in the grid */
+        flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
         margin-right: 0px;
         margin-top: 0px;
-        margin-bottom: 0;
+        margin-bottom: 0; /* Remove margin-bottom here as the box will handle spacing */
     }
 
     .logo-circle {
         padding: 8px;
-        margin-bottom: 10px; /* Space between logo and new box */
+        margin-bottom: 0; /* No margin here, handled by parent flex column */
     }
 
     /* Show the collected toads box on mobile */
     .collected-toads-box {
         display: block; /* Show on mobile */
-        /* Removed grid-area: toads-box; as hero-header is now flex */
-        margin-top: 0; /* Margin handled by logo-circle's margin-bottom */
+        grid-area: toads-box; /* Assign to the 'toads-box' area */
+        margin-top: 10px; /* Minimal spacing under the logo */
         margin-left: 0; /* Align to the left of the logo column */
         margin-right: auto; /* Keep it aligned left */
     }
 
     .hero-nav-col {
-        /* Removed grid-area: nav; as hero-header is now flex */
+        grid-area: nav; /* Assign this to the 'nav' area in the grid */
         display: flex;
         flex-direction: column;
         align-items: flex-end; /* Keep alignment to the right for title/subtitle */
-        justify-content: flex-end; /* Push title/subtitle to the bottom of this column */
         flex-grow: 1;
-        width: 100%; /* Take full width of its flex cell */
-        max-width: none;
+        width: 100%; /* Take full width of its grid cell */
+        max-width: none; /* Remove max-width that might constrain in grid */
         margin: 0;
         padding: 0;
         margin-top: 0px;
