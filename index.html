@@ -762,30 +762,26 @@
         }
         .hero-header {
             display: grid;
-            grid-template-columns: 250px 1fr; /* Fixed width for left column, rest for right */
-            grid-template-areas: "left-content nav"; /* Define areas for clarity */
-            align-items: start; /* Align content to the top of the grid cells */
+            grid-template-columns: auto 1fr; /* Logo column, then nav/titles column */
+            grid-template-rows: auto auto; /* Two rows for header content */
+            grid-template-areas:
+                "logo nav"
+                "toads-box nav"; /* Place toads-box under logo, nav spans both rows */
+            align-items: start; /* Align content to the top */
             padding: 0 4vw 0 2vw;
             margin-top: 14px;
             width: 100vw;
             max-width: 100vw;
             box-sizing: border-box;
             position: relative;
-            min-height: auto; /* Let content define height */
-        }
-
-        .hero-left-content { /* NEW CLASS */
-            grid-area: left-content; /* Assign to the new area */
-            display: flex;
-            flex-direction: column; /* Stack its children vertically */
-            align-items: flex-start; /* Align logo and toad box to the left */
-            justify-content: flex-start;
-            padding-right: 20px; /* Add some padding to the right of this column */
+            min-height: 180px; /* Adjust as needed */
         }
 
         .hero-logo-col {
-            /* No grid-area needed here, it's a child of hero-left-content */
-            margin-bottom: 10px; /* Space between logo and toad box */
+            grid-area: logo;
+            margin-right: 0px;
+            margin-top: 0px;
+            margin-bottom: 0;
         }
 
         .logo-circle {
@@ -799,14 +795,13 @@
         /* Show the desktop collected toads box but position it like mobile */
         .desktop-collected-toads-box {
             display: block; /* Show this box */
-            /* No grid-area needed here, it's a child of hero-left-content */
+            grid-area: toads-box; /* Assign to the 'toads-box' area */
+            margin-top: 10px; /* Small spacing under the logo */
             width: 220px; /* Adjusted width for tablet */
             height: 180px; /* Fixed height for tablet to match mobile aesthetic */
-            margin-top: 10px; /* Small spacing under the logo */
-            margin-bottom: 20px; /* Space below toad box and above nav/titles */
             margin-left: 0;
             margin-right: auto;
-            align-self: flex-start; /* Align to top of its flex container */
+            align-self: start; /* Align to top of its grid cell */
             border: 5px solid #FFFFFF; /* Match mobile border */
             padding: 5px; /* Inner padding */
             background-color: rgba(255, 255, 255, 0.1);
@@ -984,10 +979,10 @@
             grid-area: nav; /* Assign this to the 'nav' area in the grid */
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: flex-end; /* Keep alignment to the right for title/subtitle */
             flex-grow: 1;
-            width: 100%;
-            max-width: none;
+            width: 100%; /* Take full width of its grid cell */
+            max-width: none; /* Remove max-width that might constrain in grid */
             margin: 0;
             padding: 0;
             margin-top: 0px;
@@ -1237,22 +1232,20 @@
     </div>
     <section class="hero" id="hero">
       <div class="hero-header">
-  <div class="hero-left-content">
-    <div class="hero-logo-col">
-      <div class="logo-circle">
-        <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
-      </div>
-      <div class="collected-toads-box" id="collectedToadsBox">
-          <div class="collected-toads-grid" id="collectedToadsGrid">
-              </div>
-          <div class="toad-counter" id="toadCounter">0 / 12</div>
-      </div>
+  <div class="hero-logo-col">
+    <div class="logo-circle">
+      <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
     </div>
-    <div class="desktop-collected-toads-box" id="desktopToadsBox">
-        <div class="collected-toads-grid" id="desktopToadsGrid">
+    <div class="collected-toads-box" id="collectedToadsBox">
+        <div class="collected-toads-grid" id="collectedToadsGrid">
             </div>
-        <div class="toad-counter" id="desktopToadCounter">0 / 12</div>
+        <div class="toad-counter" id="toadCounter">0 / 12</div>
     </div>
+  </div>
+  <div class="desktop-collected-toads-box" id="desktopToadsBox">
+      <div class="collected-toads-grid" id="desktopToadsGrid">
+          </div>
+      <div class="toad-counter" id="desktopToadCounter">0 / 12</div>
   </div>
   <div class="hero-nav-col">
     <div class="hero-nav-title">
