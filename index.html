@@ -1248,7 +1248,7 @@
         </div>
     </footer>
     <script>
-    // Modal & scroll logic
+    // Modal & scroll logic (unchanged)
     function openModal(img) {
         var modal = document.getElementById('imgModal');
         var modalImg = document.getElementById('modalImg');
@@ -1287,16 +1287,33 @@
         const DESKTOP_COLUMNS = 6;
         const TOAD_ROW_HEIGHT_PX = 70; // Matching grid-auto-rows in CSS
 
-        // Conditionally select the correct grid and counter based on screen size
-        let currentCollectedToadsGrid;
+        // --- Canvas-specific variables ---
+        const desktopToadsCanvas = document.getElementById('desktopToadsCanvas');
+        const desktopToadsBox = document.querySelector('.desktop-collected-toads-box'); // The container
+        let ctx = null; // Context for drawing on canvas
+        let toadImage = new Image(); // Image object for the toad
+
+        // Mobile grid variable (for non-desktop)
+        let mobileCollectedToadsGrid = document.getElementById('collectedToadsGrid');
+
+        // Check if canvas exists and get 2D context
+        if (desktopToadsCanvas) {
+            ctx = desktopToadsCanvas.getContext('2d');
+            // Load the toad image once
+            toadImage.src = frogImgSrc;
+            toadImage.onload = () => {
+                // Image is loaded, ready to draw. Redraw if toads already collected.
+                drawToadsOnCanvas();
+            };
+        }
+
+        // Conditionally select the correct counter based on screen size
         let currentToadCounter;
         let isDesktopView = window.innerWidth > 700; // Determine view type
 
         if (isDesktopView) {
-            currentCollectedToadsGrid = document.getElementById('desktopToadsGrid');
             currentToadCounter = document.getElementById('desktopToadCounter');
         } else {
-            currentCollectedToadsGrid = document.getElementById('collectedToadsGrid');
             currentToadCounter = document.getElementById('toadCounter');
         }
 
@@ -1309,32 +1326,136 @@
                 currentToadCounter.textContent = `${collectedToadCount} / ${maxToads}`;
             }
 
-            // --- Desktop Box Expansion Logic ---
-            const desktopToadsBox = document.querySelector('.desktop-collected-toads-box');
-            if (desktopToadsBox && isDesktopView) { // Only apply this on desktop
+            // --- Desktop Box Expansion Logic (for the container) ---
+            if (desktopToadsBox && isDesktopView) {
                 // Ensure the box is visible when toads start being collected
                 desktopToadsBox.style.display = 'block';
 
                 // Calculate the number of rows needed based on collected toads and columns
                 const filledRows = Math.ceil(collectedToadCount / DESKTOP_COLUMNS);
-                // Calculate the desired max-height for the box
-                // Add a small buffer (e.g., 5px) to account for padding or border if needed
-                const desiredMaxHeight = (filledRows * TOAD_ROW_HEIGHT_PX) + (2 * 5); // 2*padding top/bottom from CSS
+                // Calculate the desired max-height for the box container
+                const desiredMaxHeight = (filledRows * TOAD_ROW_HEIGHT_PX) + (2 * 5); // Add padding (2*5px)
 
-                // Apply the calculated max-height
                 desktopToadsBox.style.maxHeight = desiredMaxHeight + 'px';
+
+                // Set canvas dimensions to match the container's content area
+                // This is crucial for drawing accurately within the expanding box
+                desktopToadsCanvas.width = desktopToadsBox.clientWidth - (2 * 5); // Width minus horizontal padding
+                desktopToadsCanvas.height = desiredMaxHeight - (2 * 5); // Height minus vertical padding
+
+                // Redraw toads on canvas
+                drawToadsOnCanvas();
+            } else if (!isDesktopView) {
+                 // On mobile, ensure the desktop box is hidden
+                if (desktopToadsBox) {
+                    desktopToadsBox.style.display = 'none';
+                }
             }
+        }
+
+        // --- New: Function to draw all collected toads on the canvas ---
+        function drawToadsOnCanvas() {
+            if (!ctx || !toadImage.complete || toadImage.naturalWidth === 0 || desktopToadsCanvas.width === 0 || desktopToadsCanvas.height === 0) {
+                return; // Don't draw if canvas/image isn't ready or canvas has no area
+            }
+
+            ctx.clearRect(0, 0, desktopToadsCanvas.width, desktopToadsCanvas.height); // Clear previous drawing
+
+            // Calculate the actual size of each toad on the canvas based on canvas dimensions
+            const drawToadWidth = desktopToadsCanvas.width / DESKTOP_COLUMNS;
+            const drawToadHeight = TOAD_ROW_HEIGHT_PX; // Use fixed row height for drawing
+
+            for (let i = 0; i < collectedToadCount; i++) {
+                const column = i % DESKTOP_COLUMNS;
+                const row = Math.floor(i / DESKTOP_COLUMNS);
+
+                // Calculate x, y position for drawing
+                const x = column * drawToadWidth;
+                const y = row * drawToadHeight;
+
+                ctx.drawImage(toadImage, x, y, drawToadWidth, drawToadHeight);
+            }
+        }
 
         // ... (your existing subtitle.innerHTML = ''; and character span creation logic) ...
 
         const frogPeeps = subtitle.querySelectorAll('.frog-peep');
 
-        // ... (your existing peep sequence and animation functions: resetFrogVisuals, doPeepAnimation, scheduleIndividualRandomPeep, startNextPeepSequence) ...
-        // These can remain largely as they are, but ensure they use the `currentlyPeepingFrog` logic correctly.
+        // Variables for peep sequence management (unchanged from your previous successful code)
+        let mainSequenceSchedulerId;
+        let individualPeepSchedulerId;
+        let peepSequenceActive = false;
+        let currentlyPeepingFrog = null;
+        let currentPeepIndex = 0;
+
+        function resetFrogVisuals(frog) {
+            frog.classList.remove('peeping', 'fully-raised');
+            frog.style.opacity = '1';
+            frog.style.pointerEvents = 'auto';
+            frog.style.transition = 'opacity 0.2s, transform 0.2s';
+            frog.style.transform = 'translateY(0)';
+        }
+
+        function doPeepAnimation(frog, delay, duration) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    if (currentlyPeepingFrog && currentlyPeepingFrog !== frog) { // Ensure only one frog peeping
+                        resetFrogVisuals(currentlyPeepingFrog);
+                    }
+                    currentlyPeepingFrog = frog;
+                    peepSequenceActive = true;
+                    frog.style.pointerEvents = 'none'; // Temporarily disable clicks during animation
+                    frog.classList.add('peeping');
+                    frog.style.transform = 'translateY(-20px)'; // Peep up
+
+                    setTimeout(() => {
+                        frog.classList.add('fully-raised');
+                        frog.style.transform = 'translateY(-30px)'; // Full peep
+                        frog.style.pointerEvents = 'auto'; // Enable clicks when fully raised
+                        resolve();
+                    }, duration);
+                }, delay);
+            });
+        }
+
+        function scheduleIndividualRandomPeep() {
+            if (!peepSequenceActive) return; // Stop if sequence ended prematurely
+            const randomFrogIndex = Math.floor(Math.random() * frogPeeps.length);
+            const frog = frogPeeps[randomFrogIndex];
+            const randomDelay = Math.random() * (1000 - 300) + 300; // 300-1000ms
+            const randomDuration = Math.random() * (200 - 100) + 100; // 100-200ms
+
+            individualPeepSchedulerId = setTimeout(() => {
+                doPeepAnimation(frog, 0, randomDuration).then(() => {
+                    if (peepSequenceActive) {
+                        individualPeepSchedulerId = setTimeout(() => {
+                            resetFrogVisuals(frog);
+                            scheduleIndividualRandomPeep(); // Schedule next peep
+                        }, Math.random() * (2000 - 500) + 500); // Wait 500-2000ms before next peep
+                    }
+                });
+            }, randomDelay);
+        }
+
+        function startNextPeepSequence() {
+            if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+            if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+            peepSequenceActive = false; // Reset previous sequence state
+            if (currentlyPeepingFrog) {
+                resetFrogVisuals(currentlyPeepingFrog);
+                currentlyPeepingFrog = null;
+            }
+
+            mainSequenceSchedulerId = setTimeout(() => {
+                peepSequenceActive = true;
+                scheduleIndividualRandomPeep(); // Start individual random peeps
+            }, Math.random() * (3000 - 1000) + 1000); // Start next sequence after 1-3 seconds
+        }
 
         // Initial kick-off: Start the very first sequence
         startNextPeepSequence();
-        updateToadCounter(); // Initialize counter display
+        updateToadCounter(); // Initialize counter display and box state
+
 
         // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
         frogPeeps.forEach(frog => {
@@ -1369,71 +1490,84 @@
                         hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
                         hoppingToad.style.height = frogRect.height + 'px';
 
-                        // Calculate target position based on whether it's desktop or mobile
-                        if (currentCollectedToadsGrid) { // Ensure the grid exists
-                            const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
+                        let targetX, targetY;
+                        // Determine target based on desktop (canvas) or mobile (DOM grid)
+                        if (isDesktopView) {
+                            const boxRect = desktopToadsBox.getBoundingClientRect();
+                            const column = collectedToadCount % DESKTOP_COLUMNS;
+                            const row = Math.floor(collectedToadCount / DESKTOP_COLUMNS);
 
-                            let targetToadWidth, targetToadHeight, columnsInGrid;
+                            // Calculate dimensions based on the canvas's current dimensions for consistency
+                            const cellWidth = desktopToadsCanvas.width / DESKTOP_COLUMNS;
+                            const cellHeight = TOAD_ROW_HEIGHT_PX;
 
-                            if (isDesktopView) {
-                                columnsInGrid = DESKTOP_COLUMNS;
-                                targetToadWidth = gridRect.width / columnsInGrid; // Divide grid width by desktop columns
-                                targetToadHeight = TOAD_ROW_HEIGHT_PX; // Use fixed row height for desktop
-                            } else {
-                                // For mobile (4x4 grid)
-                                columnsInGrid = 4;
-                                targetToadWidth = gridRect.width / columnsInGrid;
-                                targetToadHeight = gridRect.height / 4; // Mobile grid divides height by 4
-                            }
+                            // Calculate the absolute position on the page where the toad should land
+                            // This is box's top-left + padding + position within canvas + half cell (to center toad)
+                            const targetXOnPage = boxRect.left + 5 + (column * cellWidth) + (cellWidth / 2); // 5 for left padding
+                            const targetYOnPage = boxRect.top + 5 + (row * cellHeight) + (cellHeight / 2); // 5 for top padding
 
-                            // Calculate target column and row for stacking in the *respective* grid
-                            const targetColumn = collectedToadCount % columnsInGrid;
-                            const targetRow = Math.floor(collectedToadCount / columnsInGrid);
+                            // Adjust target to be top-left of the hopping toad image itself for the transform
+                            targetX = targetXOnPage - (hoppingToad.offsetWidth / 2);
+                            targetY = targetYOnPage - (hoppingToad.offsetHeight / 2);
 
-                            // Calculate final X and Y position
-                            const targetX = gridRect.left + (targetColumn * targetToadWidth) + (targetToadWidth / 2) - (hoppingToad.offsetWidth / 2);
-                            const targetY = gridRect.top + (targetRow * targetToadHeight) + (targetToadHeight / 2) - (hoppingToad.offsetHeight / 2);
-
-
-                            // Trigger hopping animation after initial positioning is rendered
-                            requestAnimationFrame(() => {
-                                requestAnimationFrame(() => { // Double rAF for smoother transition start
-                                    const translateX = targetX - frogRect.left;
-                                    const translateY = targetY - frogRect.top;
-
-                                    // Apply transform for the hop (with an upward arc) and fade out
-                                    hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`; // -50px for the arc
-                                    hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                                    hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
-                                });
-                            });
-
-                            // Clean up the hopping toad and add the final static toad
+                            // Add transitionend listener specific to desktop canvas
                             hoppingToad.addEventListener('transitionend', () => {
                                 hoppingToad.remove(); // Remove the temporary hopping toad element
-
-                                // Create and append the final static toad to the correct grid
-                                const finalToad = document.createElement('img');
-                                finalToad.src = frogImgSrc; // Use the same image
-                                finalToad.classList.add('hopped-toad'); // Class for static collected toads
-                                currentCollectedToadsGrid.appendChild(finalToad); // Append to the *correct* grid
-
                                 collectedToadCount++; // Increment collected toad count
-                                updateToadCounter(); // Update counter display and box height
+                                updateToadCounter(); // Update counter display and trigger canvas redraw
+                                resetFrogVisuals(frog); // Reset visual state of the original subtitle frog
+                                startNextPeepSequence(); // Start the next overall peep sequence
+                            }, { once: true });
 
-                                // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
-                                resetFrogVisuals(frog);
+                        } else { // Mobile view
+                            if (mobileCollectedToadsGrid) { // Ensure the mobile grid element exists
+                                const gridRect = mobileCollectedToadsGrid.getBoundingClientRect();
+                                const columnsInGrid = 4; // Mobile grid has 4 columns
+                                const targetToadWidth = gridRect.width / columnsInGrid;
+                                const targetToadHeight = gridRect.height / 4; // Mobile grid divides height by 4
 
-                                // Start the next overall peep sequence after collection
+                                const targetColumn = collectedToadCount % columnsInGrid;
+                                const targetRow = Math.floor(collectedToadCount / columnsInGrid);
+
+                                targetX = gridRect.left + (targetColumn * targetToadWidth) + (targetToadWidth / 2) - (hoppingToad.offsetWidth / 2);
+                                targetY = gridRect.top + (targetRow * targetToadHeight) + (targetToadHeight / 2) - (hoppingToad.offsetHeight / 2);
+
+                                // Add transitionend listener specific to mobile DOM grid
+                                hoppingToad.addEventListener('transitionend', () => {
+                                    hoppingToad.remove(); // Remove the temporary hopping toad element
+
+                                    // Create and append the final static toad to the mobile DOM grid
+                                    const finalToad = document.createElement('img');
+                                    finalToad.src = frogImgSrc; // Use the same image
+                                    finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                                    mobileCollectedToadsGrid.appendChild(finalToad); // Append to the *mobile* grid
+
+                                    collectedToadCount++; // Increment collected toad count
+                                    updateToadCounter(); // Update counter display (no canvas redraw for mobile)
+                                    resetFrogVisuals(frog); // Reset visual state of the original subtitle frog
+                                    startNextPeepSequence(); // Start the next overall peep sequence
+                                }, { once: true });
+                            } else {
+                                console.error("Mobile collected toads grid element not found!");
+                                hoppingToad.remove(); // Remove hopping toad if target not found
                                 startNextPeepSequence();
+                            }
+                        }
 
-                            }, { once: true }); // Ensure this listener runs only once per hop
-                        } else {
-                            // Fallback if grid is not found (shouldn't happen with correct IDs)
-                            console.error("Collected toads grid element not found!");
-                            hoppingToad.remove(); // Remove hopping toad if target not found
-                            startNextPeepSequence();
-                    } else {
+                        // Trigger hopping animation (applies to both desktop and mobile hopping toads)
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => { // Double rAF for smoother transition start
+                                const translateX = targetX - frogRect.left;
+                                const translateY = targetY - frogRect.top;
+
+                                // Apply transform for the hop (with an upward arc) and fade out
+                                hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`; // -50px for the arc
+                                hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                                hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                            });
+                        });
+
+                    } else { // This 'else' correctly pairs with 'if (collectedToadCount < maxToads)'
                         // If box is full, just reset the frog without collecting
                         resetFrogVisuals(frog);
                         frog.style.opacity = '1';
@@ -1443,30 +1577,50 @@
                 }
             };
         });
-    // Mobile Navigation Toggle (existing code, unchanged)
-    const logoElement = document.querySelector('.logo-circle');
-    const navLinksContainer = document.querySelector('.main-links');
 
-    if (logoElement && navLinksContainer) {
-        logoElement.style.cursor = 'pointer';
+        // Event listener for window resize to update isDesktopView and redraw canvas
+        window.addEventListener('resize', () => {
+            const wasDesktopView = isDesktopView;
+            isDesktopView = window.innerWidth > 700;
 
-        logoElement.addEventListener('click', () => {
-            if (window.innerWidth <= 700) {
-                navLinksContainer.classList.toggle('active');
+            if (isDesktopView !== wasDesktopView) {
+                // If view type changed, re-initialize collected toads grid/counter references
+                if (isDesktopView) {
+                    currentToadCounter = document.getElementById('desktopToadCounter');
+                } else {
+                    currentToadCounter = document.getElementById('toadCounter');
+                }
+                updateToadCounter(); // Recalculate max-height and redraw canvas if necessary
+            } else if (isDesktopView) {
+                 // If still on desktop, but size changed, update canvas dimensions and redraw
+                updateToadCounter(); // This will handle canvas resizing and redraw
             }
         });
-    }
-    // News Banner Close Button (existing code, unchanged)
-    const newsBanner = document.getElementById('newsBanner');
-    const closeBannerBtn = document.querySelector('.close-banner-btn');
 
-    if (newsBanner && closeBannerBtn) {
-        closeBannerBtn.addEventListener('click', function() {
-            newsBanner.classList.add('hidden');
-            document.body.style.paddingTop = '0';
-        });
-    }
-});
+        // Mobile Navigation Toggle (existing code, unchanged)
+        const logoElement = document.querySelector('.logo-circle');
+        const navLinksContainer = document.querySelector('.main-links');
+
+        if (logoElement && navLinksContainer) {
+            logoElement.style.cursor = 'pointer';
+
+            logoElement.addEventListener('click', () => {
+                if (window.innerWidth <= 700) {
+                    navLinksContainer.classList.toggle('active');
+                }
+            });
+        }
+        // News Banner Close Button (existing code, unchanged)
+        const newsBanner = document.getElementById('newsBanner');
+        const closeBannerBtn = document.querySelector('.close-banner-btn');
+
+        if (newsBanner && closeBannerBtn) {
+            closeBannerBtn.addEventListener('click', function() {
+                newsBanner.classList.add('hidden');
+                document.body.style.paddingTop = '0';
+            });
+        }
+    });
 </script>
 </body>
 </html>
