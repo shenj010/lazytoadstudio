@@ -765,7 +765,7 @@
             grid-template-columns: auto 1fr auto; /* Logo column, central content, titles column */
             grid-template-rows: auto auto; /* Two rows for header content */
             grid-template-areas:
-                "logo-area toad-box-area titles-area"
+                "logo-area central-top-area titles-area"
                 ". nav-links-area titles-area"; /* Nav links below toad box, titles span both rows */
             align-items: start; /* Align content to the top */
             padding: 0 4vw 0 2vw;
@@ -775,6 +775,7 @@
             box-sizing: border-box;
             position: relative;
             min-height: 250px; /* Adjusted to ensure enough space for all elements */
+            column-gap: 20px; /* Add gap between grid columns */
         }
 
         .hero-logo-col {
@@ -801,7 +802,7 @@
             justify-self: center; /* Center horizontally within its grid cell */
             align-self: start; /* Align to the top of its grid cell */
             margin-top: 0; /* No external margin needed, grid handles spacing */
-            width: 220px; /* Adjusted width for tablet */
+            width: 220px; /* Keep fixed width, it should now fit better in 300px column */
             height: 180px; /* Fixed height for tablet to match mobile aesthetic */
             border: 5px solid #FFFFFF; /* Match mobile border */
             padding: 5px; /* Inner padding */
@@ -846,7 +847,8 @@
             left: unset;
             transform: none;
             top: unset;
-            width: fit-content; /* Allow content to dictate width */
+            width: 100%; /* Make it take full width of its grid cell */
+            max-width: 280px; /* Add a max-width to prevent it from getting too wide, adjust as needed */
             min-width: unset;
             max-height: unset;
             overflow: visible;
