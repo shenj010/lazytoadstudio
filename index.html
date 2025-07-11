@@ -664,14 +664,21 @@
         }
 
     @media (min-width: 701px) { /* NEW MEDIA QUERY: Applies ONLY to desktop screens */
-        .hero-header {
-            display: grid; /* CHANGED FOR DESKTOP: Switch hero-header to Grid layout */
-            grid-template-columns: auto 400px 1fr; /* Defines 3 columns: Logo (auto), Toad Box (180px), Nav (remaining) */
-            grid-template-areas:
-                "logo desktop-toads-box nav"; /* Defines named areas for desktop layout */
-            align-items: center; /* Vertically aligns items in the middle of their grid row */
-            /* If you have 'justify-content: space-between;' in your global .hero-header, you can remove it or set to 'unset' here. */
-        }
+    .hero-header {
+        display: grid;
+        grid-template-columns: auto 400px 1fr;
+        grid-template-areas:
+            "logo desktop-toads-box nav";
+        align-items: center;
+    }
+
+    /* Add/modify this section for the desktop grid */
+    #desktopToadsGrid {
+        grid-template-columns: repeat(8, 1fr); /* Desktop grid columns */
+        grid-template-rows: repeat(8, 1fr);    /* Desktop grid rows */
+        /* You can also add/adjust 'gap' here if needed for desktop */
+        /* gap: 1px; */
+    }
 
         /* Assign existing elements to their grid areas on desktop */
         .hero-logo-col {
