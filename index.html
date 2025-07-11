@@ -673,10 +673,10 @@
     @media (min-width: 1025px) { /* Changed from 701px */
         .hero-header {
             display: grid;
-            /* Ensure these two lines are changed exactly as below: */
-            grid-template-columns: auto 1fr 200px; /* This defines the column widths for logo, nav, and toad box */
+            /* Make these changes: */
+            grid-template-columns: auto 200px 1fr; /* Order: logo, desktop-toads-box, nav */
             grid-template-areas:
-                "logo nav desktop-toads-box"; /* This reorders the areas */
+                "logo desktop-toads-box nav"; /* Order: logo, desktop-toads-box, nav */
             align-items: end;
         }
         /* ... (other styles in this media query) ... */
@@ -706,12 +706,12 @@
         }
 
         .desktop-collected-toads-box {
-            display: block; /* Show the new desktop box on desktop */
-            grid-area: desktop-toads-box; /* Place it in the defined grid area */
-            margin: 0 0 0 20px; /* Changed: Add margin to the left only for spacing on desktop */
-            align-self: end; /* Aligns the box to the very bottom of its grid row in .hero-header */
+            display: block;
+            grid-area: desktop-toads-box;
+            /* Make this change: */
+            margin: 0 20px 0 0; /* Add 20px margin to the RIGHT only */
+            align-self: end;
         }
-
         .hero-nav-col {
             grid-area: nav;
         }
