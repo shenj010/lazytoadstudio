@@ -650,29 +650,27 @@
 
     /* NEW: Base styles for the new desktop box - Add this after the above .collected-toads-box */
     .desktop-collected-toads-box {
-        display: none; /* Keep hidden by default, will be shown via JS */
-        width: 380px; /* Fixed width as you desired */
+        display: none;
+        width: 380px;
         box-sizing: border-box;
-        padding: 5px; /* Inner padding */
-        margin-left: 10px; /* Maintains your horizontal margin */
-        overflow: hidden; /* Ensures content stays within bounds */
-        position: relative; /* Keep for potential future use or if needed by your JS */
+        padding: 5px;
+        margin-left: 10px;
+        position: relative;
 
-        /* --- Changes for Expanding Box Style --- */
-        /* REMOVE: height: 190px; (or whatever fixed height you had) */
-        height: auto; /* Allow the box to expand/contract based on content */
-        min-height: 40px; /* Minimum height, enough for one row of toads (adjust this value as needed) */
+        /* Revert to solid box appearance */
+        border: 10px solid #FFFFFF;
+        background-color: rgba(255, 255, 255, 0.1);
 
-        /* --- Changes for Top Alignment --- */
-        /* REMOVE: margin-top: 1px; (this would create an offset from the very top) */
-        align-self: start; /* Aligns the box to the very top of its grid row in .hero-header */
+        /* --- KEY CHANGES FOR EXPANSION EFFECT --- */
+        height: auto; /* Allow natural height calculation */
+        min-height: 0; /* Important: Remove previous min-height */
+        max-height: 0; /* Start with 0 height, will be controlled by JS */
+        overflow: hidden; /* Crucial to hide content exceeding max-height */
+        transition: max-height 0.5s ease-out; /* Smooth transition when height changes */
 
-        /* --- Revert to Solid Box Appearance --- */
-        border: 10px solid #FFFFFF; /* White border for a solid box */
-        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-
-        /* Make sure no pseudo-elements are here if you had added them for brackets */
-        /* E.g., remove any &::before, &::after rules if they are present for this selector */
+        /* Other properties like align-self and grid-area */
+        align-self: start;
+        grid-area: desktop-toads-box;
     }
 
     @media (min-width: 701px) { /* NEW MEDIA QUERY: Applies ONLY to desktop screens */
@@ -687,13 +685,12 @@
     /* Add/modify this section for the desktop grid */
    #desktopToadsGrid {
         display: grid;
-        grid-template-columns: repeat(8, 1fr); /* Your 8 columns */
-        /* REMOVE: grid-template-rows: repeat(8, 1fr); (or whatever fixed rows you had) */
-        grid-auto-rows: 40px; /* Each new row will automatically be 40px tall (match min-height above) */
-        gap: 2px; /* Adjust gap if needed */
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: 60px; /* Each row will effectively be 40px tall (adjust this value if needed) */
+        gap: 2px;
         width: 100%;
-        height: auto; /* Allow the grid's height to be determined by its rows */
-        overflow: hidden; /* Prevents scrollbars if content overflows */
+        height: auto; /* Grid's height determined by its rows */
+        /* overflow: hidden; (This is often not needed here if parent has overflow: hidden) */
     }
 
     /* --- Styles for individual toad images within the grid --- */
