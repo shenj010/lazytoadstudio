@@ -656,7 +656,7 @@
         width: 200px; /* Fixed width as you desired */
         box-sizing: border-box;
         padding: 5px; /* Inner padding */
-        margin-left: 70px; /* Maintains your horizontal margin */
+        margin-left: 200px; /* Maintains your horizontal margin */
         overflow: hidden; /* Ensures content stays within bounds */
         position: relative; /* Keep for potential future use or if needed by your JS */
 
@@ -673,7 +673,7 @@
     @media (min-width: 1025px) { /* Changed from 701px */
         .hero-header {
             display: grid;
-            grid-template-columns: auto 400px 1fr;
+            grid-template-columns: auto 200px 1fr;
             grid-template-areas:
                 "logo desktop-toads-box nav";
             align-items: end;
@@ -681,7 +681,7 @@
 
         #desktopToadsGrid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr); /* Your 8 columns */
+            grid-template-columns: repeat(4, 1fr); /* Your 8 columns */
             gap: 2px;
             width: 100%;
             height: auto;
