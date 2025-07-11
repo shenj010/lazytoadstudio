@@ -762,11 +762,11 @@
         }
         .hero-header {
             display: grid;
-            grid-template-columns: auto 1fr auto; /* Logo column, central content, titles column */
+            grid-template-columns: auto 1fr; /* Logo column, then nav/titles column */
             grid-template-rows: auto auto; /* Two rows for header content */
             grid-template-areas:
-                "logo-area central-top-area titles-area"
-                ". nav-links-area titles-area"; /* Nav links below toad box, titles span both rows */
+                "logo nav"
+                "toads-box nav"; /* Place toads-box under logo, nav spans both rows */
             align-items: start; /* Align content to the top */
             padding: 0 4vw 0 2vw;
             margin-top: 14px;
@@ -774,14 +774,11 @@
             max-width: 100vw;
             box-sizing: border-box;
             position: relative;
-            min-height: 250px; /* Adjusted to ensure enough space for all elements */
-            column-gap: 20px; /* Add gap between grid columns */
+            min-height: 180px; /* Adjust as needed */
         }
 
         .hero-logo-col {
-            grid-area: logo-area;
-            align-self: start;
-            justify-self: start;
+            grid-area: logo;
             margin-right: 0px;
             margin-top: 0px;
             margin-bottom: 0;
@@ -795,23 +792,19 @@
             height: 100px; /* Adjust logo size for tablet */
         }
 
-        /* Position the desktop collected toads box */
+        /* Show the desktop collected toads box but position it like mobile */
         .desktop-collected-toads-box {
             display: block; /* Show this box */
-            grid-area: toad-box-area; /* Assign to its grid area */
-            justify-self: center; /* Center horizontally within its grid cell */
-            align-self: start; /* Align to the top of its grid cell */
-            margin-top: 0; /* No external margin needed, grid handles spacing */
-            width: 220px; /* Keep fixed width, it should now fit better in 300px column */
+            grid-area: toads-box; /* Assign to the 'toads-box' area */
+            margin-top: 10px; /* Small spacing under the logo */
+            width: 220px; /* Adjusted width for tablet */
             height: 180px; /* Fixed height for tablet to match mobile aesthetic */
+            margin-left: 0;
+            margin-right: auto;
+            align-self: start; /* Align to top of its grid cell */
             border: 5px solid #FFFFFF; /* Match mobile border */
             padding: 5px; /* Inner padding */
             background-color: rgba(255, 255, 255, 0.1);
-            /* Reset any absolute positioning from previous attempts */
-            position: static;
-            left: unset;
-            transform: none;
-            top: unset;
         }
 
         #desktopToadsGrid {
@@ -829,65 +822,17 @@
             margin: auto;
         }
 
-        /* Position the navigation links */
-        .main-links {
-            grid-area: nav-links-area; /* Assign to its grid area */
-            justify-self: center; /* Center horizontally within its grid cell */
-            align-self: start; /* Align to the top of its grid cell */
-            display: flex; /* Ensure it's a flex container */
-            flex-direction: row; /* Keep links in a row */
-            flex-wrap: wrap; /* Allow wrapping */
-            gap: 10px; /* Adjust gap for tablet */
-            background-color: transparent; /* Remove background */
-            padding: 0; /* Remove any default padding */
-            margin: 0; /* Remove any external margins */
-            z-index: auto;
-            /* Reset any absolute positioning from previous attempts */
-            position: static;
-            left: unset;
-            transform: none;
-            top: unset;
-            width: 100%; /* Make it take full width of its grid cell */
-            max-width: 280px; /* Add a max-width to prevent it from getting too wide, adjust as needed */
-            min-width: unset;
-            max-height: unset;
-            overflow: visible;
-            transition: none;
-            padding-bottom: 0;
-        }
-        .main-links a {
-            padding: 8px 15px; /* Adjust button padding */
-            font-size: 0.9rem;
-            border: 3px solid #181818; /* Adjust border thickness */
-            margin: 0;
-        }
-        .main-links .icon {
-            width: 1.5em; /* Adjust icon size */
-            height: 1.5em;
-            min-width: 1.5em;
-            min-height: 1.5em;
-        }
-
-        /* Position the titles (hero-nav-col) */
         .hero-nav-col {
-            grid-area: titles-area; /* Assign to its grid area */
-            align-self: start; /* Align to the top of its grid cell */
-            justify-self: end; /* Align to the right of its grid cell */
+            grid-area: nav;
             display: flex;
             flex-direction: column;
-            align-items: flex-end; /* Keep titles aligned right */
+            align-items: flex-end;
             flex-grow: 1;
             width: 100%;
             max-width: none;
             margin: 0;
             padding: 0;
             margin-top: 0px;
-            /* Reset any absolute positioning from previous attempts */
-            position: static;
-            top: unset;
-            right: unset;
-            left: unset;
-            transform: none;
         }
         .hero-nav-title {
             font-size: 2.5rem; /* Adjust title size */
@@ -901,6 +846,38 @@
             margin-bottom: 18px;
             margin-top: 0;
             line-height: 1.2;
+        }
+
+        .main-links {
+            /* Keep as flex row for tablet, but align right */
+            position: static; /* IMPORTANT: Remove absolute positioning */
+            top: auto;
+            left: auto;
+            width: auto;
+            min-width: unset;
+            max-height: unset; /* Remove these overrides from mobile */
+            overflow: visible;
+            transition: none;
+            display: flex;
+            flex-direction: row; /* Keep as row */
+            flex-wrap: wrap; /* Allow wrapping */
+            justify-content: flex-end; /* Align to the right */
+            gap: 10px; /* Adjust gap for tablet */
+            background-color: transparent; /* Remove background */
+            padding-bottom: 0;
+            z-index: auto;
+        }
+        .main-links a {
+            padding: 8px 15px; /* Adjust button padding */
+            font-size: 0.9rem;
+            border: 3px solid #181818; /* Adjust border thickness */
+            margin: 0;
+        }
+        .main-links .icon {
+            width: 1.5em; /* Adjust icon size */
+            height: 1.5em;
+            min-width: 1.5em;
+            min-height: 1.5em;
         }
 
 
@@ -944,7 +921,6 @@
     }
 
 
-    /* Your existing media query for max-width: 700px (mobile) - IMPORTANT TO KEEP THIS! */
     @media (max-width: 700px) {
         /* Hides the new desktop box on mobile screens */
         .desktop-collected-toads-box {
