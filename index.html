@@ -1430,13 +1430,14 @@
 
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
-    const subtitle = document.querySelector('.hero-nav-subtitle');
-    const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
-    const originalText = subtitle.textContent.trim();
-
     // --- MODIFICATION START ---
     let collectedToadCount = 0; // Moved declaration to the top
     const maxToads = 12; // Moved declaration to the top
+    // --- MODIFICATION END ---
+
+    const subtitle = document.querySelector('.hero-nav-subtitle');
+    const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
+    const originalText = subtitle.textContent.trim();
 
     // Conditionally select the correct grid and counter based on screen size
     let currentCollectedToadsGrid;
@@ -1481,7 +1482,7 @@
     // Call on load and resize to maintain height
     updateToadBoxVisibility(); // Initial call
     window.addEventListener('resize', updateToadBoxVisibility); // Update on resize
-    // --- MODIFICATION END ---
+
 
     // Function to update the toad counter
     function updateToadCounter() {
@@ -1572,7 +1573,8 @@
                 frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('raised');
             }, 50);
 
-            // After initial peep animation completes
+            // After initial peep animation completes (0.7s transition)
+            // We wait slightly longer to ensure the first part of the animation has rendered
             setTimeout(() => {
                 if (frogElement.style.opacity === '0') { // Check if the frog was clicked and collected during its peep
                     currentlyPeepingFrog = null; // Clear reference as it's collected
@@ -1597,7 +1599,7 @@
                         currentlyPeepingFrog = null; // Clear reference as this frog is no longer peeping
                         resetFrogVisuals(frogElement); // Reset classes
                         resolve(); // Resolve the promise
-                    }, 1500); // How long the toad stays fully raised before disappearing/cleanup
+                    }, 800); // Adjusted from 1500 to 800 (0.7s transition + buffer)
 
                 } else {
                     // Just peep and retract
@@ -1608,9 +1610,9 @@
                         currentlyPeepingFrog = null; // Clear reference as this peep is done
                         resetFrogVisuals(frogElement); // Ensure fully retracted classes are removed
                         resolve(); // Resolve the promise
-                    }, 700); // Duration for retract animation
+                    }, 800); // Adjusted from 700 to 800 (0.7s transition + buffer)
                 }
-            }, 1000); // Duration of the initial 'peeping' state before deciding next action (fully raise or retract)
+            }, 750); // Adjusted from 1000 to 750 (0.7s transition + buffer for initial peep)
         });
     }
 
