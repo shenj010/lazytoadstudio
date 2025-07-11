@@ -1435,6 +1435,9 @@
     const originalText = subtitle.textContent.trim();
 
     // --- MODIFICATION START ---
+    let collectedToadCount = 0; // Moved declaration to the top
+    const maxToads = 12; // Moved declaration to the top
+
     // Conditionally select the correct grid and counter based on screen size
     let currentCollectedToadsGrid;
     let currentToadCounter;
@@ -1470,7 +1473,8 @@
             document.getElementById('collectedToadsBox').style.display = 'block';
         }
         updateToadCounter(); // Ensure counter is updated after switching
-        adjustDesktopToadsBoxHeight(); // Adjust height if desktop box is now visible
+        // Use a small timeout to ensure mainLinks.offsetHeight is calculated after layout
+        setTimeout(adjustDesktopToadsBoxHeight, 0);
     }
 
 
@@ -1478,9 +1482,6 @@
     updateToadBoxVisibility(); // Initial call
     window.addEventListener('resize', updateToadBoxVisibility); // Update on resize
     // --- MODIFICATION END ---
-
-    let collectedToadCount = 0;
-    const maxToads = 12; // Max toads in the 4x4 grid
 
     // Function to update the toad counter
     function updateToadCounter() {
