@@ -76,7 +76,7 @@
         flex-direction: row;
         align-items: flex-end; /* Keep align-items to flex-end for general header alignment */
         justify-content: space-between;
-        margin-top: 36px;
+        margin-top: 36px; /* Keep this general margin-top for overall header positioning */
         margin-bottom: 0;
         box-sizing: border-box;
         padding-left: 2vw;
@@ -680,7 +680,7 @@
         grid-template-columns: auto minmax(200px, 380px) minmax(300px, 1fr);
         grid-template-areas:
             "logo desktop-toads-box nav";
-        align-items: end; /* Align items to the bottom */
+        align-items: start; /* CHANGED: Align items to the top */
     }
 
     /* Add/modify this section for the desktop grid */
@@ -710,13 +710,14 @@
         /* Assign existing elements to their grid areas on desktop */
         .hero-logo-col {
             grid-area: logo;
+            margin-top: 0; /* ADDED: Ensure logo column starts at the top */
         }
 
         .desktop-collected-toads-box {
             display: block; /* Show the new desktop box on desktop */
             grid-area: desktop-toads-box; /* Place it in the defined grid area */
             margin: 0 20px; /* Add horizontal margin for spacing on desktop */
-            align-self: end; /* Aligns the box to the very bottom of its grid row in .hero-header */
+            align-self: start; /* CHANGED: Aligns the box to the very TOP of its grid row in .hero-header */
         }
 
         .hero-nav-col {
