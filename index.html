@@ -85,7 +85,8 @@
         }
         .hero-logo-col {
             display: flex;
-            align-items: center;
+            flex-direction: column; /* Changed to column to stack logo and new box */
+            align-items: flex-start; /* Align items to the start for logo and box */
             justify-content: flex-start;
             flex: 0 0 auto;
         }
@@ -97,6 +98,7 @@
             border-radius: 50%;
             box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
             padding: 18px;
+            margin-bottom: 10px; /* Space between logo and new box */
         }
         .hero-logo {
             display: block;
@@ -601,27 +603,49 @@
 
         /* Styles for the static toads collected in the header (consolidated) */
         .hopped-toad {
-            width: 1.5em; /* Using 1.5em for potentially better responsiveness relative to text */
-            height: 1.5em;
+            width: 100%; /* To fill the grid cell */
+            height: auto; /* Maintain aspect ratio */
             object-fit: contain; /* Ensures the image fits without distortion */
-            /* Removed 'transition' here as this is the static toad */
-            /* Removed 'filter: none;' unless explicitly needed */
+            image-rendering: pixelated; /* Keep pixelated look */
         }
 
-        /* Styles for the "hopped" toads container */
+        /* Styles for the "hopped" toads container - Desktop version hidden */
         .hopped-toad-container {
-            position: absolute; /* Position relative to .hero-header */
-            /* Calculate 'left' to be just right of the logo circle */
-            /* 2vw (header left padding) + 150px (logo height/width) + 18px*2 (logo circle padding) + 10px (desired gap) */
-            left: calc(2vw + 150px + (18px * 2) + 10px);
-            top: 50%; /* Vertically center within hero-header */
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center; /* Align items vertically if they have different heights */
-            gap: 5px; /* Space between hopped toads */
-            z-index: 5; /* Ensure it's above other elements if necessary */
-            white-space: nowrap; /* Keep toads on one line */
-            pointer-events: none; /* Make it non-interactive, only for visual display */
+            display: none; /* Hidden by default on desktop */
+        }
+
+        /* New styles for the collected toads box */
+        .collected-toads-box {
+            display: none; /* Hidden by default on desktop */
+            width: 180px; /* Fixed width for the box */
+            height: 180px; /* Fixed height for the box */
+            border: 2px solid #FFFFFF; /* White border */
+            position: relative;
+            margin-top: 10px; /* Minimal spacing under the logo */
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
+            padding: 5px; /* Inner padding for the grid */
+        }
+
+        .collected-toads-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns */
+            grid-template-rows: repeat(4, 1fr); /* 4 rows */
+            gap: 2px; /* Small gap between toads */
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Hide any overflow */
+        }
+
+        .toad-counter {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            color: #FFFFFF; /* White text for the counter */
+            font-family: 'Press Start 2P', monospace !important; /* Same font as nav links */
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Outline */
         }
 
        /* MOBILE OPTIMIZATION (only for mobile) */
@@ -635,7 +659,7 @@
         grid-template-rows: auto auto;
         grid-template-areas:
             "logo nav"
-            "toads .";
+            "toads-box ."; /* Changed to 'toads-box' for the new container */
         align-items: start;
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
@@ -654,12 +678,21 @@
         flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
         margin-right: 0px;
         margin-top: 0px;
-        margin-bottom: 10px; /* Add space below the logo before the toads */
+        margin-bottom: 0; /* Remove margin-bottom here as the box will handle spacing */
     }
 
     .logo-circle {
         padding: 8px;
-        margin-bottom: 0;
+        margin-bottom: 0; /* No margin here, handled by parent flex column */
+    }
+
+    /* Show the collected toads box on mobile */
+    .collected-toads-box {
+        display: block; /* Show on mobile */
+        grid-area: toads-box; /* Assign to the 'toads-box' area */
+        margin-top: 10px; /* Minimal spacing under the logo */
+        margin-left: 0; /* Align to the left of the logo column */
+        margin-right: auto; /* Keep it aligned left */
     }
 
     .hero-nav-col {
@@ -707,25 +740,13 @@
     }
 
     #hoppedToadContainer {
-        grid-area: toads; /* Assign this to the 'toads' area in the grid */
-        /* It will now naturally position under the 'logo' grid area */
-        position: static; /* Ensure it flows within the grid, not absolutely positioned */
-        display: flex;
-        flex-wrap: wrap; /* Allow toads to wrap into rows */
-        justify-content: center; /* Center the toads within their rows */
-        width: 100%; /* Take full width of its grid cell */
-        margin-top: 0; /* Margin handled by grid or hero-logo-col margin-bottom */
-        transform: none; /* Reset any desktop transforms */
-        box-sizing: border-box; /* Include padding in width calculation */
-        padding: 0 5px; /* Small horizontal padding inside the container */
-        gap: 5px; /* Add gap between toads */
-        z-index: 5; /* Adjust z-index if toads are overlapping other content */
+        display: none; /* Hide the old hopped toad container on mobile */
     }
     .hopped-toad {
-        flex: 0 0 25%; /* Each toad takes 25% of the container width for 4 per row */
-        max-width: 25%; /* Ensures it doesn't exceed 25% */
-        height: auto; /* Maintain aspect ratio */
-        /* Removed fixed width/height like 1.2em as flex-basis will control it */
+        /* These styles are now applied to toads within the grid */
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     /* Your existing .main-links and .news-banner styles (unchanged) */
@@ -939,6 +960,13 @@
           <div class="logo-circle">
             <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
           </div>
+          <!-- New collected toads box for mobile -->
+          <div class="collected-toads-box" id="collectedToadsBox">
+              <div class="collected-toads-grid" id="collectedToadsGrid">
+                  <!-- Toads will be appended here -->
+              </div>
+              <div class="toad-counter" id="toadCounter">0 / 16</div>
+          </div>
         </div>
         <div class="hopped-toad-container" id="hoppedToadContainer"></div> <div class="hero-nav-col">
           <div class="hero-nav-title">
@@ -1109,7 +1137,7 @@
     <footer class="footer-social">
         <div class="footer-social-links">
             <a class="footer-social-link" href="mailto:contact@lazytoadstudios.com" target="_blank" rel="noopener" title="Contact Email">
-                <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2v.01L12 13 4 6.01V6h16zm-16 12V8.08l7.29 6.29a1 1 0 0 0 1.42 0L20 8.08V18H4z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2v.01L12 13 4 6.01V6h16zm-16 12V8.08l7.29 6.29a1 2 0 0 0 1.42 0L20 8.08V18H4z"/></svg>
                 Contact
             </a>
             <a class="footer-social-link" href="https://instagram.com/lazytoadstudios" target="_blank" rel="noopener" title="Instagram">
@@ -1164,8 +1192,15 @@
         const subtitle = document.querySelector('.hero-nav-subtitle');
         const frogImgSrc = 'images/toad icon static.png'; // IMPORTANT: Verify this image path is correct
         const originalText = subtitle.textContent.trim();
-        const hoppedToadContainer = document.getElementById('hoppedToadContainer');
-        let hoppedToadCount = 0;
+        const collectedToadsGrid = document.getElementById('collectedToadsGrid'); // New grid container
+        const toadCounter = document.getElementById('toadCounter'); // New counter element
+        let collectedToadCount = 0; // Renamed from hoppedToadCount
+        const maxToads = 16; // Max toads in the 4x4 grid
+
+        // Function to update the toad counter
+        function updateToadCounter() {
+            toadCounter.textContent = `${collectedToadCount} / ${maxToads}`;
+        }
 
         subtitle.innerHTML = ''; // Clear original content
 
@@ -1369,6 +1404,7 @@
 
         // Initial kick-off: Start the very first sequence
         startNextPeepSequence();
+        updateToadCounter(); // Initialize counter display
 
         // GAME LOGIC: Click handler for the peeking frog with HOP ANIMATION
         frogPeeps.forEach(frog => {
@@ -1377,67 +1413,84 @@
                 if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
                     event.stopPropagation(); // Prevent event bubbling
 
-                    // Clear all pending timers related to the current sequence immediately
-                    if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-                    if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-                    peepSequenceActive = false; // End current sequence prematurely upon collection
-                    currentlyPeepingFrog = null; // No frog is currently peeping after collection
+                    // Only collect if there's space in the box
+                    if (collectedToadCount < maxToads) {
+                        // Clear all pending timers related to the current sequence immediately
+                        if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+                        if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+                        peepSequenceActive = false; // End current sequence prematurely upon collection
+                        currentlyPeepingFrog = null; // No frog is currently peeping after collection
 
-                    // Make the original frog disappear immediately from the subtitle
-                    frog.style.opacity = '0';
-                    frog.style.pointerEvents = 'none'; // Make it unclickable
+                        // Make the original frog disappear immediately from the subtitle
+                        frog.style.opacity = '0';
+                        frog.style.pointerEvents = 'none'; // Make it unclickable
 
-                    // --- Start Hop Animation Logic ---
-                    const frogRect = frog.getBoundingClientRect(); // Get original frog's position
+                        // --- Start Hop Animation Logic ---
+                        const frogRect = frog.getBoundingClientRect(); // Get original frog's position
 
-                    const hoppingToad = document.createElement('img');
-                    hoppingToad.src = frogImgSrc; // Use the same image source
-                    hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
-                    document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
+                        const hoppingToad = document.createElement('img');
+                        hoppingToad.src = frogImgSrc; // Use the same image source
+                        hoppingToad.classList.add('hopping-toad'); // Class for the hopping animation
+                        document.body.appendChild(hoppingToad); // Append to body for fixed positioning during hop
 
-                    // Set initial position of the hopping toad (same as the clicked frog)
-                    hoppingToad.style.left = frogRect.left + 'px';
-                    hoppingToad.style.top = frogRect.top + 'px';
-                    hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
-                    hoppingToad.style.height = frogRect.height + 'px';
+                        // Set initial position of the hopping toad (same as the clicked frog)
+                        hoppingToad.style.left = frogRect.left + 'px';
+                        hoppingToad.style.top = frogRect.top + 'px';
+                        hoppingToad.style.width = frogRect.width + 'px'; // Maintain initial size
+                        hoppingToad.style.height = frogRect.height + 'px';
 
-                    // Calculate target position in the hoppedToadContainer
-                    const containerRect = hoppedToadContainer.getBoundingClientRect();
-                    const targetX = containerRect.left;
-                    const targetY = containerRect.top + (containerRect.height / 2) - (frogRect.height / 2);
+                        // Calculate target position in the collectedToadsGrid
+                        const gridRect = collectedToadsGrid.getBoundingClientRect();
+                        const toadWidth = gridRect.width / 4;
+                        const toadHeight = gridRect.height / 4;
 
-                    // Trigger hopping animation after initial positioning is rendered
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => { // Double rAF for smoother transition start
-                            const translateX = targetX - frogRect.left;
-                            const translateY = targetY - frogRect.top;
+                        // Calculate target column and row for stacking in columns
+                        const targetColumn = Math.floor(collectedToadCount / 4); // 0-3
+                        const targetRow = collectedToadCount % 4; // 0-3
 
-                            // Apply transform for the hop (with an upward arc) and fade out
-                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
-                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                            hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                        const targetX = gridRect.left + (targetColumn * toadWidth) + (toadWidth / 2) - (frogRect.width / 2);
+                        const targetY = gridRect.top + (targetRow * toadHeight) + (toadHeight / 2) - (frogRect.height / 2);
+
+                        // Trigger hopping animation after initial positioning is rendered
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => { // Double rAF for smoother transition start
+                                const translateX = targetX - frogRect.left;
+                                const translateY = targetY - frogRect.top;
+
+                                // Apply transform for the hop (with an upward arc) and fade out
+                                hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
+                                hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                                hoppingToad.style.opacity = '0'; // Fade out as it reaches the destination
+                            });
                         });
-                    });
 
-                    // Clean up the hopping toad and add the final static toad
-                    hoppingToad.addEventListener('transitionend', () => {
-                        hoppingToad.remove(); // Remove the temporary hopping toad element
+                        // Clean up the hopping toad and add the final static toad
+                        hoppingToad.addEventListener('transitionend', () => {
+                            hoppingToad.remove(); // Remove the temporary hopping toad element
 
-                        // Create and append the final static toad to the header container
-                        const finalToad = document.createElement('img');
-                        finalToad.src = frogImgSrc; // Use the same image
-                        finalToad.classList.add('hopped-toad'); // Class for static collected toads
-                        hoppedToadContainer.appendChild(finalToad);
+                            // Create and append the final static toad to the grid
+                            const finalToad = document.createElement('img');
+                            finalToad.src = frogImgSrc; // Use the same image
+                            finalToad.classList.add('hopped-toad'); // Class for static collected toads
+                            collectedToadsGrid.appendChild(finalToad);
 
-                        hoppedToadCount++; // Increment collected toad count
+                            collectedToadCount++; // Increment collected toad count
+                            updateToadCounter(); // Update counter display
 
-                        // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
+                            // Reset visual state of the original subtitle frog (it's already opacity:0, pointer-events:none)
+                            resetFrogVisuals(frog);
+                            
+                            // Start the next overall peep sequence after collection
+                            startNextPeepSequence();
+
+                        }, { once: true }); // Ensure this listener runs only once per hop
+                    } else {
+                        // If box is full, just reset the frog without collecting
                         resetFrogVisuals(frog);
-                        
-                        // Start the next overall peep sequence after collection
-                        startNextPeepSequence();
-
-                    }, { once: true }); // Ensure this listener runs only once per hop
+                        frog.style.opacity = '1';
+                        frog.style.pointerEvents = 'auto';
+                        startNextPeepSequence(); // Start next sequence
+                    }
                 }
             };
         });
