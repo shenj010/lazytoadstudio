@@ -765,52 +765,50 @@
             font-size: 15px; /* Adjust base font size for better scaling */
         }
         .hero-header {
-            display: grid;
-            grid-template-columns: auto 1fr; /* Logo column, then nav/titles column */
-            grid-template-rows: auto auto; /* Two rows for header content */
-            grid-template-areas:
-                "logo nav"
-                "toads-box nav"; /* Place toads-box under logo, nav spans both rows */
-            align-items: start; /* Align content to the top */
-            padding: 0 4vw 0 2vw;
-            margin-top: 14px;
-            width: 100vw;
-            max-width: 100vw;
-            box-sizing: border-box;
-            position: relative;
-            min-height: 180px; /* Adjust as needed */
-            margin-bottom: 20px; /* Add space below the entire header for tablet view */
-        }
+        display: grid;
+        /* UPDATED: Define columns: Logo (auto), a combined column for (gap + toad box - 200px wide), and Nav (1fr) */
+        grid-template-columns: auto 250px 1fr; /* (Logo) (Gap + Toad Box) (Nav) */
+        grid-template-rows: auto; /* Single row for header content */
+        /* Updated areas: 'toads-area' covers the combined gap and toad box column */
+        grid-template-areas: "logo toads-area nav";
+        align-items: start; /* Align content to the top */
+        padding: 0 4vw 0 2vw;
+        margin-top: 14px;
+        width: 100vw;
+        max-width: 100vw;
+        box-sizing: border-box;
+        position: relative;
+        min-height: 180px; /* Adjust as needed */
+        margin-bottom: 0; /* Let the banner container handle the bottom spacing */
+    }
 
-        .hero-logo-col {
-            grid-area: logo;
-            margin-right: 0px;
-            margin-top: 0px;
-            margin-bottom: 0;
-        }
+    .hero-logo-col {
+        grid-area: logo; /* Assign to the 'logo' area */
+        margin-right: 0px;
+        margin-top: 0px;
+        margin-bottom: 0;
+    }
 
-        .logo-circle {
-            padding: 8px;
-            margin-bottom: 0;
-        }
-        .hero-logo {
-            height: 100px; /* Adjust logo size for tablet */
-        }
+    .logo-circle {
+        padding: 8px;
+        margin-bottom: 0;
+    }
+    .hero-logo {
+        height: 100px;
+    }
 
-        /* Show the desktop collected toads box but position it like mobile */
-        .desktop-collected-toads-box {
-            display: block; /* Show this box */
-            grid-area: toads-box; /* Assign to the 'toads-box' area */
-            margin-top: 10px; /* Small spacing under the logo */
-            width: 200px; /* Adjusted width for tablet */
-            height: 180px; /* Fixed height for tablet to match mobile aesthetic */
-            margin-left: 100px;
-            margin-right: auto;
-            align-self: start; /* Align to top of its grid cell */
-            border: 5px solid #FFFFFF; /* Match mobile border */
-            padding: 5px; /* Inner padding */
-            background-color: rgba(255, 255, 255, 0.1);
-        }
+    .desktop-collected-toads-box {
+        display: block; /* Ensure it's shown */
+        grid-area: toads-area; /* Assign to the 'toads-area' */
+        width: 200px; /* Its intrinsic width */
+        height: 180px; /* Fixed height for tablet */
+        margin-left: 50px; /* This creates the 50px gap from the logo */
+        margin-right: auto; /* Pushes it left within its grid area */
+        align-self: start; /* Align to top of its grid cell */
+        border: 5px solid #FFFFFF; /* Match mobile border */
+        padding: 5px; /* Inner padding */
+        background-color: rgba(255, 255, 255, 0.1);
+    }
 
         #desktopToadsGrid {
             display: grid;
