@@ -761,17 +761,20 @@
 
     /* NEW MEDIA QUERY: Tablet / Small Desktop (701px to 1024px) */
     @media (min-width: 701px) and (max-width: 1024px) {
-        html, body {
-            font-size: 15px; /* Adjust base font size for better scaling */
-        }
-        .hero-header {
+    html, body {
+        font-size: 15px; /* Adjust base font size for better scaling */
+    }
+    .hero-header {
         display: grid;
-        /* Define columns: Logo (auto), 50px gap, Toad Box (fixed 200px width), Nav (fills rest) */
-        grid-template-columns: auto 50px 200px 1fr;
-        grid-template-rows: auto; /* Single row for header content */
-        /* Use '.' for unnamed grid areas (our 50px gap) */
-        grid-template-areas: "logo . toads-box nav";
-        align-items: center; /* IMPORTANT: Vertically center all items in the header row */
+        /* UPDATED: Define two rows for the layout */
+        grid-template-rows: auto auto; /* First row for logo/nav, second for toad box */
+        /* Define two columns with a small gap between them */
+        grid-template-columns: 200px 1fr; /* Fixed column for Logo/Toad Box, and flexible for Nav/Titles */
+        /* Define the grid areas across the new rows and columns */
+        grid-template-areas:
+            "logo nav"
+            "toads-box nav";
+        align-items: start; /* Align content to the top of its cell */
         padding: 0 4vw 0 2vw;
         margin-top: 14px;
         width: 100vw;
@@ -795,37 +798,37 @@
         margin-bottom: 0;
     }
     .hero-logo {
-        height: 100px;
+        height: 100px; /* Maintain full size */
     }
 
     .desktop-collected-toads-box {
-        display: flex; /* IMPORTANT: Use flexbox for internal layout */
+        display: flex; /* Use flexbox for internal layout */
         flex-direction: column; /* Stack children vertically */
         justify-content: flex-start; /* Align content to the top */
         align-items: flex-start; /* Align content to the left */
-        grid-area: toads-box; /* Assign to the 'toads-box' area */
-        width: 200px; /* Fixed width as per desktop's expanded state */
+        grid-area: toads-box; /* Assign to the 'toads-box' area in the second row */
+        width: 200px; /* Fixed width */
         height: auto; /* Allow height to be determined by content or min-height */
         min-height: 40px; /* Initial small height like a button in tablet view */
-        margin-left: 0; /* Grid column handles spacing */
-        margin-right: 0; /* Grid column handles spacing */
-        align-self: center; /* Ensure toad box is vertically centered within its cell */
-        border: 5px solid #FFFFFF; /* Match current tablet/desktop border style */
-        padding: 5px; /* Inner padding */
+        margin-left: 0; /* No explicit margin needed here */
+        margin-right: 0; /* No explicit margin needed here */
+        align-self: end; /* IMPORTANT: Align to the bottom of its grid cell */
+        border: 5px solid #FFFFFF;
+        padding: 5px;
         background-color: rgba(255, 255, 255, 0.1);
-        box-sizing: border-box; /* Important for consistent sizing */
-        transition: min-height 0.3s ease-out; /* Smooth transition for height changes */
+        box-sizing: border-box;
+        transition: min-height 0.3s ease-out;
     }
 
     /* Ensure the grid and counter adapt within the flex container */
     #desktopToadsGrid {
-        display: grid; /* Always a grid, even if empty */
+        display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 2px;
         width: 100%;
-        flex-grow: 1; /* Allow grid to take available vertical space */
+        flex-grow: 1;
         align-content: start;
-        overflow: hidden; /* Hide overflow if toads exceed initial small height */
+        overflow: hidden;
     }
 
     #desktopToadsGrid .hopped-toad {
@@ -835,26 +838,26 @@
     }
 
     #desktopToadCounter {
-        position: static; /* Remove absolute positioning */
-        margin-top: auto; /* Push counter to the bottom */
-        margin-left: auto; /* Push counter to the right */
+        position: static;
+        margin-top: auto;
+        margin-left: auto;
         padding: 0;
-        font-size: 0.8rem; /* Consistent with desktop */
-        white-space: nowrap; /* Prevent text breaking */
+        font-size: 0.8rem;
+        white-space: nowrap;
     }
 
     .hero-nav-col {
-        grid-area: nav; /* Assign to the 'nav' area */
+        grid-area: nav; /* Assign to the 'nav' area, spanning both rows */
         display: flex;
-        flex-direction: column; /* Keep column for titles and then links */
-        align-items: flex-end; /* Align title/subtitle and links to the right */
+        flex-direction: column;
+        align-items: flex-end;
         flex-grow: 1;
         width: 100%;
         max-width: none;
         margin: 0;
         padding: 0;
         margin-top: 0;
-        align-self: center; /* Ensure nav column is vertically centered within its cell */
+        align-self: start; /* Align to the top of its grid cell */
     }
     .hero-nav-title {
         font-size: 2.5rem;
@@ -880,10 +883,10 @@
         overflow: visible;
         transition: none;
         display: flex;
-        flex-direction: row; /* Make links horizontal for tablet */
-        flex-wrap: wrap; /* Allow wrapping if screen gets too narrow */
-        justify-content: flex-end; /* Align links to the right */
-        gap: 10px; /* Adjust gap for tablet */
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
         background-color: transparent;
         padding-bottom: 0;
         z-index: auto;
@@ -919,7 +922,7 @@
 
     .desktop-banner-container {
         display: block;
-        margin-top: 20px; /* Add space between header and banner in tablet view */
+        margin-top: 20px;
     }
     .mobile-banner-container {
         display: none;
