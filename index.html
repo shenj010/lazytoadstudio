@@ -674,7 +674,7 @@
         .hero-header {
             display: grid;
             /* Make these changes: */
-            grid-template-columns: auto 200px 1fr; /* Order: logo, desktop-toads-box, nav */
+            grid-template-columns: auto 500px 1fr; /* Order: logo, desktop-toads-box, nav */
             grid-template-areas:
                 "logo desktop-toads-box nav"; /* Order: logo, desktop-toads-box, nav */
             align-items: end;
@@ -709,7 +709,7 @@
             display: block;
             grid-area: desktop-toads-box;
             /* Make this change: */
-            margin: 0 200px 0 0; /* Add 20px margin to the RIGHT only */
+            margin: 0 0 0 200px; /* Add 20px margin to the RIGHT only */
             align-self: end;
         }
         .hero-nav-col {
@@ -760,170 +760,199 @@
     }
 
     /* NEW MEDIA QUERY: Tablet / Small Desktop (701px to 1024px) */
-    @media (min-width: 701px) and (max-width: 1024px) {
-        html, body {
-            font-size: 15px; /* Adjust base font size for better scaling */
-        }
-        .hero-header {
-            display: grid;
-            grid-template-columns: auto 1fr; /* Logo column, then nav/titles column */
-            grid-template-rows: auto auto; /* Two rows for header content */
-            grid-template-areas:
-                "logo nav"
-                "toads-box nav"; /* Place toads-box under logo, nav spans both rows */
-            align-items: start; /* Align content to the top */
-            padding: 0 4vw 0 2vw;
-            margin-top: 14px;
-            width: 100vw;
-            max-width: 100vw;
-            box-sizing: border-box;
-            position: relative;
-            min-height: 180px; /* Adjust as needed */
-        }
-
-        .hero-logo-col {
-            grid-area: logo;
-            margin-right: 0px;
-            margin-top: 0px;
-            margin-bottom: 0;
-        }
-
-        .logo-circle {
-            padding: 8px;
-            margin-bottom: 0;
-        }
-        .hero-logo {
-            height: 100px; /* Adjust logo size for tablet */
-        }
-
-        /* Show the desktop collected toads box but position it like mobile */
-        .desktop-collected-toads-box {
-            display: block; /* Show this box */
-            grid-area: toads-box; /* Assign to the 'toads-box' area */
-            margin-top: 10px; /* Small spacing under the logo */
-            width: 200px; /* Adjusted width for tablet */
-            height: 180px; /* Fixed height for tablet to match mobile aesthetic */
-            margin-left: 0;
-            margin-right: auto;
-            align-self: start; /* Align to top of its grid cell */
-            border: 5px solid #FFFFFF; /* Match mobile border */
-            padding: 5px; /* Inner padding */
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        #desktopToadsGrid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 6 columns for 12 toads (2 rows) for even spacing */
-            gap: 2px;
-            width: 100%;
-            height: 100%; /* Fill parent box */
-            align-content: start; /* Align to content start for tablet */
-        }
-
-        #desktopToadsGrid .hopped-toad {
-            width: 80%; /* Adjust toad size within grid cell */
-            height: auto;
-            margin: auto;
-        }
-
-        .hero-nav-col {
-            grid-area: nav;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            flex-grow: 1;
-            width: 100%;
-            max-width: none;
-            margin: 0;
-            padding: 0;
-            margin-top: 0px;
-        }
-        .hero-nav-title {
-            font-size: 2.5rem; /* Adjust title size */
-            -webkit-text-stroke: 1.5px #000;
-            text-stroke: 1.5px #000;
-            margin-bottom: 8px;
-            line-height: 1;
-        }
-        .hero-nav-subtitle {
-            font-size: 2.5rem; /* Adjust subtitle size */
-            margin-bottom: 18px;
-            margin-top: 0;
-            line-height: 1.2;
-        }
-
-        .main-links {
-            /* Keep as flex row for tablet, but align right */
-            position: static; /* IMPORTANT: Remove absolute positioning */
-            top: auto;
-            left: auto;
-            width: auto;
-            min-width: unset;
-            max-height: unset; /* Remove these overrides from mobile */
-            overflow: visible;
-            transition: none;
-            display: flex;
-            flex-direction: row; /* Keep as row */
-            flex-wrap: wrap; /* Allow wrapping */
-            justify-content: flex-end; /* Align to the right */
-            gap: 10px; /* Adjust gap for tablet */
-            background-color: transparent; /* Remove background */
-            padding-bottom: 0;
-            z-index: auto;
-        }
-        .main-links a {
-            padding: 8px 15px; /* Adjust button padding */
-            font-size: 0.9rem;
-            border: 3px solid #181818; /* Adjust border thickness */
-            margin: 0;
-        }
-        .main-links .icon {
-            width: 1.5em; /* Adjust icon size */
-            height: 1.5em;
-            min-width: 1.5em;
-            min-height: 1.5em;
-        }
-
-
-        #collectedToadsBox {
-            display: none; /* Hide the mobile specific toad box */
-        }
-
-        /* Hide separators on tablet as well if not needed */
-        .nav-hero-separator, .banner-hero-separator {
-            display: none !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .desktop-banner-container {
-            display: block; /* Show desktop banner images */
-        }
-        .mobile-banner-container {
-            display: none; /* Hide mobile banner */
-        }
-
-        .hero-image-row {
-            flex-direction: row; /* Keep as row for tablet */
-        }
-        .hero-image-box {
-            width: auto; /* Allow flexbox to size */
-            margin: 0; /* Remove auto margins */
-        }
-        .gallery-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust minmax for tablet gallery */
-            gap: 20px;
-            padding: 30px 5vw 40px 5vw;
-        }
-        .footer-social-links {
-            flex-direction: row; /* Keep as row */
-            gap: 16px;
-        }
-        .footer-social-link {
-            font-size: 0.9rem;
-        }
+   @media (max-width: 1024px) {
+    html, body {
+        font-size: 15px; /* Adjust base font size for better scaling */
+    }
+    .hero-header {
+        display: grid;
+        /* UPDATED: Define two rows for the layout */
+        grid-template-rows: auto auto; /* First row for logo/nav, second for toad box */
+        /* Define two columns with a small gap between them */
+        grid-template-columns: 200px 1fr; /* Fixed column for Logo/Toad Box, and flexible for Nav/Titles */
+        /* Define the grid areas across the new rows and columns */
+        grid-template-areas:
+            "logo nav"
+            "toads-box nav";
+        align-items: start; /* Align content to the top of its cell */
+        padding: 0 4vw 0 2vw;
+        margin-top: 14px;
+        width: 100vw;
+        max-width: 100vw;
+        box-sizing: border-box;
+        position: relative;
+        min-height: 180px; /* Adjust as needed */
+        margin-bottom: 0; /* Let the banner container handle the bottom spacing */
     }
 
+    .hero-logo-col {
+        grid-area: logo; /* Assign to the 'logo' area */
+        margin-right: 0;
+        margin-top: 0;
+        /* UPDATED: Added margin to create space between the logo and toad box */
+        margin-bottom: 10px;
+        align-self: center; /* Ensure logo is vertically centered within its cell */
+    }
+
+    .logo-circle {
+        padding: 8px;
+        margin-bottom: 0;
+    }
+    .hero-logo {
+        height: 150px; /* Maintain full size */
+    }
+
+    .desktop-collected-toads-box {
+        display: flex; /* Use flexbox for internal layout */
+        flex-direction: column; /* Stack children vertically */
+        justify-content: flex-start; /* Align content to the top */
+        align-items: flex-start; /* Align content to the left */
+        grid-area: toads-box; /* Assign to the 'toads-box' area in the second row */
+        width: 200px; /* Fixed width */
+        height: auto; /* Allow height to be determined by content or min-height */
+        min-height: 40px !important; /* Initial small height like a button in tablet view */
+        /* UPDATED: Set a max-height to ensure it only expands for 3 rows of toads */
+        max-height: 150px; 
+        margin-left: 0; /* No explicit margin needed here */
+        margin-right: 0; /* No explicit margin needed here */
+        align-self: end; /* IMPORTANT: Align to the bottom of its grid cell */
+        border: 5px solid #FFFFFF; /* Adjusted border to match desktop */
+        padding: 4px; /* Adjusted padding to match desktop */
+        background-color: rgba(255, 255, 255, 0.1);
+        box-sizing: border-box;
+        transition: min-height 0.3s ease-out;
+        position: relative;
+    }
+
+    /* Ensure the grid and counter adapt within the flex container */
+    #desktopToadsGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+        width: 100%;
+        flex-grow: 1;
+        align-content: start;
+    }
+
+    #desktopToadsGrid .hopped-toad {
+        width: 80%;
+        height: auto;
+        margin: auto;
+    }
+
+    #desktopToadCounter {
+        position: absolute;
+        /* UPDATED: Removed top: 4px to keep the counter at the bottom */
+        bottom: 4px; /* Match the padding of the parent container */
+        right: 4px; /* Match the padding of the parent container */
+        margin: 0;
+        padding: 0;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .hero-nav-col {
+        grid-area: nav; /* Assign to the 'nav' area, spanning both rows */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        flex-grow: 1;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        margin-top: 0;
+        align-self: start; /* Align to the top of its grid cell */
+    }
+    .hero-nav-title {
+        font-size: 2.5rem;
+        -webkit-text-stroke: 1.5px #000;
+        text-stroke: 1.5px #000;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+    .hero-nav-subtitle {
+        font-size: 2.5rem;
+        margin-bottom: 18px;
+        margin-top: 0;
+        line-height: 1.2;
+    }
+
+    .main-links {
+        position: static;
+        top: auto;
+        left: auto;
+        width: auto;
+        min-width: unset;
+        max-height: unset;
+        overflow: visible;
+        transition: none;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+        background-color: transparent;
+        padding-bottom: 0;
+        z-index: auto;
+    }
+    .main-links a {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        border: 3px solid #181818;
+        margin: 0;
+    }
+    .main-links .icon {
+        width: 1.5em;
+        height: 1.5em;
+        min-width: 1.5em;
+        min-height: 1.5em;
+    }
+
+    #collectedToadsBox {
+        display: none;
+    }
+
+    .nav-hero-separator,
+    .banner-hero-separator,
+    .solid-separator-top,
+    .hero-images-spacing,
+    .banner-images-spacing {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    .desktop-banner-container {
+        display: block;
+        margin-top: 20px;
+    }
+    .mobile-banner-container {
+        display: none;
+    }
+
+    .hero-image-row {
+        flex-direction: row;
+    }
+    .hero-image-box {
+        width: auto;
+        margin: 0;
+    }
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 30px 5vw 40px 5vw;
+    }
+    .footer-social-links {
+        flex-direction: row;
+        gap: 16px;
+    }
+    .footer-social-link {
+        font-size: 0.9rem;
+    }
+}
 
     @media (max-width: 700px) {
         /* Hides the new desktop box on mobile screens */
@@ -977,6 +1006,7 @@
             margin-top: 50px; /* Minimal spacing under the logo */
             margin-left: 0; /* Align to the left of the logo column */
             margin-right: auto; /* Keep it aligned left */
+            border: 6px solid #FFFFFF;
         }
 
         .hero-nav-col {
@@ -1139,7 +1169,7 @@
             width: 100vw; /* Take full viewport width */
             aspect-ratio: 1 / 0.9;
             overflow: hidden;
-            margin: 0 0 10px 0; /* Align to edge, add bottom margin */
+            margin: 10px 0 10px 0; /* Align to edge, add bottom margin */
             border-radius: 0;
 
             /* APPLY THE WHITE BORDER HERE (to the container) */
@@ -1222,121 +1252,12 @@
         }
     }
     /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
-     @media (max-width: 700px) {
-        .hero-header {
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: flex-start;
-            padding-left: 5vw;
-            padding-right: 5vw;
-        }
-        .hero-logo-col {
-            width: 100%;
-            justify-content: space-between;
-            flex-direction: row;
-            align-items: center;
-        }
-        .hero-logo-col .logo-circle {
-            margin-bottom: 0;
-        }
-        .hero-logo-col .collected-toads-box {
-            margin-top: 0;
-        }
-        .hero-nav-col {
-            width: 180px;
-            align-items: flex-start;
-            justify-content: flex-start;
-            position: relative;
-            top: 0;
-            left: 0;
-            transform: none;
-            transition: none;
-            z-index: 900;
-            border: none;
-            box-sizing: content-box;
-            background-color: transparent;
-        }
-        .hero-nav-col.active {
-            border: none;
-        }
-
-        .main-links {
-            position: absolute;
-            top: 200px;
-            left: 2vw;
-            width: fit-content;
-            min-width: 180px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            background-color: #FDEDF4;
-            padding-bottom: 10px;
-            box-sizing: border-box;
-            z-index: 10;
-            gap: 5px;
-        }
-        .main-links.active {
-            max-height: 500px;
-        }
-        .main-links a {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            font-size: 0.95rem;
-            width: 100%;
-            box-sizing: border-box;
-            padding: 0.5em 1em;
-            border-radius: 0px;
-            border: 2px solid #181818;
-            background-color: #FFFFFF;
-            margin: 0;
-            text-decoration: none;
-            color: #181818;
-            position: relative;
-            overflow: hidden;
-            z-index: 0;
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-        .main-links a::before {
-            content: none;
-            background-image: none;
-        }
-        .main-links .icon {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-image: url("./images/toad icon static.png");
-        }
-        .main-links a:hover,
-        .main-links a:focus {
-            background-color: #181818 !important;
-            color: #FDEDF4 !important;
-            opacity: 1 !important;
-            text-decoration: none !important;
-            border-color: #FDEDF4 !important;
-        }
-        .main-links a.shop:hover .icon { background-image: url("./images/toad shop.png"); }
-        .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
-        .main-links a.about:hover .icon { background-image: url("./images/toad about.png"); }
-        .main-links a.work:hover .icon { background-image: url("./images/toad work.png"); }
-
-        .nav-hero-separator,
-        .banner-hero-separator,
-        .desktop-collected-toads-box {
-            display: none !important;
-        }
-        .hero-nav-title, .hero-nav-subtitle {
-            display: none;
+    @media (max-width: 700px) {
+        body .hero-nav-subtitle {
+            font-family: 'DotGothic16', monospace !important;
         }
     }
-</style>
+    </style>
 </head>
 <body>
     <div class="news-banner" id="newsBanner">
