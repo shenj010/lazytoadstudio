@@ -760,7 +760,7 @@
     }
 
     /* NEW MEDIA QUERY: Tablet / Small Desktop (701px to 1024px) */
-   @media (max-width: 1024px) {
+   @media (min-width: 701px) and (max-width: 1024px) {
     html, body {
         font-size: 15px; /* Adjust base font size for better scaling */
     }
@@ -809,7 +809,7 @@
         grid-area: toads-box; /* Assign to the 'toads-box' area in the second row */
         width: 200px; /* Fixed width */
         height: auto; /* Allow height to be determined by content or min-height */
-        min-height: 70px !important; /* Initial small height like a button in tablet view */
+        min-height: 50px !important; /* Initial small height like a button in tablet view */
         /* UPDATED: Set a max-height to ensure it only expands for 3 rows of toads */
         max-height: 150px; 
         margin-left: 0; /* No explicit margin needed here */
