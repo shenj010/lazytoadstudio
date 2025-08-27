@@ -1222,12 +1222,121 @@
         }
     }
     /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
-    @media (max-width: 700px) {
-        body .hero-nav-subtitle {
-            font-family: 'DotGothic16', monospace !important;
+     @media (max-width: 700px) {
+        .hero-header {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding-left: 5vw;
+            padding-right: 5vw;
+        }
+        .hero-logo-col {
+            width: 100%;
+            justify-content: space-between;
+            flex-direction: row;
+            align-items: center;
+        }
+        .hero-logo-col .logo-circle {
+            margin-bottom: 0;
+        }
+        .hero-logo-col .collected-toads-box {
+            margin-top: 0;
+        }
+        .hero-nav-col {
+            width: 180px;
+            align-items: flex-start;
+            justify-content: flex-start;
+            position: relative;
+            top: 0;
+            left: 0;
+            transform: none;
+            transition: none;
+            z-index: 900;
+            border: none;
+            box-sizing: content-box;
+            background-color: transparent;
+        }
+        .hero-nav-col.active {
+            border: none;
+        }
+
+        .main-links {
+            position: absolute;
+            top: 200px;
+            left: 2vw;
+            width: fit-content;
+            min-width: 180px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            background-color: #FDEDF4;
+            padding-bottom: 10px;
+            box-sizing: border-box;
+            z-index: 10;
+            gap: 5px;
+        }
+        .main-links.active {
+            max-height: 500px;
+        }
+        .main-links a {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.5em 1em;
+            border-radius: 0px;
+            border: 2px solid #181818;
+            background-color: #FFFFFF;
+            margin: 0;
+            text-decoration: none;
+            color: #181818;
+            position: relative;
+            overflow: hidden;
+            z-index: 0;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .main-links a::before {
+            content: none;
+            background-image: none;
+        }
+        .main-links .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-image: url("./images/toad icon static.png");
+        }
+        .main-links a:hover,
+        .main-links a:focus {
+            background-color: #181818 !important;
+            color: #FDEDF4 !important;
+            opacity: 1 !important;
+            text-decoration: none !important;
+            border-color: #FDEDF4 !important;
+        }
+        .main-links a.shop:hover .icon { background-image: url("./images/toad shop.png"); }
+        .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
+        .main-links a.about:hover .icon { background-image: url("./images/toad about.png"); }
+        .main-links a.work:hover .icon { background-image: url("./images/toad work.png"); }
+
+        .nav-hero-separator,
+        .banner-hero-separator,
+        .desktop-collected-toads-box {
+            display: none !important;
+        }
+        .hero-nav-title, .hero-nav-subtitle {
+            display: none;
         }
     }
-    </style>
+</style>
 </head>
 <body>
     <div class="news-banner" id="newsBanner">
