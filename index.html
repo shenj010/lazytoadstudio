@@ -790,7 +790,7 @@
         margin-right: 0;
         margin-top: 0;
         margin-bottom: 0;
-        align-self: center; /* Ensure logo is vertically centered within its cell */
+        align-self: start; /* Ensure logo stays at the top of its grid cell */
     }
 
     .logo-circle {
@@ -810,7 +810,6 @@
         width: 200px; /* Fixed width */
         height: auto; /* Allow height to be determined by content or min-height */
         min-height: 40px; /* Initial small height like a button in tablet view */
-        /* UPDATED: Set a max-height to ensure it only expands for 3 rows of toads */
         max-height: 150px; 
         margin-left: 0; /* No explicit margin needed here */
         margin-right: 0; /* No explicit margin needed here */
@@ -840,6 +839,7 @@
     }
 
     #desktopToadCounter {
+        /* UPDATED: Ensure counter is always visible at the bottom of the flex container */
         position: static;
         margin-top: auto;
         margin-left: auto;
