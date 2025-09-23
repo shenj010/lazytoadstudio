@@ -1974,11 +1974,11 @@ let rewardGiven = false;
 function triggerReward() {
 if (rewardGiven) return; // <---- ADDED GUARD
     rewardGiven = true;
-animateWallet();
   const card = document.getElementById('rewardCard');
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
+animateWallet();
 }
 
   // Pick random card
