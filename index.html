@@ -1976,7 +1976,7 @@ function triggerReward() {
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
-  const toadContainer = document.getElementById('collectedToadsContainer'); // your container element
+  const toadContainer = document.getElementById('collectedToadsContainer');
 
   // Pick random card
   const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
@@ -1995,14 +1995,9 @@ function triggerReward() {
 
     // Start wallet chew at the same time as card flies
     animateWallet();
-
-    // ✅ Reset toad counter and container
-    collectedToadCount = 0;
-    if (toadContainer) toadContainer.innerHTML = '';
-    updateToadBoxVisibility();
   }, 500);
 
-  // After animation, update wallet + badge + save card
+  // After animation, update wallet + badge + save card + reset toads
   card.addEventListener(
     'animationend',
     () => {
@@ -2016,10 +2011,19 @@ function triggerReward() {
       // Update badge count (total collected, incl. duplicates)
       let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
       badge.textContent = collected.length;
+
+      // ✅ Reset toad counter and container AFTER card is safely in wallet
+      collectedToadCount = 0;
+      if (toadContainer) toadContainer.innerHTML = '';
+      updateToadBoxVisibility();
+
+      // Allow another reward to be given in the future
+      rewardGiven = false;
     },
     { once: true }
   );
 }
+
 
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
