@@ -1989,27 +1989,30 @@ function triggerReward() {
 
   // Animate into wallet
   setTimeout(() => {
-    card.style.animation = 'none';   // ✅ reset first
-    card.offsetWidth;                // ✅ force reflow
-    card.style.animation = 'flyToWallet 1.3s forwards'; // slowed from 1s → 1.3s
-  }, 1500);
+    card.offsetWidth; // force reflow
+    card.style.animation = 'flyToWallet 1.3s forwards';
 
-  // After animation, update wallet
-  card.addEventListener('animationend', () => {
-    card.style.display = 'none';
-    card.style.animation = ''; // reset for next time
-    wallet.style.display = 'block';
-
-    // Play wallet eating animation!
+    // 🔥 Start wallet chew at the same time card flies
     animateWallet();
+  }, 500);
 
-    // Save card permanently (duplicates allowed)
-    saveCard(randomCard);
+  // After animation, update wallet + badge
+  card.addEventListener(
+    'animationend',
+    () => {
+      card.style.display = 'none';
+      card.style.animation = ''; // reset for next time
+      wallet.style.display = 'block';
 
-    // Update badge count (total collected, incl. duplicates)
-    let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-    badge.textContent = collected.length;
-  }, { once: true });
+      // Save card permanently (duplicates allowed)
+      saveCard(randomCard);
+
+      // Update badge count (total collected, incl. duplicates)
+      let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+      badge.textContent = collected.length;
+    },
+    { once: true }
+  );
 }
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
