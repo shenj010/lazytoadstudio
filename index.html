@@ -2005,11 +2005,11 @@ function triggerReward() {
       wallet.style.display = 'block';
 
       // Save card permanently (duplicates allowed)
-      saveCard(randomCard);
+saveCard(randomCard);
 
-      // Update badge count (total collected, incl. duplicates)
-      let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-      badge.textContent = collected.length;
+// Update badge count (total collected, incl. duplicates)
+let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+badge.textContent = collected.length;
     },
     { once: true }
   );
@@ -2099,20 +2099,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const badge = document.getElementById('walletBadge');
   const closeBtn = document.querySelector('.close-wallet');
   const modal = document.getElementById('walletModal');
-  const resetBtn = document.getElementById('resetWallet'); // ✅ new line
+  const resetBtn = document.getElementById('resetWallet'); 
 
   // Restore collected cards
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
 
   if (collected.length > 0) {
     wallet.style.display = 'block';
-
-    // Count unique cards
-    let unique = {};
-    collected.forEach(card => {
-      unique[card.name] = true;
-    });
-    badge.textContent = Object.keys(unique).length;
+    badge.textContent = collected.length; // ✅ total cards, not unique
   }
 
   // Wallet click = open inventory
