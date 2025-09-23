@@ -1912,17 +1912,21 @@
 
                             collectedToadCount++;
                             updateToadBoxVisibility(); // Call this to re-render toads in the correct grid
-                            // ---- REWARD LOGIC START ----
-                          if (collectedToadCount === maxToads && !rewardGiven) {
-                          rewardGiven = true;
-                          triggerReward();
-                      }
-                      // ---- REWARD LOGIC END ----
-                            resetFrogVisuals(frog);
-                            startNextPeepSequence();
+                            // ---- REWARD LOGIC + RESET TOADS ----
+                        if (collectedToadCount === maxToads && !rewardGiven) {
+                            rewardGiven = true;
+                            triggerReward();
 
-                        }, { once: true });
-                    } else {
+                            // ✅ Reset toad counter and container immediately
+                            collectedToadCount = 0;
+                            if (currentCollectedToadsGrid) currentCollectedToadsGrid.innerHTML = '';
+                            updateToadBoxVisibility();
+                        }
+
+                        resetFrogVisuals(frog);
+                        startNextPeepSequence();
+                    }, { once: true });
+                } else {
                         console.error("Collected toads grid element not found!");
                         hoppingToad.remove();
                         startNextPeepSequence();
