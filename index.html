@@ -1998,6 +1998,9 @@ function triggerReward() {
     card.style.animation = ''; // reset for next time
     wallet.style.display = 'block';
 
+    // Play wallet eating animation!
+    animateWallet();
+
     // Save card permanently (duplicates allowed)
     saveCard(randomCard);
 
@@ -2006,7 +2009,6 @@ function triggerReward() {
     badge.textContent = collected.length;
   }, { once: true });
 }
-
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
   collected.push(card); // duplicates allowed
@@ -2017,6 +2019,26 @@ function getValidCards() {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
   let validNames = cardPool.map(c => c.name);
   return collected.filter(c => validNames.includes(c.name));
+}
+function animateWallet() {
+  const walletImg = document.getElementById('walletImage');
+  const frames = [
+    "images/toad-wallet.png",
+    "images/toad-wallet 2.png",
+    "images/toad-wallet 3.png",
+    "images/toad-wallet 4.png"
+  ];
+
+  let i = 0;
+  const interval = setInterval(() => {
+    walletImg.src = frames[i];
+    i++;
+    if (i === frames.length) {
+      clearInterval(interval);
+      // Reset back to idle
+      walletImg.src = frames[0];
+    }
+  }, 120); // ~8fps
 }
 
 function showInventory() {
@@ -2118,7 +2140,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
     <!-- 🐸 Toad Wallet (bottom right) -->
 <div id="toadWallet" class="toad-wallet">
-  <img src="images/toad-wallet.png" alt="Toad Wallet">
+  <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
   <span id="walletBadge" class="wallet-badge">0</span>
 </div>
 
