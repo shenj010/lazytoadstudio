@@ -1987,8 +1987,9 @@ function triggerReward() {
   card.style.opacity = '1';
   card.style.transform = 'translate(-50%, -50%) scale(1)';
 
-  // Animate into wallet
+  // Animate into wallet after a short delay
   setTimeout(() => {
+    card.offsetWidth; // <-- force reflow to trigger animation
     card.style.animation = 'flyToWallet 1s forwards';
   }, 1500);
 
