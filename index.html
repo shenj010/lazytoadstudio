@@ -2169,7 +2169,272 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+<script>
+// --- CONFIGURATION ---
+const cardPool = [
+    { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
+    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
+    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
+    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
+];
+
+let rewardGiven = false;
+let playerHP = {};
+let computerHP = {};
+let maxHP = 80;
+
+// --- UTILITY ---
+function shuffleArray(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+// --- SHOW FIGHT OVERLAY ---
+function showFightOverlay(callback) {
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = 10000;
+    overlay.style.fontFamily = "'Press Start 2P','DotGothic16',monospace";
+    overlay.style.color = '#fff';
+    overlay.style.fontSize = '20px';
+    overlay.innerText = 'FIGHT';
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        overlay.remove();
+        if (callback) callback();
+    }, 1000);
+}
+
+// --- DISTRIBUTE CARDS ---
+function dealHands() {
+    const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    if (collected.length < 2) return null;
+
+    const shuffled = shuffleArray(collected);
+
+    const playerHandCount = Math.min(collected.length, 5);
+    const compHandCount = Math.min(collected.length, 5);
+
+    const playerHand = shuffled.slice(0, playerHandCount);
+    const computerHand = shuffled.slice(playerHandCount, playerHandCount + compHandCount);
+
+    // Initialize HP
+    playerHand.forEach(c => playerHP[c.name] = maxHP);
+    computerHand.forEach(c => computerHP[c.name] = maxHP);
+
+    return { playerHand, computerHand };
+}
+
+// --- CREATE CARD ELEMENT ---
+function createCardEl(card) {
+    const el = document.createElement('div');
+    el.className = 'battle-card';
+    el.style.position = 'relative';
+    el.style.width = '80px';
+    el.style.height = '120px';
+    el.style.margin = '0 5px';
+    el.style.cursor = 'pointer';
+    el.style.transition = 'transform 0.2s';
+    el.style.display = 'inline-block';
+
+    const img = document.createElement('img');
+    img.src = card.src;
+    img.alt = card.name;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    el.appendChild(img);
+
+    const hpBar = document.createElement('div');
+    hpBar.style.position = 'absolute';
+    hpBar.style.top = '2px';
+    hpBar.style.left = '2px';
+    hpBar.style.width = '76px';
+    hpBar.style.height = '10px';
+    hpBar.style.background = '#555';
+    el.appendChild(hpBar);
+
+    const hpFill = document.createElement('div');
+    hpFill.style.width = '100%';
+    hpFill.style.height = '100%';
+    hpFill.style.background = 'red';
+    hpBar.appendChild(hpFill);
+
+    const hpText = document.createElement('div');
+    hpText.style.position = 'absolute';
+    hpText.style.top = '14px';
+    hpText.style.left = '2px';
+    hpText.style.fontSize = '8px';
+    hpText.style.fontFamily = "'Press Start 2P','DotGothic16',monospace";
+    hpText.style.color = '#fff';
+    hpText.innerText = maxHP;
+    el.appendChild(hpText);
+
+    el._hpText = hpText;
+    el._hpFill = hpFill;
+
+    return el;
+}
+
+// --- UPDATE HP ---
+function updateHP(cardName, owner) {
+    const hp = owner[cardName];
+    const cardEl = document.querySelector(`.battle-card[data-name="${cardName}"]`);
+    if (!cardEl) return;
+    cardEl._hpText.innerText = hp;
+    cardEl._hpFill.style.width = `${(hp / maxHP) * 100}%`;
+}
+
+// --- SHOW ACTION CHOICES ---
+function showActionChoices(cardEl, cardData, onAttack, onDefend) {
+    const existing = document.querySelector('.action-choices');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.className = 'action-choices';
+    container.style.position = 'absolute';
+    container.style.bottom = '140px';
+    container.style.left = '50%';
+    container.style.transform = 'translateX(-50%)';
+    container.style.display = 'flex';
+    container.style.gap = '10px';
+    container.style.zIndex = 1000;
+
+    const fightBtn = document.createElement('div');
+    fightBtn.className = 'action-button';
+    fightBtn.innerText = 'FIGHT';
+    fightBtn.addEventListener('click', () => {
+        onAttack(cardData);
+        container.remove();
+    });
+
+    const defendBtn = document.createElement('div');
+    defendBtn.className = 'action-button';
+    defendBtn.innerText = 'DEFEND';
+    defendBtn.addEventListener('click', () => {
+        onDefend(cardData);
+        container.remove();
+    });
+
+    container.appendChild(fightBtn);
+    container.appendChild(defendBtn);
+    document.body.appendChild(container);
+}
+
+// --- PERFORM ATTACK ---
+function performAttack(card) {
+    const targets = Object.keys(computerHP);
+    if (targets.length === 0) return;
+    const target = targets[Math.floor(Math.random() * targets.length)];
+    computerHP[target] -= 5;
+    if (computerHP[target] < 0) computerHP[target] = 0;
+    updateHP(target, computerHP);
+    checkBattleEnd();
+}
+
+// --- PERFORM DEFEND ---
+function performDefend(card) {
+    playerHP[card.name] += 5;
+    if (playerHP[card.name] > maxHP) playerHP[card.name] = maxHP;
+    updateHP(card.name, playerHP);
+}
+
+// --- CHECK END ---
+function checkBattleEnd() {
+    const playerAlive = Object.values(playerHP).some(h => h > 0);
+    const compAlive = Object.values(computerHP).some(h => h > 0);
+
+    if (!playerAlive || !compAlive) {
+        alert(compAlive ? 'You lost!' : 'You won!');
+        document.querySelectorAll('.battle-card').forEach(c => c.remove());
+        document.querySelector('.action-choices')?.remove();
+    }
+}
+
+// --- START FIGHT ---
+function startFight() {
+    const hands = dealHands();
+    if (!hands) return alert("You need at least 2 cards to fight!");
+
+    showFightOverlay(() => {
+        const battlefield = document.getElementById('battlefield');
+        battlefield.innerHTML = '';
+
+        hands.playerHand.forEach(c => {
+            const el = createCardEl(c);
+            el.dataset.name = c.name;
+            battlefield.appendChild(el);
+
+            el.addEventListener('click', () => {
+                showActionChoices(
+                    el,
+                    c,
+                    performAttack,
+                    performDefend
+                );
+            });
+
+            el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.1)');
+            el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
+        });
+
+        hands.computerHand.forEach(c => {
+            const el = createCardEl(c);
+            el.dataset.name = c.name;
+            battlefield.appendChild(el);
+            el.style.opacity = 0.7;
+        });
+    });
+}
+
+// --- ADD FIGHT BUTTON ---
+function addFightButton() {
+    const btn = document.createElement('div');
+    btn.innerText = 'FIGHT';
+    btn.style.position = 'fixed';
+    btn.style.bottom = '20px';
+    btn.style.left = '50%';
+    btn.style.transform = 'translateX(-50%)';
+    btn.style.padding = '10px 20px';
+    btn.style.background = '#fff';
+    btn.style.border = '2px solid #000';
+    btn.style.fontFamily = "'Press Start 2P','DotGothic16',monospace";
+    btn.style.fontSize = '12px';
+    btn.style.cursor = 'pointer';
+    btn.style.zIndex = 9999;
+    btn.addEventListener('click', startFight);
+    document.body.appendChild(btn);
+}
+
+// --- INIT ---
+window.addEventListener('DOMContentLoaded', () => {
+    addFightButton();
+
+    // Create battlefield container
+    let battlefield = document.getElementById('battlefield');
+    if (!battlefield) {
+        battlefield = document.createElement('div');
+        battlefield.id = 'battlefield';
+        battlefield.style.position = 'fixed';
+        battlefield.style.bottom = '80px';
+        battlefield.style.left = '50%';
+        battlefield.style.transform = 'translateX(-50%)';
+        battlefield.style.display = 'flex';
+        battlefield.style.gap = '10px';
+        battlefield.style.zIndex = 900;
+        document.body.appendChild(battlefield);
+    }
+});
 </script>
+
     <!-- 🐸 Toad Wallet (bottom right) -->
 <div id="toadWallet" class="toad-wallet">
   <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
