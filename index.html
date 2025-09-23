@@ -1257,7 +1257,7 @@
             font-family: 'DotGothic16', monospace !important;
         }
     }
-        /* Wallet (fixed bottom right) */
+/* Wallet (fixed bottom right) */
 .toad-wallet {
   position: fixed;
   bottom: 20px;
@@ -1354,6 +1354,22 @@
   font-size: 0.7rem;
   padding: 2px 6px;
   border-radius: 6px;
+}
+
+/* Reset wallet button */
+.reset-wallet {
+  margin-top: 20px;
+  background: #d62828;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  font-family: 'Press Start 2P', monospace;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.reset-wallet:hover {
+  background: #a61c1c;
 }
     </style>
 </head>
@@ -1991,49 +2007,56 @@ function triggerReward() {
   }, { once: true });
 }
 
-// Save card to localStorage
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
   collected.push(card); // duplicates allowed
   localStorage.setItem('collectedCards', JSON.stringify(collected));
 }
 
-// Show inventory modal
+function getValidCards() {
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+  let validNames = cardPool.map(c => c.name);
+  return collected.filter(c => validNames.includes(c.name));
+}
+
 function showInventory() {
   const modal = document.getElementById('walletModal');
   const inventory = document.getElementById('cardInventory');
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+  let collected = getValidCards();
 
-  // Count duplicates
-  let cardMap = {};
-  collected.forEach(card => {
-    if (!cardMap[card.name]) {
-      cardMap[card.name] = { ...card, count: 1 };
-    } else {
-      cardMap[card.name].count++;
-    }
-  });
+  if (collected.length === 0) {
+    inventory.innerHTML = "<p>No cards collected yet!</p>";
+  } else {
+    // Count duplicates
+    let cardMap = {};
+    collected.forEach(card => {
+      if (!cardMap[card.name]) {
+        cardMap[card.name] = { ...card, count: 1 };
+      } else {
+        cardMap[card.name].count++;
+      }
+    });
 
-  // Clear and repopulate inventory
-  inventory.innerHTML = "";
-  Object.values(cardMap).forEach(card => {
-    let wrapper = document.createElement('div');
-    wrapper.className = "inventory-card";
+    inventory.innerHTML = "";
+    Object.values(cardMap).forEach(card => {
+      let wrapper = document.createElement('div');
+      wrapper.className = "inventory-card";
 
-    let img = document.createElement('img');
-    img.src = card.src;
-    img.alt = card.name;
+      let img = document.createElement('img');
+      img.src = card.src;
+      img.alt = card.name;
 
-    if (card.count > 1) {
-      let badge = document.createElement('span');
-      badge.textContent = "x" + card.count;
-      badge.className = "duplicate-badge";
-      wrapper.appendChild(badge);
-    }
+      if (card.count > 1) {
+        let badge = document.createElement('span');
+        badge.textContent = "x" + card.count;
+        badge.className = "duplicate-badge";
+        wrapper.appendChild(badge);
+      }
 
-    wrapper.appendChild(img);
-    inventory.appendChild(wrapper);
-  });
+      wrapper.appendChild(img);
+      inventory.appendChild(wrapper);
+    });
+  }
 
   modal.style.display = 'flex';
 }
@@ -2043,6 +2066,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const badge = document.getElementById('walletBadge');
   const closeBtn = document.querySelector('.close-wallet');
   const modal = document.getElementById('walletModal');
+  const resetBtn = document.getElementById('resetWallet'); // ✅ new line
 
   // Restore collected cards
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
@@ -2079,6 +2103,16 @@ window.addEventListener('DOMContentLoaded', () => {
       modal.style.display = 'none';
     }
   });
+
+  // ✅ Reset wallet button
+  resetBtn.addEventListener('click', () => {
+    if (confirm("Are you sure you want to reset your wallet? All cards will be lost!")) {
+      localStorage.removeItem('collectedCards');
+      document.getElementById('cardInventory').innerHTML = "<p>No cards collected yet!</p>";
+      badge.textContent = "0";
+      wallet.style.display = 'none';
+    }
+  });
 });
 
 </script>
@@ -2099,6 +2133,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <button class="close-wallet">&times;</button>
     <h2>Your Toad Cards</h2>
     <div id="cardInventory" class="card-inventory"></div>
+    <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
   </div>
 </div>
 </body>
