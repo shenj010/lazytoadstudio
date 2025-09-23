@@ -2031,15 +2031,19 @@ function animateWallet() {
   ];
 
   let i = 0;
-  const interval = setInterval(() => {
+
+  function nextFrame() {
     walletImg.src = frames[i];
+    walletImg.offsetWidth; // force repaint
     i++;
-    if (i === frames.length) {
-      clearInterval(interval);
-      // Reset back to idle
-      walletImg.src = frames[0];
+    if (i < frames.length) {
+      setTimeout(nextFrame, 120); // ~8fps
+    } else {
+      walletImg.src = frames[0]; // reset to idle frame
     }
-  }, 120); // ~8fps
+  }
+
+  nextFrame();
 }
 
 function showInventory() {
