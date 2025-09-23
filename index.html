@@ -1257,6 +1257,104 @@
             font-family: 'DotGothic16', monospace !important;
         }
     }
+        /* Wallet (fixed bottom right) */
+.toad-wallet {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 64px;
+  height: 64px;
+  display: none; /* Hidden until first card */
+  cursor: pointer;
+  z-index: 9999;
+}
+.toad-wallet img {
+  width: 100%;
+  height: 100%;
+}
+.wallet-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  padding: 4px 6px;
+}
+
+/* Reward card */
+.reward-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  z-index: 10000;
+}
+.reward-card img {
+  width: 100%;
+  border: 4px solid #181818;
+}
+@keyframes flyToWallet {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(100vw - 60px), calc(100vh - 60px)) scale(0.2); opacity: 0; }
+}
+
+/* Wallet modal */
+.wallet-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 100000;
+  justify-content: center;
+  align-items: center;
+}
+.wallet-modal-content {
+  background: #fff;
+  padding: 20px;
+  border: 6px solid #181818;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80%;
+  overflow-y: auto;
+  font-family: 'Press Start 2P', monospace;
+  position: relative;
+}
+.close-wallet {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+}
+.card-inventory {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.card-inventory img {
+  width: 100%;
+  border: 4px solid #181818;
+}
+.inventory-card { position: relative; }
+.duplicate-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: black;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
     </style>
 </head>
 <body>
@@ -1798,7 +1896,12 @@
 
                             collectedToadCount++;
                             updateToadBoxVisibility(); // Call this to re-render toads in the correct grid
-
+                            // ---- REWARD LOGIC START ----
+                          if (collectedToadCount === maxToads && !rewardGiven) {
+                          rewardGiven = true;
+                          triggerReward();
+                      }
+                      // ---- REWARD LOGIC END ----
                             resetFrogVisuals(frog);
                             startNextPeepSequence();
 
@@ -1840,6 +1943,144 @@
         });
     }
 });
+        // Card pool (add your real card images here)
+const cardPool = [
+  { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+  { src: "images/cards/sage.jpg", name: "The Sage" },
+  { src: "images/cards/warrior.jpg", name: "The Warrior" },
+  { src: "images/cards/merchant.jpg", name: "The Merchant" },
+  { src: "images/cards/trickster.jpg", name: "The Trickster" }
+];
+
+let rewardGiven = false;
+
+// Trigger reward when full toad run is complete
+function triggerReward() {
+  const card = document.getElementById('rewardCard');
+  const cardImg = card.querySelector('img');
+  const wallet = document.getElementById('toadWallet');
+  const badge = document.getElementById('walletBadge');
+
+  // Pick random card
+  const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
+  cardImg.src = randomCard.src;
+  cardImg.alt = randomCard.name;
+
+  // Show card in center
+  card.style.display = 'block';
+  card.style.opacity = '1';
+  card.style.transform = 'translate(-50%, -50%) scale(1)';
+
+  // Animate into wallet
+  setTimeout(() => {
+    card.style.animation = 'flyToWallet 1s forwards';
+  }, 1500);
+
+  // After animation, update wallet
+  card.addEventListener('animationend', () => {
+    card.style.display = 'none';
+    card.style.animation = ''; // reset for next time
+    wallet.style.display = 'block';
+
+    // Save card permanently (duplicates allowed)
+    saveCard(randomCard);
+
+    // Update badge count (total collected, incl. duplicates)
+    let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    badge.textContent = collected.length;
+  }, { once: true });
+}
+
+// Save card to localStorage
+function saveCard(card) {
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+  collected.push(card); // duplicates allowed
+  localStorage.setItem('collectedCards', JSON.stringify(collected));
+}
+
+// Show inventory modal
+function showInventory() {
+  const modal = document.getElementById('walletModal');
+  const inventory = document.getElementById('cardInventory');
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+
+  // Count duplicates
+  let cardMap = {};
+  collected.forEach(card => {
+    if (!cardMap[card.name]) {
+      cardMap[card.name] = { ...card, count: 1 };
+    } else {
+      cardMap[card.name].count++;
+    }
+  });
+
+  // Clear and repopulate inventory
+  inventory.innerHTML = "";
+  Object.values(cardMap).forEach(card => {
+    let wrapper = document.createElement('div');
+    wrapper.className = "inventory-card";
+
+    let img = document.createElement('img');
+    img.src = card.src;
+    img.alt = card.name;
+
+    if (card.count > 1) {
+      let badge = document.createElement('span');
+      badge.textContent = "x" + card.count;
+      badge.className = "duplicate-badge";
+      wrapper.appendChild(badge);
+    }
+
+    wrapper.appendChild(img);
+    inventory.appendChild(wrapper);
+  });
+
+  modal.style.display = 'flex';
+}
+
+// Wallet click = open inventory
+document.getElementById('toadWallet').addEventListener('click', showInventory);
+
+// Close wallet modal
+document.querySelector('.close-wallet').addEventListener('click', () => {
+  document.getElementById('walletModal').style.display = 'none';
+});
+document.getElementById('walletModal').addEventListener('click', (e) => {
+  if (e.target.id === 'walletModal') {
+    e.target.style.display = 'none';
+  }
+});
+
+// On page load, restore wallet state
+window.addEventListener('DOMContentLoaded', () => {
+  const wallet = document.getElementById('toadWallet');
+  const badge = document.getElementById('walletBadge');
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+
+  if (collected.length > 0) {
+    wallet.style.display = 'block';
+    badge.textContent = collected.length;
+  }
+});
 </script>
+    <!-- 🐸 Toad Wallet (bottom right) -->
+<div id="toadWallet" class="toad-wallet">
+  <img src="images/toad-wallet.png" alt="Toad Wallet">
+  <span id="walletBadge" class="wallet-badge">0</span>
+</div>
+
+<!-- 🃏 Reward Card (appears in center, flies into wallet) -->
+<div id="rewardCard" class="reward-card">
+  <img src="images/cards/the stranger card format.jpg" alt="Toad Card">
+</div>
+
+<!-- 📔 Wallet Inventory Modal -->
+<div id="walletModal" class="wallet-modal">
+  <div class="wallet-modal-content">
+    <button class="close-wallet">&times;</button>
+    <h2>Your Toad Cards</h2>
+    <div id="cardInventory" class="card-inventory"></div>
+  </div>
+</div>
 </body>
 </html>
