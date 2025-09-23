@@ -1987,10 +1987,11 @@ function triggerReward() {
   card.style.opacity = '1';
   card.style.transform = 'translate(-50%, -50%) scale(1)';
 
-  // Animate into wallet after a short delay
+  // Animate into wallet
   setTimeout(() => {
-    card.offsetWidth; // <-- force reflow to trigger animation
-    card.style.animation = 'flyToWallet 1s forwards';
+    card.style.animation = 'none';   // ✅ reset first
+    card.offsetWidth;                // ✅ force reflow
+    card.style.animation = 'flyToWallet 1.3s forwards'; // slowed from 1s → 1.3s
   }, 1500);
 
   // After animation, update wallet
@@ -2032,18 +2033,20 @@ function animateWallet() {
 
   let i = 0;
 
-  function nextFrame() {
-    walletImg.src = frames[i];
-    walletImg.offsetWidth; // force repaint
-    i++;
-    if (i < frames.length) {
-      setTimeout(nextFrame, 120); // ~8fps
-    } else {
-      walletImg.src = frames[0]; // reset to idle frame
-    }
-  }
+  // ✅ clear previous run if it exists
+  if (walletImg._walletAnim) clearInterval(walletImg._walletAnim);
 
-  nextFrame();
+  // ✅ slower frame rate: 200ms instead of 120ms
+  walletImg._walletAnim = setInterval(() => {
+    walletImg.src = frames[i];
+    i++;
+    if (i === frames.length) {
+      clearInterval(walletImg._walletAnim);
+      walletImg._walletAnim = null;
+      // Reset back to idle
+      walletImg.src = frames[0];
+    }
+  }, 200); // ~5fps (slower chew)
 }
 
 function showInventory() {
