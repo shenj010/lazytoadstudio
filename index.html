@@ -2041,8 +2041,10 @@ function showInventory() {
 window.addEventListener('DOMContentLoaded', () => {
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
+  const closeBtn = document.querySelector('.close-wallet');
+  const modal = document.getElementById('walletModal');
 
-  // Restore collected cards from localStorage
+  // Restore collected cards
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
 
   if (collected.length > 0) {
@@ -2056,18 +2058,27 @@ window.addEventListener('DOMContentLoaded', () => {
     badge.textContent = Object.keys(unique).length;
   }
 
-  // Attach wallet click after DOM is ready
+  // Wallet click = open inventory
   wallet.addEventListener('click', showInventory);
-});
 
-// Close wallet modal
-document.querySelector('.close-wallet').addEventListener('click', () => {
-  document.getElementById('walletModal').style.display = 'none';
-});
-document.getElementById('walletModal').addEventListener('click', (e) => {
-  if (e.target.id === 'walletModal') {
-    e.target.style.display = 'none';
-  }
+  // Close wallet modal (× button)
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  // Close wallet modal (click outside content)
+  modal.addEventListener('click', (e) => {
+    if (e.target.id === 'walletModal') {
+      modal.style.display = 'none';
+    }
+  });
+
+  // Close wallet modal (Esc key)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+      modal.style.display = 'none';
+    }
+  });
 });
 
 </script>
