@@ -1960,6 +1960,7 @@
     }
 });
         // Card pool (add your real card images here)
+// ---- Card pool ----
 const cardPool = [
   { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
   { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
@@ -1970,14 +1971,14 @@ const cardPool = [
 
 let rewardGiven = false;
 
-// Trigger reward when full toad run is complete
+// ---- Trigger reward ----
 function triggerReward() {
   const card = document.getElementById('rewardCard');
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
 
-  // Pick random card
+  // Pick a random card
   const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
   cardImg.src = randomCard.src;
   cardImg.alt = randomCard.name;
@@ -1987,40 +1988,42 @@ function triggerReward() {
   card.style.opacity = '1';
   card.style.transform = 'translate(-50%, -50%) scale(1)';
 
-  // Animate into wallet after a short delay
-  setTimeout(() => {
-    card.offsetWidth; // <-- force reflow to trigger animation
-    card.style.animation = 'flyToWallet 1s forwards';
-  }, 1500);
+  // Force reflow before animation
+  card.offsetWidth;
 
-  // After animation, update wallet
+  // Animate card into wallet
+  card.style.animation = 'flyToWallet 1s forwards';
+
   card.addEventListener('animationend', () => {
+    // Hide reward card
     card.style.display = 'none';
-    card.style.animation = ''; // reset for next time
-    wallet.style.display = 'block';
+    card.style.animation = '';
 
-    // Play wallet eating animation!
+    // Make wallet visible and force repaint
+    wallet.style.display = 'block';
+    wallet.offsetWidth;
+
+    // Animate wallet “eating” frames
     animateWallet();
 
-    // Save card permanently (duplicates allowed)
+    // Save the card (duplicates allowed)
     saveCard(randomCard);
 
-    // Update badge count (total collected, incl. duplicates)
-    let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    // Update wallet badge (count all collected, including duplicates)
+    const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
     badge.textContent = collected.length;
+
   }, { once: true });
 }
+
+// ---- Save card to localStorage ----
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  collected.push(card); // duplicates allowed
+  collected.push(card);
   localStorage.setItem('collectedCards', JSON.stringify(collected));
 }
 
-function getValidCards() {
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  let validNames = cardPool.map(c => c.name);
-  return collected.filter(c => validNames.includes(c.name));
-}
+// ---- Wallet animation ----
 function animateWallet() {
   const walletImg = document.getElementById('walletImage');
   const frames = [
@@ -2034,12 +2037,12 @@ function animateWallet() {
 
   function nextFrame() {
     walletImg.src = frames[i];
-    walletImg.offsetWidth; // force repaint
     i++;
     if (i < frames.length) {
-      setTimeout(nextFrame, 120); // ~8fps
+      requestAnimationFrame(nextFrame);
     } else {
-      walletImg.src = frames[0]; // reset to idle frame
+      // Reset to idle frame
+      walletImg.src = frames[0];
     }
   }
 
