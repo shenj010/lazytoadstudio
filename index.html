@@ -1972,8 +1972,6 @@ let rewardGiven = false;
 
 // Trigger reward when full toad run is complete
 function triggerReward() {
-if (rewardGiven) return; // <---- ADDED GUARD
-    rewardGiven = true;
   const card = document.getElementById('rewardCard');
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
