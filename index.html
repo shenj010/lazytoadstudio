@@ -2038,8 +2038,27 @@ function showInventory() {
   modal.style.display = 'flex';
 }
 
-// Wallet click = open inventory
-document.getElementById('toadWallet').addEventListener('click', showInventory);
+window.addEventListener('DOMContentLoaded', () => {
+  const wallet = document.getElementById('toadWallet');
+  const badge = document.getElementById('walletBadge');
+
+  // Restore collected cards from localStorage
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+
+  if (collected.length > 0) {
+    wallet.style.display = 'block';
+
+    // Count unique cards
+    let unique = {};
+    collected.forEach(card => {
+      unique[card.name] = true;
+    });
+    badge.textContent = Object.keys(unique).length;
+  }
+
+  // Attach wallet click after DOM is ready
+  wallet.addEventListener('click', showInventory);
+});
 
 // Close wallet modal
 document.querySelector('.close-wallet').addEventListener('click', () => {
@@ -2051,17 +2070,6 @@ document.getElementById('walletModal').addEventListener('click', (e) => {
   }
 });
 
-// On page load, restore wallet state
-window.addEventListener('DOMContentLoaded', () => {
-  const wallet = document.getElementById('toadWallet');
-  const badge = document.getElementById('walletBadge');
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-
-  if (collected.length > 0) {
-    wallet.style.display = 'block';
-    badge.textContent = collected.length;
-  }
-});
 </script>
     <!-- 🐸 Toad Wallet (bottom right) -->
 <div id="toadWallet" class="toad-wallet">
