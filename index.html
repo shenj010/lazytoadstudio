@@ -1976,6 +1976,7 @@ function triggerReward() {
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
+  const toadContainer = document.getElementById('collectedToadsContainer'); // your container element
 
   // Pick random card
   const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
@@ -1987,16 +1988,21 @@ function triggerReward() {
   card.style.opacity = '1';
   card.style.transform = 'translate(-50%, -50%) scale(1)';
 
-  // Animate into wallet
+  // After short delay, animate into wallet
   setTimeout(() => {
     card.offsetWidth; // force reflow
     card.style.animation = 'flyToWallet 1.3s forwards';
 
-    // 🔥 Start wallet chew at the same time card flies
+    // Start wallet chew at the same time as card flies
     animateWallet();
+
+    // Reset toad counter and container
+    collectedToadCount = 0;
+    if (toadContainer) toadContainer.innerHTML = '';
+    updateToadBoxVisibility();
   }, 500);
 
-  // After animation, update wallet + badge
+  // After animation, update wallet + badge + save card
   card.addEventListener(
     'animationend',
     () => {
@@ -2005,15 +2011,16 @@ function triggerReward() {
       wallet.style.display = 'block';
 
       // Save card permanently (duplicates allowed)
-saveCard(randomCard);
+      saveCard(randomCard);
 
-// Update badge count (total collected, incl. duplicates)
-let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-badge.textContent = collected.length;
+      // Update badge count (total collected, incl. duplicates)
+      let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+      badge.textContent = collected.length;
     },
     { once: true }
   );
 }
+
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
   collected.push(card); // duplicates allowed
@@ -2025,6 +2032,7 @@ function getValidCards() {
   let validNames = cardPool.map(c => c.name);
   return collected.filter(c => validNames.includes(c.name));
 }
+
 function animateWallet() {
   const walletImg = document.getElementById('walletImage');
   const frames = [
