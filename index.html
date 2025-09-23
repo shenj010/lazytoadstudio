@@ -1617,7 +1617,7 @@
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
     let collectedToadCount = 0;
-    const maxToads = 12;
+    const maxToads = 8;
 
     const subtitle = document.querySelector('.hero-nav-subtitle');
     const frogImgSrc = 'images/toad icon static.png';
@@ -1882,7 +1882,7 @@
 
                     if (currentCollectedToadsGrid) {
                         const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
-                        const cols = 6;
+                        const cols = 4;
                         const rows = Math.ceil(maxToads / cols);
                         const toadWidthInGrid = gridRect.width / cols;
                         const toadHeightInGrid = gridRect.height / rows;
