@@ -2169,7 +2169,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+ <!-- 🐸 Toad Wallet (bottom right) -->
+<div id="toadWallet" class="toad-wallet">
+  <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
+  <span id="walletBadge" class="wallet-badge">0</span>
+</div>
 
+<!-- 🃏 Reward Card (appears in center, flies into wallet) -->
+<div id="rewardCard" class="reward-card">
+  <img src="" alt="Toad Card">
+</div>
+
+<!-- 📔 Wallet Inventory Modal -->
+<div id="walletModal" class="wallet-modal">
+  <div class="wallet-modal-content">
+    <button class="close-wallet">&times;</button>
+    <h2>Your Toad Cards</h2>
+    <div id="cardInventory" class="card-inventory"></div>
+    <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
+  </div>
+</div>
 <script>
 (function() {
   // --- CONFIGURATION ---
@@ -2431,26 +2450,6 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('DOMContentLoaded', addFightButton);
 
 })();
-
-    <!-- 🐸 Toad Wallet (bottom right) -->
-<div id="toadWallet" class="toad-wallet">
-  <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
-  <span id="walletBadge" class="wallet-badge">0</span>
-</div>
-
-<!-- 🃏 Reward Card (appears in center, flies into wallet) -->
-<div id="rewardCard" class="reward-card">
-  <img src="" alt="Toad Card">
-</div>
-
-<!-- 📔 Wallet Inventory Modal -->
-<div id="walletModal" class="wallet-modal">
-  <div class="wallet-modal-content">
-    <button class="close-wallet">&times;</button>
-    <h2>Your Toad Cards</h2>
-    <div id="cardInventory" class="card-inventory"></div>
-    <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
-  </div>
-</div>
+   
 </body>
 </html>
