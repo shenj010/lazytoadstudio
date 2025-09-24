@@ -2120,6 +2120,17 @@ function showInventory() {
 
   modal.style.display = 'flex';
 }
+function updateFightButton() {
+  const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+  const fightBtn = document.getElementById("fightBtn");
+
+  if (collected.length >= 2) {
+    fightBtn.style.display = "block";
+    fightBtn.onclick = goToBattlePage;
+  } else {
+    fightBtn.style.display = "none";
+  }
+}
 function goToBattlePage() {
   const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
   if (collected.length < 2) {
@@ -2147,6 +2158,9 @@ function goToBattlePage() {
     }, 800);
   });
 }
+
+document.addEventListener("DOMContentLoaded", updateFightButton);
+window.addEventListener("storage", updateFightButton);
 
 window.addEventListener('DOMContentLoaded', () => {
   const wallet = document.getElementById('toadWallet');
@@ -2216,12 +2230,11 @@ window.addEventListener('DOMContentLoaded', () => {
     <div id="cardInventory" class="card-inventory"></div>
     <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
   </div>
-</div>
 <div id="fightBtn" 
-     style="background:#fff; border:2px solid #000; 
+     style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+            background:#fff; border:2px solid #000; 
             padding:10px 20px; font-family:'Press Start 2P','DotGothic16',monospace; 
-            cursor:pointer; text-align:center; width:fit-content; margin:20px auto;"
-     onclick="goToBattlePage()">
+            cursor:pointer; text-align:center; z-index:9998;">
   FIGHT
 </div>
 </body>
