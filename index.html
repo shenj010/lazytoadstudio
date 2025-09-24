@@ -1387,13 +1387,13 @@
     <div class="collected-toads-box" id="collectedToadsBox">
         <div class="collected-toads-grid" id="collectedToadsGrid">
             </div>
-        <div class="toad-counter" id="toadCounter">0 / 12</div>
+        <div class="toad-counter" id="toadCounter">0 / 1</div>
     </div>
   </div>
   <div class="desktop-collected-toads-box" id="desktopToadsBox">
       <div class="collected-toads-grid" id="desktopToadsGrid">
           </div>
-      <div class="toad-counter" id="desktopToadCounter">0 / 12</div>
+      <div class="toad-counter" id="desktopToadCounter">0 / 1</div>
   </div>
   <div class="hero-nav-col">
     <div class="hero-nav-title">
@@ -1991,7 +1991,6 @@ function triggerReward() {
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
-  const toadContainer = document.getElementById('collectedToadsContainer');
 
   // Pick random card
   const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
@@ -2007,8 +2006,6 @@ function triggerReward() {
   setTimeout(() => {
     card.offsetWidth; // force reflow
     card.style.animation = 'flyToWallet 1.3s forwards';
-
-    // Start wallet chew at the same time as card flies
     animateWallet();
   }, 500);
 
@@ -2017,21 +2014,23 @@ function triggerReward() {
     'animationend',
     () => {
       card.style.display = 'none';
-      card.style.animation = ''; // reset for next time
+      card.style.animation = '';
       wallet.style.display = 'block';
 
-      // Save card permanently (duplicates allowed)
+      // Save card permanently
       saveCard(randomCard);
+      
+      // Update fight eligibility after saving card
+      updateFightEligibility();
 
-      // Update badge count (total collected, incl. duplicates)
+      // Update badge count
       let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
       badge.textContent = collected.length;
 
-      // ✅ Reset toad counter and container AFTER card is safely in wallet
-      collectedToadCount = 0;
-      if (toadContainer) toadContainer.innerHTML = '';
-      updateToadBoxVisibility();
-
+      // Reset toad counter - this should be handled by the main game logic
+      // Remove the toadContainer reference since it doesn't exist
+      // The reset will be handled by updateToadBoxVisibility()
+      
       // Allow another reward to be given in the future
       rewardGiven = false;
     },
@@ -2083,6 +2082,11 @@ function showInventory() {
   const modal = document.getElementById('walletModal');
   const inventory = document.getElementById('cardInventory');
   let collected = getValidCards();
+      // Define the helper function at the top, outside the loop
+  function getDisplayName(cardName) {
+    return cardName.replace('reward-', '').replace(/-/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   if (collected.length === 0) {
     inventory.innerHTML = "<p>No cards collected yet!</p>";
@@ -2095,7 +2099,10 @@ function showInventory() {
       } else {
         cardMap[card.name].count++;
       }
+        
     });
+
+    
 
     inventory.innerHTML = "";
     Object.values(cardMap).forEach(card => {
