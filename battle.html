@@ -1,1 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Toad Battle</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Press Start 2P','DotGothic16',monospace;
+    background: #a0c4ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+  }
+  #battlefield {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 700px;
+    margin-top: 20px;
+    position: relative;
+  }
+  .card-slot {
+    width: 80px;
+    height: 120px;
+    border: 2px dashed #000;
+    margin: 0 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .battle-card {
+    position: absolute;
+    width: 80px;
+    height: 120px;
+    cursor: pointer;
+  }
+  .battle-card img {
+    width: 100%;
+    height: 100%;
+  }
+  .hp-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background: #555;
+  }
+  .hp-fill {
+    height: 100%;
+    background: red;
+    width: 100%;
+    transition: width 0.3s;
+  }
+  .hp-text {
+    position: absolute;
+    top: 12px;
+    left: 2px;
+    font-size: 8px;
+    color: #fff;
+  }
+  #actionMenu {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    position: relative;
+  }
+  .action-btn {
+    padding: 5px 10px;
+    background: #fff;
+    border: 2px solid #000;
+    cursor: pointer;
+    position: relative;
+  }
+  .attack-dropdown {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    background: #fff;
+    border: 2px solid #000;
+    flex-direction: column;
+    z-index: 10;
+  }
+  .attack-dropdown div {
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .attack-dropdown div:hover, .attack-dropdown .selected {
+    background: #000;
+    color: #fff;
+  }
+  .damage-text {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: yellow;
+    text-shadow: 1px 1px 2px black;
+    pointer-events: none;
+    animation: floatUp 0.8s forwards;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-30px); opacity: 0; }
+  }
+  .defend-flash {
+    animation: flashGreen 0.5s;
+  }
+  @keyframes flashGreen {
+    0%,100% { box-shadow: 0 0 0px green; }
+    50% { box-shadow: 0 0 10px green; }
+  }
+  .death-flash {
+    animation: flashBW 0.5s forwards;
+  }
+  @keyframes flashBW {
+    0%,100% { filter: grayscale(0); opacity: 1; }
+    50% { filter: grayscale(100%); opacity: 0; }
+  }
+</style>
+</head>
+<body>
 
+<div id="battlefield">
+  <div id="computerSlots">
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+  </div>
+  <div id="playerSlots">
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+    <div class="card-slot"></div>
+  </div>
+</div>
+
+<div id="actionMenu">
+  <div id="fightBtn" class="action-btn">FIGHT
+    <div id="attackDropdown" class="attack-dropdown">
+      <div data-attack="1">Light Attack (5)</div>
+      <div data-attack="2">Heavy Attack (10)</div>
+    </div>
+  </div>
+  <div id="defendBtn" class="action-btn">DEFEND</div>
+</div>
+
+<script>
+(function(){
+  const battleMaxHP = 80;
+  let battlePlayerHP = {};
+  let battleComputerHP = {};
+  const cardPool = [
+    { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
+    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
+    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
+    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
+  ];
+
+  let playerTurn = true;
+  let selectorIndex = 0;
+
+  function shuffle(array){ return array.sort(()=>Math.random()-0.5); }
+
+  function createCardEl(card, owner, slotIndex){
+    const el = document.createElement('div');
+    el.className='battle-card';
+    const img = document.createElement('img');
+    img.src=card.src;
+    el.appendChild(img);
+
+    const hpBar = document.createElement('div'); hpBar.className='hp-bar';
+    const hpFill = document.createElement('div'); hpFill.className='hp-fill';
+    hpBar.appendChild(hpFill); el.appendChild(hpBar);
+
+    const hpText = document.createElement('div'); hpText.className='hp-text';
+    hpText.innerText = `${battleMaxHP}/${battleMaxHP}`;
+    el.appendChild(hpText);
+
+    el._hpFill = hpFill;
+    el._hpText = hpText;
+    el.dataset.name = card.name;
+
+    // Position in slot
+    const slot = document.querySelectorAll(owner==='player'?'#playerSlots .card-slot':'#computerSlots .card-slot')[slotIndex];
+    const rect = slot.getBoundingClientRect();
+    const parentRect = document.getElementById('battlefield').getBoundingClientRect();
+    el.style.left = (rect.left - parentRect.left) + 'px';
+    el.style.top = (rect.top - parentRect.top) + 'px';
+
+    document.getElementById('battlefield').appendChild(el);
+    return el;
+  }
+
+  function updateHP(cardName, owner){
+    const el = document.querySelector(`.battle-card[data-name="${cardName}"]`);
+    if(!el) return;
+    const hp = owner[cardName];
+    el._hpText.innerText = `${hp}/${battleMaxHP}`;
+    el._hpFill.style.width=(hp/battleMaxHP*100)+'%';
+  }
+
+  function showDamage(el, dmg){
+    const dmgText = document.createElement('div');
+    dmgText.className='damage-text';
+    dmgText.innerText=dmg;
+    dmgText.style.left='30px';
+    dmgText.style.top='-20px';
+    el.appendChild(dmgText);
+    setTimeout(()=>dmgText.remove(),800);
+  }
+
+  function animateAttack(attacker, target, callback){
+    attacker.style.transform='translateX(10px)';
+    setTimeout(()=>{ attacker.style.transform='translateX(-10px)'; },100);
+    setTimeout(()=>{ attacker.style.transform='translateX(0px)'; callback(); },200);
+  }
+
+  function animateDefend(el){
+    el.classList.add('defend-flash');
+    setTimeout(()=>el.classList.remove('defend-flash'),500);
+  }
+
+  function animateDeath(el){
+    el.classList.add('death-flash');
+    setTimeout(()=>el.remove(),500);
+  }
+
+  function playerAttack(attackNum){
+    const targets = Object.keys(battleComputerHP);
+    if(!targets.length) return;
+    const targetName = targets[Math.floor(Math.random()*targets.length)];
+    const dmg = attackNum===1?5:10;
+    const targetEl = document.querySelector(`.battle-card[data-name="${targetName}"]`);
+    animateAttack(targetEl, targetEl, ()=>{
+      battleComputerHP[targetName]-=dmg;
+      if(battleComputerHP[targetName]<0) battleComputerHP[targetName]=0;
+      updateHP(targetName,battleComputerHP);
+      showDamage(targetEl,dmg);
+      if(battleComputerHP[targetName]===0) animateDeath(targetEl);
+      endPlayerTurn();
+    });
+  }
+
+  function playerDefend(){
+    Object.keys(battlePlayerHP).forEach(c=>{
+      battlePlayerHP[c]+=5;
+      if(battlePlayerHP[c]>battleMaxHP) battlePlayerHP[c]=battleMaxHP;
+      updateHP(c,battlePlayerHP);
+      animateDefend(document.querySelector(`.battle-card[data-name="${c}"]`));
+    });
+    endPlayerTurn();
+  }
+
+  function computerTurn(){
+    const action = Math.random()<0.7?'attack':'defend';
+    if(action==='attack'){
+      const targets = Object.keys(battlePlayerHP);
+      if(!targets.length) return;
+      const targetName = targets[Math.floor(Math.random()*targets.length)];
+      const dmg = Math.random()<0.5?5:10;
+      const targetEl = document.querySelector(`.battle-card[data-name="${targetName}"]`);
+      animateAttack(targetEl,targetEl,()=>{
+        battlePlayerHP[targetName]-=dmg;
+        if(battlePlayerHP[targetName]<0) battlePlayerHP[targetName]=0;
+        updateHP(targetName,battlePlayerHP);
+        showDamage(targetEl,dmg);
+        if(battlePlayerHP[targetName]===0) animateDeath(targetEl);
+        playerTurn=true;
+        checkBattleEnd();
+      });
+    } else {
+      Object.keys(battleComputerHP).forEach(c=>{
+        battleComputerHP[c]+=5;
+        if(battleComputerHP[c]>battleMaxHP) battleComputerHP[c]=battleMaxHP;
+        updateHP(c,battleComputerHP);
+        animateDefend(document.querySelector(`.battle-card[data-name="${c}"]`));
+      });
+      playerTurn=true;
+      checkBattleEnd();
+    }
+  }
+
+  function checkBattleEnd(){
+    const playerAlive = Object.values(battlePlayerHP).some(h=>h>0);
+    const compAlive = Object.values(battleComputerHP).some(h=>h>0);
+    if(!playerAlive || !compAlive){
+      alert(compAlive?'You lost!':'You won!');
+      location.reload();
+    }
+  }
+
+  function endPlayerTurn(){
+    playerTurn=false;
+    setTimeout(computerTurn,500);
+  }
+
+  function setupBattle(){
+    const shuffled = shuffle(cardPool);
+    const playerHand = shuffled.slice(0,2);
+    const computerHand = shuffled.slice(2,4);
+    playerHand.forEach((c,i)=>battlePlayerHP[c.name]=battleMaxHP);
+    computerHand.forEach((c,i)=>battleComputerHP[c.name]=battleMaxHP);
+
+    playerHand.forEach((c,i)=>createCardEl(c,'player',i));
+    computerHand.forEach((c,i)=>createCardEl(c,'computer',i));
+
+    playerTurn = Math.random()<0.5;
+    if(!playerTurn) setTimeout(computerTurn,500);
+  }
+
+  setupBattle();
+
+  // --- FIGHT MENU ---
+  const fightBtn = document.getElementById('fightBtn');
+  const attackDropdown = document.getElementById('attackDropdown');
+  const attackOptions = Array.from(attackDropdown.children);
+
+  function highlightSelector(){
+    attackOptions.forEach((opt,i)=>{
+      if(i===selectorIndex) opt.classList.add('selected');
+      else opt.classList.remove('selected');
+    });
+  }
+
+  fightBtn.addEventListener('mouseenter',()=>{attackDropdown.style.display='flex';});
+  fightBtn.addEventListener('mouseleave',()=>{attackDropdown.style.display='none';});
+  attackOptions.forEach((opt,i)=>{
+    opt.addEventListener('mouseenter',()=>{selectorIndex=i; highlightSelector();});
+    opt.addEventListener('click',()=>{ if(playerTurn) playerAttack(i+1); });
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(!playerTurn) return;
+    if(['ArrowUp','ArrowDown'].includes(e.key)){
+      selectorIndex = e.key==='ArrowUp'? (selectorIndex-1+attackOptions.length)%attackOptions.length
+                                        : (selectorIndex+1)%attackOptions.length;
+      highlightSelector();
+    }
+    if(e.key==='Enter'){
+      playerAttack(selectorIndex+1);
+    }
+    if(e.key==='d') playerDefend();
+  });
+
+  document.getElementById('defendBtn').addEventListener('click',()=>{ if(playerTurn) playerDefend(); });
+
+})();
+</script>
+</body>
+</html>
