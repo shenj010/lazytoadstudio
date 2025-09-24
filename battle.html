@@ -519,15 +519,6 @@
     }
   }
 
-  function endPlayerTurn(){
-    // After a player action, check if they have any remaining actions
-    const remainingActions = playerSlots.filter(s => s && s.hp > 0 && !s.acted).length;
-    if (remainingActions === 0) {
-      addLog('system', 'All your cards have acted. Turn automatically ends.');
-      endTurn();
-    }
-  }
-
   function endTurn(){
     // Reset acted status for both players
     playerSlots.forEach(slot => { if(slot) slot.acted = false; });
@@ -550,7 +541,14 @@
   });
 
   // attack menu logic
-  fightBtn.addEventListener('mouseenter', ()=>{ attackMenu.style.display='flex'; attackMenuOpen=true});
+  fightBtn.addEventListener('click', ()=>{
+    if (selected && selected.side === 'player' && !playerSlots[selected.idx].acted) {
+      attackMenu.style.display = 'flex';
+    } else {
+      addLog('system','Select a card that has not yet acted this turn to fight.');
+      attackMenu.style.display = 'none';
+    }
+  });
   fightBtn.addEventListener('mouseleave', ()=>{ if(!attackMenuOpen) attackMenu.style.display='none'});
   attackMenu.addEventListener('mouseenter', ()=> attackMenuOpen=true);
   attackMenu.addEventListener('mouseleave', ()=>{ attackMenuOpen=false; attackMenu.style.display='none'; });
