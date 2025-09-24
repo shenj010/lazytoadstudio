@@ -2134,6 +2134,22 @@ function showInventory() {
 
   modal.style.display = 'flex';
 }
+function updateFightEligibility() {
+  setTimeout(checkFightEligibility, 100);
+}
+// === Check if fight button should be shown ===
+function checkFightEligibility() {
+  let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
+  // Fixed: Now correctly checks for cards with names that start with "reward-"
+  let rewardCards = collectedCards.filter(card => card.name && card.name.startsWith("reward-"));
+  const battleArea = document.getElementById("battleArea");
+  if (!battleArea) return; // Safety check
+  if (rewardCards.length >= 2 && rewardCards.length <= 10) {
+    battleArea.style.display = "block";
+  } else {
+    battleArea.style.display = "none";
+  }
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   const wallet = document.getElementById('toadWallet');
@@ -2193,9 +2209,6 @@ window.addEventListener('DOMContentLoaded', () => {
       wallet.style.display = 'none';
     }
   });
-
-const battleArea = document.getElementById("battleArea");
-const fightButton = document.getElementById("fightButton");
 
 // === Overlay + FIGHT! animation ===
 function startFight() {
@@ -2257,31 +2270,6 @@ function startFight() {
     battlefield.appendChild(el);
   });
 }
-function updateFightEligibility() {
-  setTimeout(checkFightEligibility, 100);
-}
-// === Check if fight button should be shown ===
-function checkFightEligibility() {
-  let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
-  // Fixed: Now correctly checks for cards with names that start with "reward-"
-  let rewardCards = collectedCards.filter(card => card.name && card.name.startsWith("reward-"));
-
-  const battleArea = document.getElementById("battleArea");
-  if (!battleArea) return; // Safety check
-
-  if (rewardCards.length >= 2 && rewardCards.length <= 10) {
-    battleArea.style.display = "block";
-  } else {
-    battleArea.style.display = "none";
-  }
-}
-
-fightButton.addEventListener("click", () => {
-  startFight();
-});
-
-// Run on page load
-checkFightEligibility();
 
  (function() {
     const battleCardPool = [
