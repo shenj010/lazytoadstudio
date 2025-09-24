@@ -6,648 +6,651 @@
 <title>Toad Battle Arena</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
-    --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
-  }
-  html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
-  .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
-  .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
-  .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
-  /* top area (computer) */
-  .area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
-  .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
-  .name{color:var(--accent);font-size:12px;margin-bottom:6px}
-  .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .hp-segments{display:flex;width:92%;gap:2px}
-  .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
-  .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
-  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
-  /* battlefield slots */
-  .slots{display:flex;gap:10px;align-items:center;justify-content:center}
-  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
-  .slot.occupied{border-style:solid}
-  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
-  .card img{width:100%;height:72% ;object-fit:cover;display:block}
-  .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
-  .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
-  /* action panel */
-  .action-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
-  .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
-  .btn:active{transform:scale(.98)}
-  .dropdown{position:relative}
-  .dropdown-menu{position:absolute;bottom:44px;left:0;background:#fff;color:#000;border:2px solid #000;padding:6px;display:none;flex-direction:column;gap:6px}
-  .dropdown-menu .opt{padding:6px 10px;cursor:pointer;white-space:nowrap}
-  .dropdown-menu .opt:hover,.dropdown-menu .opt.selected{background:#000;color:#fff}
-  /* damage popup */
-  .dmg-pop{position:absolute;font-size:12px;font-weight:700;color:#fff;pointer-events:none;animation:pop 700ms ease-out forwards}
-  @keyframes pop{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-36px) scale(1.1);opacity:0}}
-  /* flash & death */
-  @keyframes flashBW {0%{filter:grayscale(0)}50%{filter:grayscale(1)}100%{filter:grayscale(0)}}
-  .flash{animation:flashBW 240ms linear 0s 2}
-  .die{animation:dieFade 500ms ease forwards}
-  @keyframes dieFade{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.6)}}
-  /* log */
-  .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
-  .log .entry{margin-bottom:6px}
-  .log .player{color:var(--accent)}
-  .log .computer{color:var(--danger)}
-  /* small responsive */
-  @media (max-width:900px){
-    .area{flex-direction:column;gap:8px}
-    .player-info{min-width:140px}
-    .slots{flex-wrap:wrap}
-  }
+  :root{
+    --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
+    --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
+  }
+  html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
+  .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
+  .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
+  .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
+  /* top area (computer) */
+  .area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
+  .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
+  .name{color:var(--accent);font-size:12px;margin-bottom:6px}
+  .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .hp-segments{display:flex;width:92%;gap:2px}
+  .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
+  .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
+  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
+  /* battlefield slots */
+  .slots{display:flex;gap:10px;align-items:center;justify-content:center}
+  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+  .slot.occupied{border-style:solid}
+  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+  .card img{width:100%;height:72% ;object-fit:cover;display:block}
+  .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
+  .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
+  .card.acted{opacity:0.6; pointer-events: none;}
+  /* action panel */
+  .action-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
+  .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
+  .btn:active{transform:scale(.98)}
+  .dropdown{position:relative}
+  .dropdown-menu{position:absolute;bottom:44px;left:0;background:#fff;color:#000;border:2px solid #000;padding:6px;display:none;flex-direction:column;gap:6px}
+  .dropdown-menu .opt{padding:6px 10px;cursor:pointer;white-space:nowrap}
+  .dropdown-menu .opt:hover,.dropdown-menu .opt.selected{background:#000;color:#fff}
+  /* damage popup */
+  .dmg-pop{position:absolute;font-size:12px;font-weight:700;color:#fff;pointer-events:none;animation:pop 700ms ease-out forwards}
+  @keyframes pop{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-36px) scale(1.1);opacity:0}}
+  /* flash & death */
+  @keyframes flashBW {0%{filter:grayscale(0)}50%{filter:grayscale(1)}100%{filter:grayscale(0)}}
+  .flash{animation:flashBW 240ms linear 0s 2}
+  .die{animation:dieFade 500ms ease forwards}
+  @keyframes dieFade{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.6)}}
+  /* log */
+  .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
+  .log .entry{margin-bottom:6px}
+  .log .player{color:var(--accent)}
+  .log .computer{color:var(--danger)}
+  /* small responsive */
+  @media (max-width:900px){
+    .area{flex-direction:column;gap:8px}
+    .player-info{min-width:140px}
+    .slots{flex-wrap:wrap}
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
+  <div class="wrap">
+    <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
 
-    <div class="arena" id="arena">
-      <!-- COMPUTER AREA -->
-      <div class="area" id="computerArea">
-        <div class="player-info">
-          <div class="name">Computer</div>
-          <div class="hp-bar" title="Computer total HP">
-            <div class="hp-segments" id="computerGlobalHP"></div>
-          </div>
-          <div style="height:6px"></div>
-        </div>
+    <div class="arena" id="arena">
+            <div class="area" id="computerArea">
+        <div class="player-info">
+          <div class="name">Computer</div>
+          <div class="hp-bar" title="Computer total HP">
+            <div class="hp-segments" id="computerGlobalHP"></div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
 
-        <div class="slots" id="computerSlots">
-          <!-- 5 slots -->
-        </div>
+        <div class="slots" id="computerSlots">
+                  </div>
 
-        <div class="hand" id="computerHand">
-          <!-- computer reserve cards (small) -->
-        </div>
-      </div>
+        <div class="hand" id="computerHand">
+                  </div>
+      </div>
 
-      <!-- CENTER BATTLEFIELD NOTE (empty; we use top/bottom) -->
+                  <div class="area" id="playerArea">
+        <div class="player-info">
+          <div class="name">Player</div>
+          <div class="hp-bar" title="Player total HP">
+            <div class="hp-segments" id="playerGlobalHP"></div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
 
-      <!-- PLAYER AREA -->
-      <div class="area" id="playerArea">
-        <div class="player-info">
-          <div class="name">Player</div>
-          <div class="hp-bar" title="Player total HP">
-            <div class="hp-segments" id="playerGlobalHP"></div>
-          </div>
-          <div style="height:6px"></div>
-        </div>
+        <div class="slots" id="playerSlots">
+                  </div>
 
-        <div class="slots" id="playerSlots">
-          <!-- 5 slots -->
-        </div>
+        <div class="hand" id="playerHand" style="margin-left:12px">
+                  </div>
+      </div>
+    </div>
 
-        <div class="hand" id="playerHand" style="margin-left:12px">
-          <!-- player hand cards (click to place on slots) -->
-        </div>
-      </div>
-    </div>
+        <div class="action-panel" id="actionPanel" style="display:none">
+      <div class="dropdown">
+        <div class="btn" id="fightBtn">FIGHT</div>
+        <div class="dropdown-menu" id="attackMenu">
+          <div class="opt" data-dmg="5">Light Attack — 5</div>
+          <div class="opt" data-dmg="10">Heavy Attack — 10</div>
+        </div>
+      </div>
+      <div class="btn" id="defendBtn">DEFEND</div>
+      <div class="btn" id="endTurnBtn">END TURN</div>
+    </div>
 
-    <!-- action panel: appears when battlefield card selected -->
-    <div class="action-panel" id="actionPanel" style="display:none">
-      <div class="dropdown">
-        <div class="btn" id="fightBtn">FIGHT</div>
-        <div class="dropdown-menu" id="attackMenu">
-          <div class="opt" data-dmg="5">Light Attack — 5</div>
-          <div class="opt" data-dmg="10">Heavy Attack — 10</div>
-        </div>
-      </div>
-      <div class="btn" id="defendBtn">DEFEND</div>
-      <div class="btn" id="endTurnBtn">END TURN</div>
-    </div>
-
-    <div class="log" id="battleLog"><div class="entry system">Battle ready — place cards to begin.</div></div>
-  </div>
+    <div class="log" id="battleLog"><div class="entry system">Battle ready — place cards to begin.</div></div>
+  </div>
 
 <script>
 (function(){
-  // config
-  const MAX_SLOTS = 5;
-  const MAX_HP = 80; // per card
-  const SEGMENTS = 8; // 8 segments of 10hp
+  // config
+  const MAX_SLOTS = 5;
+  const MAX_HP = 80; // per card
+  const SEGMENTS = 8; // 8 segments of 10hp
 
-  // card pool fallback (if user has no collected cards)
-  const cardPool = [
-    { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
-    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
-    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
-    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
-    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
-  ];
+  // card pool fallback (if user has no collected cards)
+  const cardPool = [
+    { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
+    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
+    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
+    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
+  ];
 
-  // state
-  let playerHand = [];      // full objects {src,name}
-  let computerReserve = [];
-  let playerSlots = new Array(MAX_SLOTS).fill(null); // slot = {card, hp, defending}
-  let computerSlots = new Array(MAX_SLOTS).fill(null);
-  let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
-  let playerTurn = true;
-  let attackMenuOpen = false;
+  // state
+  let playerHand = [];      // full objects {src,name}
+  let computerReserve = [];
+  let playerSlots = new Array(MAX_SLOTS).fill(null); // slot = {card, hp, defending, acted}
+  let computerSlots = new Array(MAX_SLOTS).fill(null);
+  let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
+  let playerTurn = true;
+  let attackMenuOpen = false;
 
-  // elements
-  const playerHandEl = document.getElementById('playerHand');
-  const computerHandEl = document.getElementById('computerHand');
-  const playerSlotsEl = document.getElementById('playerSlots');
-  const computerSlotsEl = document.getElementById('computerSlots');
-  const logEl = document.getElementById('battleLog');
-  const actionPanel = document.getElementById('actionPanel');
-  const attackMenu = document.getElementById('attackMenu');
-  const fightBtn = document.getElementById('fightBtn');
-  const defendBtn = document.getElementById('defendBtn');
-  const endTurnBtn = document.getElementById('endTurnBtn');
-  const playerGlobalHP = document.getElementById('playerGlobalHP');
-  const computerGlobalHP = document.getElementById('computerGlobalHP');
+  // elements
+  const playerHandEl = document.getElementById('playerHand');
+  const computerHandEl = document.getElementById('computerHand');
+  const playerSlotsEl = document.getElementById('playerSlots');
+  const computerSlotsEl = document.getElementById('computerSlots');
+  const logEl = document.getElementById('battleLog');
+  const actionPanel = document.getElementById('actionPanel');
+  const attackMenu = document.getElementById('attackMenu');
+  const fightBtn = document.getElementById('fightBtn');
+  const defendBtn = document.getElementById('defendBtn');
+  const endTurnBtn = document.getElementById('endTurnBtn');
+  const playerGlobalHP = document.getElementById('playerGlobalHP');
+  const computerGlobalHP = document.getElementById('computerGlobalHP');
 
-  // init interface slots
-  function makeSlotsUI(){
-    playerSlotsEl.innerHTML = '';
-    computerSlotsEl.innerHTML = '';
-    for(let i=0;i<MAX_SLOTS;i++){
-      const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
-      ps.addEventListener('click', ()=>onSlotClick('player', i));
-      playerSlotsEl.appendChild(ps);
-      const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
-      cs.addEventListener('click', ()=>onSlotClick('computer', i));
-      computerSlotsEl.appendChild(cs);
-    }
-  }
+  // init interface slots
+  function makeSlotsUI(){
+    playerSlotsEl.innerHTML = '';
+    computerSlotsEl.innerHTML = '';
+    for(let i=0;i<MAX_SLOTS;i++){
+      const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
+      ps.addEventListener('click', ()=>onSlotClick('player', i));
+      playerSlotsEl.appendChild(ps);
+      const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
+      cs.addEventListener('click', ()=>onSlotClick('computer', i));
+      computerSlotsEl.appendChild(cs);
+    }
+  }
 
-  // load player's collected cards from localStorage
-  function loadPlayerInventory(){
-    let stored = [];
-    try {
-      stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
-    } catch(e){ stored = []; }
-    // If stored is empty, fall back to cardPool
-    if(!stored || stored.length === 0) stored = [...cardPool];
-    playerHand = stored.slice(0,10); // cap hand size (we'll allow up to 10 in hand)
-  }
+  // load player's collected cards from localStorage
+  function loadPlayerInventory(){
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    } catch(e){ stored = []; }
+    // If stored is empty, fall back to cardPool
+    if(!stored || stored.length === 0) stored = [...cardPool];
+    playerHand = stored.slice(0,10); // cap hand size (we'll allow up to 10 in hand)
+  }
 
-  // computer reserve: random picks
-  function buildComputerReserve(){
-    const cp = [];
-    // fill up to 6 (reserve)
-    for(let i=0;i<6;i++){
-      cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
-    }
-    computerReserve = cp;
-  }
+  // computer reserve: random picks, matches player hand size
+  function buildComputerReserve(){
+    const cp = [];
+    const count = playerHand.length;
+    for(let i=0;i<count;i++){
+      cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
+    }
+    computerReserve = cp;
+  }
 
-  // render player hand UI (cards you can place)
-  function renderHand(){
-    playerHandEl.innerHTML = '';
-    playerHand.forEach((card, idx) => {
-      const c = createHandCardEl(card, idx);
-      playerHandEl.appendChild(c);
-    });
-    computerHandEl.innerHTML = '';
-    computerReserve.forEach((card, idx) => {
-      const c = createReserveCardEl(card, idx);
-      computerHandEl.appendChild(c);
-    });
-  }
+  // render player hand UI (cards you can place)
+  function renderHand(){
+    playerHandEl.innerHTML = '';
+    playerHand.forEach((card, idx) => {
+      const c = createHandCardEl(card, idx);
+      playerHandEl.appendChild(c);
+    });
+    computerHandEl.innerHTML = '';
+    computerReserve.forEach((card, idx) => {
+      const c = createReserveCardEl(card, idx);
+      computerHandEl.appendChild(c);
+    });
+  }
 
-  function createHandCardEl(card, idx){
-    const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
-    // wrap to look like battlefield card
-    el.addEventListener('click', ()=>onHandClick(idx));
-    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-    el.appendChild(img); el.appendChild(stats);
-    // container
-    const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
-    wrap.appendChild(el);
-    return wrap;
-  }
+  function createHandCardEl(card, idx){
+    const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
+    // wrap to look like battlefield card
+    el.addEventListener('click', ()=>onHandClick(idx));
+    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
+    el.appendChild(img); el.appendChild(stats);
+    // container
+    const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
+    wrap.appendChild(el);
+    return wrap;
+  }
 
-  function createReserveCardEl(card, idx){
-    const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
-    el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
-    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px';
-    stats.innerHTML = `<div>${card.name}</div>`;
-    el.appendChild(img); el.appendChild(stats);
-    const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px';
-    wrap.appendChild(el);
-    return wrap;
-  }
+  function createReserveCardEl(card, idx){
+    const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
+    el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
+    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+    const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px';
+    stats.innerHTML = `<div>${card.name}</div>`;
+    el.appendChild(img); el.appendChild(stats);
+    const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px';
+    wrap.appendChild(el);
+    return wrap;
+  }
 
-  // slot click: either place a hand card there (if player slot) or select a card if occupied
-  function onSlotClick(side, idx){
-    if(side === 'player'){
-      // placing from hand
-      if(selected && selected.type==='hand'){
-        // place the selected hand card to this slot if empty
-        if(playerSlots[idx] === null){
-          const card = playerHand.splice(selected.index,1)[0];
-          playerSlots[idx] = { card, hp: MAX_HP, defending:false };
-          selected = null;
-          renderAll();
-          addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
-          // auto-select the placed card
-          selectSlot('player', idx);
-        }
-      } else {
-        // attempt to select this slot card
-        if(playerSlots[idx]) selectSlot('player', idx);
-      }
-    } else {
-      // selecting computer card to target or examine
-      if(computerSlots[idx]) selectSlot('computer', idx);
-    }
-  }
+  // slot click: either place a hand card there (if player slot) or select a card if occupied
+  function onSlotClick(side, idx){
+    if(side === 'player'){
+      // placing from hand
+      if(selected && selected.type==='hand'){
+        // place the selected hand card to this slot if empty
+        if(playerSlots[idx] === null){
+          const card = playerHand.splice(selected.index,1)[0];
+          playerSlots[idx] = { card, hp: MAX_HP, defending:false, acted:false };
+          selected = null;
+          renderAll();
+          addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
+          // auto-select the placed card
+          selectSlot('player', idx);
+        }
+      } else {
+        // attempt to select this slot card
+        if(playerSlots[idx]) selectSlot('player', idx);
+      }
+    } else {
+      // selecting computer card to target or examine
+      if(computerSlots[idx]) selectSlot('computer', idx);
+    }
+  }
 
-  // select slot (battlefield card) — shows action panel only for player side selection
-  function selectSlot(side, idx){
-    // clear previous selections
-    document.querySelectorAll('.card.selected').forEach(n=>n.classList.remove('selected'));
-    selected = { side, idx };
-    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-    if(slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
-    // action panel only visible if player selected their own slot
-    if(side==='player'){
-      showActionPanel(true);
-    } else {
-      showActionPanel(false);
-    }
-  }
+  // select slot (battlefield card) — shows action panel only for player side selection
+  function selectSlot(side, idx){
+    // clear previous selections
+    document.querySelectorAll('.card.selected').forEach(n=>n.classList.remove('selected'));
+    selected = { side, idx };
+    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+    if(slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
+    // action panel only visible if player selected their own slot
+    if(side==='player'){
+      showActionPanel(true);
+    } else {
+      showActionPanel(false);
+    }
+  }
 
-  function onHandClick(index){
-    // choose a hand card for placement
-    selected = { type:'hand', index };
-    // visual feedback: outline the clicked hand card
-    document.querySelectorAll('#playerHand .card').forEach((c,i)=>{ if(i===index) c.classList.add('selected'); else c.classList.remove('selected');});
-  }
+  function onHandClick(index){
+    // choose a hand card for placement
+    selected = { type:'hand', index };
+    // visual feedback: outline the clicked hand card
+    document.querySelectorAll('#playerHand .card').forEach((c,i)=>{ if(i===index) c.classList.add('selected'); else c.classList.remove('selected');});
+  }
 
-  // render battlefield slots and global HP segments
-  function renderAll(){
-    // slots
-    for(let i=0;i<MAX_SLOTS;i++){
-      const pSlotEl = playerSlotsEl.children[i];
-      pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
-      if(playerSlots[i]){
-        pSlotEl.classList.add('occupied');
-        pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
-      }
-      const cSlotEl = computerSlotsEl.children[i];
-      cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
-      if(computerSlots[i]){
-        cSlotEl.classList.add('occupied');
-        cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
-      }
-    }
-    // hand
-    renderHand();
-    updateGlobalHPUI();
-  }
+  // render battlefield slots and global HP segments
+  function renderAll(){
+    // slots
+    for(let i=0;i<MAX_SLOTS;i++){
+      const pSlotEl = playerSlotsEl.children[i];
+      pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
+      if(playerSlots[i]){
+        pSlotEl.classList.add('occupied');
+        pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+      }
+      const cSlotEl = computerSlotsEl.children[i];
+      cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
+      if(computerSlots[i]){
+        cSlotEl.classList.add('occupied');
+        cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+      }
+    }
+    // hand
+    renderHand();
+    updateGlobalHPUI();
+  }
 
-  // create visual card for battlefield slot
-  function makeBattleCardEl(slotObj, owner, slotIndex){
-    const wrap = document.createElement('div'); wrap.className='card'; wrap.style.width='86px'; wrap.style.height='120px';
-    const img = document.createElement('img'); img.src = slotObj.card.src; img.alt = slotObj.card.name;
-    const stats = document.createElement('div'); stats.className='stats';
-    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
-    wrap.appendChild(img); wrap.appendChild(stats);
-    // attach metadata for updating & selection
-    wrap.dataset.owner = owner;
-    wrap.dataset.slot = slotIndex;
-    wrap._hpEl = stats.querySelector('.card-hp');
+  // create visual card for battlefield slot
+  function makeBattleCardEl(slotObj, owner, slotIndex){
+    const wrap = document.createElement('div'); wrap.className='card'; wrap.style.width='86px'; wrap.style.height='120px';
+    const img = document.createElement('img'); img.src = slotObj.card.src; img.alt = slotObj.card.name;
+    const stats = document.createElement('div'); stats.className='stats';
+    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+    wrap.appendChild(img); wrap.appendChild(stats);
+    // attach metadata for updating & selection
+    wrap.dataset.owner = owner;
+    wrap.dataset.slot = slotIndex;
+    wrap._hpEl = stats.querySelector('.card-hp');
+    if (slotObj.acted) {
+      wrap.classList.add('acted');
+    }
 
-    // click behavior: player side already handled on slot container; allow clicking card to also select
-    wrap.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      selectSlot(owner, slotIndex);
-    });
-    return wrap;
-  }
+    // click behavior: player side already handled on slot container; allow clicking card to also select
+    wrap.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      selectSlot(owner, slotIndex);
+    });
+    return wrap;
+  }
 
-  // show / hide action panel
-  function showActionPanel(enabled){
-    if(enabled && playerTurn){
-      actionPanel.style.display = 'flex';
-    } else {
-      actionPanel.style.display = 'none';
-    }
-  }
+  // show / hide action panel
+  function showActionPanel(enabled){
+    if(enabled && playerTurn){
+      actionPanel.style.display = 'flex';
+    } else {
+      actionPanel.style.display = 'none';
+    }
+  }
 
-  // attack action: attacker uses damage on target slot
-  function attack(attackerSide, attackerIndex, targetSide, targetIndex, damage){
-    const attacker = (attackerSide==='player' ? playerSlots[attackerIndex] : computerSlots[attackerIndex]);
-    const target = (targetSide==='player' ? playerSlots[targetIndex] : computerSlots[targetIndex]);
-    if(!attacker || !target) return;
+  // attack action: attacker uses damage on target slot
+  function attack(attackerSide, attackerIndex, targetSide, targetIndex, damage){
+    const attacker = (attackerSide==='player' ? playerSlots[attackerIndex] : computerSlots[attackerIndex]);
+    const target = (targetSide==='player' ? playerSlots[targetIndex] : computerSlots[targetIndex]);
+    if(!attacker || !target) return;
 
-    // apply defend reduction if active
-    let finalDmg = damage;
-    if(target.defending){
-      finalDmg = Math.ceil(finalDmg/2);
-      target.defending = false; // defend consumed
-      addLog('system', `${target.card.name} defended — reduced damage!`);
-    }
+    // apply defend reduction if active
+    let finalDmg = damage;
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false; // defend consumed
+      addLog('system', `${target.card.name} defended — reduced damage!`);
+    }
 
-    // show damage popup on target slot element
-    const targetSlotEl = (targetSide==='player' ? playerSlotsEl.children[targetIndex] : computerSlotsEl.children[targetIndex]);
-    showDamagePopup(targetSlotEl, `-${finalDmg}`, finalDmg < 0 ? 'green' : '#fff');
+    // show damage popup on target slot element
+    const targetSlotEl = (targetSide==='player' ? playerSlotsEl.children[targetIndex] : computerSlotsEl.children[targetIndex]);
+    showDamagePopup(targetSlotEl, `-${finalDmg}`, finalDmg < 0 ? 'green' : '#fff');
 
-    // flash animation
-    const cardEl = targetSlotEl.querySelector('.card');
-    if(cardEl){ cardEl.classList.add('flash'); setTimeout(()=>cardEl.classList.remove('flash'), 500); }
+    // flash animation
+    const cardEl = targetSlotEl.querySelector('.card');
+    if(cardEl){ cardEl.classList.add('flash'); setTimeout(()=>cardEl.classList.remove('flash'), 500); }
 
-    // subtract
-    target.hp = Math.max(0, target.hp - finalDmg);
-    updateSlotUI(targetSide, targetIndex);
+    // subtract
+    target.hp = Math.max(0, target.hp - finalDmg);
+    updateSlotUI(targetSide, targetIndex);
 
-    addLog(attackerSide==='player'?'player':'computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg}`);
+    addLog(attackerSide==='player'?'player':'computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg}`);
 
-    // death check
-    if(target.hp <= 0){
-      // death animation then remove
-      if(cardEl){
-        cardEl.classList.add('die');
-        setTimeout(()=>{
-          // remove slot
-          if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
-          renderAll();
-          checkBattleOver();
-        }, 520);
-      } else {
-        if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
-        renderAll();
-        checkBattleOver();
-      }
-    } else {
-      checkBattleOver();
-    }
-  }
+    // death check
+    if(target.hp <= 0){
+      // death animation then remove
+      if(cardEl){
+        cardEl.classList.add('die');
+        setTimeout(()=>{
+          // remove slot
+          if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
+          renderAll();
+          checkBattleOver();
+        }, 520);
+      } else {
+        if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
+        renderAll();
+        checkBattleOver();
+      }
+    } else {
+      checkBattleOver();
+    }
+  }
 
-  // show popup
-  function showDamagePopup(container, text, color){
-    const popup = document.createElement('div'); popup.className='dmg-pop'; popup.style.color=color || '#fff'; popup.textContent = text;
-    popup.style.left = '50%'; popup.style.top = '30%'; popup.style.transform = 'translateX(-50%)';
-    container.appendChild(popup);
-    setTimeout(()=>{ popup.remove(); }, 700);
-  }
+  // show popup
+  function showDamagePopup(container, text, color){
+    const popup = document.createElement('div'); popup.className='dmg-pop'; popup.style.color=color || '#fff'; popup.textContent = text;
+    popup.style.left = '50%'; popup.style.top = '30%'; popup.style.transform = 'translateX(-50%)';
+    container.appendChild(popup);
+    setTimeout(()=>{ popup.remove(); }, 700);
+  }
 
-  // update a single slot UI text & segment bar
-  function updateSlotUI(side, idx){
-    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
-    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-    if(slot && slotEl.firstChild){
-      slotEl.firstChild._hpText = slot.hp;
-      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-    }
-    updateGlobalHPUI();
-  }
+  // update a single slot UI text & segment bar
+  function updateSlotUI(side, idx){
+    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
+    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+    if(slot && slotEl.firstChild){
+      slotEl.firstChild._hpText = slot.hp;
+      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+    }
+    updateGlobalHPUI();
+  }
 
-  // compute and render global HP segments (sum of hp for all slots, normalized to max possible)
-  function updateGlobalHPUI(){
-    // global HP is sum of hp / (MAX_SLOTS * MAX_HP) expressed as segments
-    const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
-    const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
-    // clear
-    playerGlobalHP.innerHTML = ''; computerGlobalHP.innerHTML = '';
-    // render 8 segments scaled by percentage of total possible (MAX_SLOTS*MAX_HP)
-    const totalPossible = MAX_SLOTS * MAX_HP;
-    const playerFrac = sumPlayer / totalPossible;
-    const compFrac = sumComputer / totalPossible;
-    renderSegments(playerGlobalHP, playerFrac);
-    renderSegments(computerGlobalHP, compFrac);
-  }
+  // compute and render global HP segments (sum of hp for all slots, normalized to max possible)
+  function updateGlobalHPUI(){
+    // global HP is sum of hp / (MAX_SLOTS * MAX_HP) expressed as segments
+    const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    // clear
+    playerGlobalHP.innerHTML = ''; computerGlobalHP.innerHTML = '';
+    // render 8 segments scaled by percentage of total possible (MAX_SLOTS*MAX_HP)
+    const totalPossible = MAX_SLOTS * MAX_HP;
+    const playerFrac = sumPlayer / totalPossible;
+    const compFrac = sumComputer / totalPossible;
+    renderSegments(playerGlobalHP, playerFrac);
+    renderSegments(computerGlobalHP, compFrac);
+  }
 
-  function renderSegments(container, fraction){
-    // fraction 0..1 mapped to SEGMENTS segments
-    const segmentsToShow = fraction * SEGMENTS;
-    for(let i=0;i<SEGMENTS;i++){
-      const s = document.createElement('div'); s.className='seg';
-      const remain = segmentsToShow - i;
-      if(remain <= 0) { s.style.opacity = 0.12; } // gone
-      else if(remain < 1) { s.classList.add('half'); } // half
-      container.appendChild(s);
-    }
-  }
+  function renderSegments(container, fraction){
+    // fraction 0..1 mapped to SEGMENTS segments
+    const segmentsToShow = fraction * SEGMENTS;
+    for(let i=0;i<SEGMENTS;i++){
+      const s = document.createElement('div'); s.className='seg';
+      const remain = segmentsToShow - i;
+      if(remain <= 0) { s.style.opacity = 0.12; } // gone
+      else if(remain < 1) { s.classList.add('half'); } // half
+      container.appendChild(s);
+    }
+  }
 
-  // check if battle over
-  function checkBattleOver(){
-    const playerHas = playerSlots.some(s=>s && s.hp>0);
-    const compHas = computerSlots.some(s=>s && s.hp>0);
-    if(!playerHas || !compHas){
-      const result = compHas ? 'defeat' : 'victory';
-      addLog('system', `Battle over: ${result.toUpperCase()}`);
-      setTimeout(()=>showGameOver(result), 500);
-    }
-  }
+  // check if battle over
+  function checkBattleOver(){
+    const playerHas = playerSlots.some(s=>s && s.hp>0);
+    const compHas = computerSlots.some(s=>s && s.hp>0);
+    if(!playerHas || !compHas){
+      const result = compHas ? 'defeat' : 'victory';
+      addLog('system', `Battle over: ${result.toUpperCase()}`);
+      setTimeout(()=>showGameOver(result), 500);
+    }
+  }
 
-  function showGameOver(result){
-    alert(result==='victory' ? 'You won!' : 'You lost!');
-    // return to main index (developer can change)
-    // location.href = 'index.html';
-  }
+  function showGameOver(result){
+    alert(result==='victory' ? 'You won!' : 'You lost!');
+    // return to main index (developer can change)
+    // location.href = 'index.html';
+  }
 
-  // simple AI: pick a random active card and attack random player slot; defend sometimes
-  function computerAction(){
-    // small delay for realism
-    setTimeout(()=>{
-      // find active computer cards
-      const activeIdx = computerSlots.map((s,i)=> s && s.hp>0 ? i : -1).filter(i=>i>=0);
-      if(activeIdx.length===0){ checkBattleOver(); return; }
-      const actType = Math.random() < 0.7 ? 'attack' : 'defend';
-      const choiceIdx = activeIdx[Math.floor(Math.random()*activeIdx.length)];
-      if(actType==='defend'){
-        computerSlots[choiceIdx].defending = true;
-        addLog('computer', `${computerSlots[choiceIdx].card.name} is defending!`);
-        updateSlotUI('computer', choiceIdx);
-      } else {
-        // pick target player slot with hp>0
-        const targetIdxs = playerSlots.map((s,i)=> s && s.hp>0 ? i : -1).filter(i=>i>=0);
-        if(targetIdxs.length===0) { checkBattleOver(); return; }
-        const t = targetIdxs[Math.floor(Math.random()*targetIdxs.length)];
-        const dmg = Math.random()<0.6 ? 5 : 10;
-        attack('computer', choiceIdx, 'player', t, dmg);
-      }
-      // end computer turn => back to player
-      playerTurn = true;
-      addLog('system', 'Player turn.');
-      showActionPanel(true);
-    }, 600);
-  }
+  // simple AI: pick a random active card and attack random player slot; defend sometimes
+  function computerAction(){
+    // small delay for realism
+    setTimeout(()=>{
+      // find active computer cards that haven't acted
+      const activeIdx = computerSlots.map((s,i)=> s && s.hp>0 && !s.acted ? i : -1).filter(i=>i>=0);
+      if(activeIdx.length===0){ 
+        addLog('system', 'Computer has no more actions. Player turn.');
+        endTurn();
+        return;
+      }
+      const choiceIdx = activeIdx[Math.floor(Math.random()*activeIdx.length)];
+      
+      // always attack the opposite slot if possible
+      if(playerSlots[choiceIdx] && playerSlots[choiceIdx].hp > 0){
+        const dmg = Math.random()<0.6 ? 5 : 10;
+        attack('computer', choiceIdx, 'player', choiceIdx, dmg);
+        computerSlots[choiceIdx].acted = true;
+      } else {
+        // if opposite slot is empty, defend instead
+        computerSlots[choiceIdx].defending = true;
+        computerSlots[choiceIdx].acted = true;
+        addLog('computer', `${computerSlots[choiceIdx].card.name} is defending!`);
+        updateSlotUI('computer', choiceIdx);
+      }
 
-  // actions: fight (choose dmg), defend (set defending for selected card), endTurn
-  function performAttackFromSelected(damage){
-    if(!selected || selected.side!=='player') return;
-    const attackerIndex = selected.idx;
-    // select target: choose a computer target (if none, nothing)
-    const targetIdxs = computerSlots.map((s,i)=> s && s.hp>0 ? i : -1).filter(i=>i>=0);
-    if(targetIdxs.length===0){
-      addLog('system', 'No targets available.');
-      return;
-    }
-    // If the user has manually selected a computer card before, target that; otherwise random
-    let target = null;
-    if(selected.targetSide==='computer' && selected.targetIdx!=null) {
-      target = selected.targetIdx;
-    } else {
-      target = targetIdxs[Math.floor(Math.random()*targetIdxs.length)];
-    }
-    attack('player', attackerIndex, 'computer', target, damage);
-    endPlayerAction();
-  }
+      // if there are still active cards, the computer can act again
+      const remainingActions = computerSlots.filter(s => s && s.hp > 0 && !s.acted).length;
+      if (remainingActions > 0) {
+        computerAction();
+      } else {
+        // end computer turn => back to player
+        endTurn();
+      }
+    }, 600);
+  }
 
-  function performDefendFromSelected(){
-    if(!selected || selected.side!=='player') return;
-    const idx = selected.idx;
-    if(playerSlots[idx]){
-      playerSlots[idx].defending = true;
-      addLog('player', `${playerSlots[idx].card.name} takes a defensive stance.`);
-      updateSlotUI('player', idx);
-      endPlayerAction();
-    }
-  }
+  // actions: fight (choose dmg), defend (set defending for selected card), endTurn
+  function performAttackFromSelected(damage){
+    if(!selected || selected.side!=='player') return;
+    const attackerIndex = selected.idx;
+    const attacker = playerSlots[attackerIndex];
 
-  function endPlayerAction(){
-    // after performing action, hide panel and let computer act
-    showActionPanel(false);
-    playerTurn = false;
-    addLog('system', 'Computer thinking...');
-    // small pause then computer action
-    setTimeout(()=>computerAction(), 700);
-  }
+    if(attacker.acted){
+      addLog('system', 'This card has already acted this turn.');
+      return;
+    }
 
-  // end turn button (skip)
-  endTurnBtn.addEventListener('click', ()=>{
-    if(!playerTurn) return;
-    showActionPanel(false);
-    playerTurn = false;
-    addLog('system','Player ended their turn.');
-    setTimeout(()=>computerAction(), 600);
-  });
+    // Target the card in the opposite slot.
+    const target = computerSlots[attackerIndex];
+    if(!target){
+      addLog('system', 'No target available in this slot.');
+      return;
+    }
 
-  // attack menu logic
-  fightBtn.addEventListener('mouseenter', ()=>{ attackMenu.style.display='flex'; attackMenuOpen=true});
-  fightBtn.addEventListener('mouseleave', ()=>{ if(!attackMenuOpen) attackMenu.style.display='none'});
-  attackMenu.addEventListener('mouseenter', ()=> attackMenuOpen=true);
-  attackMenu.addEventListener('mouseleave', ()=>{ attackMenuOpen=false; attackMenu.style.display='none'; });
+    attack('player', attackerIndex, 'computer', attackerIndex, damage);
+    attacker.acted = true;
+    renderAll();
+  }
 
-  attackMenu.querySelectorAll('.opt').forEach(opt=>{
-    opt.addEventListener('click', ()=>{
-      const dmg = parseInt(opt.dataset.dmg,10);
-      // when clicked, find selected card index
-      if(selected && selected.side==='player'){
-        const attackerIdx = selected.idx;
-        // target selection: if a computer slot is currently selected, use that, else random
-        const targeted = document.querySelectorAll('.card.selected');
-        let tgtIdx = null;
-        // prefer any selected computer slot element
-        const compSel = Array.from(document.querySelectorAll('#computerSlots .card.selected'));
-        if(compSel.length>0) {
-          tgtIdx = parseInt(compSel[0].parentElement.dataset.i,10);
-        }
-        // otherwise pick random active target
-        const targetIdxs = computerSlots.map((s,i)=> s && s.hp>0 ? i : -1).filter(i=>i>=0);
-        if(!tgtIdx && targetIdxs.length>0) tgtIdx = targetIdxs[Math.floor(Math.random()*targetIdxs.length)];
-        if(tgtIdx==null){ addLog('system','No available targets.'); return; }
-        // perform attack
-        attack('player', attackerIdx, 'computer', tgtIdx, dmg);
-        // after attack -> end player's action -> computer
-        endPlayerAction();
-        attackMenu.style.display='none';
-      } else {
-        addLog('system','Select one of your battlefield cards first.');
-      }
-    });
-  });
+  function performDefendFromSelected(){
+    if(!selected || selected.side!=='player') return;
+    const idx = selected.idx;
+    const card = playerSlots[idx];
 
-  // defend handler
-  defendBtn.addEventListener('click', ()=> {
-    if(!selected || selected.side!=='player') { addLog('system','Select one of your battlefield cards first.'); return; }
-    performDefendFromSelected();
-  });
+    if(card && card.acted){
+      addLog('system', 'This card has already acted this turn.');
+      return;
+    }
 
-  // keyboard support: ArrowUp/Down to change attack selection when menu open, Enter to pick
-  let keyboardIndex = 0;
-  document.addEventListener('keydown',(e)=>{
-    if(attackMenu.style.display==='flex'){
-      const opts = attackMenu.querySelectorAll('.opt');
-      if(e.key==='ArrowUp' || e.key==='ArrowLeft'){ keyboardIndex = (keyboardIndex-1+opts.length)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
-      if(e.key==='ArrowDown' || e.key==='ArrowRight'){ keyboardIndex = (keyboardIndex+1)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
-      if(e.key==='Enter'){ opts[keyboardIndex].click(); e.preventDefault(); }
-    } else {
-      // quick keys: 'd' defend, 'e' end turn
-      if(e.key==='d') defendBtn.click();
-      if(e.key==='e') endTurnBtn.click();
-    }
-  });
+    if(card){
+      card.defending = true;
+      card.acted = true;
+      addLog('player', `${card.card.name} takes a defensive stance.`);
+      renderAll();
+    }
+  }
 
-  function updateKeyboardSelection(opts){
-    opts.forEach((o,i)=> o.classList.toggle('selected', i===keyboardIndex));
-  }
+  function endPlayerTurn(){
+    // After a player action, check if they have any remaining actions
+    const remainingActions = playerSlots.filter(s => s && s.hp > 0 && !s.acted).length;
+    if (remainingActions === 0) {
+      addLog('system', 'All your cards have acted. Turn automatically ends.');
+      endTurn();
+    }
+  }
 
-  // helper log
-  function addLog(type, text){
-    const div = document.createElement('div'); div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); div.textContent = text;
-    logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
-  }
+  function endTurn(){
+    // Reset acted status for both players
+    playerSlots.forEach(slot => { if(slot) slot.acted = false; });
+    computerSlots.forEach(slot => { if(slot) slot.acted = false; });
+    renderAll();
+    selected = null;
+    
+    showActionPanel(false);
+    playerTurn = false;
+    addLog('system', 'Computer thinking...');
+    // small pause then computer action
+    setTimeout(()=>computerAction(), 700);
+  }
 
-  // place initial computer slots (randomly fill 3-5 slots)
-  function fillComputerSlots(){
-    const fillCount = Math.min(MAX_SLOTS, Math.max(2, Math.floor(Math.random()*MAX_SLOTS)+1));
-    let filled = 0;
-    while(filled < fillCount){
-      const idx = Math.floor(Math.random()*MAX_SLOTS);
-      if(!computerSlots[idx]){
-        const card = computerReserve[Math.floor(Math.random()*computerReserve.length)];
-        computerSlots[idx] = { card, hp: MAX_HP, defending:false };
-        filled++;
-      }
-    }
-  }
+  // end turn button (skip)
+  endTurnBtn.addEventListener('click', ()=>{
+    if(!playerTurn) return;
+    addLog('system','Player ended their turn.');
+    endTurn();
+  });
 
-  // update UI for single slot (helper)
-  function updateSlotUIFull(){
-    renderAll();
-  }
+  // attack menu logic
+  fightBtn.addEventListener('mouseenter', ()=>{ attackMenu.style.display='flex'; attackMenuOpen=true});
+  fightBtn.addEventListener('mouseleave', ()=>{ if(!attackMenuOpen) attackMenu.style.display='none'});
+  attackMenu.addEventListener('mouseenter', ()=> attackMenuOpen=true);
+  attackMenu.addEventListener('mouseleave', ()=>{ attackMenuOpen=false; attackMenu.style.display='none'; });
 
-  // choose starting player randomly
-  function decideFirstPlayer(){
-    playerTurn = Math.random() < 0.5;
-    addLog('system', playerTurn ? 'Player goes first.' : 'Computer goes first.');
-    if(!playerTurn){
-      showActionPanel(false);
-      setTimeout(()=>computerAction(),700);
-    } else {
-      showActionPanel(true);
-    }
-  }
+  attackMenu.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      const dmg = parseInt(opt.dataset.dmg,10);
+      // when clicked, find selected card index
+      if(selected && selected.side==='player'){
+        performAttackFromSelected(dmg);
+      } else {
+        addLog('system','Select one of your battlefield cards first.');
+      }
+    });
+  });
 
-  // when attack triggers we must update global UI
-  function init(){
-    makeSlotsUI();
-    loadPlayerInventory();
-    buildComputerReserve();
-    fillComputerSlots();
-    renderAll();
-    decideFirstPlayer();
-    addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
-  }
+  // defend handler
+  defendBtn.addEventListener('click', ()=> {
+    if(!selected || selected.side!=='player') { addLog('system','Select one of your battlefield cards first.'); return; }
+    performDefendFromSelected();
+  });
 
-  // small helper: update slot UI after hp change
-  function updateSlotUI(side, idx){
-    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
-    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-    if(slot && slotEl.firstChild){
-      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-      // show defending marker
-      slotEl.firstChild.style.boxShadow = slot.defending ? '0 0 10px rgba(56,239,125,0.8) inset' : 'none';
-    }
-    updateGlobalHPUI();
-  }
+  // keyboard support: ArrowUp/Down to change attack selection when menu open, Enter to pick
+  let keyboardIndex = 0;
+  document.addEventListener('keydown',(e)=>{
+    if(attackMenu.style.display==='flex'){
+      const opts = attackMenu.querySelectorAll('.opt');
+      if(e.key==='ArrowUp' || e.key==='ArrowLeft'){ keyboardIndex = (keyboardIndex-1+opts.length)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
+      if(e.key==='ArrowDown' || e.key==='ArrowRight'){ keyboardIndex = (keyboardIndex+1)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
+      if(e.key==='Enter'){ opts[keyboardIndex].click(); e.preventDefault(); }
+    } else {
+      // quick keys: 'd' defend, 'e' end turn
+      if(e.key==='d') defendBtn.click();
+      if(e.key==='e') endTurnBtn.click();
+    }
+  });
 
-  // expose small helper to place card by index for testing (optional)
-  window._debug = { playerSlots, computerSlots, playerHand };
+  function updateKeyboardSelection(opts){
+    opts.forEach((o,i)=> o.classList.toggle('selected', i===keyboardIndex));
+  }
 
-  init();
+  // helper log
+  function addLog(type, text){
+    const div = document.createElement('div'); div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); div.textContent = text;
+    logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // place initial computer slots (randomly fill 3-5 slots)
+  function fillComputerSlots(){
+    const fillCount = Math.min(MAX_SLOTS, Math.max(2, Math.floor(Math.random()*MAX_SLOTS)+1));
+    let filled = 0;
+    while(filled < fillCount){
+      const idx = Math.floor(Math.random()*MAX_SLOTS);
+      if(!computerSlots[idx]){
+        const card = computerReserve[Math.floor(Math.random()*computerReserve.length)];
+        computerSlots[idx] = { card, hp: MAX_HP, defending:false, acted:false };
+        filled++;
+      }
+    }
+  }
+
+  // update UI for single slot (helper)
+  function updateSlotUIFull(){
+    renderAll();
+  }
+
+  // choose starting player randomly
+  function decideFirstPlayer(){
+    playerTurn = Math.random() < 0.5;
+    addLog('system', playerTurn ? 'Player goes first.' : 'Computer goes first.');
+    if(!playerTurn){
+      showActionPanel(false);
+      setTimeout(()=>computerAction(),700);
+    } else {
+      showActionPanel(true);
+    }
+  }
+
+  // small helper: update slot UI after hp change
+  function updateSlotUI(side, idx){
+    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
+    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+    if(slot && slotEl.firstChild){
+      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+      // show defending marker
+      slotEl.firstChild.style.boxShadow = slot.defending ? '0 0 10px rgba(56,239,125,0.8) inset' : 'none';
+      // update acted class
+      if (slot.acted) {
+        slotEl.firstChild.classList.add('acted');
+      } else {
+        slotEl.firstChild.classList.remove('acted');
+      }
+    }
+    updateGlobalHPUI();
+  }
+
+  // expose small helper to place card by index for testing (optional)
+  window._debug = { playerSlots, computerSlots, playerHand };
+
+  init();
 
 })();
 </script>
