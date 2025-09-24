@@ -1,651 +1,732 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Toad Battle Arena</title>
+    <title>Toad Battle Arena - Lazy Toad Studios</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
     <style>
-        :root{
-            --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
-            --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
-        }
-        html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-        .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
-        .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
-        .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
-        .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
-        .area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
-        .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
-        .name{color:var(--accent);font-size:12px;margin-bottom:6px}
-        .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-        .hp-segments{display:flex;width:92%;gap:2px}
-        .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
-        .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
-        .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
-        .slots{display:flex;gap:10px;align-items:center;justify-content:center}
-        .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
-        .slot.occupied{border-style:solid}
-        .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
-        .card img{width:100%;height:72% ;object-fit:cover;display:block}
-        .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
-        .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
-        .card.acted{opacity:0.6; pointer-events: none;}
-        .action-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
-        .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
-        .btn:active{transform:scale(.98)}
-        .dropdown{position:relative}
-        .dropdown-menu{position:absolute;bottom:44px;left:0;background:#fff;color:#000;border:2px solid #000;padding:6px;display:none;flex-direction:column;gap:6px}
-        .dropdown-menu .opt{padding:6px 10px;cursor:pointer;white-space:nowrap}
-        .dropdown-menu .opt:hover,.dropdown-menu .opt.selected{background:#000;color:#fff}
-        .dmg-pop{position:absolute;font-size:12px;font-weight:700;color:#fff;pointer-events:none;animation:pop 700ms ease-out forwards}
-        @keyframes pop{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-36px) scale(1.1);opacity:0}}
-        @keyframes flashBW {0%{filter:grayscale(0)}50%{filter:grayscale(1)}100%{filter:grayscale(0)}}
-        .flash{animation:flashBW 240ms linear 0s 2}
-        .die{animation:dieFade 500ms ease forwards}
-        @keyframes dieFade{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.6)}}
-        .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
-        .log .entry{margin-bottom:6px}
-        .log .player{color:var(--accent)}
-        .log .computer{color:var(--danger)}
-        @media (max-width:900px){
-            .area{flex-direction:column;gap:8px}
-            .player-info{min-width:140px}
-            .slots{flex-wrap:wrap}
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #2D1B69 0%, #11998E 50%, #38EF7D 100%);
+            color: #fff;
+            font-family: 'Press Start 2P', monospace;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
         }
 
-        .game-over-screen {
+        /* Animated background particles */
+        .battle-bg {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            display: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+        }
+
+        /* Header */
+        .battle-header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 4px solid #fff;
+        }
+
+        .battle-title {
+            font-size: 2rem;
+            color: #38EF7D;
+            text-shadow: 2px 2px 0 #000;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 2px 2px 0 #000, 0 0 10px #38EF7D; }
+            to { text-shadow: 2px 2px 0 #000, 0 0 20px #38EF7D, 0 0 30px #38EF7D; }
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            color: #181818;
+            border: 3px solid #181818;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: #181818;
+            color: #fff;
+            border-color: #fff;
+        }
+
+        /* Battle Arena */
+        .battle-arena {
+            position: relative;
+            z-index: 5;
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        /* Player Areas */
+        .player-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid #fff;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 200px;
+        }
+
+        .player-info {
+            display: flex;
             flex-direction: column;
             align-items: center;
+            min-width: 200px;
+        }
+
+        .player-name {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #38EF7D;
+        }
+
+        .player-hp {
+            width: 150px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444 0%, #ffff44 50%, #44ff44 100%);
+            transition: width 0.5s ease;
+            border-radius: 6px;
+        }
+
+        .hp-text {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        /* Card Areas */
+        .card-hand {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
+            max-width: calc(100% - 220px);
+        }
+
+        .battle-card {
+            position: relative;
+            width: 80px;
+            height: 120px;
+            border: 3px solid #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #222;
+        }
+
+        .battle-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: #38EF7D;
+            box-shadow: 0 10px 20px rgba(56, 239, 125, 0.5);
+        }
+
+        .battle-card.computer-card {
+            opacity: 0.7;
+            cursor: default;
+            border-color: #ff4444;
+        }
+
+        .battle-card.computer-card:hover {
+            transform: none;
+            border-color: #ff4444;
+            box-shadow: none;
+        }
+
+        .battle-card img {
+            width: 100%;
+            height: 70%;
+            object-fit: cover;
+        }
+
+        .card-stats {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2px 4px;
+            font-size: 0.6rem;
             text-align: center;
+        }
+
+        .card-hp {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        /* Action Buttons */
+        .action-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #38EF7D;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 20;
+        }
+        
+        .action-panel.active {
+            display: flex;
+        }
+
+        .action-btn {
+            background: #38EF7D;
+            color: #000;
+            border: 2px solid #000;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .action-btn:hover {
+            background: #fff;
+            transform: scale(1.05);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Battle Log */
+        .battle-log {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            width: 250px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.7rem;
+            overflow-y: auto;
+            z-index: 15;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entry.player { color: #38EF7D; }
+        .log-entry.computer { color: #ff4444; }
+        .log-entry.system { color: #ffff44; }
+
+        /* Game Over Modal */
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
             z-index: 100;
         }
-        .game-over-screen h2 {
-            font-size: 28px;
-            margin: 0;
+
+        .game-over-content {
+            background: #fff;
+            color: #000;
+            border: 6px solid #000;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
         }
-        .game-over-screen p {
-            font-size: 14px;
-            margin: 0;
-            max-width: 80%;
+
+        .game-over-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #38EF7D;
+        }
+
+        .game-over-message {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .restart-btn, .home-btn {
+            background: #38EF7D;
+            color: #000;
+            border: 3px solid #000;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .restart-btn:hover, .home-btn:hover {
+            background: #000;
+            color: #38EF7D;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .battle-title {
+                font-size: 1.5rem;
+            }
+
+            .battle-arena {
+                padding: 10px;
+            }
+
+            .player-area {
+                flex-direction: column;
+                min-height: 150px;
+            }
+
+            .card-hand {
+                max-width: 100%;
+                margin-top: 10px;
+            }
+
+            .battle-card {
+                width: 60px;
+                height: 90px;
+            }
+
+            .battle-log {
+                position: relative;
+                width: 100%;
+                height: 100px;
+                margin-top: 10px;
+                order: 3;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="wrap">
-        <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
+    <div class="battle-bg" id="battleBg"></div>
+    
+    <div class="battle-header">
+        <a href="index.html" class="back-button">← Back to Gallery</a>
+        <h1 class="battle-title">TOAD BATTLE ARENA</h1>
+    </div>
 
-        <div class="arena" id="arena">
-            <div class="area" id="computerArea">
-                <div class="player-info">
-                    <div class="name">Computer</div>
-                    <div class="hp-bar" title="Computer total HP">
-                        <div class="hp-segments" id="computerGlobalHP"></div>
-                    </div>
-                    <div style="height:6px"></div>
+    <div class="battle-arena">
+        <div class="player-area">
+            <div class="player-info">
+                <div class="player-name">Computer</div>
+                <div class="player-hp">
+                    <div class="hp-fill" id="computerHpFill" style="width: 100%;"></div>
                 </div>
-
-                <div class="slots" id="computerSlots">
-                    </div>
-
-                <div class="hand" id="computerHand">
-                    </div>
+                <div class="hp-text" id="computerHpText">100 HP</div>
             </div>
-
-            <div class="area" id="playerArea">
-                <div class="player-info">
-                    <div class="name">Player</div>
-                    <div class="hp-bar" title="Player total HP">
-                        <div class="hp-segments" id="playerGlobalHP"></div>
-                    </div>
-                    <div style="height:6px"></div>
+            <div class="card-hand" id="computerHand">
                 </div>
-
-                <div class="slots" id="playerSlots">
-                    </div>
-
-                <div class="hand" id="playerHand" style="margin-left:12px">
-                    </div>
-            </div>
         </div>
 
-        <div class="action-panel" id="actionPanel" style="display:none">
-            <div class="dropdown">
-                <div class="btn" id="fightBtn">FIGHT</div>
-                <div class="dropdown-menu" id="attackMenu">
-                    <div class="opt" data-dmg="5">Light Attack — 5</div>
-                    <div class="opt" data-dmg="10">Heavy Attack — 10</div>
+        <div class="player-area">
+            <div class="player-info">
+                <div class="player-name">Player</div>
+                <div class="player-hp">
+                    <div class="hp-fill" id="playerHpFill" style="width: 100%;"></div>
                 </div>
+                <div class="hp-text" id="playerHpText">100 HP</div>
             </div>
-            <div class="btn" id="defendBtn">DEFEND</div>
-            <div class="btn" id="endTurnBtn">END TURN</div>
-        </div>
-
-        <div class="log" id="battleLog"><div class="entry system">Battle ready — place cards to begin.</div></div>
-
-        <div class="game-over-screen" id="gameOver">
-            <h2 id="gameOverTitle"></h2>
-            <p id="gameOverMessage"></p>
-            <button class="btn" onclick="location.reload();">Play Again</button>
+            <div class="card-hand" id="playerHand">
+                </div>
         </div>
     </div>
 
-<script>
-(function(){
-    // config
-    const MAX_SLOTS = 5;
-    const MAX_HP = 80; // per card
-    const SEGMENTS = 8; // 8 segments of 10hp
+    <div class="action-panel" id="actionPanel">
+        <button class="action-btn" id="attackBtn">ATTACK!</button>
+        <button class="action-btn" id="defendBtn">DEFEND</button>
+        <button class="action-btn" id="cancelBtn">CANCEL</button>
+    </div>
 
-    // card pool fallback (if user has no collected cards)
-    const cardPool = [
-        { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
-        { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
-        { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
-        { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
-        { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
-    ];
+    <div class="battle-log" id="battleLog">
+        <div class="log-entry system">Battle begins! Choose your card to take action.</div>
+    </div>
 
-    // state
-    let playerHand = [];
-    let computerReserve = [];
-    let playerSlots = new Array(MAX_SLOTS).fill(null);
-    let computerSlots = new Array(MAX_SLOTS).fill(null);
-    let selected = null;
-    let playerTurn = true;
-    let attackMenuOpen = false;
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <h2 class="game-over-title" id="gameOverTitle">VICTORY!</h2>
+            <p class="game-over-message" id="gameOverMessage">You have defeated the computer in glorious toad combat!</p>
+            <button class="restart-btn" id="restartBtn">FIGHT AGAIN</button>
+            <a href="index.html" class="home-btn">RETURN HOME</a>
+        </div>
+    </div>
 
-    // elements
-    const playerHandEl = document.getElementById('playerHand');
-    const computerHandEl = document.getElementById('computerHand');
-    const playerSlotsEl = document.getElementById('playerSlots');
-    const computerSlotsEl = document.getElementById('computerSlots');
-    const logEl = document.getElementById('battleLog');
-    const actionPanel = document.getElementById('actionPanel');
-    const attackMenu = document.getElementById('attackMenu');
-    const fightBtn = document.getElementById('fightBtn');
-    const defendBtn = document.getElementById('defendBtn');
-    const endTurnBtn = document.getElementById('endTurnBtn');
-    const playerGlobalHP = document.getElementById('playerGlobalHP');
-    const computerGlobalHP = document.getElementById('computerGlobalHP');
-    const gameOverScreen = document.getElementById('gameOver');
-    const gameOverTitle = document.getElementById('gameOverTitle');
-    const gameOverMessage = document.getElementById('gameOverMessage');
+    <script>
+        // Game state
+        let playerHP = 100;
+        let computerHP = 100;
+        let selectedCard = null;
+        let gameActive = true;
+        let playerTurn = true;
+        
+        // Card pool matching your main site
+        const cardPool = [
+            { src: "images/cards/the stranger card format.jpg", name: "The Stranger", hp: 80 },
+            { src: "images/cards/horny toad card format.jpg", name: "Horny Toad", hp: 80 },
+            { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad", hp: 80 },
+            { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad", hp: 80 },
+            { src: "images/cards/mad toad card format.jpg", name: "Mad Toad", hp: 80 }
+        ];
 
-    // init function to start the game
-    function init() {
-        makeSlotsUI();
-        loadPlayerInventory();
-        buildComputerReserve();
-        fillComputerSlots();
-        renderAll();
-        decideFirstPlayer();
-    }
-
-    // init interface slots
-    function makeSlotsUI(){
-        playerSlotsEl.innerHTML = '';
-        computerSlotsEl.innerHTML = '';
-        for(let i=0;i<MAX_SLOTS;i++){
-            const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
-            ps.addEventListener('click', ()=>onSlotClick('player', i));
-            playerSlotsEl.appendChild(ps);
-            const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
-            cs.addEventListener('click', ()=>onSlotClick('computer', i));
-            computerSlotsEl.appendChild(cs);
-        }
-    }
-
-    // load player's collected cards from localStorage
-    function loadPlayerInventory(){
-        let stored = [];
-        try {
-            stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
-        } catch(e){ stored = []; }
-        if(!stored || stored.length === 0) stored = [...cardPool];
-        playerHand = stored.slice(0,10);
-    }
-
-    // computer reserve: random picks, matches player hand size
-    function buildComputerReserve(){
-        const cp = [];
-        const count = playerHand.length;
-        for(let i=0;i<count;i++){
-            cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
-        }
-        computerReserve = cp;
-    }
-
-    // render player hand UI (cards you can place)
-    function renderHand(){
-        playerHandEl.innerHTML = '';
-        playerHand.forEach((card, idx) => {
-            const c = createHandCardEl(card, idx);
-            playerHandEl.appendChild(c);
-        });
-        computerHandEl.innerHTML = '';
-        computerReserve.forEach((card, idx) => {
-            const c = createReserveCardEl(card, idx);
-            computerHandEl.appendChild(c);
-        });
-    }
-
-    function createHandCardEl(card, idx){
-        const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
-        el.addEventListener('click', ()=>onHandClick(idx));
-        const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-        const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-        el.appendChild(img); el.appendChild(stats);
-        const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
-        wrap.appendChild(el);
-        return wrap;
-    }
-
-    function createReserveCardEl(card, idx){
-        const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
-        el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
-        const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-        const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px';
-        stats.innerHTML = `<div>${card.name}</div>`;
-        el.appendChild(img); el.appendChild(stats);
-        const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px';
-        wrap.appendChild(el);
-        return wrap;
-    }
-
-    // slot click: either place a hand card there (if player slot) or select a card if occupied
-    function onSlotClick(side, idx){
-        if(side === 'player'){
-            if(selected && selected.type==='hand'){
-                if(playerSlots[idx] === null){
-                    const card = playerHand.splice(selected.index,1)[0];
-                    playerSlots[idx] = { card, hp: MAX_HP, defending:false, acted:false };
-                    selected = null;
-                    renderAll();
-                    addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
-                    selectSlot('player', idx);
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', function() {
+            createBackground();
+            initializeBattle();
+            
+            // Event listeners
+            document.getElementById('attackBtn').addEventListener('click', () => {
+                if(playerTurn) {
+                    performAttack();
+                    endPlayerTurn();
                 }
-            } else {
-                if(playerSlots[idx]) selectSlot('player', idx);
-            }
-        } else {
-            if(computerSlots[idx]) selectSlot('computer', idx);
-        }
-    }
-
-    // select slot (battlefield card) — shows action panel only for player side selection
-    function selectSlot(side, idx){
-        document.querySelectorAll('.card.selected').forEach(n=>n.classList.remove('selected'));
-        selected = { side, idx };
-        const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-        if(slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
-        if(side==='player'){
-            showActionPanel(true);
-        } else {
-            showActionPanel(false);
-        }
-    }
-
-    function onHandClick(index){
-        selected = { type:'hand', index };
-        document.querySelectorAll('#playerHand .card').forEach((c,i)=>{ if(i===index) c.classList.add('selected'); else c.classList.remove('selected');});
-    }
-
-    // render battlefield slots and global HP segments
-    function renderAll(){
-        for(let i=0;i<MAX_SLOTS;i++){
-            const pSlotEl = playerSlotsEl.children[i];
-            pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
-            if(playerSlots[i]){
-                pSlotEl.classList.add('occupied');
-                pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
-            }
-            const cSlotEl = computerSlotsEl.children[i];
-            cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
-            if(computerSlots[i]){
-                cSlotEl.classList.add('occupied');
-                cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
-            }
-        }
-        renderHand();
-        updateGlobalHPUI();
-    }
-
-    // create visual card for battlefield slot
-    function makeBattleCardEl(slotObj, owner, slotIndex){
-        const wrap = document.createElement('div'); wrap.className='card'; wrap.style.width='86px'; wrap.style.height='120px';
-        const img = document.createElement('img'); img.src = slotObj.card.src; img.alt = slotObj.card.name;
-        const stats = document.createElement('div'); stats.className='stats';
-        stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
-        wrap.appendChild(img); wrap.appendChild(stats);
-        wrap.dataset.owner = owner;
-        wrap.dataset.slot = slotIndex;
-        wrap._hpEl = stats.querySelector('.card-hp');
-        if (slotObj.acted) {
-            wrap.classList.add('acted');
-        }
-
-        wrap.addEventListener('click', (e)=>{
-            e.stopPropagation();
-            selectSlot(owner, slotIndex);
+            });
+            document.getElementById('defendBtn').addEventListener('click', () => {
+                if(playerTurn) {
+                    performDefend();
+                    endPlayerTurn();
+                }
+            });
+            document.getElementById('cancelBtn').addEventListener('click', () => cancelAction());
+            document.getElementById('restartBtn').addEventListener('click', () => restartGame());
         });
-        return wrap;
-    }
 
-    // show / hide action panel
-    function showActionPanel(enabled){
-        if(enabled && playerTurn){
-            actionPanel.style.display = 'flex';
-        } else {
-            actionPanel.style.display = 'none';
-        }
-    }
-
-    // attack action: attacker uses damage on target slot
-    function attack(attackerSide, attackerIndex, targetSide, targetIndex, damage){
-        const attacker = (attackerSide==='player' ? playerSlots[attackerIndex] : computerSlots[attackerIndex]);
-        const target = (targetSide==='player' ? playerSlots[targetIndex] : computerSlots[targetIndex]);
-        if(!attacker || !target) return;
-
-        let finalDmg = damage;
-        if(target.defending){
-            finalDmg = Math.ceil(finalDmg/2);
-            target.defending = false;
-            addLog('system', `${target.card.name} defended — reduced damage!`);
-        }
-
-        const targetSlotEl = (targetSide==='player' ? playerSlotsEl.children[targetIndex] : computerSlotsEl.children[targetIndex]);
-        showDamagePopup(targetSlotEl, `-${finalDmg}`, finalDmg < 0 ? 'green' : '#fff');
-
-        const cardEl = targetSlotEl.querySelector('.card');
-        if(cardEl){ cardEl.classList.add('flash'); setTimeout(()=>cardEl.classList.remove('flash'), 500); }
-
-        target.hp = Math.max(0, target.hp - finalDmg);
-        updateSlotUI(targetSide, targetIndex);
-
-        addLog(attackerSide==='player'?'player':'computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg}`);
-
-        if(target.hp <= 0){
-            if(cardEl){
-                cardEl.classList.add('die');
-                setTimeout(()=>{
-                    if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
-                    renderAll();
-                    checkBattleOver();
-                }, 520);
-            } else {
-                if(targetSide==='player') playerSlots[targetIndex] = null; else computerSlots[targetIndex] = null;
-                renderAll();
-                checkBattleOver();
+        function createBackground() {
+            const bg = document.getElementById('battleBg');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 4 + 2) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                bg.appendChild(particle);
             }
-        } else {
-            checkBattleOver();
         }
-    }
 
-    // show popup
-    function showDamagePopup(container, text, color){
-        const popup = document.createElement('div'); popup.className='dmg-pop'; popup.style.color=color || '#fff'; popup.textContent = text;
-        popup.style.left = '50%'; popup.style.top = '30%'; popup.style.transform = 'translateX(-50%)';
-        container.appendChild(popup);
-        setTimeout(()=>{ popup.remove(); }, 700);
-    }
+        function initializeBattle() {
+            const collectedCards = JSON.parse(localStorage.getItem('collectedCards')) || [];
+            
+            const rewardCards = collectedCards.filter(card => 
+                card.name && card.name.startsWith('reward-')
+            ).slice(0, 5);
 
-    // update a single slot UI text & segment bar
-    function updateSlotUI(side, idx){
-        const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
-        const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-        if(slot && slotEl.firstChild){
-            slotEl.firstChild._hpText = slot.hp;
-            slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-        }
-        updateGlobalHPUI();
-    }
-
-    // compute and render global HP segments (sum of hp for all slots, normalized to max possible)
-    function updateGlobalHPUI(){
-        const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
-        const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
-        playerGlobalHP.innerHTML = ''; computerGlobalHP.innerHTML = '';
-        const totalPossible = MAX_SLOTS * MAX_HP;
-        const playerFrac = sumPlayer / totalPossible;
-        const compFrac = sumComputer / totalPossible;
-        renderSegments(playerGlobalHP, playerFrac);
-        renderSegments(computerGlobalHP, compFrac);
-    }
-
-    function renderSegments(container, fraction){
-        const segmentsToShow = fraction * SEGMENTS;
-        for(let i=0;i<SEGMENTS;i++){
-            const s = document.createElement('div'); s.className='seg';
-            const remain = segmentsToShow - i;
-            if(remain <= 0) { s.style.opacity = 0.12; }
-            else if(remain < 1) { s.classList.add('half'); }
-            container.appendChild(s);
-        }
-    }
-
-    // check if battle over
-    function checkBattleOver(){
-        const playerHas = playerSlots.some(s=>s && s.hp>0);
-        const compHas = computerSlots.some(s=>s && s.hp>0);
-        if(!playerHas || !compHas){
-            const result = compHas ? 'defeat' : 'victory';
-            addLog('system', `Battle over: ${result.toUpperCase()}`);
-            setTimeout(()=>showGameOver(result), 500);
-        }
-    }
-
-    function showGameOver(result) {
-        if (result === 'victory') {
-            gameOverTitle.textContent = 'VICTORY!';
-            gameOverMessage.textContent = 'You have defeated the computer in glorious toad combat! Your tactical prowess is legendary!';
-            gameOverTitle.style.color = '#38EF7D';
-        } else {
-            gameOverTitle.textContent = 'DEFEAT!';
-            gameOverMessage.textContent = 'The computer has bested you in battle. Return when you are stronger, brave toad warrior!';
-            gameOverTitle.style.color = '#ff4444';
-        }
-        gameOverScreen.style.display = 'flex';
-    }
-
-    // simple AI: pick a random active card and attack random player slot; defend sometimes
-    function computerAction(){
-        setTimeout(()=>{
-            const activeIdx = computerSlots.map((s,i)=> s && s.hp>0 && !s.acted ? i : -1).filter(i=>i>=0);
-            if(activeIdx.length===0){
-                addLog('system', 'Computer has no more actions. Player turn.');
-                endTurn();
+            if (rewardCards.length === 0) {
+                addLogEntry('system', 'No cards found! Returning to main page...');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
                 return;
             }
-            const choiceIdx = activeIdx[Math.floor(Math.random()*activeIdx.length)];
 
-            if(playerSlots[choiceIdx] && playerSlots[choiceIdx].hp > 0){
-                const dmg = Math.random()<0.6 ? 5 : 10;
-                attack('computer', choiceIdx, 'player', choiceIdx, dmg);
-                computerSlots[choiceIdx].acted = true;
+            createPlayerCards(rewardCards);
+            createComputerCards();
+            
+            addLogEntry('system', `Battle ready! You have ${rewardCards.length} cards.`);
+            updateOverallHP();
+        }
+
+        function createPlayerCards(cards) {
+            const playerHand = document.getElementById('playerHand');
+            playerHand.innerHTML = '';
+            
+            cards.forEach((card, index) => {
+                const cardElement = createCardElement(card, 'player', index);
+                playerHand.appendChild(cardElement);
+            });
+        }
+
+        function createComputerCards() {
+            const computerHand = document.getElementById('computerHand');
+            computerHand.innerHTML = '';
+            const numCards = Math.min(5, cardPool.length);
+            
+            for (let i = 0; i < numCards; i++) {
+                const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
+                const cardElement = createCardElement(randomCard, 'computer', i);
+                computerHand.appendChild(cardElement);
+            }
+        }
+
+        function createCardElement(card, owner, index) {
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('battle-card');
+            if (owner === 'computer') {
+                cardDiv.classList.add('computer-card');
+            }
+            cardDiv.dataset.owner = owner;
+            cardDiv.dataset.index = index;
+            cardDiv.dataset.hp = card.hp || 80;
+            cardDiv.dataset.name = card.name;
+            
+            const img = document.createElement('img');
+            img.src = card.src;
+            img.alt = card.name;
+            cardDiv.appendChild(img);
+
+            const stats = document.createElement('div');
+            stats.classList.add('card-stats');
+            stats.innerHTML = `<div class="card-hp">HP: ${card.hp || 80}</div>`;
+            cardDiv.appendChild(stats);
+
+            if (owner === 'player') {
+                cardDiv.addEventListener('click', () => {
+                    if (playerTurn) {
+                        selectCard(cardDiv);
+                    }
+                });
+            }
+
+            return cardDiv;
+        }
+
+        function selectCard(cardElement) {
+            if (!gameActive) return;
+            
+            document.querySelectorAll('.battle-card.selected').forEach(card => {
+                card.classList.remove('selected');
+                card.style.border = '3px solid #fff';
+            });
+
+            selectedCard = cardElement;
+            cardElement.classList.add('selected');
+            cardElement.style.border = '3px solid #38EF7D';
+
+            document.getElementById('actionPanel').classList.add('active');
+            
+            addLogEntry('player', `Selected ${selectedCard.dataset.name}.`);
+        }
+
+        function performAttack() {
+            if (!selectedCard || !gameActive) return;
+
+            const playerCard = selectedCard;
+            const computerCards = document.querySelectorAll('.computer-card');
+            const targetCard = computerCards[playerCard.dataset.index];
+
+            if (!targetCard) {
+                addLogEntry('system', 'No card to attack in this slot.');
+                return;
+            }
+
+            const damage = Math.floor(Math.random() * 20) + 15;
+            let targetHP = parseInt(targetCard.dataset.hp);
+            targetHP = Math.max(0, targetHP - damage);
+            targetCard.dataset.hp = targetHP;
+            targetCard.querySelector('.card-hp').textContent = `HP: ${targetHP}`;
+
+            addLogEntry('player', `${playerCard.dataset.name} attacks ${targetCard.dataset.name} for ${damage} damage!`);
+            
+            if (targetHP <= 0) {
+                targetCard.style.transition = 'opacity 0.5s ease-out';
+                targetCard.style.opacity = '0.2';
+                addLogEntry('system', `${targetCard.dataset.name} was defeated!`);
+            }
+        }
+
+        function performDefend() {
+            if (!selectedCard || !gameActive) return;
+
+            const cardHP = parseInt(selectedCard.dataset.hp);
+            const newHP = Math.min(80, cardHP + 15);
+            selectedCard.dataset.hp = newHP;
+            selectedCard.querySelector('.card-hp').textContent = `HP: ${newHP}`;
+            
+            addLogEntry('player', `${selectedCard.dataset.name} defends and recovers 15 HP!`);
+        }
+
+        function endPlayerTurn() {
+            hideActionPanel();
+            playerTurn = false;
+            
+            // Check for game over
+            const remainingComputerCards = Array.from(document.querySelectorAll('.computer-card')).filter(card => parseInt(card.dataset.hp) > 0).length;
+            if (remainingComputerCards === 0) {
+                endGame('victory');
+                return;
+            }
+
+            addLogEntry('system', 'Computer\'s turn.');
+            setTimeout(() => computerTurn(), 1000);
+        }
+
+        function computerTurn() {
+            if (!gameActive) return;
+
+            const playerCardElements = document.querySelectorAll('.battle-card[data-owner="player"]');
+            const computerCardElements = document.querySelectorAll('.battle-card[data-owner="computer"]');
+
+            const computerAttackIndex = Math.floor(Math.random() * computerCardElements.length);
+            const computerCard = computerCardElements[computerAttackIndex];
+            const targetPlayerCard = playerCardElements[computerAttackIndex];
+
+            if (computerCard && parseInt(computerCard.dataset.hp) > 0) {
+                if (targetPlayerCard && parseInt(targetPlayerCard.dataset.hp) > 0) {
+                    const damage = Math.floor(Math.random() * 18) + 12;
+                    let targetHP = parseInt(targetPlayerCard.dataset.hp);
+                    targetHP = Math.max(0, targetHP - damage);
+                    targetPlayerCard.dataset.hp = targetHP;
+                    targetPlayerCard.querySelector('.card-hp').textContent = `HP: ${targetHP}`;
+
+                    addLogEntry('computer', `${computerCard.dataset.name} attacks ${targetPlayerCard.dataset.name} for ${damage} damage!`);
+                    
+                    if (targetHP <= 0) {
+                        targetPlayerCard.style.transition = 'opacity 0.5s ease-out';
+                        targetPlayerCard.style.opacity = '0.2';
+                        addLogEntry('system', `${targetPlayerCard.dataset.name} was defeated!`);
+                    }
+                } else {
+                    addLogEntry('computer', `${computerCard.dataset.name} has no one to attack in this lane and skips their turn.`);
+                }
             } else {
-                computerSlots[choiceIdx].defending = true;
-                computerSlots[choiceIdx].acted = true;
-                addLog('computer', `${computerSlots[choiceIdx].card.name} is defending!`);
-                updateSlotUI('computer', choiceIdx);
+                addLogEntry('computer', 'Computer has no active cards and skips their turn.');
+            }
+            
+            updateOverallHP();
+            
+            const remainingPlayerCards = Array.from(document.querySelectorAll('.battle-card[data-owner="player"]')).filter(card => parseInt(card.dataset.hp) > 0).length;
+            if (remainingPlayerCards === 0) {
+                endGame('defeat');
+                return;
             }
 
-            const remainingActions = computerSlots.filter(s => s && s.hp > 0 && !s.acted).length;
-            if (remainingActions > 0) {
-                computerAction();
+            playerTurn = true;
+            addLogEntry('system', 'Player\'s turn.');
+        }
+
+        function updateOverallHP() {
+            const playerCardElements = document.querySelectorAll('.battle-card[data-owner="player"]');
+            const computerCardElements = document.querySelectorAll('.battle-card[data-owner="computer"]');
+            
+            let playerTotalHP = Array.from(playerCardElements).reduce((sum, card) => sum + parseInt(card.dataset.hp), 0);
+            let computerTotalHP = Array.from(computerCardElements).reduce((sum, card) => sum + parseInt(card.dataset.hp), 0);
+            
+            const playerHPFill = document.getElementById('playerHpFill');
+            const playerHPText = document.getElementById('playerHpText');
+            const computerHPFill = document.getElementById('computerHpFill');
+            const computerHPText = document.getElementById('computerHpText');
+
+            const maxPossibleHP = 5 * 80;
+            playerHPFill.style.width = `${(playerTotalHP / maxPossibleHP) * 100}%`;
+            playerHPText.textContent = `${playerTotalHP} HP`;
+
+            computerHPFill.style.width = `${(computerTotalHP / maxPossibleHP) * 100}%`;
+            computerHPText.textContent = `${computerTotalHP} HP`;
+        }
+        
+        function hideActionPanel() {
+            document.getElementById('actionPanel').classList.remove('active');
+            if (selectedCard) {
+                selectedCard.classList.remove('selected');
+                selectedCard.style.border = '3px solid #fff';
+                selectedCard = null;
+            }
+        }
+
+        function addLogEntry(type, message) {
+            const log = document.getElementById('battleLog');
+            const entry = document.createElement('div');
+            entry.classList.add('log-entry', type);
+            entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function endGame(result) {
+            gameActive = false;
+            hideActionPanel();
+            
+            const gameOver = document.getElementById('gameOver');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            
+            if (result === 'victory') {
+                title.textContent = 'VICTORY!';
+                message.textContent = 'You have defeated the computer in glorious toad combat! Your tactical prowess is legendary!';
+                title.style.color = '#38EF7D';
             } else {
-                endTurn();
+                title.textContent = 'DEFEAT!';
+                message.textContent = 'The computer has bested you in battle. Return when you are stronger, brave toad warrior!';
+                title.style.color = '#ff4444';
             }
-        }, 600);
-    }
-
-    // actions: fight (choose dmg), defend (set defending for selected card), endTurn
-    function performAttackFromSelected(damage){
-        if(!selected || selected.side!=='player') return;
-        const attackerIndex = selected.idx;
-        const attacker = playerSlots[attackerIndex];
-
-        if(attacker.acted){
-            addLog('system', 'This card has already acted this turn.');
-            return;
+            
+            gameOver.style.display = 'flex';
         }
 
-        const target = computerSlots[attackerIndex];
-        if(!target){
-            addLog('system', 'No target available in this slot.');
-            return;
+        function restartGame() {
+            selectedCard = null;
+            gameActive = true;
+            playerTurn = true;
+            
+            document.getElementById('playerHand').innerHTML = '';
+            document.getElementById('computerHand').innerHTML = '';
+            
+            document.getElementById('battleLog').innerHTML = '<div class="log-entry system">Battle begins! Choose your card to take action.</div>';
+            
+            document.getElementById('gameOver').style.display = 'none';
+            
+            initializeBattle();
         }
-
-        attack('player', attackerIndex, 'computer', attackerIndex, damage);
-        attacker.acted = true;
-        renderAll();
-    }
-
-    function performDefendFromSelected(){
-        if(!selected || selected.side!=='player') return;
-        const idx = selected.idx;
-        const card = playerSlots[idx];
-
-        if(card && card.acted){
-            addLog('system', 'This card has already acted this turn.');
-            return;
-        }
-
-        if(card){
-            card.defending = true;
-            card.acted = true;
-            addLog('player', `${card.card.name} takes a defensive stance.`);
-            renderAll();
-        }
-    }
-
-    function endTurn(){
-        playerSlots.forEach(slot => { if(slot) slot.acted = false; });
-        computerSlots.forEach(slot => { if(slot) slot.acted = false; });
-        renderAll();
-        selected = null;
-
-        showActionPanel(false);
-        playerTurn = false;
-        addLog('system', 'Computer thinking...');
-        setTimeout(()=>computerAction(), 700);
-    }
-
-    endTurnBtn.addEventListener('click', ()=>{
-        if(!playerTurn) return;
-        addLog('system','Player ended their turn.');
-        endTurn();
-    });
-
-    fightBtn.addEventListener('click', ()=>{
-        if (selected && selected.side === 'player' && !playerSlots[selected.idx].acted) {
-            attackMenu.style.display = 'flex';
-        } else {
-            addLog('system','Select a card that has not yet acted this turn to fight.');
-            attackMenu.style.display = 'none';
-        }
-    });
-    fightBtn.addEventListener('mouseleave', ()=>{ if(!attackMenuOpen) attackMenu.style.display='none'});
-    attackMenu.addEventListener('mouseenter', ()=> attackMenuOpen=true);
-    attackMenu.addEventListener('mouseleave', ()=>{ attackMenuOpen=false; attackMenu.style.display='none'; });
-
-    attackMenu.querySelectorAll('.opt').forEach(opt=>{
-        opt.addEventListener('click', ()=>{
-            const dmg = parseInt(opt.dataset.dmg,10);
-            if(selected && selected.side==='player'){
-                performAttackFromSelected(dmg);
-            } else {
-                addLog('system','Select one of your battlefield cards first.');
-            }
-        });
-    });
-
-    defendBtn.addEventListener('click', ()=> {
-        if(!selected || selected.side!=='player') { addLog('system','Select one of your battlefield cards first.'); return; }
-        performDefendFromSelected();
-    });
-
-    let keyboardIndex = 0;
-    document.addEventListener('keydown',(e)=>{
-        if(attackMenu.style.display==='flex'){
-            const opts = attackMenu.querySelectorAll('.opt');
-            if(e.key==='ArrowUp' || e.key==='ArrowLeft'){ keyboardIndex = (keyboardIndex-1+opts.length)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
-            if(e.key==='ArrowDown' || e.key==='ArrowRight'){ keyboardIndex = (keyboardIndex+1)%opts.length; updateKeyboardSelection(opts); e.preventDefault(); }
-            if(e.key==='Enter'){ opts[keyboardIndex].click(); e.preventDefault(); }
-        } else {
-            if(e.key==='d') defendBtn.click();
-            if(e.key==='e') endTurnBtn.click();
-        }
-    });
-
-    function updateKeyboardSelection(opts){
-        opts.forEach((o,i)=> o.classList.toggle('selected', i===keyboardIndex));
-    }
-
-    function addLog(type, text){
-        const div = document.createElement('div'); div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); div.textContent = text;
-        logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function fillComputerSlots(){
-        const fillCount = Math.min(MAX_SLOTS, Math.max(2, Math.floor(Math.random()*MAX_SLOTS)+1));
-        let filled = 0;
-        while(filled < fillCount){
-            const idx = Math.floor(Math.random()*MAX_SLOTS);
-            if(!computerSlots[idx]){
-                const card = computerReserve[Math.floor(Math.random()*computerReserve.length)];
-                computerSlots[idx] = { card, hp: MAX_HP, defending:false, acted:false };
-                filled++;
-            }
-        }
-    }
-
-    function updateSlotUIFull(){
-        renderAll();
-    }
-
-    function decideFirstPlayer(){
-        playerTurn = Math.random() < 0.5;
-        addLog('system', playerTurn ? 'Player goes first.' : 'Computer goes first.');
-        if(!playerTurn){
-            showActionPanel(false);
-            setTimeout(()=>computerAction(),700);
-        } else {
-            showActionPanel(true);
-        }
-    }
-
-    function updateSlotUI(side, idx){
-        const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
-        const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-        if(slot && slotEl.firstChild){
-            slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-            slotEl.firstChild.style.boxShadow = slot.defending ? '0 0 10px rgba(56,239,125,0.8) inset' : 'none';
-            if (slot.acted) {
-                slotEl.firstChild.classList.add('acted');
-            } else {
-                slotEl.firstChild.classList.remove('acted');
-            }
-        }
-        updateGlobalHPUI();
-    }
-
-    window._debug = { playerSlots, computerSlots, playerHand };
-
-    init();
-
-})();
-</script>
+    </script>
 </body>
 </html>
