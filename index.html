@@ -2150,18 +2150,6 @@ function checkFightEligibility() {
     battleArea.style.display = "none";
   }
 }
-function checkFightEligibility() {
-  let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
-  // Fixed: Now correctly checks for cards with names that start with "reward-"
-  let rewardCards = collectedCards.filter(card => card.name && card.name.startsWith("reward-"));
-  const battleArea = document.getElementById("battleArea");
-  if (!battleArea) return; // Safety check
-  if (rewardCards.length >= 2 && rewardCards.length <= 10) {
-    battleArea.style.display = "block";
-  } else {
-    battleArea.style.display = "none";
-  }
-}
 // === Overlay + FIGHT! animation ===
 function startFight() {
   const overlay = document.createElement("div");
@@ -2194,7 +2182,6 @@ function startFight() {
   }, 2000);
 }
 
-
 window.addEventListener('DOMContentLoaded', () => {
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
@@ -2202,60 +2189,28 @@ window.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('walletModal');
   const resetBtn = document.getElementById('resetWallet'); 
 
-  // ADD THIS FIGHT BUTTON SETUP HERE:
-  const battleArea = document.getElementById("battleArea");
+  // Fight button setup
   const fightButton = document.getElementById("fightButton");
-
   if (fightButton) {
     fightButton.addEventListener("click", () => {
       startFight();
     });
   }
 
-  // Check fight eligibility on page load
   checkFightEligibility();
+  
   // Restore collected cards
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-
   if (collected.length > 0) {
     wallet.style.display = 'block';
-    badge.textContent = collected.length; // ✅ total cards, not unique
+    badge.textContent = collected.length;
   }
 
-window.addEventListener('DOMContentLoaded', () => {
-  const wallet = document.getElementById('toadWallet');
-  const badge = document.getElementById('walletBadge');
-  const closeBtn = document.querySelector('.close-wallet');
-  const modal = document.getElementById('walletModal');
-  const resetBtn = document.getElementById('resetWallet'); 
-
-  // ADD THIS FIGHT BUTTON SETUP HERE:
-  const battleArea = document.getElementById("battleArea");
-  const fightButton = document.getElementById("fightButton");
-
-  if (fightButton) {
-    fightButton.addEventListener("click", () => {
-      startFight();
-    });
-  }
-
-  // Check fight eligibility on page load
-  checkFightEligibility();
-  // Restore collected cards
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-
-  if (collected.length > 0) {
-    wallet.style.display = 'block';
-    badge.textContent = collected.length; // ✅ total cards, not unique
-  }
-
-  // Wallet click = open inventory
+  // All wallet event listeners here...
   wallet.addEventListener('click', showInventory);
-
-  // Close wallet modal (× button)
-  closeBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
+  closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+  // etc.
+});
 
   // Close wallet modal (click outside content)
   modal.addEventListener('click', (e) => {
