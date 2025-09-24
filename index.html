@@ -1976,11 +1976,11 @@
 });
         // Card pool (add your real card images here)
 const cardPool = [
-  { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
-  { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
-  { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
-  { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
-  { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
+  { src: "images/cards/the stranger card format.jpg", name: "reward-the-stranger" },
+  { src: "images/cards/horny toad card format.jpg", name: "reward-horny-toad" },
+  { src: "images/cards/hypno toad card format.jpg", name: "reward-hypno-toad" },
+  { src: "images/cards/sumo toad card format.jpg", name: "reward-sumo-toad" },
+  { src: "images/cards/mad toad card format.jpg", name: "reward-mad-toad" }
 ];
 
 let rewardGiven = false;
@@ -2082,7 +2082,8 @@ function showInventory() {
   const modal = document.getElementById('walletModal');
   const inventory = document.getElementById('cardInventory');
   let collected = getValidCards();
-      // Define the helper function at the top, outside the loop
+
+  // Define the helper function at the top, outside the loop
   function getDisplayName(cardName) {
     return cardName.replace('reward-', '').replace(/-/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase());
@@ -2099,10 +2100,7 @@ function showInventory() {
       } else {
         cardMap[card.name].count++;
       }
-        
     });
-
-    
 
     inventory.innerHTML = "";
     Object.values(cardMap).forEach(card => {
@@ -2111,7 +2109,15 @@ function showInventory() {
 
       let img = document.createElement('img');
       img.src = card.src;
-      img.alt = card.name;
+      img.alt = getDisplayName(card.name); // Use the display name here
+
+      // Add a title/caption showing the friendly name
+      let title = document.createElement('p');
+      title.textContent = getDisplayName(card.name);
+      title.style.fontFamily = "'Press Start 2P', monospace";
+      title.style.fontSize = "0.6rem";
+      title.style.textAlign = "center";
+      title.style.margin = "4px 0 0 0";
 
       if (card.count > 1) {
         let badge = document.createElement('span');
@@ -2121,6 +2127,7 @@ function showInventory() {
       }
 
       wrapper.appendChild(img);
+      wrapper.appendChild(title);
       inventory.appendChild(wrapper);
     });
   }
@@ -2135,6 +2142,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('walletModal');
   const resetBtn = document.getElementById('resetWallet'); 
 
+  // ADD THIS FIGHT BUTTON SETUP HERE:
+  const battleArea = document.getElementById("battleArea");
+  const fightButton = document.getElementById("fightButton");
+
+  if (fightButton) {
+    fightButton.addEventListener("click", () => {
+      startFight();
+    });
+  }
+
+  // Check fight eligibility on page load
+  checkFightEligibility();
   // Restore collected cards
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
 
@@ -2238,15 +2257,22 @@ function startFight() {
     battlefield.appendChild(el);
   });
 }
+function updateFightEligibility() {
+  setTimeout(checkFightEligibility, 100);
+}
 // === Check if fight button should be shown ===
 function checkFightEligibility() {
   let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
-  let rewardCards = collectedCards.filter(card => card.startsWith("reward"));
+  // Fixed: Now correctly checks for cards with names that start with "reward-"
+  let rewardCards = collectedCards.filter(card => card.name && card.name.startsWith("reward-"));
 
-  if (rewardCards.length >= 2 && rewardCards.length <= 4) {
-    battleArea.style.display = "block"; // Show fight button
+  const battleArea = document.getElementById("battleArea");
+  if (!battleArea) return; // Safety check
+
+  if (rewardCards.length >= 2 && rewardCards.length <= 10) {
+    battleArea.style.display = "block";
   } else {
-    battleArea.style.display = "none";  // Hide otherwise
+    battleArea.style.display = "none";
   }
 }
 
