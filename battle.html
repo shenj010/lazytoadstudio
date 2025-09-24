@@ -466,13 +466,6 @@
                 card.name && card.name.startsWith('reward-')
             ).slice(0, 5);
 
-            if (rewardCards.length === 0) {
-                addLogEntry('system', 'No cards found! Returning to main page...');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
-                return;
-            }
 
             // Create player cards
             createPlayerCards(rewardCards);
