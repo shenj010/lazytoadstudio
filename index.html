@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1618,7 +1617,7 @@
     // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
     document.addEventListener("DOMContentLoaded", function() {
     let collectedToadCount = 0;
-    const maxToads = 1;
+    const maxToads = 4;
 
     const subtitle = document.querySelector('.hero-nav-subtitle');
     const frogImgSrc = 'images/toad icon static.png';
@@ -1855,89 +1854,104 @@
     startNextPeepSequence();
     updateToadCounter();
 
-    frogPeeps.forEach(frog => {
-        frog.onclick = function(event) {
-            if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
-                event.stopPropagation();
+   frogPeeps.forEach(frog => {
+    frog.onclick = function(event) {
+        // Only allow clicks on peeping or fully-raised frogs that aren't disabled
+        if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
+            event.stopPropagation();
 
-                if (collectedToadCount < maxToads) {
-                    if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-                    if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-                    peepSequenceActive = false;
-                    currentlyPeepingFrog = null;
+            // Only collect toads if under max
+            if (collectedToadCount < maxToads) {
+                // Stop any scheduled sequences
+                if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
+                if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
+                peepSequenceActive = false;
+                currentlyPeepingFrog = null;
 
-                    frog.style.opacity = '0';
-                    frog.style.pointerEvents = 'none';
+                // Hide clicked frog
+                frog.style.opacity = '0';
+                frog.style.pointerEvents = 'none';
 
-                    const frogRect = frog.getBoundingClientRect();
+                const frogRect = frog.getBoundingClientRect();
 
-                    const hoppingToad = document.createElement('img');
-                    hoppingToad.src = frogImgSrc;
-                    hoppingToad.classList.add('hopping-toad');
-                    document.body.appendChild(hoppingToad);
+                // Create hopping toad element
+                const hoppingToad = document.createElement('img');
+                hoppingToad.src = frogImgSrc;
+                hoppingToad.classList.add('hopping-toad');
+                document.body.appendChild(hoppingToad);
 
-                    hoppingToad.style.left = frogRect.left + 'px';
-                    hoppingToad.style.top = frogRect.top + 'px';
-                    hoppingToad.style.width = frogRect.width + 'px';
-                    hoppingToad.style.height = frogRect.height + 'px';
+                hoppingToad.style.left = frogRect.left + 'px';
+                hoppingToad.style.top = frogRect.top + 'px';
+                hoppingToad.style.width = frogRect.width + 'px';
+                hoppingToad.style.height = frogRect.height + 'px';
 
-                    if (currentCollectedToadsGrid) {
-                        const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
-                        const cols = 4;
-                        const rows = Math.ceil(maxToads / cols);
-                        const toadWidthInGrid = gridRect.width / cols;
-                        const toadHeightInGrid = gridRect.height / rows;
+                if (currentCollectedToadsGrid) {
+                    const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
+                    const cols = 4;
+                    const rows = Math.ceil(maxToads / cols);
+                    const toadWidthInGrid = gridRect.width / cols;
+                    const toadHeightInGrid = gridRect.height / rows;
 
-                        const targetColumn = collectedToadCount % cols;
-                        const targetRow = Math.floor(collectedToadCount / cols);
+                    const targetColumn = collectedToadCount % cols;
+                    const targetRow = Math.floor(collectedToadCount / cols);
 
-                        const targetX = gridRect.left + (targetColumn * toadWidthInGrid) + (toadWidthInGrid / 2);
-                        const targetY = gridRect.bottom - ((targetRow + 0.5) * toadHeightInGrid);
+                    const targetX = gridRect.left + (targetColumn * toadWidthInGrid) + (toadWidthInGrid / 2);
+                    const targetY = gridRect.bottom - ((targetRow + 0.5) * toadHeightInGrid);
 
-                        const finalTargetX = targetX - (frogRect.width / 2);
-                        const finalTargetY = targetY - (frogRect.height / 2);
+                    const finalTargetX = targetX - (frogRect.width / 2);
+                    const finalTargetY = targetY - (frogRect.height / 2);
 
+                    // Animate hopping toad into grid
+                    requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
-                            requestAnimationFrame(() => {
-                                const translateX = finalTargetX - frogRect.left;
-                                const translateY = finalTargetY - frogRect.top;
-
-                                hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
-                                hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                                hoppingToad.style.opacity = '0';
-                            });
+                            const translateX = finalTargetX - frogRect.left;
+                            const translateY = finalTargetY - frogRect.top;
+                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
+                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
+                            hoppingToad.style.opacity = '0';
                         });
+                    });
 
-                        hoppingToad.addEventListener('transitionend', () => {
-                            hoppingToad.remove();
-
-                            collectedToadCount++;
-                            updateToadBoxVisibility(); // Call this to re-render toads in the correct grid
-                            // ---- REWARD LOGIC START ----
-                          if (collectedToadCount === maxToads && !rewardGiven) {
-                          rewardGiven = true;
-                          triggerReward();
-                      }
-                      // ---- REWARD LOGIC END ----
-                            resetFrogVisuals(frog);
-                            startNextPeepSequence();
-
-                        }, { once: true });
-                    } else {
-                        console.error("Collected toads grid element not found!");
+                    hoppingToad.addEventListener('transitionend', () => {
                         hoppingToad.remove();
+
+                        // Increment toad counter and update visuals
+                        collectedToadCount++;
+                        updateToadBoxVisibility();
+
+                        // ---- RESET & REWARD LOGIC ----
+                        if (collectedToadCount >= maxToads) {
+                            // Trigger reward if not already given
+                            if (!rewardGiven) {
+                                rewardGiven = true;
+                                triggerReward();
+                            }
+
+                            // Reset counter and container immediately
+                            collectedToadCount = 0;
+                            currentCollectedToadsGrid.innerHTML = '';
+                            updateToadBoxVisibility();
+                        }
+
+                        resetFrogVisuals(frog);
                         startNextPeepSequence();
-                    }
+                    }, { once: true });
                 } else {
-                    resetFrogVisuals(frog);
-                    frog.style.opacity = '1';
-                    frog.style.pointerEvents = 'auto';
+                    console.error("Collected toads grid element not found!");
+                    hoppingToad.remove();
                     startNextPeepSequence();
                 }
+            } else {
+                // If max already reached, just reset frog visuals
+                resetFrogVisuals(frog);
+                frog.style.opacity = '1';
+                frog.style.pointerEvents = 'auto';
+                startNextPeepSequence();
             }
-        };
-    });
-
+        }
+    };
+});
+        
     const logoElement = document.querySelector('.logo-circle');
     const navLinksContainer = document.querySelector('.main-links');
 
@@ -1977,7 +1991,7 @@ function triggerReward() {
   const cardImg = card.querySelector('img');
   const wallet = document.getElementById('toadWallet');
   const badge = document.getElementById('walletBadge');
-  const toadContainer = document.getElementById('collectedToadsContainer'); // your container element
+  const toadContainer = document.getElementById('collectedToadsContainer');
 
   // Pick random card
   const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
@@ -1996,14 +2010,9 @@ function triggerReward() {
 
     // Start wallet chew at the same time as card flies
     animateWallet();
-
-    // Reset toad counter and container
-    collectedToadCount = 0;
-    if (toadContainer) toadContainer.innerHTML = '';
-    updateToadBoxVisibility();
   }, 500);
 
-  // After animation, update wallet + badge + save card
+  // After animation, update wallet + badge + save card + reset toads
   card.addEventListener(
     'animationend',
     () => {
@@ -2017,10 +2026,19 @@ function triggerReward() {
       // Update badge count (total collected, incl. duplicates)
       let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
       badge.textContent = collected.length;
+
+      // ✅ Reset toad counter and container AFTER card is safely in wallet
+      collectedToadCount = 0;
+      if (toadContainer) toadContainer.innerHTML = '';
+      updateToadBoxVisibility();
+
+      // Allow another reward to be given in the future
+      rewardGiven = false;
     },
     { once: true }
   );
 }
+
 
 function saveCard(card) {
   let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
