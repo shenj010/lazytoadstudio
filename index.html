@@ -2167,9 +2167,291 @@ window.addEventListener('DOMContentLoaded', () => {
       wallet.style.display = 'none';
     }
   });
+
+const battleArea = document.getElementById("battleArea");
+const fightButton = document.getElementById("fightButton");
+
+// === Overlay + FIGHT! animation ===
+function startFight() {
+  const overlay = document.createElement("div");
+  overlay.id = "fightOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "9999";
+
+  const fightText = document.createElement("h1");
+  fightText.textContent = "FIGHT!";
+  fightText.style.color = "white";
+  fightText.style.fontSize = "80px";
+  fightText.style.fontWeight = "bold";
+  fightText.style.fontFamily = "sans-serif";
+
+  overlay.appendChild(fightText);
+  document.body.appendChild(overlay);
+
+  // Remove overlay after 2s and start actual battle
+  setTimeout(() => {
+    overlay.remove();
+    startBattleGame();
+  }, 2000);
+}
+
+  // Shuffle cards and split between player and computer
+  const shuffled = shuffleArray(collected);
+  const handCount = Math.min(collected.length, 5);
+  const playerHand = shuffled.slice(0, handCount);
+  const computerHand = shuffled.slice(handCount, handCount * 2);
+
+  // Initialize HP
+  playerHand.forEach(c => battlePlayerHP[c.name] = battleMaxHP);
+  computerHand.forEach(c => battleComputerHP[c.name] = battleMaxHP);
+
+  // Create battlefield
+  const battlefield = createBattlefield();
+
+  // Add player cards
+  playerHand.forEach(c => {
+    const el = createBattleCard(c);
+    battlefield.appendChild(el);
+    el.addEventListener('click', () => showActionChoices(el, c));
+    el.addEventListener('mouseenter', () => el.style.transform='scale(1.1)');
+    el.addEventListener('mouseleave', () => el.style.transform='scale(1)');
+  });
+
+  // Add computer cards
+  computerHand.forEach(c => {
+    const el = createBattleCard(c, true);
+    battlefield.appendChild(el);
+  });
+}
+// === Check if fight button should be shown ===
+function checkFightEligibility() {
+  let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
+  let rewardCards = collectedCards.filter(card => card.startsWith("reward"));
+
+  if (rewardCards.length >= 2 && rewardCards.length <= 4) {
+    battleArea.style.display = "block"; // Show fight button
+  } else {
+    battleArea.style.display = "none";  // Hide otherwise
+  }
+}
+
+fightButton.addEventListener("click", () => {
+  startFight();
 });
 
+// Run on page load
+checkFightEligibility();
+
+ (function() {
+    const battleCardPool = [
+      { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+      { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
+      { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
+      { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
+      { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
+    ];
+    
+    const battleMaxHP = 80;
+    let battlePlayerHP = {};
+    let battleComputerHP = {};
+
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createBattlefield() {
+      let bf = document.querySelector('#battlefieldContainer');
+      if (!bf) {
+        bf = document.createElement('div');
+        bf.id = 'battlefieldContainer';
+        Object.assign(bf.style, {
+          position: 'fixed',
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '10px',
+          zIndex: 10000
+        });
+        document.body.appendChild(bf);
+      }
+      bf.innerHTML = '';
+      return bf;
+    }
+
+    function createBattleCard(card, isComputer=false) {
+      const el = document.createElement('div');
+      el.className = 'battle-system-card';
+      Object.assign(el.style, {
+        position: 'relative',
+        width: '80px',
+        height: '120px',
+        cursor: 'pointer',
+        display: 'inline-block',
+        opacity: isComputer ? 0.7 : 1,
+        transition: 'transform 0.2s'
+      });
+
+      const img = document.createElement('img');
+      img.src = card.src;
+      img.alt = card.name;
+      Object.assign(img.style, { width: '100%', height: '100%' });
+      el.appendChild(img);
+
+      const hpBar = document.createElement('div');
+      Object.assign(hpBar.style, {
+        position: 'absolute',
+        top: '2px',
+        left: '2px',
+        width: '76px',
+        height: '10px',
+        background: '#555'
+      });
+      el.appendChild(hpBar);
+
+      const hpFill = document.createElement('div');
+      Object.assign(hpFill.style, { width: '100%', height: '100%', background: 'red' });
+      hpBar.appendChild(hpFill);
+
+      const hpText = document.createElement('div');
+      Object.assign(hpText.style, {
+        position: 'absolute',
+        top: '14px',
+        left: '2px',
+        fontSize: '8px',
+        fontFamily: "'Press Start 2P','DotGothic16',monospace",
+        color: '#fff'
+      });
+      hpText.innerText = battleMaxHP;
+      el.appendChild(hpText);
+
+      el._hpText = hpText;
+      el._hpFill = hpFill;
+      el.dataset.name = card.name;
+
+      return el;
+    }
+
+    function updateHP(cardName, owner) {
+      const el = document.querySelector(`.battle-system-card[data-name="${cardName}"]`);
+      if (!el) return;
+      el._hpText.innerText = owner[cardName];
+      el._hpFill.style.width = `${(owner[cardName] / battleMaxHP) * 100}%`;
+    }
+
+    function performAttack(card) {
+      const targets = Object.keys(battleComputerHP);
+      if (!targets.length) return;
+      const target = targets[Math.floor(Math.random() * targets.length)];
+      battleComputerHP[target] -= 5;
+      if (battleComputerHP[target] < 0) battleComputerHP[target] = 0;
+      updateHP(target, battleComputerHP);
+      checkBattleEnd();
+    }
+
+    function performDefend(card) {
+      battlePlayerHP[card.name] += 5;
+      if (battlePlayerHP[card.name] > battleMaxHP) battlePlayerHP[card.name] = battleMaxHP;
+      updateHP(card.name, battlePlayerHP);
+    }
+
+    function showActionChoices(cardEl, cardData) {
+      const existing = document.querySelector('#battleActionChoices');
+      if (existing) existing.remove();
+
+      const container = document.createElement('div');
+      container.id = 'battleActionChoices';
+      Object.assign(container.style, {
+        position: 'absolute',
+        bottom: '140px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: '10px',
+        zIndex: 10001
+      });
+
+      const fightBtn = document.createElement('div');
+      fightBtn.innerText = 'FIGHT';
+      Object.assign(fightBtn.style, {
+        background: '#fff',
+        border: '2px solid #000',
+        padding: '5px',
+        cursor: 'pointer',
+        fontFamily: "'Press Start 2P','DotGothic16',monospace"
+      });
+      fightBtn.addEventListener('click', () => { performAttack(cardData); container.remove(); });
+
+      const defendBtn = document.createElement('div');
+      defendBtn.innerText = 'DEFEND';
+      Object.assign(defendBtn.style, {
+        background: '#fff',
+        border: '2px solid #000',
+        padding: '5px',
+        cursor: 'pointer',
+        fontFamily: "'Press Start 2P','DotGothic16',monospace"
+      });
+      defendBtn.addEventListener('click', () => { performDefend(cardData); container.remove(); });
+
+      container.appendChild(fightBtn);
+      container.appendChild(defendBtn);
+      document.body.appendChild(container);
+    }
+
+    function checkBattleEnd() {
+      const playerAlive = Object.values(battlePlayerHP).some(h => h > 0);
+      const compAlive = Object.values(battleComputerHP).some(h => h > 0);
+      if (!playerAlive || !compAlive) {
+        alert(compAlive ? 'You lost!' : 'You won!');
+        document.querySelectorAll('.battle-system-card').forEach(c => c.remove());
+        document.querySelector('#battleActionChoices')?.remove();
+      }
+    }
+
+    // === MAIN battle starter ===
+    function startBattleGame() {
+      const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+      if (collected.length < 2) return alert("Need at least 2 cards to fight!");
+
+      const shuffled = shuffleArray(battleCardPool);
+      const handCount = Math.min(collected.length, 5);
+      const playerHand = shuffled.slice(0, handCount);
+      const computerHand = shuffled.slice(handCount, handCount * 2);
+
+      playerHand.forEach(c => battlePlayerHP[c.name] = battleMaxHP);
+      computerHand.forEach(c => battleComputerHP[c.name] = battleMaxHP);
+
+      const battlefield = createBattlefield();
+
+      playerHand.forEach(c => {
+        const el = createBattleCard(c);
+        battlefield.appendChild(el);
+        el.addEventListener('click', () => showActionChoices(el, c));
+        el.addEventListener('mouseenter', () => el.style.transform='scale(1.1)');
+        el.addEventListener('mouseleave', () => el.style.transform='scale(1)');
+      });
+
+      computerHand.forEach(c => {
+        const el = createBattleCard(c, true);
+        battlefield.appendChild(el);
+      });
+    }
+
+    // Expose to overlay flow
+    window.startBattleGame = startBattleGame;
+  })();
+
+});
 </script>
+    
     <!-- 🐸 Toad Wallet (bottom right) -->
 <div id="toadWallet" class="toad-wallet">
   <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
@@ -2189,6 +2471,10 @@ window.addEventListener('DOMContentLoaded', () => {
     <div id="cardInventory" class="card-inventory"></div>
     <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
   </div>
+</div>
+    <!-- Fight button area (hidden by default) -->
+<div id="battleArea" style="display:none; text-align:center; margin-top:20px;">
+  <button id="fightButton">Fight!</button>
 </div>
 </body>
 </html>
