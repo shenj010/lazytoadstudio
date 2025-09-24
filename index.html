@@ -2150,6 +2150,77 @@ function checkFightEligibility() {
     battleArea.style.display = "none";
   }
 }
+function checkFightEligibility() {
+  let collectedCards = JSON.parse(localStorage.getItem("collectedCards")) || [];
+  // Fixed: Now correctly checks for cards with names that start with "reward-"
+  let rewardCards = collectedCards.filter(card => card.name && card.name.startsWith("reward-"));
+  const battleArea = document.getElementById("battleArea");
+  if (!battleArea) return; // Safety check
+  if (rewardCards.length >= 2 && rewardCards.length <= 10) {
+    battleArea.style.display = "block";
+  } else {
+    battleArea.style.display = "none";
+  }
+}
+// === Overlay + FIGHT! animation ===
+function startFight() {
+  const overlay = document.createElement("div");
+  overlay.id = "fightOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "9999";
+
+  const fightText = document.createElement("h1");
+  fightText.textContent = "FIGHT!";
+  fightText.style.color = "white";
+  fightText.style.fontSize = "80px";
+  fightText.style.fontWeight = "bold";
+  fightText.style.fontFamily = "sans-serif";
+
+  overlay.appendChild(fightText);
+  document.body.appendChild(overlay);
+
+  // Remove overlay after 2s and start actual battle
+  setTimeout(() => {
+    overlay.remove();
+    startBattleGame();
+  }, 2000);
+}
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  const wallet = document.getElementById('toadWallet');
+  const badge = document.getElementById('walletBadge');
+  const closeBtn = document.querySelector('.close-wallet');
+  const modal = document.getElementById('walletModal');
+  const resetBtn = document.getElementById('resetWallet'); 
+
+  // ADD THIS FIGHT BUTTON SETUP HERE:
+  const battleArea = document.getElementById("battleArea");
+  const fightButton = document.getElementById("fightButton");
+
+  if (fightButton) {
+    fightButton.addEventListener("click", () => {
+      startFight();
+    });
+  }
+
+  // Check fight eligibility on page load
+  checkFightEligibility();
+  // Restore collected cards
+  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+
+  if (collected.length > 0) {
+    wallet.style.display = 'block';
+    badge.textContent = collected.length; // ✅ total cards, not unique
+  }
 
 window.addEventListener('DOMContentLoaded', () => {
   const wallet = document.getElementById('toadWallet');
@@ -2209,67 +2280,6 @@ window.addEventListener('DOMContentLoaded', () => {
       wallet.style.display = 'none';
     }
   });
-
-// === Overlay + FIGHT! animation ===
-function startFight() {
-  const overlay = document.createElement("div");
-  overlay.id = "fightOverlay";
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
-  overlay.style.display = "flex";
-  overlay.style.justifyContent = "center";
-  overlay.style.alignItems = "center";
-  overlay.style.zIndex = "9999";
-
-  const fightText = document.createElement("h1");
-  fightText.textContent = "FIGHT!";
-  fightText.style.color = "white";
-  fightText.style.fontSize = "80px";
-  fightText.style.fontWeight = "bold";
-  fightText.style.fontFamily = "sans-serif";
-
-  overlay.appendChild(fightText);
-  document.body.appendChild(overlay);
-
-  // Remove overlay after 2s and start actual battle
-  setTimeout(() => {
-    overlay.remove();
-    startBattleGame();
-  }, 2000);
-}
-
-  // Shuffle cards and split between player and computer
-  const shuffled = shuffleArray(collected);
-  const handCount = Math.min(collected.length, 5);
-  const playerHand = shuffled.slice(0, handCount);
-  const computerHand = shuffled.slice(handCount, handCount * 2);
-
-  // Initialize HP
-  playerHand.forEach(c => battlePlayerHP[c.name] = battleMaxHP);
-  computerHand.forEach(c => battleComputerHP[c.name] = battleMaxHP);
-
-  // Create battlefield
-  const battlefield = createBattlefield();
-
-  // Add player cards
-  playerHand.forEach(c => {
-    const el = createBattleCard(c);
-    battlefield.appendChild(el);
-    el.addEventListener('click', () => showActionChoices(el, c));
-    el.addEventListener('mouseenter', () => el.style.transform='scale(1.1)');
-    el.addEventListener('mouseleave', () => el.style.transform='scale(1)');
-  });
-
-  // Add computer cards
-  computerHand.forEach(c => {
-    const el = createBattleCard(c, true);
-    battlefield.appendChild(el);
-  });
-}
 
  (function() {
     const battleCardPool = [
