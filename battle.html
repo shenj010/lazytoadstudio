@@ -507,7 +507,7 @@ const cardDatabase = {
     el.style.cursor='default';
     
     const img = document.createElement('img'); 
-    img.src = 'images/card back.jpg';  // Fixed path - removed /cards
+    img.src = 'images/card back.jpeg';  // Fixed path - removed /cards
     img.alt = 'Hidden Card';
     img.style.width = '100%';
     img.style.height = '100%';
@@ -1177,7 +1177,7 @@ const cardDatabase = {
         statusContainer.appendChild(indicator);
       }
       
-      if(slotObj.effects.sleep && slotObj.effects.sleep.duration > 0) {
+      if(slotObj.effects.sleep && slotObj.effects.sleep > 0) {
         const indicator = document.createElement('div');
         indicator.className = 'status-effect sleep';
         indicator.textContent = slotObj.effects.sleep;
