@@ -515,27 +515,116 @@ function onHandClick(index)
 }
 
 // show action panel next to selected card
-function showCardActions(side, idx)
-{
-    if (side !== 'player' || !playerTurn) return;
-
-    // Don't show actions during setup phase
-    if (turnIndicator.textContent.includes('Setup')) return;
-
-    const slot = playerSlots[idx];
-    if (!slot || slot.used) return;
+function showCardActions(side, idx){
+    console.log("showCardActions called:", side, idx);
     
-    // Check for status effects that prevent actions
-    if (slot.statusEffects) {
-        const preventingEffects = slot.statusEffects.filter(effect => 
-            effect.type === 'stun' || effect.type === 'sleep'
-        );
-        if (preventingEffects.length > 0) {
-            const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
-            addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
-            return;
-       }
-   }
+    if(side !== 'player') {
+        console.log("Not player side");
+        return;
+    }
+    
+    if(!playerTurn) {
+        console.log("Not player turn");
+        return;
+    }
+    
+    // Remove setup phase check for testing
+    // if(turnIndicator.textContent.includes('Setup')) return;
+    
+    const slot = playerSlots[idx];
+    if(!slot) {
+        console.log("No slot found");
+        return;
+    }
+    
+    if(slot.used) {
+        console.log("Slot already used");
+        return;
+    }
+
+    // Check status effects
+    if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+      addLog('system', `${slot.card.name} cannot act due to status effect!`);
+      return;
+    }
+
+    hideActionPanel();
+    clearSelections();
+
+    const slotEl = playerSlotsEl.children[idx];
+    const cardEl = slotEl.querySelector('.card');
+    if(!cardEl) {
+        console.log("No card element found");
+        return;
+    }
+
+    cardEl.classList.add('selected');
+    
+    const panel = document.createElement('div');
+    panel.className = 'card-action-panel';
+    
+    // Better positioning - always visible
+    const rect = slotEl.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left = Math.min(rect.right + 10, window.innerWidth - 150) + 'px';
+    panel.style.top = Math.max(rect.top, 10) + 'px';
+    panel.style.zIndex = '1000';
+
+    const oppositeSlot = computerSlots[idx];
+    const canAttack = oppositeSlot && oppositeSlot.hp > 0;
+
+    console.log("Creating action buttons for:", slot.card.name);
+    console.log("Can attack opposite slot:", canAttack);
+
+    // Create attack buttons
+    slot.card.attacks.forEach((attack, attackIndex) => {
+      const attackBtn = document.createElement('div');
+      attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
+      
+      let buttonText = attack.name;
+      if(attack.damage > 0) buttonText += ` (${attack.damage})`;
+      if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+      
+      attackBtn.textContent = buttonText;
+      attackBtn.title = attack.description;
+      
+      attackBtn.addEventListener('click', ()=> {
+        console.log("Attack button clicked:", attack.name);
+        if(canAttack || attack.damage === 0) {
+          performUniqueAttack(idx, attackIndex);
+        }
+      });
+      
+      panel.appendChild(attackBtn);
+    });
+
+    // Defend button
+    const defendBtn = document.createElement('div');
+    defendBtn.className = 'btn';
+    defendBtn.textContent = 'Defend';
+    defendBtn.addEventListener('click', ()=> {
+        console.log("Defend button clicked");
+        performDefend(idx);
+    });
+
+    panel.appendChild(defendBtn);
+
+    if(!canAttack) {
+      const noTargetMsg = document.createElement('div');
+      noTargetMsg.style.fontSize = '8px';
+      noTargetMsg.style.color = '#aaa';
+      noTargetMsg.style.textAlign = 'center';
+      noTargetMsg.style.marginTop = '4px';
+      noTargetMsg.textContent = 'No opposite target';
+      panel.appendChild(noTargetMsg);
+    }
+
+    document.body.appendChild(panel);
+    currentActionPanel = panel;
+    selected = { side: 'player', idx };
+    
+    console.log("Action panel created and added to DOM");
+}
 
     hideActionPanel();
     clearSelections();
