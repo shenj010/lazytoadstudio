@@ -617,12 +617,28 @@ function onHandClick(index)
 function showCardActions(side, idx)
 {
     if (side !== 'player' || !playerTurn) return;
+    console.log('showCardActions called with:', {side, idx, playerTurn, turnIndicator: turnIndicator.textContent});
+    
+    if (side !== 'player' || !playerTurn) {
+        console.log('Early return: not player side or not player turn');
+        return;
+    }
 
     // Don't show actions during setup phase
     if (turnIndicator.textContent.includes('Setup')) return;
+    if (turnIndicator.textContent.includes('Setup')) {
+        console.log('Early return: still in setup phase');
+        return;
+    }
 
     const slot = playerSlots[idx];
     if (!slot || slot.used) return;
+    console.log('Slot data:', slot);
+    
+    if (!slot || slot.used) {
+        console.log('Early return: no slot or slot used', {hasSlot: !!slot, used: slot?.used});
+        return;
+    }
     
     // Check for status effects that prevent actions
     if (slot.statusEffects) {
@@ -631,6 +647,7 @@ function showCardActions(side, idx)
         );
         if (preventingEffects.length > 0) {
             const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
+            console.log('Early return: preventing status effect', effectName);
             addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
             return;
        }
@@ -642,6 +659,12 @@ function showCardActions(side, idx)
     const slotEl = playerSlotsEl.children[idx];
     const cardEl = slotEl.querySelector('.card');
     if (!cardEl) return;
+    console.log('Card element found:', !!cardEl);
+    
+    if (!cardEl) {
+        console.log('Early return: no card element found');
+        return;
+    }
 
     cardEl.classList.add('selected');
 
@@ -657,6 +680,7 @@ function showCardActions(side, idx)
     // Find opposite slot (computer slot at same index)
     const oppositeSlot = computerSlots[idx];
     const canAttack = oppositeSlot && oppositeSlot.hp > 0;
+    console.log('Attack capability:', {oppositeSlot: !!oppositeSlot, canAttack, attacks: slot.card.attacks});
 
     // Create attack buttons for each attack the card has
     slot.card.attacks.forEach((attack, attackIndex) => {
@@ -679,6 +703,7 @@ function showCardActions(side, idx)
    });
 
     panel.appendChild(attackBtn);
+    console.log('Added attack button:', buttonText);
 });
 
 // Defend button
@@ -688,6 +713,7 @@ defendBtn.textContent = 'Defend';
 defendBtn.addEventListener('click', () => performDefend(idx));
 
 panel.appendChild(defendBtn);
+console.log('Added defend button');
 
 if (!canAttack)
 {
@@ -704,6 +730,9 @@ document.body.appendChild(panel);
 currentActionPanel = panel;
 selected = { side: 'player', idx}
 ;
+selected = { side: 'player', idx};
+
+console.log('Action panel created and added to DOM');
  }
 
   function hideActionPanel()
@@ -1295,15 +1324,15 @@ return false; // Remove this effect
         return true; // Keep this effect
      });
 
-// Update UI if HP changed
-if (slot.hp <= 0)
-{
-    slots[idx] = null;
-}
-else
-{
-    updateSlotUI(side, idx);
-}
+    // Update UI if HP changed
+    if (slot.hp <= 0)
+    {
+        slots[idx] = null;
+    }
+    else
+    {
+        updateSlotUI(side, idx);
+    }
    });
 
 renderAll();
@@ -1739,6 +1768,7 @@ window._debug = { playerSlots, computerSlots, playerHand, computerReserve}
 init();
 
 })();
+
 </script>
 </body>
 </html>
