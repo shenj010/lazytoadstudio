@@ -12,7 +12,7 @@
     --poison:#8A2BE2; --sleep:#4169E1; --weakness:#FF6347;
   }
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
   .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
   .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
   .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
@@ -24,13 +24,13 @@
   .hp-segments{display:flex;width:92%;gap:2px}
   .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
   .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
-  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
+  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px;}
   /* battlefield slots */
-  .slots{display:flex;gap:10px;align-items-center;justify-content:center}
-  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
-  .slot.occupied{border-style:solid}
-  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
-  .card img{width:100%;height:72%;object-fit:cover;display:block}
+  .slots{display:flex;gap:10px;align-items:center;justify-content:center;}
+  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative;}
+  .slot.occupied{border-style:solid;}
+  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease;}
+  .card img{width:100%;height:72%;object-fit:cover;display:block;}
   .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
   .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
   .card.used{opacity:0.4;filter:grayscale(0.7)}
@@ -83,13 +83,31 @@
     50%{transform:scale(1.08);box-shadow:0 0 20px rgba(56,239,125,0.8)}
     100%{transform:scale(1);box-shadow:0 0 10px rgba(56,239,125,0.6)}
   }
-  
+
   /* damage popup */
-  .dmg-pop{position:absolute;font-size:16px,font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
-  @keyframes damageFloat{
-    0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
-    20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
-    60%{transform:translateY(-40px) translateX(-50%) scale(1);opacity:1}
+  .dmg-pop {
+    position: absolute;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ff4444;
+    pointer-events: none;
+    animation: damageFloat 1000ms ease-out forwards;
+    z-index: 200;
+    text-shadow: 2px 2px 0 #000;
+  }
+  @keyframes damageFloat {
+    0% {
+      transform: translateY(0) translateX(-50%) scale(0.8);
+      opacity: 0;
+    }
+    20% {
+      transform: translateY(-10px) translateX(-50%) scale(1.2);
+      opacity: 1;
+    }
+    60% {
+      transform: translateY(-40px) translateX(-50%) scale(1);
+      opacity: 1;
+    }
     100%{transform:translateY(-70px) translateX(-50%) scale(0.8);opacity:0}
   }
   
