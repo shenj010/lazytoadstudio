@@ -48,13 +48,22 @@
   /* turn indicator */
   .turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
   /* attack animations */
-  .attacking{animation:attackMove 800ms ease-in-out forwards}
-  @keyframes attackMove{
+  .attacking-forward{animation:attackForward 800ms ease-in-out forwards}
+  @keyframes attackForward{
     0%{transform:translateY(0) scale(1)}
-    25%{transform:translateY(-20px) scale(1.1)}
-    50%{transform:translateY(-30px) scale(1.15)}
-    75%{transform:translateY(-10px) scale(1.05)}
-    100%{transform:translateY(0) scale(1)}
+    30%{transform:translateY(40px) scale(1.1) translateZ(10px)}
+    60%{transform:translateY(60px) scale(1.15) translateZ(20px)}
+    80%{transform:translateY(30px) scale(1.05) translateZ(5px)}
+    100%{transform:translateY(0) scale(1) translateZ(0px)}
+  }
+  
+  .attacking-backward{animation:attackBackward 800ms ease-in-out forwards}
+  @keyframes attackBackward{
+    0%{transform:translateY(0) scale(1)}
+    30%{transform:translateY(-40px) scale(1.1) translateZ(10px)}
+    60%{transform:translateY(-60px) scale(1.15) translateZ(20px)}
+    80%{transform:translateY(-30px) scale(1.05) translateZ(5px)}
+    100%{transform:translateY(0) scale(1) translateZ(0px)}
   }
   
   /* defend animation */
@@ -257,14 +266,12 @@
   function createCardBackEl(){
     const el = document.createElement('div'); 
     el.className='card'; 
-    el.style.width='68px'; 
-    el.style.height='96px';
-    el.style.opacity='0.85'; 
-    el.style.transform='scale(.88)'; 
+    el.style.width='86px'; 
+    el.style.height='120px';
     el.style.cursor='default';
     
     const img = document.createElement('img'); 
-    img.src = 'images/card back.jpg';
+    img.src = 'images/cards/card back.jpeg';
     img.alt = 'Hidden Card';
     img.style.width = '100%';
     img.style.height = '100%';
@@ -273,8 +280,8 @@
     el.appendChild(img);
     
     const wrap = document.createElement('div'); 
-    wrap.style.width='68px'; 
-    wrap.style.height='96px';
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
     wrap.appendChild(el);
     return wrap;
   }
@@ -442,10 +449,10 @@
     const attackerCardEl = attackerSlotEl.querySelector('.card');
     const targetCardEl = targetSlotEl.querySelector('.card');
     
-    // Animate attacker
+    // Animate attacker (player attacks forward toward computer)
     if(attackerCardEl){
-      attackerCardEl.classList.add('attacking');
-      setTimeout(()=>attackerCardEl.classList.remove('attacking'), 800);
+      attackerCardEl.classList.add('attacking-forward');
+      setTimeout(()=>attackerCardEl.classList.remove('attacking-forward'), 800);
     }
     
     // Apply defend reduction if active
@@ -532,9 +539,12 @@
     addLog('system', 'Computer is thinking...');
     
     setTimeout(()=>{
-      // reset all computer card used status
+      // Reset ALL computer card used status at start of turn
       computerSlots.forEach(slot => {
-        if(slot) slot.used = false;
+        if(slot) {
+          slot.used = false;
+          // Also clear any defending status from previous turns if needed
+        }
       });
 
       performComputerActions();
@@ -612,10 +622,10 @@
     const attackerCardEl = attackerSlotEl.querySelector('.card');
     const targetCardEl = targetSlotEl.querySelector('.card');
     
-    // Animate attacker
+    // Animate attacker (computer attacks backward toward player)
     if(attackerCardEl){
-      attackerCardEl.classList.add('attacking');
-      setTimeout(()=>attackerCardEl.classList.remove('attacking'), 800);
+      attackerCardEl.classList.add('attacking-backward');
+      setTimeout(()=>attackerCardEl.classList.remove('attacking-backward'), 800);
     }
 
     let finalDmg = damage;
@@ -672,6 +682,14 @@
     slot.used = true;
     slot.defending = true;
     
+    // Animate defend
+    const slotEl = computerSlotsEl.children[slotIdx];
+    const cardEl = slotEl.querySelector('.card');
+    if(cardEl){
+      cardEl.classList.add('defending-anim');
+      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+    }
+    
     addLog('computer', `${slot.card.name} takes a defensive stance`);
     renderAll();
   }
@@ -691,16 +709,16 @@
   }
 
   // show damage popup
-  function showDamagePopup(container, text, color){
+  function showDamagePopup(container, damage, color){
     const popup = document.createElement('div'); 
     popup.className='dmg-pop'; 
-    popup.style.color=color || '#fff'; 
-    popup.textContent = text;
+    popup.style.color = color || '#ff4444'; 
+    popup.textContent = `-${damage}`;
     popup.style.left = '50%'; 
-    popup.style.top = '30%'; 
-    popup.style.transform = 'translateX(-50%)';
+    popup.style.top = '10%';
+    container.style.position = 'relative'; // Ensure container can position the popup
     container.appendChild(popup);
-    setTimeout(()=> popup.remove(), 700);
+    setTimeout(()=> popup.remove(), 1000);
   }
 
   // render battlefield slots and global HP segments
