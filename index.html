@@ -1,2241 +1,1383 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <title>Lazy Toad Studios</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
-    <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        background: #FDEDF4;
-        color: #222;
-        font-family: 'Press Start 2P', 'DotGothic16', monospace;
-        width: 100vw;
-        overflow-x: hidden;
-        /* INITIAL PADDING: Space for the banner when visible */
-        padding-top: 30px;
-    }
-    body { min-height: 100vh; }
-
-    /* News Banner Styles */
-    .news-banner {
-        background-color: #FFFFFF;
-        color: #181818;
-        padding: 8px 20px;
-        width: 100vw;
-        box-sizing: border-box;
-        z-index: 1000;
-        position: fixed; /* Makes it stick to the top */
-        top: 0;
-        left: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        transition: opacity 0.3s ease-in-out;
-    }
-
-    .news-banner.hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .news-banner p {
-        font-family: 'Press Start 2P', monospace !important;
-        font-size: 0.9rem;
-        margin: 0;
-        line-height: 1.2;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        flex-grow: 1;
-        text-align: center;
-    }
-
-    .close-banner-btn {
-        background: none;
-        border: none;
-        color: #181818;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0 5px;
-        line-height: 1;
-        transition: color 0.2s ease;
-        flex-shrink: 0;
-    }
-
-    .close-banner-btn:hover {
-        color: #555;
-    }
-    /* END News Banner Styles */
-
-    .hero-header {
-        width: 100vw;
-        display: flex; /* Global default is flex, overridden by grid for desktop in media query */
-        flex-direction: row;
-        align-items: flex-end; /* Keep align-items to flex-end for general header alignment */
-        justify-content: space-between;
-        margin-top: 36px;
-        margin-bottom: 0;
-        box-sizing: border-box;
-        padding-left: 2vw;
-        padding-right: 4vw;
-        position: relative; /* Ensure hero-header is positioned relative */
-    }
-    .hero-logo-col {
-        display: flex;
-        flex-direction: column; /* Changed to column to stack logo and new box */
-        align-items: flex-start; /* Align items to the start for logo and box */
-        justify-content: flex-start;
-        flex: 0 0 auto;
-    }
-    .logo-circle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #fff;
-        border-radius: 50%;
-        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
-        padding: 18px;
-        margin-bottom: 10px; /* Space between logo and new box */
-    }
-    .hero-logo {
-        display: block;
-        width: auto;
-        height: 150px;
-        min-width: 0;
-        min-height: 0;
-        margin: 0;
-        object-fit: contain;
-        transition: height 0.2s;
-    }
-    .hero-nav-col {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        justify-content: flex-end;
-        min-width: 0;
-        min-height: 0;
-        padding: 0;
-        margin-right: 0;
-    }
-    .hero-nav-title,
-    .main-links a,
-    .footer-social-link,
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Press Start 2P', monospace !important;
-        letter-spacing: 0.04em;
-    }
-    /* MAIN TITLE FONT & OUTLINE */
-    .hero-nav-title {
-        color: #fff; /* White text */
-        font-size: 2.5rem; /* Made smaller */
-        -webkit-text-stroke: 2px #000; /* Bolder 2px black outline for Webkit browsers */
-        text-stroke: 2px #000;          /* Bolder 2px black outline for standard browsers */
-        font-weight: normal;
-        word-break: break-word;
-        text-align: right;
-        margin-bottom: 4px;
-        position: relative; /* For positioning hopped toads */
-        padding-left: 0; /* REMOVE THIS PADDING as toads are now outside */
-    }
-    /* Subtitle uses DotGothic16 by default (desktop) - unchanged */
-    .hero-nav-subtitle {
-        font-family: 'DotGothic16', monospace !important;
-        font-size: 3rem; /* Made smaller */
-        color: #fff;
-        text-align: right; /* Current desktop alignment */
-        margin-bottom: 18px;
-        margin-top: -6px;
-        letter-spacing: 0.04em;
-        text-shadow:
-            -2px -2px 0 #000,
-            2px -2px 0 #000,
-            -2px 2px 0 #000,
-            2px 2px 0 #000,
-            0px -2px 0 #000,
-            0px 2px 0 #000,
-            -2px 0px 0 #000,
-            2px 0px 0 #000;
-        -webkit-text-stroke: 0;
-        text-stroke: 0;
-        font-weight: normal;
-        word-break: break-word;
-    }
-    /* Robust Frog Mask Animation */
-    .hero-nav-subtitle .char-frog-wrap {
-        position: relative;
-        display: inline-block;
-        vertical-align: baseline;
-    }
-    .hero-nav-subtitle .letter-wrap {
-        display: inline-block;
-        position: relative;
-        z-index: 1;
-    }
-    .hero-nav-subtitle .frog-wrap {
-        position: absolute;
-        left: 50%;
-        bottom: 0;
-        width: 1.2em;
-        height: 0.7em; /* shows only top of frog when peeping */
-        transform: translateX(-50%);
-        overflow: hidden;
-        pointer-events: none;
-        z-index: 2;
-        display: block;
-        transition: height 0.3s;
-    }
-    .hero-nav-subtitle .frog-wrap.fully-raised {
-        height: 1.2em; /* Fully raised: show all */
-    }
-    .hero-nav-subtitle .frog-peep {
-        width: 1.2em;
-        height: 1.2em;
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97);
-        will-change: transform;
-        display: block;
-        transform: translateY(100%);
-        cursor: pointer; /* Make toads clickable */
-    }
-    .hero-nav-subtitle .frog-peep.peeping {
-        transform: translateY(30%);
-    }
-    .hero-nav-subtitle .frog-peep.fully-raised {
-        transform: translateY(0);
-    }
-    .hero-nav-subtitle .the-letter {
-        display: inline-block;
-        transition: transform 0.7s cubic-bezier(.48,1.48,.56,.97), opacity 0.3s;
-        will-change: transform;
-        z-index: 1;
-        position: relative;
-    }
-    .hero-nav-subtitle .the-letter.lifted {
-        transform: translateY(-1.2em);
-        opacity: 0;
-    }
-    .hero-nav-subtitle .the-letter.raised {
-        transform: translateY(-0.5em);
-    }
-    .main-links {
-        display: flex;
-        gap: 18px;
-        justify-content: flex-end;
-        margin-top: 0;
-        margin-bottom: 0;
-        padding: 0;
-    }
-    .main-links a {
-        font-size: 0.8rem;
-        color: #181818; /* Black text */
-        text-decoration: none;
-        opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
-        font-weight: normal;
-        display: flex;
-        align-items: center; /* Aligns toad icon and text vertically */
-        justify-content: flex-start; /* Aligns content to the left */
-        gap: 0.5em; /* Spacing between icon and text */
-        box-sizing: border-box;
-        padding: 7px 8px; /* Adjust padding to your preference for rectangular shape */
-        border-radius: 0; /* Ensures a perfectly rectangular shape */
-        border: 3px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
-        margin: 0 0.1em; /* Keep current margins */
-        background-color: #FFFFFF; /* White infill for the button */
-        position: relative; /* Needed for z-index if other elements overlap */
-        overflow: hidden; /* Ensures content stays within boundaries */
-        z-index: 0;
-        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-        width: 180px; /* Adjust this value as needed to fit your widest link comfortably, e.g., 'Contact' */
-            text-align: center; /* Ensures text is centered if it wraps */
-        }
-    .main-links .icon {
-        display: inline-block; /* Or flex/grid depending on layout */
-        width: 1.7em; /* Or whatever size your default icons should be */
-        height: 1.7em;
-        min-width: 1.7em;
-        min-height: 1.7em;
-        vertical-align: middle;
-        margin-right: 0.1em;
-        background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        image-rendering: auto;
-        transition: background-image 0.15s, filter 0.2s ease;
-    }
-    /* Hover styles for the button (link) itself */
-    .main-links a:hover,
-    .main-links a:focus {
-        background-color: #181818 !important; /* Background becomes black */
-        color: #FDEDF4 !important; /* Text color becomes white */
-        opacity: 1 !important;
-        text-decoration: none !important;
-        border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
-    }
-    /* Hover styles for the toad icon within the button */
-    .main-links a:hover .icon {
-        filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
-    }
-    .main-links a.shop:hover .icon { background-image: url("./images/toad shop.png"); }
-    .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
-    .main-links a.about:hover .icon { background-image: url("./images/toad about.png"); }
-    .main-links a.work:hover .icon { background-image: url("./images/toad work.png"); }
-
-    .nav-hero-separator,
-    .banner-hero-separator {
-        width: 86vw;
-        max-width: 1200px;
-        margin: 0 auto;
-        height: 56px;
-        position: relative;
-        background: none;
-        border: none;
-        z-index: 2;
-    }
-    .nav-hero-separator svg,
-    .banner-hero-separator svg {
-        display: block;
-        width: 100%;
-        height: 56px;
-        min-height: 56px;
-    }
-    .nav-hero-separator {
-        margin-top: 10px;
-    }
-    .banner-hero-separator {
-        margin-top: 0;
-    }
-
-    /* New containers for desktop/mobile banner content */
-    .desktop-banner-container {
-        display: block; /* Default for desktop */
-    }
-    .mobile-banner-container {
-        display: none; /* Hidden by default for desktop */
-    }
-
-    .banner-image-mobile {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-
-        transform: scale(1.3);
-        transition: transform 0.3s ease;
-
-        margin: 0;
-        border-radius: 0;
-        max-width: none;
-    }
-
-    .hero-images-spacing, .banner-images-spacing {
-        height: 38px;
-    }
-    .hero-image-row .hero-image-box:not(:last-child) {
-        border-right: none !important;
-    }
-    .hero-image-row {
-        width: 100vw;
-        display: flex; /* Displayed by default within desktop-banner-container */
-        flex-direction: row;
-        justify-content: center;
-        align-items: stretch;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    .hero-image-box {
-        flex: 1 1 0;
-        aspect-ratio: 1/1;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-        border: none;
-        border-radius: 0;
-        background: #FDEDF4;
-        margin: 0;
-        padding: 0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .hero-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transform: scale(1.3);
-        transition: transform 0.7s cubic-bezier(.22,.68,.32,1.1);
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        background: #FDEDF4;
-    }
-    .hero-image-box:hover .hero-image,
-    .hero-image-box:focus .hero-image {
-        transform: scale(1);
-    }
-
-    .main-content {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        opacity: 1;
-        transition: opacity 0.6s;
-        background: #FDEDF4;
-    }
-    .main-content.hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    /* Style for the main gallery section header */
-    .gallery-section-header {
-        font-family: 'Press Start 2P', monospace;
-        font-size: 1.5rem; /* Adjust size as needed */
-        letter-spacing: 0.04em;
-        text-align: center;
-        color: #181818;
-        background-color: #FFFFFF;
-        border: 4px solid #181818;
-        padding: 12px 25px; /* Similar padding to nav links */
-        border-radius: 0;
-        display: block; /* Ensures it takes full width for centering */
-        width: fit-content; /* Makes the box fit the text content */
-        margin: 40px auto 30px auto; /* Centers horizontally and adds vertical spacing */
-        text-decoration: none; /* In case it's ever wrapped in a link */
-        font-weight: normal;
-        box-sizing: border-box;
-    }
-    .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 30px;
-        padding: 40px 10vw 60px 10vw;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    .gallery-item {
-        background: none;
-        border-radius: 0;
-        box-shadow: none;
-        overflow: visible;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0;
-        position: relative;
-    }
-    .gallery-item img {
-        width: 100%;
-        max-width: 300px;
-        aspect-ratio: 1/1;
-        object-fit: cover;
-        border-radius: 16px;
-        margin-bottom: 10px;
-        transition: transform 0.3s cubic-bezier(.25,1.7,.45,.84);
-        box-shadow: none;
-        background: #FDEDF4;
-        cursor: pointer;
-        display: block;
-    }
-    .gallery-item:hover img,
-    .gallery-item:focus-within img {
-        transform: scale(1.13) rotate(-2deg);
-        z-index: 2;
-    }
-    .gallery-overlay {
-        position: absolute;
-        left: 0; top: 0; right: 0; bottom: 10px;
-        border-radius: 16px;
-        color: #fff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.22s;
-        font-family: 'Press Start 2P', cursive, monospace;
-        font-weight: normal;
-        text-align: center;
-        padding: 1.2em 0.8em 0.8em 0.8em;
-        font-size: 0.75rem;
-        z-index: 10;
-        letter-spacing: 0.01em;
-    }
-    .gallery-item:hover .gallery-overlay,
-    .gallery-item:focus-within .gallery-overlay {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .gallery-overlay-title,
-    .gallery-overlay-meta,
-    .gallery-overlay-view {
-        color: #fff;
-        text-shadow:
-            2px 2px 0 #111,
-            0 2px 0 #111,
-            2px 0 0 #111;
-    }
-    .gallery-overlay-title {
-        font-size: 0.8rem;
-        margin-bottom: 0.3em;
-        line-height: 1.1;
-        font-family: 'Press Start 2P', cursive, monospace;
-        font-weight: normal;
-        letter-spacing: 0.01em;
-    }
-    .gallery-overlay-meta {
-        font-size: 0.7rem;
-        opacity: 0.90;
-        margin-bottom: 0.4em;
-        font-family: 'Press Start 2P', cursive, monospace;
-        font-weight: normal;
-    }
-    .gallery-overlay-view {
-        background: none;
-        border: 2px solid #fff;
-        border-radius: 20px;
-        padding: 0.2em 1em;
-        font-size: 0.7rem;
-        font-family: 'Press Start 2P', cursive, monospace;
-        font-weight: normal;
-        margin-top: 0.2em;
-        text-decoration: none;
-        display: inline-block;
-        transition: background 0.18s, color 0.18s, border-color 0.18s, text-shadow 0.18s;
-        box-shadow: none;
-        cursor: pointer;
-        opacity: 0.94;
-    }
-    .gallery-overlay-view:hover, .gallery-overlay-view:focus {
-        background: #fff;
-        color: #111;
-        border-color: #111;
-        text-shadow: none;
-    }
-    .gallery-item .caption {
-        margin-top: 8px;
-        font-size: 1rem;
-        /* Applying button-like styles here: */
-        background-color: #FFFFFF !important; /* White background */
-        color: #181818 !important; /* Black text */
-        border: 4px solid #181818 !important; /* Black border (similar to desktop nav links) */
-        padding: 8px 15px !important; /* Padding for the box */
-        border-radius: 0 !important; /* Rectangular corners */
-        display: inline-block !important; /* Allow padding/border and fit content */
-        width: fit-content !important; /* Make the box fit its content */
-        margin-left: auto !important; /* For horizontal centering */
-        margin-right: auto !important; /* For horizontal centering */
-        box-sizing: border-box !important; /* Include padding/border in width */
-        /* End of new styles */
-
-        font-family: 'Press Start 2P', cursive, monospace;
-        text-align: center;
-    }
-    .footer-social {
-        width: 100vw;
-        padding: 32px 0 22px 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: none;
-        margin-top: 60px;
-        justify-content: center;
-    }
-    .footer-social-links {
-        display: flex;
-        gap: 24px;
-        margin-bottom: 6px;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-    .footer-social-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: #444;
-        font-size: 1rem;
-        font-family: 'Press Start 2P', cursive, monospace;
-        transition: color 0.18s, filter 0.18s;
-        gap: 0.5em;
-    }
-    .footer-social-link svg {
-        width: 1.5em;
-        height: 1.5em;
-        margin-right: 8px;
-        vertical-align: middle;
-        fill: currentColor;
-        transition: transform 0.2s;
-    }
-    .footer-social-link:hover svg {
-        transform: scale(1.18);
-    }
-    .footer-social-link:hover,
-    .footer-social-link:focus {
-        color: #111;
-        filter: brightness(0.7);
-        text-decoration: none;
-    }
-    .footer-social-label {
-        font-size: 0.85rem;
-        color: #aaa;
-        font-family: 'Press Start 2P', cursive, monospace;
-        margin-top: 2px;
-        letter-spacing: 0.07em;
-        text-align: center;
-    }
-
-    .hopping-toad {
-        position: fixed; /* Important for absolute positioning relative to viewport */
-        z-index: 9999; /* Ensure it's on top during the hop */
-        transition: transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s;
-        opacity: 1; /* Start visible */
-    }
-
-    /* Styles for the static toads collected in the header (consolidated) */
-    .hopped-toad {
-        width: 100%; /* To fill the grid cell */
-        height: auto; /* Maintain aspect ratio */
-        object-fit: contain; /* Ensures the image fits without distortion */
-        image-rendering: pixelated; /* Keep pixelated look */
-    }
-
-    /* Styles for the "hopped" toads container - Desktop version hidden */
-    .hopped-toad-container {
-        display: block; /* Hidden by default on desktop */
-    }
-
-    /* Existing styles for the mobile collected toads box - remains hidden by default */
-    .collected-toads-box {
-        display: block; /* This box is hidden globally by your current CSS */
-        width: 180px; /* Fixed width for the box */
-        height: 180px; /* Fixed height for the box */
-        border: 5px solid #FFFFFF; /* White border */
-        position: relative;
-        margin-top: 100px; /* Minimal spacing under the logo */
-        box-sizing: border-box;
-        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-        padding: 5px; /* Inner padding for the grid */
-    }
-
-    .collected-toads-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4 columns */
-        grid-template-rows: repeat(4, 1fr); /* 4 rows */
-        gap: 2px; /* Small gap between toads */
-        width: 100%;
-        height: 100%;
-        overflow: hidden; /* Hide any overflow */
-    }
-
-    .toad-counter {
-        position: absolute;
-        bottom: 5px;
-        right: 5px;
-        color: #FFFFFF; /* White text for the counter */
-        font-family: 'Press Start 2P', monospace !important; /* Same font as nav links */
-        font-size: 0.8rem;
-        letter-spacing: 0.04em;
-        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Outline */
-    }
-
-    /* NEW: Base styles for the new desktop box - Add this after the above .collected-toads-box */
-    .desktop-collected-toads-box {
-        display: none; /* Keep hidden by default, will be shown via JS */
-        width: 200px; /* Fixed width as you desired */
-        box-sizing: border-box;
-        padding: 5px; /* Inner padding */
-        margin-left: 200px; /* Maintains your horizontal margin */
-        overflow: hidden; /* Ensures content stays within bounds */
-        position: relative; /* Keep for potential future use or if needed by your JS */
-
-        /* --- Changes for Expanding Box Style --- */
-        height: auto; /* Allow the box to expand/contract based on content */
-        /* Removed min-height from CSS, now set dynamically by JS */
-
-        /* --- Revert to Solid Box Appearance --- */
-        border: 10px solid #FFFFFF; /* White border for a solid box */
-        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-    }
-
-    /* MEDIA QUERY FOR FULL DESKTOP (LARGER SCREENS) */
-    @media (min-width: 1025px) { /* Changed from 701px */
-        .hero-header {
-            display: grid;
-            /* Make these changes: */
-            grid-template-columns: auto 500px 1fr; /* Order: logo, desktop-toads-box, nav */
-            grid-template-areas:
-                "logo desktop-toads-box nav"; /* Order: logo, desktop-toads-box, nav */
-            align-items: end;
-        }
-        /* ... (other styles in this media query) ... */
-
-        #desktopToadsGrid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Your 8 columns */
-            gap: 2px;
-            width: 100%;
-            height: auto;
-            overflow: hidden;
-            align-content: end;
-        }
-
-        #desktopToadsGrid .hopped-toad {
-            width: 70%;
-            height: auto;
-            object-fit: contain;
-            image-rendering: crisp-edges;
-            image-rendering: -webkit-optimize-contrast;
-            display: block;
-            margin: auto;
-        }
-
-        .hero-logo-col {
-            grid-area: logo;
-        }
-
-        .desktop-collected-toads-box {
-            display: block;
-            grid-area: desktop-toads-box;
-            /* Make this change: */
-            margin: 0 0 0 200px; /* Add 20px margin to the RIGHT only */
-            align-self: end;
-        }
-        .hero-nav-col {
-            grid-area: nav;
-        }
-
-        #collectedToadsBox {
-            display: none;
-        }
-        .nav-hero-separator, .banner-hero-separator {
-            display: block !important;
-            height: 56px !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            width: 86vw !important;
-            max-width: 1200px !important;
-        }
-        .nav-hero-separator svg, .banner-hero-separator svg {
-            display: block !important;
-            height: 56px !important;
-            min-height: 56px !important;
-        }
-        .desktop-banner-container {
-            display: block;
-        }
-        .mobile-banner-container {
-            display: none;
-        }
-        .hero-image-row {
-            flex-direction: row;
-        }
-        .hero-image-box {
-            width: auto;
-            margin: 0;
-        }
-        .gallery-grid {
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 30px;
-            padding: 40px 10vw 60px 10vw;
-        }
-        .footer-social-links {
-            flex-direction: row;
-            gap: 24px;
-        }
-        .footer-social-link {
-            font-size: 1rem;
-        }
-    }
-
-    /* NEW MEDIA QUERY: Tablet / Small Desktop (701px to 1024px) */
-   @media (min-width: 701px) and (max-width: 1024px) {
-    html, body {
-        font-size: 15px; /* Adjust base font size for better scaling */
-    }
-    .hero-header {
-        display: grid;
-        /* UPDATED: Define two rows for the layout */
-        grid-template-rows: auto auto; /* First row for logo/nav, second for toad box */
-        /* Define two columns with a small gap between them */
-        grid-template-columns: 200px 1fr; /* Fixed column for Logo/Toad Box, and flexible for Nav/Titles */
-        /* Define the grid areas across the new rows and columns */
-        grid-template-areas:
-            "logo nav"
-            "toads-box nav";
-        align-items: start; /* Align content to the top of its cell */
-        padding: 0 4vw 0 2vw;
-        margin-top: 14px;
-        width: 100vw;
-        max-width: 100vw;
-        box-sizing: border-box;
-        position: relative;
-        min-height: 180px; /* Adjust as needed */
-        margin-bottom: 0; /* Let the banner container handle the bottom spacing */
-    }
-
-    .hero-logo-col {
-        grid-area: logo; /* Assign to the 'logo' area */
-        margin-right: 0;
-        margin-top: 0;
-        /* UPDATED: Added margin to create space between the logo and toad box */
-        margin-bottom: 10px;
-        align-self: center; /* Ensure logo is vertically centered within its cell */
-    }
-
-    .logo-circle {
-        padding: 8px;
-        margin-bottom: 0;
-    }
-    .hero-logo {
-        height: 150px; /* Maintain full size */
-    }
-
-    .desktop-collected-toads-box {
-        display: flex; /* Use flexbox for internal layout */
-        flex-direction: column; /* Stack children vertically */
-        justify-content: flex-start; /* Align content to the top */
-        align-items: flex-start; /* Align content to the left */
-        grid-area: toads-box; /* Assign to the 'toads-box' area in the second row */
-        width: 200px; /* Fixed width */
-        height: auto; /* Allow height to be determined by content or min-height */
-        min-height: 40px !important; /* Initial small height like a button in tablet view */
-        /* UPDATED: Set a max-height to ensure it only expands for 3 rows of toads */
-        max-height: 150px; 
-        margin-left: 0; /* No explicit margin needed here */
-        margin-right: 0; /* No explicit margin needed here */
-        align-self: end; /* IMPORTANT: Align to the bottom of its grid cell */
-        border: 5px solid #FFFFFF; /* Adjusted border to match desktop */
-        padding: 4px; /* Adjusted padding to match desktop */
-        background-color: rgba(255, 255, 255, 0.1);
-        box-sizing: border-box;
-        transition: min-height 0.3s ease-out;
-        position: relative;
-    }
-
-    /* Ensure the grid and counter adapt within the flex container */
-    #desktopToadsGrid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 2px;
-        width: 100%;
-        flex-grow: 1;
-        align-content: start;
-    }
-
-    #desktopToadsGrid .hopped-toad {
-        width: 80%;
-        height: auto;
-        margin: auto;
-    }
-
-    #desktopToadCounter {
-        position: absolute;
-        /* UPDATED: Removed top: 4px to keep the counter at the bottom */
-        bottom: 4px; /* Match the padding of the parent container */
-        right: 4px; /* Match the padding of the parent container */
-        margin: 0;
-        padding: 0;
-        font-size: 0.8rem;
-        white-space: nowrap;
-    }
-
-    .hero-nav-col {
-        grid-area: nav; /* Assign to the 'nav' area, spanning both rows */
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        flex-grow: 1;
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 0;
-        margin-top: 0;
-        align-self: start; /* Align to the top of its grid cell */
-    }
-    .hero-nav-title {
-        font-size: 2.5rem;
-        -webkit-text-stroke: 1.5px #000;
-        text-stroke: 1.5px #000;
-        margin-bottom: 8px;
-        line-height: 1;
-    }
-    .hero-nav-subtitle {
-        font-size: 2.5rem;
-        margin-bottom: 18px;
-        margin-top: 0;
-        line-height: 1.2;
-    }
-
-    .main-links {
-        position: static;
-        top: auto;
-        left: auto;
-        width: auto;
-        min-width: unset;
-        max-height: unset;
-        overflow: visible;
-        transition: none;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 10px;
-        background-color: transparent;
-        padding-bottom: 0;
-        z-index: auto;
-    }
-    .main-links a {
-        padding: 8px 15px;
-        font-size: 0.9rem;
-        border: 3px solid #181818;
-        margin: 0;
-    }
-    .main-links .icon {
-        width: 1.5em;
-        height: 1.5em;
-        min-width: 1.5em;
-        min-height: 1.5em;
-    }
-
-    #collectedToadsBox {
-        display: none;
-    }
-
-    .nav-hero-separator,
-    .banner-hero-separator,
-    .solid-separator-top,
-    .hero-images-spacing,
-    .banner-images-spacing {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-    }
-
-    .desktop-banner-container {
-        display: block;
-        margin-top: 20px;
-    }
-    .mobile-banner-container {
-        display: none;
-    }
-
-    .hero-image-row {
-        flex-direction: row;
-    }
-    .hero-image-box {
-        width: auto;
-        margin: 0;
-    }
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        padding: 30px 5vw 40px 5vw;
-    }
-    .footer-social-links {
-        flex-direction: row;
-        gap: 16px;
-    }
-    .footer-social-link {
-        font-size: 0.9rem;
-    }
-}
-
-    @media (max-width: 700px) {
-        /* Hides the new desktop box on mobile screens */
-        .desktop-collected-toads-box {
-            display: none;
-        }
-
-        /* Your existing mobile styles for .hero-header, #collectedToadsBox, etc.,
-           remain here and will function exactly as they did before.
-           NO CHANGES ARE MADE to this block regarding your existing mobile layout. */
-       html, body {
-            font-size: 15px;
-        }
-       .hero-header {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            grid-template-rows: auto auto;
-            grid-template-areas:
-                "logo nav"
-                "toads-box ."; /* Changed to 'toads-box' for the new container */
-            align-items: start;
-            padding: 0 4vw 0 2vw;
-            margin-top: 14px;
-            width: 100vw;
-            max-width: 100vw;
-            box-sizing: border-box;
-            position: relative;
-            /* NEW: Set a minimum height for the header */
-            min-height: 120px; /* Adjust this value as needed */
-            /* This min-height should be enough to contain your logo and
-               the maximum expected height of your title/subtitle without pushing the logo down. */
-        }
-
-        .hero-logo-col {
-            grid-area: logo; /* Assign this to the 'logo' area in the grid */
-            flex: 0 0 auto; /* Keep these if they don't interfere with grid's sizing */
-            margin-right: 0px;
-            margin-top: 0px;
-            margin-bottom: 0; /* Remove margin-bottom here as the box will handle spacing */
-        }
-
-        .logo-circle {
-            padding: 8px;
-            margin-bottom: 0; /* No margin here, handled by parent flex column */
-        }
-
-        /* Show the collected toads box on mobile */
-        .collected-toads-box {
-            display: block; /* Show on mobile */
-            grid-area: toads-box; /* Assign to the 'toads-box' area */
-            margin-top: 50px; /* Minimal spacing under the logo */
-            margin-left: 0; /* Align to the left of the logo column */
-            margin-right: auto; /* Keep it aligned left */
-            border: 6px solid #FFFFFF;
-        }
-
-        .hero-nav-col {
-            grid-area: nav; /* Assign this to the 'nav' area in the grid */
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end; /* Keep alignment to the right for title/subtitle */
-            flex-grow: 1;
-            width: 100%; /* Take full width of its grid cell */
-            max-width: none; /* Remove max-width that might constrain in grid */
-            margin: 0;
-            padding: 0;
-            margin-top: 0px;
-        }
-        .hero-nav-title {
-            text-align: right; /* Keep text aligned to the right */
-            width: 100%;
-            font-size: 3rem;
-            -webkit-text-stroke: 1.5px #000;
-            text-stroke: 1.5px #000;
-            margin-bottom: 8px;
-            word-break: break-word;
-            hyphens: auto;
-            line-height: 1;
-            padding-left: 0;
-        }
-        .hero-nav-subtitle {
-            text-align: right; /* Keep text aligned to the right */
-            width: 100%;
-            font-size: 3rem;
-            text-shadow:
-                -1.5px -1.5px 0 #000,
-                1.5px -1.5px 0 #000,
-                -1.5px 1.5px 0 #000,
-                1.5px 1.5px 0 #000,
-                0px -1.5px 0 #000,
-                0px 1.5px 0 #000,
-                -1.5px 0px 0 #000,
-                1.5px 0px 0 #000;
-            margin-bottom: 18px;
-            margin-top: 0;
-            word-break: break-word;
-            hyphens: auto;
-            line-height: 1.2;
-        }
-
-        #hoppedToadContainer {
-            display: none; /* Hide the old hopped toad container on mobile */
-        }
-        .hopped-toad {
-            /* These styles are now applied to toads within the grid */
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* Your existing .main-links and .news-banner styles (unchanged) */
-        .main-links {
-            position: absolute;
-            top: 200px;
-            left: 2vw;
-            width: fit-content;
-            min-width: 180px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            background-color: #FDEDF4;
-            padding-bottom: 10px;
-            box-sizing: border-box;
-            z-index: 10;
-            gap: 5px;
-        }
-        .main-links.active {
-            max-height: 500px;
-        }
-        .main-links a {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            font-size: 0.95rem;
-            width: 100%;
-            box-sizing: border-box;
-            padding: 0.5em 1em;
-            border-radius: 0px;
-            border: 2px solid #181818;
-            background-color: #FFFFFF;
-            margin: 0;
-            text-decoration: none;
-            color: #181818;
-            position: relative;
-            overflow: hidden;
-            z-index: 0;
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-        .main-links a::before {
-            content: none;
-            background-image: none;
-        }
-        .main-links .icon {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-image: url("./images/toad icon static.png");
-        }
-        .main-links a.shop:hover .icon 	{ background-image: url("./images/toad shop.png"); }
-        .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
-        .main-links a.about:hover .icon 	{ background-image: url("./images/toad about.png"); }
-        .main-links a.work:hover .icon 	{ background-image: url("./images/toad work.png"); }
-        .main-links a:hover .icon {
-            filter: brightness(0) invert(1) !important;
-        }
-
-        /* Hover styles for mobile links */
-        .main-links a:hover,
-        .main-links a:focus {
-            background-color: #181818 !important;
-            color: #FDEDF4 !important;
-            opacity: 1 !important;
-            text-decoration: none !important;
-        }
-
-        /* --- MODIFIED: Remove hover filter for the now-removed SVG pseudo-element --- */
-        .main-links a:hover::before {
-            filter: none; /* No filter needed as ::before content is gone */
-        }
-
-        /* MODIFICATIONS START HERE for banner and separators */
-        .nav-hero-separator, .banner-hero-separator {
-            /* Force hide separators on mobile, removing all their space */
-            display: none !important;
-            visibility: hidden !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            overflow: hidden !important;
-            /* Also ensure their original width/min-width/max-width/height are overridden */
-            width: 0 !important;
-            min-width: 0 !important;
-            max-width: 0 !important;
-        }
-        .nav-hero-separator svg, .banner-hero-separator svg {
-            display: none !important; /* Also hide SVG content directly */
-            height: 0 !important;
-            min-height: 0 !important;
-        }
-
-        .desktop-banner-container {
-            display: none; /* Keep hidden on mobile */
-        }
-        .mobile-banner-container {
-            display: block; /* Show on mobile */
-            width: 100vw; /* Take full viewport width */
-            aspect-ratio: 1 / 0.9;
-            overflow: hidden;
-            margin: 10px 0 10px 0; /* Align to edge, add bottom margin */
-            border-radius: 0;
-
-            /* APPLY THE WHITE BORDER HERE (to the container) */
-            border: 10px solid #FFFFFF;
-            /* Crucial: border is included *within* the 100vw width/height of the container */
-            box-sizing: border-box;
-
-            /* Ensure no padding here, as border is now on container */
-            padding: 0;
-        }
-
-        .banner-images-spacing {
-            /* Ensure any old spacing elements are also completely removed */
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .banner-image-mobile {
-            display: block;
-            width: 100%; /* Image fills the container's *inner* space */
-            height: 100%; /* Image fills the container's *inner* space */
-            object-fit: cover; /* Ensures image covers the area, cropping if needed */
-            object-position: center;
-
-            /* IMPORTANT: Do NOT set transform: none; here. This allows the global transform: scale(1.3); to apply for the "zoomed in" effect */
-            /* If you want a specific zoom, you can explicitly set it here, e.g., transform: scale(1.3); */
-
-            margin: 0;
-            border-radius: 0;
-            max-width: none;
-        }
-        /* END MODIFICATIONS for banner and separators */
-
-        .hero-image-row {
-            flex-direction: column !important;
-            width: 100vw;
-            align-items: center;
-        }
-        .hero-image-box {
-            width: 96vw;
-            max-width: 100vw;
-            margin: 0 auto 8px auto;
-            aspect-ratio: 1/1;
-        }
-        .gallery-grid {
-            grid-template-columns: 1fr;
-            gap: 18px;
-            padding: 10px 2vw 30px 2vw;
-        }
-        .gallery-item img {
-            border-radius: 8px;
-        }
-        .footer-social-links {
-            flex-direction: column;
-            gap: 8px;
-        }
-        .footer-social-link {
-            font-size: 0.8rem;
-        }
-        body, html {
-            overflow-x: hidden;
-            max-width: 100vw;
-        }
-        /* Frog animation sizing tweaks for mobile */
-        .hero-nav-subtitle .frog-peep,
-        .hero-nav-subtitle .frog-wrap {
-            width: 1.2em;
-            min-width: 1em;
-        }
-        .hero-nav-subtitle .frog-peep {
-            height: 1.2em;
-            min-height: 1.2em;
-        }
-        .hero-nav-subtitle .frog-wrap {
-            height: 0.8em;
-        }
-        .hero-nav-subtitle .frog-wrap.fully-raised {
-            height: 1.2em;
-        }
-    }
-    /* MOBILE FONT OVERRIDE - MAXIMUM SPECIFICITY: this MUST be after all other CSS */
-    @media (max-width: 700px) {
-        body .hero-nav-subtitle {
-            font-family: 'DotGothic16', monospace !important;
-        }
-    }
-/* Wallet (fixed bottom right) */
-.toad-wallet {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 64px;
-  height: 64px;
-  display: none; /* Hidden until first card */
-  cursor: pointer;
-  z-index: 9999;
-}
-.toad-wallet img {
-  width: 100%;
-  height: 100%;
-}
-.wallet-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: red;
-  color: white;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  padding: 4px 6px;
-}
-
-/* Reward card */
-.reward-card {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 200px;
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  z-index: 10000;
-}
-.reward-card img {
-  width: 100%;
-  border: 4px solid #181818;
-}
-@keyframes flyToWallet {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  100% { transform: translate(calc(100vw - 60px), calc(100vh - 60px)) scale(0.2); opacity: 0; }
-}
-
-/* Wallet modal */
-.wallet-modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.8);
-  z-index: 100000;
-  justify-content: center;
-  align-items: center;
-}
-.wallet-modal-content {
-  background: #fff;
-  padding: 20px;
-  border: 6px solid #181818;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80%;
-  overflow-y: auto;
-  font-family: 'Press Start 2P', monospace;
-  position: relative;
-}
-.close-wallet {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-}
-.card-inventory {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  margin-top: 20px;
-}
-.card-inventory img {
-  width: 100%;
-  border: 4px solid #181818;
-}
-.inventory-card { position: relative; }
-.duplicate-badge {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  background: black;
-  color: white;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-/* Reset wallet button */
-.reset-wallet {
-  margin-top: 20px;
-  background: #d62828;
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  font-family: 'Press Start 2P', monospace;
-  cursor: pointer;
-  border-radius: 6px;
-  font-size: 0.8rem;
-}
-.reset-wallet:hover {
-  background: #a61c1c;
-}
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Toad Battle Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
+    --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
+  }
+  html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
+  .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
+  .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
+  .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
+  
+  .area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
+  .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
+  .name{color:var(--accent);font-size:12px;margin-bottom:6px}
+  .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .hp-segments{display:flex;width:92%;gap:2px}
+  .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
+  .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
+  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
+  
+  .slots{display:flex;gap:10px;align-items:center;justify-content:center}
+  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+  .slot.occupied{border-style:solid}
+  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
+  .card img{width:100%;height:72%;object-fit:cover;display:block}
+  .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
+  .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
+  .card.used{opacity:0.4;filter:grayscale(0.7)}
+  .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
+  
+  /* STATUS EFFECT INDICATORS */
+  .status-effects-container {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 20;
+  }
+  
+  .status-effect {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    border: 1px solid white;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+  }
+  
+  .status-effect.poison {
+    background-color: #8B4513;
+    animation: pulse-poison 2s infinite;
+  }
+  
+  .status-effect.poison::before {
+    content: "☠️";
+    font-size: 10px;
+  }
+  
+  .status-effect.stun {
+    background-color: #FFD700;
+    color: #000;
+  }
+  
+  .status-effect.stun::before {
+    content: "⚡";
+    font-size: 12px;
+  }
+  
+  .status-effect.sleep {
+    background-color: #4169E1;
+  }
+  
+  .status-effect.sleep::before {
+    content: "💤";
+    font-size: 10px;
+  }
+  
+  .status-effect.weaken {
+    background-color: #8A2BE2;
+  }
+  
+  .status-effect.weaken::before {
+    content: "⬇️";
+    font-size: 10px;
+  }
+  
+  .status-turns {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    font-size: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid white;
+    color: white;
+  }
+  
+  .sleep-zzz {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    color: #4169E1;
+    font-size: 14px;
+    font-weight: bold;
+    animation: float-zzz 2s ease-in-out infinite;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+  
+  .sleep-zzz:nth-child(2) {
+    right: 15px;
+    top: 8px;
+    font-size: 12px;
+    animation-delay: 0.5s;
+  }
+  
+  .sleep-zzz:nth-child(3) {
+    right: 20px;
+    top: 12px;
+    font-size: 10px;
+    animation-delay: 1s;
+  }
+  
+  @keyframes float-zzz {
+    0% { transform: translateY(0) scale(0.8); opacity: 0.3; }
+    50% { transform: translateY(-10px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-15px) scale(0.8); opacity: 0; }
+  }
+  
+  @keyframes pulse-poison {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* FIXED ACTION PANEL STYLING */
+  .card-action-panel{
+    position:fixed !important;
+    z-index:1000 !important;
+    background:rgba(0,0,0,0.95);
+    border:3px solid var(--accent);
+    border-radius:8px;
+    padding:12px;
+    display:flex;
+    gap:8px;
+    flex-direction:column;
+    min-width:140px;
+    box-shadow:0 0 20px rgba(0,0,0,0.8);
+  }
+  .card-action-panel .btn{
+    background:#fff;
+    color:#000;
+    border:2px solid #000;
+    padding:8px 12px;
+    font-family:'Press Start 2P',monospace;
+    font-size:10px;
+    cursor:pointer;
+    text-align:center;
+    border-radius:4px;
+    transition:all 0.2s ease;
+  }
+  .card-action-panel .btn:hover{
+    background:var(--accent);
+    color:#000;
+    transform:scale(1.05);
+  }
+  .card-action-panel .btn:active{transform:scale(.95)}
+  .card-action-panel .btn.disabled{
+    background:#666;
+    color:#333;
+    cursor:not-allowed;
+  }
+  
+  .turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
+  .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
+  .btn:active{transform:scale(.98)}
+  .btn.disabled{background:#666;color:#333;cursor:not-allowed}
+  
+  .turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
+  
+  .attacking-forward{animation:attackForward 1000ms ease-in-out forwards;z-index:1000;}
+  @keyframes attackForward{
+    0%{transform:translateY(0) scale(1) rotateZ(0deg)}
+    25%{transform:translateY(80px) scale(1.2) rotateZ(5deg)}
+    50%{transform:translateY(160px) scale(1.3) rotateZ(-3deg)}
+    75%{transform:translateY(200px) scale(1.1) rotateZ(2deg)}
+    100%{transform:translateY(0) scale(1) rotateZ(0deg)}
+  }
+  
+  .attacking-backward{animation:attackBackward 1000ms ease-in-out forwards;z-index:1000;}
+  @keyframes attackBackward{
+    0%{transform:translateY(0) scale(1) rotateZ(0deg)}
+    25%{transform:translateY(-80px) scale(1.2) rotateZ(-5deg)}
+    50%{transform:translateY(-160px) scale(1.3) rotateZ(3deg)}
+    75%{transform:translateY(-200px) scale(1.1) rotateZ(-2deg)}
+    100%{transform:translateY(0) scale(1) rotateZ(0deg)}
+  }
+  
+  .flying-attack{animation:flyToTarget 800ms ease-in-out forwards;z-index:2000;position:absolute;}
+  @keyframes flyToTarget{
+    0%{transform:translate(0, 0) scale(1) rotateZ(0deg);opacity:1;}
+    50%{transform:translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg);opacity:0.8;}
+    100%{transform:translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg);opacity:0;}
+  }
+  
+  .defending-anim{animation:defendPulse 600ms ease-in-out forwards}
+  @keyframes defendPulse{
+    0%{transform:scale(1);box-shadow:0 0 0 rgba(56,239,125,0.8)}
+    50%{transform:scale(1.08);box-shadow:0 0 20px rgba(56,239,125,0.8)}
+    100%{transform:scale(1);box-shadow:0 0 10px rgba(56,239,125,0.6)}
+  }
+  
+  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
+  @keyframes damageFloat{
+    0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
+    20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
+    60%{transform:translateY(-40px) translateX(-50%) scale(1);opacity:1}
+    100%{transform:translateY(-70px) translateX(-50%) scale(0.8);opacity:0}
+  }
+  
+  .hit{animation:hitShake 400ms ease-out forwards}
+  @keyframes hitShake{
+    0%{transform:translateX(0)}
+    10%{transform:translateX(-8px) rotateZ(-2deg)}
+    20%{transform:translateX(6px) rotateZ(1deg)}
+    30%{transform:translateX(-4px) rotateZ(-1deg)}
+    40%{transform:translateX(3px) rotateZ(0.5deg)}
+    50%{transform:translateX(-2px) rotateZ(-0.5deg)}
+    60%{transform:translateX(1px) rotateZ(0.2deg)}
+    100%{transform:translateX(0) rotateZ(0deg)}
+  }
+  
+  .flash{animation:flashHit 300ms ease-out forwards}
+  @keyframes flashHit{
+    0%{filter:brightness(1) contrast(1)}
+    25%{filter:brightness(1.8) contrast(1.3) saturate(0)}
+    50%{filter:brightness(1.5) contrast(1.2) saturate(0.2)}
+    75%{filter:brightness(1.3) contrast(1.1) saturate(0.6)}
+    100%{filter:brightness(1) contrast(1) saturate(1)}
+  }
+  
+  .die{animation:dieFade 600ms ease forwards}
+  @keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
+  
+  .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
+  .log .entry{margin-bottom:6px}
+  .log .player{color:var(--accent)}
+  .log .computer{color:var(--danger)}
+  
+  @media (max-width:900px){
+    .area{flex-direction:column;gap:8px}
+    .player-info{min-width:140px}
+    .slots{flex-wrap:wrap}
+  }
+</style>
 </head>
 <body>
-    <div class="news-banner" id="newsBanner">
-        <p>NEW STICKERS AVAILABLE!</p>
-        <button class="close-banner-btn" aria-label="Close banner">&times;</button>
-    </div>
-    <section class="hero" id="hero">
-      <div class="hero-header">
-  <div class="hero-logo-col">
-    <div class="logo-circle">
-      <img src="images/Lazy toad site logo 3.png" alt="Lazy Toad Studios Logo" class="hero-logo">
-    </div>
-    <div class="collected-toads-box" id="collectedToadsBox">
-        <div class="collected-toads-grid" id="collectedToadsGrid">
-            </div>
-        <div class="toad-counter" id="toadCounter">0 / 12</div>
-    </div>
-  </div>
-  <div class="desktop-collected-toads-box" id="desktopToadsBox">
-      <div class="collected-toads-grid" id="desktopToadsGrid">
-          </div>
-      <div class="toad-counter" id="desktopToadCounter">0 / 12</div>
-  </div>
-  <div class="hero-nav-col">
-    <div class="hero-nav-title">
-      LAZY TOAD STUDIOS
-    </div>
-    <div class="hero-nav-subtitle">怠け者なヒキガエルのスタジオ</div>
-    <nav class="main-links">
-      <a href="/shop.html" class="shop" title="Shop">
-        <span class="icon" aria-hidden="true"></span>
-        Shop
-      </a>
-      <a href="/contact.html" class="contact" title="Contact">
-        <span class="icon" aria-hidden="true"></span>
-        Contact
-      </a>
-      <a href="/about.html" class="about" title="About">
-        <span class="icon" aria-hidden="true"></span>
-        About
-      </a>
-      <a href="/work.html" class="work" title="Work">
-        <span class="icon" aria-hidden="true"></span>
-        Work
-      </a>
-    </nav>
-  </div>
-</div>
-<div class="solid-separator-top"></div>
+  <div class="wrap">
+    <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
+    
+    <div class="turn-indicator" id="turnIndicator">Player Turn</div>
 
-      <div class="desktop-banner-container">
-          <div class="hero-images-spacing"></div>
-          <div class="hero-image-row">
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/walking temple website.jpg" alt="After the War" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/the botanist a4 website.jpg" alt="Ramen Battleship" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/3 Joe Shenton - Reunion.jpg" alt="PTSD Machine" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/5 Joe Shenton - Remnants.jpg" alt="Transporter" class="hero-image">
-            </div>
+    <div class="arena" id="arena">
+      <!-- COMPUTER AREA -->
+      <div class="area" id="computerArea">
+        <div class="player-info">
+          <div class="name">Computer</div>
+          <div class="hp-bar" title="Computer total HP">
+            <div class="hp-segments" id="computerGlobalHP"></div>
           </div>
-          <div class="banner-images-spacing"></div>
+          <div style="height:6px"></div>
+        </div>
+
+        <div class="slots" id="computerSlots">
+          <!-- 5 slots -->
+        </div>
+
+        <div class="hand" id="computerHand">
+          <!-- computer reserve cards (small) -->
+        </div>
       </div>
 
-      <div class="mobile-banner-container">
-          <img src="images/the botanist a4 website.jpg" alt="Featured Banner" class="banner-image-mobile" />
+      <!-- PLAYER AREA -->
+      <div class="area" id="playerArea">
+        <div class="player-info">
+          <div class="name">Player</div>
+          <div class="hp-bar" title="Player total HP">
+            <div class="hp-segments" id="playerGlobalHP"></div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
+
+        <div class="slots" id="playerSlots">
+          <!-- 5 slots -->
+        </div>
+
+        <div class="hand" id="playerHand" style="margin-left:12px">
+          <!-- player hand cards (click to place on slots) -->
+        </div>
       </div>
-
-      <div class="solid-separator-bottom"></div>
-    </section>
-    <section class="main-content hidden" id="mainContent">
-        <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
-    <h2 id="galleryHeader" class="gallery-section-header">Gallery</h2>
-</div>
-        <div class="gallery-grid">
-            <div class="gallery-item">
-                <a href="gallery/after-the-war.html">
-                    <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Respite</div>
-                        <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/transporter.html">
-                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Transporter</div>
-                        <div class="gallery-overlay-meta">Digital illustration · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ramen-battleship.html">
-                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Ramen Battleship</div>
-                        <div class="gallery-overlay-meta">Watercolor · 2020</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/walking-temple.html">
-                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Quiet day at the beach</div>
-                        <div class="gallery-overlay-meta">Digital painting · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/demons.html">
-                    <img src="images/demons website.jpg" alt="Waiting for the bus in the desert">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Waiting for the bus in the desert</div>
-                        <div class="gallery-overlay-meta">Ink · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/mountain.html">
-                    <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Nature again.. At its finest!</div>
-                        <div class="gallery-overlay-meta">Acrylic · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/osaka.html">
-                    <img src="images/osaka wesbite.jpg" alt="Canoeing again">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Canoeing again</div>
-                        <div class="gallery-overlay-meta">Gouache · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/girl-train.html">
-                    <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">A girl, and a train passing</div>
-                        <div class="gallery-overlay-meta">Mixed media · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/closegirl.html">
-                    <img src="images/wanderer website.jpg" alt="What a beautiful day!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">What a beautiful day!</div>
-                        <div class="gallery-overlay-meta">Digital · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-    <div id="imgModal" class="modal" onclick="event.target === this && closeModal()">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()" aria-label="Close">&times;</button>
-            <img id="modalImg" class="modal-img" src="" alt="">
-            <div id="modalCaption" class="modal-caption"></div>
-        </div>
     </div>
-    <footer class="footer-social">
-        <div class="footer-social-links">
-            <a class="footer-social-link" href="mailto:contact@lazytoadstudios.com" target="_blank" rel="noopener" title="Contact Email">
-                <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 2v.01L12 13 4 6.01V6h16zm-16 12V8.08l7.29 6.29a1 2 0 0 0 1.42 0L20 8.08V18H4z"/></svg>
-                Contact
-            </a>
-            <a class="footer-social-link" href="https://instagram.com/lazytoadstudios" target="_blank" rel="noopener" title="Instagram">
-                <svg viewBox="0 0 24 24"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm6.13.38a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg>
-                Instagram
-            </a>
-            <a class="footer-social-link" href="https://twitter.com/lazytoadstudios" target="_blank" rel="noopener" title="Twitter">
-                <svg viewBox="0 0 24 24"><path d="M22.46 5.94c-.8.36-1.67.6-2.58.72a4.48 4.48 0 0 0 1.96-2.48c-.88.52-1.85.9-2.88 1.1a4.47 4.47 0 0 0-7.62 4.08c-3.72-.19-7.02-1.97-9.23-4.68A4.47 4.47 0 0 0 3.22 9.7a4.47 4.47 0 0 1-2.02-.56v.06a4.47 4.47 0 0 0 3.58 4.38 4.47 4.47 0 0 1-2.01.08 4.47 4.47 0 0 0 4.18 3.11A8.95 8.95 0 0 1 2 19.54a12.66 12.66 0 0 0 6.88 2.02c8.26 0 12.79-6.84 12.79-12.77 0-.19 0-.39-.01-.58a9.33 9.33 0 0 0 2.3-2.37z"/></svg>
-                Twitter
-            </a>
-            <a class="footer-social-link" href="https://facebook.com/lazytoadstudios" target="_blank" rel="noopener" title="Facebook">
-                <svg viewBox="0 0 24 24"><path d="M17.525 8.998h-3.025v-1.55c0-.7.463-.863.788-.863h2.202V4.11l-3.032-.012C11.21 4.098 10 5.338 10 7.32v1.678H7.5V12h2.5v7h3v-7h2.025l.5-3.002z"/></svg>
-                Facebook
-            </a>
-        </div>
-        <div class="footer-social-label">
-            &copy; 2025 Lazy Toad Studios &mdash; Connect with us!
-        </div>
-    </footer>
-    <script>
-    // Modal & scroll logic
-    function openModal(img) {
-        var modal = document.getElementById('imgModal');
-        var modalImg = document.getElementById('modalImg');
-        var modalCaption = document.getElementById('modalCaption');
-        modalImg.src = img.src;
-        modalImg.alt = img.alt;
-        modalCaption.textContent = img.alt;
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    function closeModal() {
-        var modal = document.getElementById('imgModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    document.addEventListener('keydown', function(e) {
-        if(e.key === 'Escape') closeModal();
-    });
-    function scrollToMain() {
-        document.getElementById('mainContent').classList.remove('hidden');
-        window.scrollTo({ top: window.innerHeight + 1, behavior: 'smooth' });
-    }
-    window.addEventListener('scroll', function() {
-        if(window.scrollY > window.innerHeight * 0.7) {
-            document.getElementById('mainContent').classList.remove('hidden');
-        }
-    });
 
-    // FROG "PEEP" ANIMATION SCRIPT AND GAME LOGIC
-    document.addEventListener("DOMContentLoaded", function() {
-    let collectedToadCount = 0;
-    const maxToads = 4;
-
-    const subtitle = document.querySelector('.hero-nav-subtitle');
-    const frogImgSrc = 'images/toad icon static.png';
-    const originalText = subtitle.textContent.trim();
-
-    let currentCollectedToadsGrid;
-    let currentToadCounter;
-    const mainLinks = document.querySelector('.main-links');
-    const desktopToadsBox = document.getElementById('desktopToadsBox');
-
-    function adjustDesktopToadsBoxHeight() {
-        if (window.innerWidth > 1024 && mainLinks && desktopToadsBox) { // Only for full desktop
-            desktopToadsBox.style.minHeight = `${mainLinks.offsetHeight}px`;
-        } else if (desktopToadsBox) {
-            desktopToadsBox.style.minHeight = 'auto'; // Reset for other breakpoints
-        }
-    }
-
-    function updateToadBoxVisibility() {
-        // Clear both grids before repopulating the active one
-        document.getElementById('collectedToadsGrid').innerHTML = '';
-        document.getElementById('desktopToadsGrid').innerHTML = '';
-
-        if (window.innerWidth > 1024) { // Full Desktop
-            currentCollectedToadsGrid = document.getElementById('desktopToadsGrid');
-            currentToadCounter = document.getElementById('desktopToadCounter');
-            document.getElementById('desktopToadsBox').style.display = 'block';
-            document.getElementById('collectedToadsBox').style.display = 'none';
-        } else if (window.innerWidth > 700 && window.innerWidth <= 1024) { // Tablet / Small Desktop
-            currentCollectedToadsGrid = document.getElementById('desktopToadsGrid'); // Use desktop grid for tablet
-            currentToadCounter = document.getElementById('desktopToadCounter'); // Use desktop counter for tablet
-            document.getElementById('desktopToadsBox').style.display = 'block'; // Show desktop box
-            document.getElementById('collectedToadsBox').style.display = 'none'; // Hide mobile box
-        } else { // Mobile
-            currentCollectedToadsGrid = document.getElementById('collectedToadsGrid');
-            currentToadCounter = document.getElementById('toadCounter');
-            document.getElementById('desktopToadsBox').style.display = 'none';
-            document.getElementById('collectedToadsBox').style.display = 'block';
-        }
-
-        // Re-populate the currently active grid with collected toads
-        for (let i = 0; i < collectedToadCount; i++) {
-            const finalToad = document.createElement('img');
-            finalToad.src = frogImgSrc;
-            finalToad.classList.add('hopped-toad');
-            currentCollectedToadsGrid.appendChild(finalToad);
-        }
-
-        updateToadCounter(); // Ensure counter is updated after switching
-        setTimeout(adjustDesktopToadsBoxHeight, 0);
-    }
-
-    updateToadBoxVisibility(); // Initial call
-    window.addEventListener('resize', updateToadBoxVisibility); // Update on resize
-
-    function updateToadCounter() {
-        if (currentToadCounter) {
-            currentToadCounter.textContent = `${collectedToadCount} / ${maxToads}`;
-        }
-    }
-
-    subtitle.innerHTML = '';
-
-    for (const c of originalText) {
-        const wrap = document.createElement('span');
-        wrap.className = 'char-frog-wrap';
-
-        const letterWrap = document.createElement('span');
-        letterWrap.className = 'letter-wrap';
-        const letter = document.createElement('span');
-        letter.className = 'the-letter';
-        letter.textContent = c;
-        letterWrap.appendChild(letter);
-
-        const frogWrap = document.createElement('span');
-        frogWrap.className = 'frog-wrap';
-        const frog = document.createElement('img');
-        frog.src = frogImgSrc;
-        frog.alt = "Toad icon";
-        frog.className = 'frog-peep';
-        frog.style.height = '1.2em';
-        frog.style.width = '1.2em';
-        frogWrap.appendChild(frog);
-
-        wrap.appendChild(letterWrap);
-        wrap.appendChild(frogWrap);
-        subtitle.appendChild(wrap);
-    }
-
-    const frogPeeps = subtitle.querySelectorAll('.frog-peep');
-
-    let peepSequenceActive = false;
-    let currentPeepsInSequence = 0;
-    let targetPeepsInSequence = 0;
-    let mainSequenceSchedulerId = null;
-    let individualPeepSchedulerId = null;
-    let currentlyPeepingFrog = null;
-
-    function resetFrogVisuals(frogElement) {
-        if (!frogElement) return;
-        const wrap = frogElement.closest('.char-frog-wrap');
-        const letter = wrap.querySelector('.the-letter');
-        const frogWrap = wrap.querySelector('.frog-wrap');
-
-        frogElement.classList.remove('fully-raised', 'peeping');
-        frogWrap.classList.remove('fully-raised');
-        letter.classList.remove('lifted', 'raised');
-    }
-
-    function doPeepAnimation(frogElement, shouldFullyRaise) {
-        return new Promise(resolve => {
-            if (!frogElement || frogElement.style.opacity === '0') {
-                resolve();
-                return;
-            }
-
-            if (currentlyPeepingFrog && currentlyPeepingFrog !== frogElement) {
-                resetFrogVisuals(currentlyPeepingFrog);
-                currentlyPeepingFrog.style.opacity = '1';
-                currentlyPeepingFrog.style.pointerEvents = 'auto';
-            }
-            currentlyPeepingFrog = frogElement;
-
-            resetFrogVisuals(frogElement);
-            frogElement.style.opacity = '1';
-            frogElement.style.pointerEvents = 'auto';
-
-            setTimeout(() => {
-                frogElement.classList.add('peeping');
-                frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('raised');
-            }, 50);
-
-            setTimeout(() => {
-                if (frogElement.style.opacity === '0') {
-                    currentlyPeepingFrog = null;
-                    resolve();
-                    return;
-                }
-
-                if (shouldFullyRaise) {
-                    frogElement.classList.remove('peeping');
-                    frogElement.classList.add('fully-raised');
-                    frogElement.closest('.char-frog-wrap').querySelector('.frog-wrap').classList.add('fully-raised');
-                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
-                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.add('lifted');
-
-                    setTimeout(() => {
-                        if (frogElement.style.opacity !== '0') {
-                           frogElement.style.opacity = '0';
-                           frogElement.style.pointerEvents = 'none';
-                        }
-                        currentlyPeepingFrog = null;
-                        resetFrogVisuals(frogElement);
-                        resolve();
-                    }, 800);
-
-                } else {
-                    frogElement.classList.remove('peeping');
-                    frogElement.closest('.char-frog-wrap').querySelector('.the-letter').classList.remove('raised');
-
-                    setTimeout(() => {
-                        currentlyPeepingFrog = null;
-                        resetFrogVisuals(frogElement);
-                        resolve();
-                    }, 800);
-                }
-            }, 750);
-        });
-    }
-
-    async function scheduleIndividualRandomPeep() {
-        if (!peepSequenceActive || currentPeepsInSequence >= targetPeepsInSequence) {
-            peepSequenceActive = false;
-            startNextPeepSequence();
-            return;
-        }
-
-        currentPeepsInSequence++;
-
-        const availableFrogs = Array.from(frogPeeps).filter(frog => frog.style.opacity !== '0');
-        if (availableFrogs.length === 0) {
-            console.log("No frogs available to peep!");
-            peepSequenceActive = false;
-            startNextPeepSequence();
-            return;
-        }
-
-        let frogToAnimate;
-        let attempts = 0;
-        const maxAttempts = 10;
-        do {
-            const idx = Math.floor(Math.random() * availableFrogs.length);
-            frogToAnimate = availableFrogs[idx];
-            attempts++;
-        } while (frogToAnimate === currentlyPeepingFrog && availableFrogs.length > 1 && attempts < maxAttempts);
-
-
-        let shouldFullyRaise = false;
-        if (currentPeepsInSequence >= 4) {
-            shouldFullyRaise = (Math.random() < 0.5) || (currentPeepsInSequence === targetPeepsInSequence);
-        }
-
-        await doPeepAnimation(frogToAnimate, shouldFullyRaise);
-
-        if (shouldFullyRaise) {
-            peepSequenceActive = false;
-            startNextPeepSequence();
-        } else {
-            individualPeepSchedulerId = setTimeout(() => {
-                scheduleIndividualRandomPeep();
-            }, Math.random() * 1000 + 500);
-        }
-    }
-
-    function startNextPeepSequence() {
-        if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-        if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-
-        if (currentlyPeepingFrog) {
-            resetFrogVisuals(currentlyPeepingFrog);
-            currentlyPeepingFrog.style.opacity = '1';
-            currentlyPeepingFrog.style.pointerEvents = 'auto';
-            currentlyPeepingFrog = null;
-        }
-
-        mainSequenceSchedulerId = setTimeout(() => {
-            peepSequenceActive = true;
-            currentPeepsInSequence = 0;
-            targetPeepsInSequence = Math.floor(Math.random() * 4) + 4;
-            scheduleIndividualRandomPeep();
-        }, Math.random() * 20000 + 10000);
-    }
-
-    startNextPeepSequence();
-    updateToadCounter();
-
-   frogPeeps.forEach(frog => {
-    frog.onclick = function(event) {
-        // Only allow clicks on peeping or fully-raised frogs that aren't disabled
-        if ((frog.classList.contains('peeping') || frog.classList.contains('fully-raised')) && frog.style.pointerEvents !== 'none') {
-            event.stopPropagation();
-
-            // Only collect toads if under max
-            if (collectedToadCount < maxToads) {
-                // Stop any scheduled sequences
-                if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
-                if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
-                peepSequenceActive = false;
-                currentlyPeepingFrog = null;
-
-                // Hide clicked frog
-                frog.style.opacity = '0';
-                frog.style.pointerEvents = 'none';
-
-                const frogRect = frog.getBoundingClientRect();
-
-                // Create hopping toad element
-                const hoppingToad = document.createElement('img');
-                hoppingToad.src = frogImgSrc;
-                hoppingToad.classList.add('hopping-toad');
-                document.body.appendChild(hoppingToad);
-
-                hoppingToad.style.left = frogRect.left + 'px';
-                hoppingToad.style.top = frogRect.top + 'px';
-                hoppingToad.style.width = frogRect.width + 'px';
-                hoppingToad.style.height = frogRect.height + 'px';
-
-                if (currentCollectedToadsGrid) {
-                    const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
-                    const cols = 4;
-                    const rows = Math.ceil(maxToads / cols);
-                    const toadWidthInGrid = gridRect.width / cols;
-                    const toadHeightInGrid = gridRect.height / rows;
-
-                    const targetColumn = collectedToadCount % cols;
-                    const targetRow = Math.floor(collectedToadCount / cols);
-
-                    const targetX = gridRect.left + (targetColumn * toadWidthInGrid) + (toadWidthInGrid / 2);
-                    const targetY = gridRect.bottom - ((targetRow + 0.5) * toadHeightInGrid);
-
-                    const finalTargetX = targetX - (frogRect.width / 2);
-                    const finalTargetY = targetY - (frogRect.height / 2);
-
-                    // Animate hopping toad into grid
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            const translateX = finalTargetX - frogRect.left;
-                            const translateY = finalTargetY - frogRect.top;
-                            hoppingToad.style.transform = `translate(${translateX}px, ${translateY}px) translateY(-50px)`;
-                            hoppingToad.style.transition = 'transform 0.8s cubic-bezier(.48,1.48,.56,.97), opacity 0.8s';
-                            hoppingToad.style.opacity = '0';
-                        });
-                    });
-
-                    hoppingToad.addEventListener('transitionend', () => {
-                        hoppingToad.remove();
-
-                        // Increment toad counter and update visuals
-                        collectedToadCount++;
-                        updateToadBoxVisibility();
-
-                        // ---- RESET & REWARD LOGIC ----
-                        if (collectedToadCount >= maxToads) {
-                            // Trigger reward if not already given
-                            if (!rewardGiven) {
-                                rewardGiven = true;
-                                triggerReward();
-                            }
-
-                            // Reset counter and container immediately
-                            collectedToadCount = 0;
-                            currentCollectedToadsGrid.innerHTML = '';
-                            updateToadBoxVisibility();
-                        }
-
-                        resetFrogVisuals(frog);
-                        startNextPeepSequence();
-                    }, { once: true });
-                } else {
-                    console.error("Collected toads grid element not found!");
-                    hoppingToad.remove();
-                    startNextPeepSequence();
-                }
-            } else {
-                // If max already reached, just reset frog visuals
-                resetFrogVisuals(frog);
-                frog.style.opacity = '1';
-                frog.style.pointerEvents = 'auto';
-                startNextPeepSequence();
-            }
-        }
-    };
-});
-        
-    const logoElement = document.querySelector('.logo-circle');
-    const navLinksContainer = document.querySelector('.main-links');
-
-    if (logoElement && navLinksContainer) {
-        logoElement.style.cursor = 'pointer';
-
-        logoElement.addEventListener('click', () => {
-            if (window.innerWidth <= 700) {
-                navLinksContainer.classList.toggle('active');
-            }
-        });
-    }
-    const newsBanner = document.getElementById('newsBanner');
-    const closeBannerBtn = document.querySelector('.close-banner-btn');
-
-    if (newsBanner && closeBannerBtn) {
-        closeBannerBtn.addEventListener('click', function() {
-            newsBanner.classList.add('hidden');
-            document.body.style.paddingTop = '0';
-        });
-    }
-});
-        // Card pool (add your real card images here)
-const cardPool = [
-  { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
-  { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
-  { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
-  { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
-  { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
-];
-
-let rewardGiven = false;
-
-// Trigger reward when full toad run is complete
-function triggerReward() {
-  const card = document.getElementById('rewardCard');
-  const cardImg = card.querySelector('img');
-  const wallet = document.getElementById('toadWallet');
-  const badge = document.getElementById('walletBadge');
-  const toadContainer = document.getElementById('collectedToadsContainer');
-
-  // Pick random card
-  const randomCard = cardPool[Math.floor(Math.random() * cardPool.length)];
-  cardImg.src = randomCard.src;
-  cardImg.alt = randomCard.name;
-
-  // Show card in center
-  card.style.display = 'block';
-  card.style.opacity = '1';
-  card.style.transform = 'translate(-50%, -50%) scale(1)';
-
-  // After short delay, animate into wallet
-  setTimeout(() => {
-    card.offsetWidth; // force reflow
-    card.style.animation = 'flyToWallet 1.3s forwards';
-
-    // Start wallet chew at the same time as card flies
-    animateWallet();
-  }, 500);
-
-  // After animation, update wallet + badge + save card + reset toads
-  card.addEventListener(
-    'animationend',
-    () => {
-      card.style.display = 'none';
-      card.style.animation = ''; // reset for next time
-      wallet.style.display = 'block';
-
-      // Save card permanently (duplicates allowed)
-      saveCard(randomCard);
-
-      // Update badge count (total collected, incl. duplicates)
-      let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-      badge.textContent = collected.length;
-
-      // ✅ Reset toad counter and container AFTER card is safely in wallet
-      collectedToadCount = 0;
-      if (toadContainer) toadContainer.innerHTML = '';
-      updateToadBoxVisibility();
-
-      // Allow another reward to be given in the future
-      rewardGiven = false;
+    <!-- turn control panel -->
+    <div class="turn-panel" id="turnPanel">
+      <div class="btn" id="endTurnBtn">END TURN</div>
+    </div>
+
+    <div class="log" id="battleLog"><div class="entry system">Battle ready – place cards to begin.</div></div>
+  </div>
+
+<script>
+(function(){
+  // config
+  const MAX_SLOTS = 5;
+  const MAX_HP = 80; 
+  const SEGMENTS = 8;
+
+  // Enhanced card pool with unique attacks and abilities
+  const cardPool = [
+    { 
+      src: "images/cards/the stranger card format.jpg", 
+      name: "The Stranger",
+      hp: 80,
+      attacks: [
+        { name: "Hidden Strike", damage: 10, type: "physical", effect: "stun", duration: 1, description: "Fast slice hits your opponent for 10 points. Stun opponent for one turn." }
+      ]
     },
-    { once: true }
-  );
-}
-
-
-function saveCard(card) {
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  collected.push(card); // duplicates allowed
-  localStorage.setItem('collectedCards', JSON.stringify(collected));
-}
-
-function getValidCards() {
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  let validNames = cardPool.map(c => c.name);
-  return collected.filter(c => validNames.includes(c.name));
-}
-
-function animateWallet() {
-  const walletImg = document.getElementById('walletImage');
-  const frames = [
-    "images/toad-wallet.png",
-    "images/toad-wallet 2.png",
-    "images/toad-wallet 3.png",
-    "images/toad-wallet 4.png"
+    { 
+      src: "images/cards/horny toad card format.jpg", 
+      name: "Horny Toad",
+      hp: 80,
+      attacks: [
+        { name: "Piercing Strike", damage: 20, type: "physical", description: "A devastating, surgical strike deals 20 damage to your opponent." }
+      ]
+    },
+    { 
+      src: "images/cards/hypno toad card format.jpg", 
+      name: "Hypno Toad",
+      hp: 80,
+      attacks: [
+        { name: "Hypnotize", damage: 0, type: "mental", effect: "sleep", duration: 2, description: "Send the opponent to sleep for 2 turns." },
+        { name: "Poison Dart", damage: 5, type: "poison", effect: "poison", duration: 5, description: "Poisons your opponent for 5 turns, 5 damage per turn." }
+      ]
+    },
+    { 
+      src: "images/cards/sumo toad card format.jpg", 
+      name: "Sumo Toad",
+      hp: 80,
+      attacks: [
+        { name: "Oshidashi", damage: 10, type: "physical", effect: "weaken", duration: 1, description: "Use sheer force to damage your enemy for 10 and reduce their next attack by 10." }
+      ]
+    },
+    { 
+      src: "images/cards/mad toad card format.jpg", 
+      name: "Mad Toad",
+      hp: 80,
+      attacks: [
+        { name: "Flasher", damage: 0, type: "mental", effect: "stun", duration: 1, description: "Stun your opponent for one turn." },
+        { name: "Bubble Slam", damage: 10, type: "physical", description: "A rear-end first slam hitting opponent for ten points." }
+      ]
+    }
   ];
 
-  let i = 0;
+  // state
+  let playerHand = [];      
+  let computerReserve = [];
+  let playerSlots = new Array(MAX_SLOTS).fill(null); 
+  let computerSlots = new Array(MAX_SLOTS).fill(null);
+  let selected = null; 
+  let playerTurn = true;
+  let currentActionPanel = null; 
 
-  // ✅ clear previous run if it exists
-  if (walletImg._walletAnim) clearInterval(walletImg._walletAnim);
+  // elements
+  const playerHandEl = document.getElementById('playerHand');
+  const computerHandEl = document.getElementById('computerHand');
+  const playerSlotsEl = document.getElementById('playerSlots');
+  const computerSlotsEl = document.getElementById('computerSlots');
+  const logEl = document.getElementById('battleLog');
+  const turnPanel = document.getElementById('turnPanel');
+  const endTurnBtn = document.getElementById('endTurnBtn');
+  const playerGlobalHP = document.getElementById('playerGlobalHP');
+  const computerGlobalHP = document.getElementById('computerGlobalHP');
+  const turnIndicator = document.getElementById('turnIndicator');
 
-  // ✅ slower frame rate: 200ms instead of 120ms
-  walletImg._walletAnim = setInterval(() => {
-    walletImg.src = frames[i];
-    i++;
-    if (i === frames.length) {
-      clearInterval(walletImg._walletAnim);
-      walletImg._walletAnim = null;
-      // Reset back to idle
-      walletImg.src = frames[0];
+  function makeSlotsUI(){
+    playerSlotsEl.innerHTML = '';
+    computerSlotsEl.innerHTML = '';
+    for(let i=0;i<MAX_SLOTS;i++){
+      const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
+      ps.addEventListener('click', ()=>onSlotClick('player', i));
+      playerSlotsEl.appendChild(ps);
+      const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
+      cs.addEventListener('click', ()=>onSlotClick('computer', i));
+      computerSlotsEl.appendChild(cs);
     }
-  }, 200); // ~5fps (slower chew)
-}
+  }
 
-function showInventory() {
-  const modal = document.getElementById('walletModal');
-  const inventory = document.getElementById('cardInventory');
-  let collected = getValidCards();
+  function loadPlayerInventory(){
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    } catch(e){ stored = []; }
+    if(!stored || stored.length === 0) stored = [...cardPool];
+    playerHand = stored.slice(0,10);
+    console.log("Player hand loaded:", playerHand.length, "cards");
+  }
 
-  if (collected.length === 0) {
-    inventory.innerHTML = "<p>No cards collected yet!</p>";
-  } else {
-    // Count duplicates
-    let cardMap = {};
-    collected.forEach(card => {
-      if (!cardMap[card.name]) {
-        cardMap[card.name] = { ...card, count: 1 };
+  function buildComputerReserve(){
+    const playerCardCount = playerHand.length;
+    const cp = [];
+    for(let i=0;i<playerCardCount;i++){
+      cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
+    }
+    computerReserve = cp;
+    console.log("Computer reserve built:", computerReserve.length, "cards");
+  }
+
+  function renderHand(){
+    playerHandEl.innerHTML = '';
+    playerHand.forEach((card, idx) => {
+      const c = createHandCardEl(card, idx);
+      playerHandEl.appendChild(c);
+    });
+    
+    computerHandEl.innerHTML = '';
+    const remainingCards = computerReserve.length - computerSlots.filter(s => s).length;
+    for(let i = 0; i < remainingCards; i++){
+      const c = createCardBackEl();
+      computerHandEl.appendChild(c);
+    }
+  }
+
+  function createCardBackEl(){
+    const el = document.createElement('div'); 
+    el.className='card'; 
+    el.style.width='86px'; 
+    el.style.height='120px';
+    el.style.cursor='default';
+    
+    const cardBack = document.createElement('div');
+    cardBack.style.width = '100%';
+    cardBack.style.height = '100%';
+    cardBack.style.background = 'linear-gradient(45deg, #333, #666)';
+    cardBack.style.display = 'flex';
+    cardBack.style.alignItems = 'center';
+    cardBack.style.justifyContent = 'center';
+    cardBack.style.color = '#fff';
+    cardBack.style.fontSize = '12px';
+    cardBack.textContent = 'TOAD';
+    
+    el.appendChild(cardBack);
+    
+    const wrap = document.createElement('div'); 
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
+    wrap.appendChild(el);
+    return wrap;
+  }
+
+  function createHandCardEl(card, idx){
+    const el = document.createElement('div'); 
+    el.className='card'; 
+    el.style.width='86px'; 
+    el.style.height='120px';
+    el.addEventListener('click', ()=>onHandClick(idx));
+    
+    const img = document.createElement('img'); 
+    img.src=card.src; 
+    img.alt=card.name;
+    
+    img.onerror = function() {
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '72%';
+      placeholder.style.background = 'linear-gradient(45deg, #2D1B69, #11998E)';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.color = '#fff';
+      placeholder.style.fontSize = '10px';
+      placeholder.style.textAlign = 'center';
+      placeholder.textContent = card.name;
+      this.parentNode.replaceChild(placeholder, this);
+    };
+    
+    const stats = document.createElement('div'); 
+    stats.className='stats'; 
+    stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
+    
+    el.appendChild(img); 
+    el.appendChild(stats);
+    
+    const wrap = document.createElement('div'); 
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
+    wrap.appendChild(el);
+    return wrap;
+  }
+
+  function onSlotClick(side, idx){
+    if(side === 'player'){
+      if(selected && selected.type==='hand'){
+        if(playerSlots[idx] === null){
+          const card = playerHand.splice(selected.index,1)[0];
+          playerSlots[idx] = { card, hp: MAX_HP, defending:false, used:false, statusEffects: [] };
+          selected = null;
+          renderAll();
+          addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
+          checkBattleStart();
+        }
       } else {
-        cardMap[card.name].count++;
+        if(playerSlots[idx] && playerTurn){
+          hideActionPanel();
+          showCardActions('player', idx);
+        }
       }
-    });
-
-    inventory.innerHTML = "";
-    Object.values(cardMap).forEach(card => {
-      let wrapper = document.createElement('div');
-      wrapper.className = "inventory-card";
-
-      let img = document.createElement('img');
-      img.src = card.src;
-      img.alt = card.name;
-
-      if (card.count > 1) {
-        let badge = document.createElement('span');
-        badge.textContent = "x" + card.count;
-        badge.className = "duplicate-badge";
-        wrapper.appendChild(badge);
+    } else {
+      if(computerSlots[idx]) {
+        clearSelections();
+        const slotEl = computerSlotsEl.children[idx];
+        if(slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
       }
+    }
+  }
 
-      wrapper.appendChild(img);
-      inventory.appendChild(wrapper);
+  function onHandClick(index){
+    hideActionPanel();
+    clearSelections();
+    selected = { type:'hand', index };
+    document.querySelectorAll('#playerHand .card').forEach((c,i)=>{
+      if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
     });
   }
 
-  modal.style.display = 'flex';
-}
-function updateFightButton() {
-  const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  const fightBtn = document.getElementById("fightBtn");
+  // FIXED: Better showCardActions function
+  function showCardActions(side, idx){
+    console.log("showCardActions called:", side, idx, "playerTurn:", playerTurn);
+    
+    if(side !== 'player' || !playerTurn) return;
+    
+    const slot = playerSlots[idx];
+    if(!slot) {
+      console.log("No slot found at index:", idx);
+      return;
+    }
+    
+    if(slot.used) {
+      console.log("Card already used this turn");
+      addLog('system', `${slot.card.name} already acted this turn`);
+      return;
+    }
 
-  if (collected.length >= 2) {
-    fightBtn.style.display = "block";
-    fightBtn.onclick = goToBattlePage;
-  } else {
-    fightBtn.style.display = "none";
+    // Check status effects
+    if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+      addLog('system', `${slot.card.name} cannot act due to status effect!`);
+      return;
+    }
+
+    hideActionPanel();
+    clearSelections();
+
+    const slotEl = playerSlotsEl.children[idx];
+    const cardEl = slotEl.querySelector('.card');
+    if(!cardEl) return;
+
+    cardEl.classList.add('selected');
+    
+    // Create action panel with better positioning
+    const panel = document.createElement('div');
+    panel.className = 'card-action-panel';
+    
+    // Calculate safe position
+    const rect = slotEl.getBoundingClientRect();
+    const panelWidth = 150;
+    const panelHeight = 200;
+    
+    let left = rect.right + 10;
+    let top = rect.top;
+    
+    // Adjust if panel would go off screen
+    if (left + panelWidth > window.innerWidth) {
+      left = rect.left - panelWidth - 10;
+    }
+    if (top + panelHeight > window.innerHeight) {
+      top = window.innerHeight - panelHeight - 10;
+    }
+    if (top < 10) top = 10;
+    if (left < 10) left = 10;
+    
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+
+    const oppositeSlot = computerSlots[idx];
+    const canAttack = oppositeSlot && oppositeSlot.hp > 0;
+
+    console.log("Creating buttons for card:", slot.card.name, "canAttack:", canAttack);
+
+    // Create attack buttons for each attack
+    slot.card.attacks.forEach((attack, attackIndex) => {
+      const attackBtn = document.createElement('div');
+      attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
+      
+      let buttonText = attack.name;
+      if(attack.damage > 0) buttonText += ` (${attack.damage})`;
+      if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+      
+      attackBtn.textContent = buttonText;
+      attackBtn.title = attack.description;
+      
+      attackBtn.addEventListener('click', (e)=> {
+        e.stopPropagation();
+        console.log("Attack clicked:", attack.name);
+        if(canAttack || attack.damage === 0) {
+          performUniqueAttack(idx, attackIndex);
+        }
+      });
+      
+      panel.appendChild(attackBtn);
+    });
+
+    // Defend button
+    const defendBtn = document.createElement('div');
+    defendBtn.className = 'btn';
+    defendBtn.textContent = 'Defend';
+    defendBtn.addEventListener('click', (e)=> {
+      e.stopPropagation();
+      console.log("Defend clicked");
+      performDefend(idx);
+    });
+
+    panel.appendChild(defendBtn);
+
+    // Close button
+    const closeBtn = document.createElement('div');
+    closeBtn.className = 'btn';
+    closeBtn.textContent = 'Close';
+    closeBtn.style.background = '#ff6666';
+    closeBtn.addEventListener('click', (e)=> {
+      e.stopPropagation();
+      hideActionPanel();
+      clearSelections();
+    });
+    panel.appendChild(closeBtn);
+
+    if(!canAttack) {
+      const noTargetMsg = document.createElement('div');
+      noTargetMsg.style.fontSize = '8px';
+      noTargetMsg.style.color = '#aaa';
+      noTargetMsg.style.textAlign = 'center';
+      noTargetMsg.style.marginTop = '4px';
+      noTargetMsg.textContent = 'No opposite target for attacks';
+      panel.appendChild(noTargetMsg);
+    }
+
+    document.body.appendChild(panel);
+    currentActionPanel = panel;
+    selected = { side: 'player', idx };
+    
+    console.log("Action panel created and added");
   }
-}
-function goToBattlePage() {
-  const collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-  if (collected.length < 2) {
-    alert("You need at least 2 cards to start a battle!");
-    return;
+
+  function hideActionPanel(){
+    if(currentActionPanel){
+      currentActionPanel.remove();
+      currentActionPanel = null;
+    }
   }
 
-  // Pokémon-style fade out
-  const fade = document.createElement("div");
-  fade.style.position = "fixed";
-  fade.style.top = 0;
-  fade.style.left = 0;
-  fade.style.width = "100%";
-  fade.style.height = "100%";
-  fade.style.background = "#000";
-  fade.style.zIndex = 9999;
-  fade.style.opacity = 0;
-  fade.style.transition = "opacity 0.8s";
-  document.body.appendChild(fade);
+  function clearSelections(){
+    document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
+    selected = null;
+  }
 
-  requestAnimationFrame(() => {
-    fade.style.opacity = 1;
-    setTimeout(() => {
-      window.location.href = "battle.html";
+  function performUniqueAttack(attackerIdx, attackIndex){
+    const attacker = playerSlots[attackerIdx];
+    const targetIdx = attackerIdx;
+    const target = computerSlots[targetIdx];
+    
+    if(!attacker || !target || attacker.used) return;
+
+    const attack = attacker.card.attacks[attackIndex];
+    if(!attack) return;
+
+    attacker.used = true;
+    
+    const attackerSlotEl = playerSlotsEl.children[attackerIdx];
+    const targetSlotEl = computerSlotsEl.children[targetIdx];
+    const attackerCardEl = attackerSlotEl.querySelector('.card');
+    const targetCardEl = targetSlotEl.querySelector('.card');
+    
+    let finalDmg = attack.damage;
+    if(target.defending && finalDmg > 0){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
+
+    if(attackerCardEl && targetCardEl && finalDmg > 0) {
+      createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
+        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+        
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+        
+        target.hp = Math.max(0, target.hp - damageToApply);
+        
+        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
+        
+        applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+        
+        if(target.hp <= 0){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              computerSlots[targetIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        } else {
+          updateSlotUI('computer', targetIdx);
+          checkBattleOver();
+        }
+      }, finalDmg);
+    } else {
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+      applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+      
+      if(attack.effect === 'poison' && attack.damage > 0) {
+        setTimeout(() => {
+          showDamagePopup(targetSlotEl, attack.damage, '#8B4513');
+          target.hp = Math.max(0, target.hp - attack.damage);
+          addLog('system', `${target.card.name} takes ${attack.damage} poison damage`);
+          
+          if(target.hp <= 0){
+            setTimeout(() => {
+              targetCardEl.classList.add('die');
+              setTimeout(()=>{
+                computerSlots[targetIdx] = null;
+                renderAll();
+                checkBattleOver();
+              }, 600);
+            }, 200);
+          } else {
+            updateSlotUI('computer', targetIdx);
+            checkBattleOver();
+          }
+        }, 500);
+      } else {
+        checkBattleOver();
+      }
+    }
+
+    hideActionPanel();
+    renderAll();
+  }
+
+  function performDefend(slotIdx){
+    const slot = playerSlots[slotIdx];
+    if(!slot || slot.used) return;
+
+    slot.used = true;
+    slot.defending = true;
+    
+    const slotEl = playerSlotsEl.children[slotIdx];
+    const cardEl = slotEl.querySelector('.card');
+    if(cardEl){
+      cardEl.classList.add('defending-anim');
+      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+    }
+    
+    addLog('player', `${slot.card.name} takes a defensive stance`);
+    
+    hideActionPanel();
+    renderAll();
+  }
+
+  function computerTurn(){
+    if(turnIndicator.textContent.includes('Setup')) return;
+    
+    turnIndicator.textContent = 'Computer Turn';
+    endTurnBtn.classList.add('disabled');
+    
+    addLog('system', 'Computer is thinking...');
+    
+    setTimeout(()=>{
+      processStatusEffects('computer');
+      
+      computerSlots.forEach(slot => {
+        if(slot) {
+          slot.used = false;
+        }
+      });
+
+      performComputerActions();
     }, 800);
-  });
-}
-
-document.addEventListener("DOMContentLoaded", updateFightButton);
-window.addEventListener("storage", updateFightButton);
-
-window.addEventListener('DOMContentLoaded', () => {
-  const wallet = document.getElementById('toadWallet');
-  const badge = document.getElementById('walletBadge');
-  const closeBtn = document.querySelector('.close-wallet');
-  const modal = document.getElementById('walletModal');
-  const resetBtn = document.getElementById('resetWallet'); 
-
-  // Restore collected cards
-  let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
-
-  if (collected.length > 0) {
-    wallet.style.display = 'block';
-    badge.textContent = collected.length; // ✅ total cards, not unique
   }
 
-  // Wallet click = open inventory
-  wallet.addEventListener('click', showInventory);
+  function performComputerActions(){
+    const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
+    if(shouldPlaceCard && computerPlaceCard()){
+      setTimeout(()=> performComputerActions(), 1000);
+      return;
+    }
+    
+    const activeSlots = computerSlots.map((slot, idx) => 
+      slot && slot.hp > 0 && !slot.used && 
+      !hasStatusEffect(slot, 'stun') && !hasStatusEffect(slot, 'sleep') ? idx : -1
+    ).filter(idx => idx !== -1);
 
-  // Close wallet modal (× button)
-  closeBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
+    if(activeSlots.length === 0){
+      setTimeout(()=>endComputerTurn(), 800);
+      return;
+    }
 
-  // Close wallet modal (click outside content)
-  modal.addEventListener('click', (e) => {
-    if (e.target.id === 'walletModal') {
-      modal.style.display = 'none';
+    const slotIdx = activeSlots[Math.floor(Math.random() * activeSlots.length)];
+    const slot = computerSlots[slotIdx];
+    
+    const targetSlot = playerSlots[slotIdx];
+    const canAttack = targetSlot && targetSlot.hp > 0;
+    
+    let action;
+    if(!canAttack){
+      action = 'defend';
+    } else {
+      const isThreated = targetSlot && targetSlot.hp > 0;
+      const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
+      action = shouldAttack ? 'attack' : 'defend';
+    }
+    
+    if(action === 'attack' && canAttack){
+      const damage = Math.random() > 0.6 ? 10 : 5;
+      performComputerAttack(slotIdx, damage);
+    } else {
+      performComputerDefend(slotIdx);
+    }
+
+    setTimeout(()=> {
+      const remainingActive = computerSlots.filter(slot => 
+        slot && slot.hp > 0 && !slot.used && 
+        !hasStatusEffect(slot, 'stun') && !hasStatusEffect(slot, 'sleep')
+      );
+      if(remainingActive.length > 0) {
+        performComputerActions();
+      } else {
+        endComputerTurn();
+      }
+    }, 1500);
+  }
+
+  function performComputerAttack(attackerIdx, damage){
+    const attacker = computerSlots[attackerIdx];
+    const target = playerSlots[attackerIdx];
+    
+    if(!attacker || !target) return;
+
+    attacker.used = true;
+
+    const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+    const targetSlotEl = playerSlotsEl.children[attackerIdx];
+    const attackerCardEl = attackerSlotEl.querySelector('.card');
+    const targetCardEl = targetSlotEl.querySelector('.card');
+    
+    let finalDmg = damage;
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
+
+    if(attackerCardEl && targetCardEl) {
+      createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
+        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+        
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+        
+        target.hp = Math.max(0, target.hp - damageToApply);
+        
+        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
+        
+        if(target.hp <= 0){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              playerSlots[attackerIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        } else {
+          updateSlotUI('player', attackerIdx);
+          checkBattleOver();
+        }
+      }, finalDmg);
+    } else {
+      setTimeout(() => {
+        showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+        target.hp = Math.max(0, target.hp - finalDmg);
+        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
+        if(target.hp <= 0){
+          playerSlots[attackerIdx] = null;
+          renderAll();
+          checkBattleOver();
+        } else {
+          updateSlotUI('player', attackerIdx);
+          checkBattleOver();
+        }
+      }, 300);
+    }
+
+    renderAll();
+  }
+
+  function performComputerDefend(slotIdx){
+    const slot = computerSlots[slotIdx];
+    if(!slot) return;
+
+    slot.used = true;
+    slot.defending = true;
+    
+    const slotEl = computerSlotsEl.children[slotIdx];
+    const cardEl = slotEl.querySelector('.card');
+    if(cardEl){
+      cardEl.classList.add('defending-anim');
+      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+    }
+    
+    addLog('computer', `${slot.card.name} takes a defensive stance`);
+    renderAll();
+  }
+
+  function endComputerTurn(){
+    playerTurn = true;
+    turnIndicator.textContent = 'Player Turn';
+    endTurnBtn.classList.remove('disabled');
+    
+    processStatusEffects('player');
+    
+    playerSlots.forEach(slot => {
+      if(slot) slot.used = false;
+    });
+    
+    addLog('system', 'Player turn begins');
+    renderAll();
+  }
+
+  function showDamagePopup(container, damage, color){
+    const popup = document.createElement('div'); 
+    popup.className='dmg-pop'; 
+    popup.style.color = color || '#ff4444'; 
+    popup.textContent = `-${damage}`;
+    popup.style.left = '50%'; 
+    popup.style.top = '10%';
+    container.style.position = 'relative';
+    container.appendChild(popup);
+    setTimeout(()=> popup.remove(), 1000);
+  }
+
+  function applyStatusEffect(target, effect, duration, attackerName) {
+    if(!effect || !duration) return;
+    
+    if(!target.statusEffects) target.statusEffects = [];
+    
+    const existingEffect = target.statusEffects.find(e => e.type === effect);
+    if (existingEffect) {
+      existingEffect.turnsRemaining = Math.max(existingEffect.turnsRemaining, duration);
+      return;
+    }
+    
+    const statusEffect = {
+      type: effect,
+      duration: duration,
+      attacker: attackerName,
+      turnsRemaining: duration
+    };
+    
+    target.statusEffects.push(statusEffect);
+    
+    const effectMessages = {
+      stun: `${target.card.name} is stunned and cannot act!`,
+      sleep: `${target.card.name} falls asleep!`,
+      poison: `${target.card.name} is poisoned!`,
+      weaken: `${target.card.name} is weakened!`
+    };
+    
+    if(effectMessages[effect]) {
+      addLog('system', effectMessages[effect]);
+    }
+  }
+
+  function processStatusEffects(side) {
+    const slots = side === 'player' ? playerSlots : computerSlots;
+    const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+    
+    slots.forEach((slot, idx) => {
+      if(!slot || !slot.statusEffects) return;
+      
+      slot.statusEffects = slot.statusEffects.filter(effect => {
+        effect.turnsRemaining--;
+        
+        if(effect.type === 'poison' && effect.turnsRemaining >= 0) {
+          const poisonDmg = 5;
+          slot.hp = Math.max(0, slot.hp - poisonDmg);
+          addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
+          
+          const slotEl = slotsEl.children[idx];
+          if(slotEl) {
+            showDamagePopup(slotEl, poisonDmg, '#8B4513');
+          }
+        }
+        
+        if(effect.turnsRemaining <= 0) {
+          const expiredMessages = {
+            stun: `${slot.card.name} is no longer stunned!`,
+            sleep: `${slot.card.name} wakes up!`,
+            poison: `${slot.card.name} is no longer poisoned!`,
+            weaken: `${slot.card.name} is no longer weakened!`
+          };
+          
+          if(expiredMessages[effect.type]) {
+            addLog('system', expiredMessages[effect.type]);
+          }
+          
+          return false;
+        }
+        
+        return true;
+      });
+      
+      if(slot.hp <= 0) {
+        slots[idx] = null;
+      } else {
+        updateSlotUI(side, idx);
+      }
+    });
+    
+    renderAll();
+  }
+
+  function hasStatusEffect(slot, effectType) {
+    if(!slot || !slot.statusEffects) return false;
+    return slot.statusEffects.some(effect => effect.type === effectType && effect.turnsRemaining > 0);
+  }
+
+  function createFlyingProjectile(fromElement, toElement, callback, damage) {
+    const projectile = fromElement.cloneNode(true);
+    projectile.style.position = 'fixed';
+    projectile.style.pointerEvents = 'none';
+    projectile.style.zIndex = '2000';
+    
+    const fromRect = fromElement.getBoundingClientRect();
+    const toRect = toElement.getBoundingClientRect();
+    
+    const deltaX = toRect.left - fromRect.left;
+    const deltaY = toRect.top - fromRect.top;
+    
+    projectile.style.left = fromRect.left + 'px';
+    projectile.style.top = fromRect.top + 'px';
+    
+    document.body.appendChild(projectile);
+    
+    projectile.style.setProperty('--target-x', deltaX + 'px');
+    projectile.style.setProperty('--target-y', deltaY + 'px');
+    
+    projectile.classList.add('flying-attack');
+    
+    setTimeout(() => {
+      projectile.remove();
+      if(callback) callback(damage);
+    }, 800);
+  }
+
+  function renderAll(){
+    for(let i=0;i<MAX_SLOTS;i++){
+      const pSlotEl = playerSlotsEl.children[i];
+      pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
+      if(playerSlots[i]){
+        pSlotEl.classList.add('occupied');
+        pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+      }
+      const cSlotEl = computerSlotsEl.children[i];
+      cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
+      if(computerSlots[i]){
+        cSlotEl.classList.add('occupied');
+        cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+      }
+    }
+    renderHand();
+    updateGlobalHPUI();
+  }
+
+  function makeBattleCardEl(slotObj, owner, slotIndex){
+    const wrap = document.createElement('div'); 
+    wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
+    wrap.style.position = 'relative';
+    
+    const img = document.createElement('img'); 
+    img.src = slotObj.card.src; 
+    img.alt = slotObj.card.name;
+    
+    img.onerror = function() {
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '72%';
+      placeholder.style.background = 'linear-gradient(45deg, #2D1B69, #11998E)';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.color = '#fff';
+      placeholder.style.fontSize = '10px';
+      placeholder.style.textAlign = 'center';
+      placeholder.textContent = slotObj.card.name;
+      this.parentNode.replaceChild(placeholder, this);
+    };
+    
+    const stats = document.createElement('div'); 
+    stats.className='stats';
+    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+    
+    wrap.appendChild(img); 
+    wrap.appendChild(stats);
+    
+    if(slotObj.defending){
+      wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+    }
+    
+    // STATUS EFFECT INDICATORS
+    if(slotObj.statusEffects && slotObj.statusEffects.length > 0) {
+      const statusContainer = document.createElement('div');
+      statusContainer.className = 'status-effects-container';
+      
+      const activeEffects = {};
+      slotObj.statusEffects.forEach(effect => {
+        if(effect.turnsRemaining > 0) {
+          activeEffects[effect.type] = effect;
+        }
+      });
+      
+      Object.values(activeEffects).forEach(effect => {
+        const statusEl = document.createElement('div');
+        statusEl.className = `status-effect ${effect.type}`;
+        statusEl.title = `${effect.type.charAt(0).toUpperCase() + effect.type.slice(1)}: ${effect.turnsRemaining} turns remaining`;
+        
+        const turnsEl = document.createElement('div');
+        turnsEl.className = 'status-turns';
+        turnsEl.textContent = effect.turnsRemaining;
+        statusEl.appendChild(turnsEl);
+        
+        statusContainer.appendChild(statusEl);
+        
+        if(effect.type === 'sleep') {
+          for(let i = 1; i <= 3; i++) {
+            const zzz = document.createElement('div');
+            zzz.className = 'sleep-zzz';
+            zzz.textContent = 'Z';
+            zzz.style.animationDelay = `${(i-1) * 0.5}s`;
+            wrap.appendChild(zzz);
+          }
+        }
+      });
+      
+      wrap.appendChild(statusContainer);
+    }
+    
+    wrap.dataset.owner = owner;
+    wrap.dataset.slot = slotIndex;
+    wrap._hpEl = stats.querySelector('.card-hp');
+
+    return wrap;
+  }
+
+  function updateSlotUI(side, idx){
+    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
+    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+    if(slot && slotEl.firstChild){
+      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+    }
+    updateGlobalHPUI();
+  }
+
+  function updateGlobalHPUI(){
+    const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    playerGlobalHP.innerHTML = ''; 
+    computerGlobalHP.innerHTML = '';
+    const totalPossible = MAX_SLOTS * MAX_HP;
+    const playerFrac = sumPlayer / totalPossible;
+    const compFrac = sumComputer / totalPossible;
+    renderSegments(playerGlobalHP, playerFrac);
+    renderSegments(computerGlobalHP, compFrac);
+  }
+
+  function renderSegments(container, fraction){
+    const segmentsToShow = fraction * SEGMENTS;
+    for(let i=0;i<SEGMENTS;i++){
+      const s = document.createElement('div'); s.className='seg';
+      const remain = segmentsToShow - i;
+      if(remain <= 0) { s.style.opacity = 0.12; }
+      else if(remain < 1) { s.classList.add('half'); }
+      container.appendChild(s);
+    }
+  }
+
+  function checkBattleOver(){
+    const playerHas = playerSlots.some(s=>s && s.hp>0);
+    const compHas = computerSlots.some(s=>s && s.hp>0);
+    if(!playerHas || !compHas){
+      const result = compHas ? 'defeat' : 'victory';
+      addLog('system', `Battle over: ${result.toUpperCase()}`);
+      setTimeout(()=>showGameOver(result), 500);
+    }
+  }
+
+  function showGameOver(result){
+    alert(result==='victory' ? 'You won!' : 'You lost!');
+  }
+
+  endTurnBtn.addEventListener('click', ()=>{
+    if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+    
+    hideActionPanel();
+    clearSelections();
+    playerTurn = false;
+    addLog('system','Player ended their turn.');
+    
+    if(!turnIndicator.textContent.includes('Setup')){
+      setTimeout(()=>computerTurn(), 500);
     }
   });
 
-  // Close wallet modal (Esc key)
+  function computerInitialPlacement(){
+    const emptySlots = [];
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
+    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
+    const cardsToPlace = Math.min(Math.max(1, playerOccupiedSlots.length), 3, computerReserve.length);
+    
+    const prioritySlots = playerOccupiedSlots.filter(idx => emptySlots.includes(idx));
+    const remainingSlots = emptySlots.filter(idx => !prioritySlots.includes(idx));
+    
+    const targetSlots = [...prioritySlots, ...remainingSlots].slice(0, cardsToPlace);
+    
+    targetSlots.forEach((slotIdx, i) => {
+      if(i < computerReserve.length){
+        const card = computerReserve[i];
+        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
+      }
+    });
+    
+    renderAll();
+    addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+  }
+
+  function computerPlaceCard(){
+    const emptySlots = [];
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
+    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
+    
+    const placedCount = computerSlots.filter(slot => slot !== null).length;
+    if(placedCount >= computerReserve.length) return false;
+    
+    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
+    const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
+    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
+                      emptySlots[Math.floor(Math.random() * emptySlots.length)];
+    
+    const cardToPlace = computerReserve[placedCount];
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
+    
+    renderAll();
+    addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
+    return true;
+  }
+
+  function addLog(type, text){
+    const div = document.createElement('div'); 
+    div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); 
+    div.textContent = text;
+    logEl.appendChild(div); 
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  document.addEventListener('click', (e) => {
+    if(currentActionPanel && !currentActionPanel.contains(e.target) && 
+       !e.target.closest('.slot') && !e.target.closest('.card')){
+      hideActionPanel();
+      clearSelections();
+    }
+  });
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-      modal.style.display = 'none';
+    if(e.key === 'Escape'){
+      hideActionPanel();
+      clearSelections();
+    }
+    if(e.key === ' ' || e.key === 'Enter'){
+      if(playerTurn && !endTurnBtn.classList.contains('disabled')){
+        endTurnBtn.click();
+        e.preventDefault();
+      }
     }
   });
 
-  // ✅ Reset wallet button
-  resetBtn.addEventListener('click', () => {
-    if (confirm("Are you sure you want to reset your wallet? All cards will be lost!")) {
-      localStorage.removeItem('collectedCards');
-      document.getElementById('cardInventory').innerHTML = "<p>No cards collected yet!</p>";
-      badge.textContent = "0";
-      wallet.style.display = 'none';
-    }
-  });
-});
+  function decideFirstPlayer(){
+    playerTurn = true;
+    turnIndicator.textContent = 'Player Setup Phase';
+    endTurnBtn.classList.add('disabled');
+    addLog('system', 'Place your cards on the battlefield first.');
+  }
 
+  function checkBattleStart(){
+    const playerHasCards = playerSlots.some(slot => slot !== null);
+
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+      addLog('system', 'Computer is ready to battle...');
+
+      computerInitialPlacement();
+
+      setTimeout(() => {
+        turnIndicator.textContent = 'Player Turn'; // Force battle start
+        addLog('system', 'Battle begins! Click your cards to see attack/defend options.');
+        playerTurn = true;
+        endTurnBtn.classList.remove('disabled');
+      }, 1500);
+    }
+  }
+
+  function init(){
+    console.log("Initializing game...");
+    makeSlotsUI();
+    loadPlayerInventory();
+    buildComputerReserve();
+    renderAll();
+    decideFirstPlayer();
+    addLog('system', 'Place cards by clicking a hand card, then click an empty player slot.');
+    addLog('system', 'The battle will begin once you place your first card.');
+    console.log("Game initialized successfully!");
+  }
+
+  window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
+
+  init();
+
+})();
 </script>
-    <!-- 🐸 Toad Wallet (bottom right) -->
-<div id="toadWallet" class="toad-wallet">
-  <img id="walletImage" src="images/toad-wallet.png" alt="Toad Wallet">
-  <span id="walletBadge" class="wallet-badge">0</span>
-</div>
-
-<!-- 🃏 Reward Card (appears in center, flies into wallet) -->
-<div id="rewardCard" class="reward-card">
-  <img src="" alt="Toad Card">
-</div>
-
-<!-- 📔 Wallet Inventory Modal -->
-<div id="walletModal" class="wallet-modal">
-  <div class="wallet-modal-content">
-    <button class="close-wallet">&times;</button>
-    <h2>Your Toad Cards</h2>
-    <div id="cardInventory" class="card-inventory"></div>
-    <button id="resetWallet" class="reset-wallet">Reset Wallet</button>
-  </div>
-<div id="fightBtn" 
-     style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-            background:#fff; border:2px solid #000; 
-            padding:10px 20px; font-family:'Press Start 2P','DotGothic16',monospace; 
-            cursor:pointer; text-align:center; z-index:9998;">
-  FIGHT
-</div>
 </body>
 </html>
