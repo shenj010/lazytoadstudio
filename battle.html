@@ -1370,7 +1370,385 @@ function performComputerAttack(attackerIdx, damage)
     addLog('computer', `${slot.card.name}
     takes a defensive stance`);
 }
-})();
-</script>
-</body>
-</html>
+
+// show damage popup
+function showDamagePopup(container, damage, color) {
+    const popup = document.createElement('div');
+    popup.className = 'dmg-pop';
+    popup.style.color = color || '#ff4444';
+    popup.textContent = `-${damage}`;
+    popup.style.left = '50%';
+    popup.style.top = '10%';
+    container.style.position = 'relative';
+    container.appendChild(popup);
+    setTimeout(() => popup.remove(), 1000);
+}
+
+// apply status effects to a target
+function applyStatusEffect(target, effect, duration, attackerName) {
+    if (!effect || !duration) return;
+
+    if (!target.statusEffects) target.statusEffects = [];
+
+    const statusEffect = {
+        type: effect,
+        duration: duration,
+        attacker: attackerName,
+        turnsRemaining: duration
+    };
+
+    target.statusEffects.push(statusEffect);
+
+    const effectMessages = {
+        stun: `${target.card.name} is stunned and cannot act!`,
+        sleep: `${target.card.name} falls asleep!`,
+        poison: `${target.card.name} is poisoned!`,
+        weaken: `${target.card.name} is weakened!`
+    };
+
+    if (effectMessages[effect]) {
+        addLog('system', effectMessages[effect]);
+    }
+}
+
+// create flying projectile animation
+function createFlyingProjectile(fromElement, toElement, callback, damage) {
+    const projectile = fromElement.cloneNode(true);
+    projectile.style.position = 'fixed';
+    projectile.style.pointerEvents = 'none';
+    projectile.style.zIndex = '2000';
+
+    const fromRect = fromElement.getBoundingClientRect();
+    const toRect = toElement.getBoundingClientRect();
+
+    const deltaX = toRect.left - fromRect.left;
+    const deltaY = toRect.top - fromRect.top;
+
+    projectile.style.left = fromRect.left + 'px';
+    projectile.style.top = fromRect.top + 'px';
+
+    document.body.appendChild(projectile);
+
+    projectile.style.setProperty('--target-x', deltaX + 'px');
+    projectile.style.setProperty('--target-y', deltaY + 'px');
+
+    projectile.classList.add('flying-attack');
+
+    setTimeout(() => {
+        projectile.remove();
+        if (callback) callback(damage);
+    }, 800);
+}
+
+// render battlefield slots and global HP segments
+function renderAll() {
+    for (let i = 0; i < MAX_SLOTS; i++) {
+        const pSlotEl = playerSlotsEl.children[i];
+        pSlotEl.innerHTML = '';
+        pSlotEl.classList.remove('occupied');
+        if (playerSlots[i]) {
+            pSlotEl.classList.add('occupied');
+            pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+        }
+        const cSlotEl = computerSlotsEl.children[i];
+        cSlotEl.innerHTML = '';
+        cSlotEl.classList.remove('occupied');
+        if (computerSlots[i]) {
+            cSlotEl.classList.add('occupied');
+            cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+        }
+    }
+    renderHand();
+    updateGlobalHPUI();
+}
+
+// create visual card for battlefield slot
+function makeBattleCardEl(slotObj, owner, slotIndex) {
+    const wrap = document.createElement('div');
+    wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+    wrap.style.width = '86px';
+    wrap.style.height = '120px';
+    wrap.style.position = 'relative';
+
+    const img = document.createElement('img');
+    img.src = slotObj.card.src;
+    img.alt = slotObj.card.name;
+    
+    img.onerror = function() {
+        this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODYiIGhlaWdodD0iODYiIHZpZXdCb3g9IjAgMCA4NiA4NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijg2IiBoZWlnaHQ9Ijg2IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjQzIiB5PSI0MyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRlciI+Tk8gSU1BR0U8L3RleHQ+Cjwvc3ZnPgo=';
+        this.alt = `${slotObj.card.name} (Image missing)`;
+    };
+
+    const stats = document.createElement('div');
+    stats.className = 'stats';
+    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+
+    wrap.appendChild(img);
+    wrap.appendChild(stats);
+
+    // Status effects display
+    if (slotObj.statusEffects && slotObj.statusEffects.length > 0) {
+        const statusContainer = document.createElement('div');
+        statusContainer.className = 'status-effects';
+        
+        slotObj.statusEffects.forEach(effect => {
+            const statusEl = document.createElement('div');
+            statusEl.className = `status-effect ${effect.type}`;
+            
+            let icon = '';
+            switch(effect.type) {
+                case 'poison': icon = '☠'; break;
+                case 'sleep': icon = '💤'; break;
+                case 'stun': icon = '⚡'; break;
+                case 'weaken': icon = '⬇'; break;
+                default: icon = '?'; break;
+            }
+            
+            statusEl.innerHTML = `${icon}${effect.turnsRemaining}`;
+            statusContainer.appendChild(statusEl);
+        });
+        
+        wrap.appendChild(statusContainer);
+        
+        // ADD ANIMATED STATUS OVERLAYS
+        slotObj.statusEffects.forEach(effect => {
+            const overlay = document.createElement('div');
+            overlay.className = `status-overlay ${effect.type}-overlay`;
+            
+            let overlaySymbol = '';
+            switch(effect.type) {
+                case 'poison': overlaySymbol = '☠💀'; break;
+                case 'sleep': overlaySymbol = 'ZZZ'; break;
+                case 'stun': overlaySymbol = '⚡⭐'; break;
+                case 'weaken': overlaySymbol = '⬇📉'; break;
+                default: overlaySymbol = '❓'; break;
+            }
+            
+            overlay.textContent = overlaySymbol;
+            wrap.appendChild(overlay);
+        });
+    }
+
+    if (slotObj.defending) {
+        wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+    }
+
+    wrap.dataset.owner = owner;
+    wrap.dataset.slot = slotIndex;
+    wrap._hpEl = stats.querySelector('.card-hp');
+
+    return wrap;
+}
+
+// Add these missing functions before the closing })();
+
+// show damage popup
+function showDamagePopup(container, damage, color) {
+    const popup = document.createElement('div');
+    popup.className = 'dmg-pop';
+    popup.style.color = color || '#ff4444';
+    popup.textContent = `-${damage}`;
+    popup.style.left = '50%';
+    popup.style.top = '10%';
+    container.style.position = 'relative';
+    container.appendChild(popup);
+    setTimeout(() => popup.remove(), 1000);
+}
+
+// apply status effects to a target
+function applyStatusEffect(target, effect, duration, attackerName) {
+    if (!effect || !duration) return;
+
+    if (!target.statusEffects) target.statusEffects = [];
+
+    const statusEffect = {
+        type: effect,
+        duration: duration,
+        attacker: attackerName,
+        turnsRemaining: duration
+    };
+
+    target.statusEffects.push(statusEffect);
+
+    const effectMessages = {
+        stun: `${target.card.name} is stunned and cannot act!`,
+        sleep: `${target.card.name} falls asleep!`,
+        poison: `${target.card.name} is poisoned!`,
+        weaken: `${target.card.name} is weakened!`
+    };
+
+    if (effectMessages[effect]) {
+        addLog('system', effectMessages[effect]);
+    }
+}
+
+// create flying projectile animation
+function createFlyingProjectile(fromElement, toElement, callback, damage) {
+    const projectile = fromElement.cloneNode(true);
+    projectile.style.position = 'fixed';
+    projectile.style.pointerEvents = 'none';
+    projectile.style.zIndex = '2000';
+
+    const fromRect = fromElement.getBoundingClientRect();
+    const toRect = toElement.getBoundingClientRect();
+
+    const deltaX = toRect.left - fromRect.left;
+    const deltaY = toRect.top - fromRect.top;
+
+    projectile.style.left = fromRect.left + 'px';
+    projectile.style.top = fromRect.top + 'px';
+
+    document.body.appendChild(projectile);
+
+    projectile.style.setProperty('--target-x', deltaX + 'px');
+    projectile.style.setProperty('--target-y', deltaY + 'px');
+
+    projectile.classList.add('flying-attack');
+
+    setTimeout(() => {
+        projectile.remove();
+        if (callback) callback(damage);
+    }, 800);
+}
+
+// render battlefield slots and global HP segments
+function renderAll() {
+    for (let i = 0; i < MAX_SLOTS; i++) {
+        const pSlotEl = playerSlotsEl.children[i];
+        pSlotEl.innerHTML = '';
+        pSlotEl.classList.remove('occupied');
+        if (playerSlots[i]) {
+            pSlotEl.classList.add('occupied');
+            pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+        }
+        const cSlotEl = computerSlotsEl.children[i];
+        cSlotEl.innerHTML = '';
+        cSlotEl.classList.remove('occupied');
+        if (computerSlots[i]) {
+            cSlotEl.classList.add('occupied');
+            cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+        }
+    }
+    renderHand();
+    updateGlobalHPUI();
+}
+
+// create visual card for battlefield slot
+function makeBattleCardEl(slotObj, owner, slotIndex) {
+    const wrap = document.createElement('div');
+    wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+    wrap.style.width = '86px';
+    wrap.style.height = '120px';
+    wrap.style.position = 'relative';
+
+    const img = document.createElement('img');
+    img.src = slotObj.card.src;
+    img.alt = slotObj.card.name;
+    
+    img.onerror = function() {
+        this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODYiIGhlaWdodD0iODYiIHZpZXdCb3g9IjAgMCA4NiA4NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijg2IiBoZWlnaHQ9Ijg2IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjQzIiB5PSI0MyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRlciI+Tk8gSU1BR0U8L3RleHQ+Cjwvc3ZnPgo=';
+        this.alt = `${slotObj.card.name} (Image missing)`;
+    };
+
+    const stats = document.createElement('div');
+    stats.className = 'stats';
+    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+
+    wrap.appendChild(img);
+    wrap.appendChild(stats);
+
+    // Status effects display
+    if (slotObj.statusEffects && slotObj.statusEffects.length > 0) {
+        const statusContainer = document.createElement('div');
+        statusContainer.className = 'status-effects';
+        
+        slotObj.statusEffects.forEach(effect => {
+            const statusEl = document.createElement('div');
+            statusEl.className = `status-effect ${effect.type}`;
+            
+            let icon = '';
+            switch(effect.type) {
+                case 'poison': icon = '☠'; break;
+                case 'sleep': icon = '💤'; break;
+                case 'stun': icon = '⚡'; break;
+                case 'weaken': icon = '⬇'; break;
+                default: icon = '?'; break;
+            }
+            
+            statusEl.innerHTML = `${icon}${effect.turnsRemaining}`;
+            statusContainer.appendChild(statusEl);
+        });
+        
+        wrap.appendChild(statusContainer);
+        
+        // ADD ANIMATED STATUS OVERLAYS
+        slotObj.statusEffects.forEach(effect => {
+            const overlay = document.createElement('div');
+            overlay.className = `status-overlay ${effect.type}-overlay`;
+            
+            let overlaySymbol = '';
+            switch(effect.type) {
+                case 'poison': overlaySymbol = '☠💀'; break;
+                case 'sleep': overlaySymbol = 'ZZZ'; break;
+                case 'stun': overlaySymbol = '⚡⭐'; break;
+                case 'weaken': overlaySymbol = '⬇📉'; break;
+                default: overlaySymbol = '❓'; break;
+            }
+            
+            overlay.textContent = overlaySymbol;
+            wrap.appendChild(overlay);
+        });
+    }
+
+    if (slotObj.defending) {
+        wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+    }
+
+    wrap.dataset.owner = owner;
+    wrap.dataset.slot = slotIndex;
+    wrap._hpEl = stats.querySelector('.card-hp');
+
+    return wrap;
+}
+
+// End turn button handler
+endTurnBtn.addEventListener('click', () => {
+    if (!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+
+    hideActionPanel();
+    clearSelections();
+    playerTurn = false;
+    addLog('system', 'Player ended their turn.');
+
+    if (!turnIndicator.textContent.includes('Setup')) {
+        setTimeout(() => computerTurn(), 500);
+    }
+});
+
+// Click outside to hide action panel
+document.addEventListener('click', (e) => {
+    if (currentActionPanel && !currentActionPanel.contains(e.target) &&
+       !e.target.closest('.slot') && !e.target.closest('.card')) {
+        hideActionPanel();
+        clearSelections();
+    }
+});
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        hideActionPanel();
+        clearSelections();
+    }
+    if (e.key === ' ' || e.key === 'Enter') {
+        if (playerTurn && !endTurnBtn.classList.contains('disabled')) {
+            endTurnBtn.click();
+            e.preventDefault();
+        }
+    }
+});
+
+// expose for debugging
+window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
+
+init();
