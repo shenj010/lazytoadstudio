@@ -201,11 +201,39 @@
       const c = createHandCardEl(card, idx);
       playerHandEl.appendChild(c);
     });
+    
+    // Show computer's hand as card backs
     computerHandEl.innerHTML = '';
-    computerReserve.forEach((card, idx) => {
-      const c = createReserveCardEl(card, idx);
+    const remainingCards = computerReserve.length - computerSlots.filter(s => s).length;
+    for(let i = 0; i < remainingCards; i++){
+      const c = createCardBackEl();
       computerHandEl.appendChild(c);
-    });
+    }
+  }
+
+  function createCardBackEl(){
+    const el = document.createElement('div'); 
+    el.className='card'; 
+    el.style.width='68px'; 
+    el.style.height='96px';
+    el.style.opacity='0.85'; 
+    el.style.transform='scale(.88)'; 
+    el.style.cursor='default';
+    
+    const img = document.createElement('img'); 
+    img.src = 'images/cards/card back.jpeg';
+    img.alt = 'Hidden Card';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    
+    el.appendChild(img);
+    
+    const wrap = document.createElement('div'); 
+    wrap.style.width='68px'; 
+    wrap.style.height='96px';
+    wrap.appendChild(el);
+    return wrap;
   }
 
   function createHandCardEl(card, idx){
@@ -445,14 +473,23 @@
   }
 
   function performComputerActions(){
+    // Computer's strategic decision making each turn
+    
+    // Option 1: Place a new card (if beneficial)
+    const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
+    if(shouldPlaceCard && computerPlaceCard()){
+      // Placed a card, continue with other actions
+      setTimeout(()=> performComputerActions(), 1000);
+      return;
+    }
+    
+    // Option 2: Use existing cards to attack or defend
     const activeSlots = computerSlots.map((slot, idx) => 
       slot && slot.hp > 0 && !slot.used ? idx : -1
     ).filter(idx => idx !== -1);
 
-    console.log('Computer active slots:', activeSlots, computerSlots); // Debug log
-
     if(activeSlots.length === 0){
-      endComputerTurn();
+      setTimeout(()=>endComputerTurn(), 800);
       return;
     }
 
@@ -463,9 +500,16 @@
     const targetSlot = playerSlots[slotIdx];
     const canAttack = targetSlot && targetSlot.hp > 0;
     
-    const action = canAttack && Math.random() > 0.3 ? 'attack' : 'defend';
-    
-    console.log(`Computer slot ${slotIdx} performing ${action}, can attack: ${canAttack}`); // Debug log
+    // Strategic decision: attack if possible, defend if threatened or randomly
+    let action;
+    if(!canAttack){
+      action = 'defend'; // Can't attack, so defend
+    } else {
+      // Consider if this computer card might be threatened
+      const isThreated = targetSlot && targetSlot.hp > 0;
+      const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
+      action = shouldAttack ? 'attack' : 'defend';
+    }
     
     if(action === 'attack' && canAttack){
       const damage = Math.random() > 0.6 ? 10 : 5;
@@ -482,7 +526,7 @@
       } else {
         endComputerTurn();
       }
-    }, 1200);
+    }, 1500);
   }
 
   function performComputerAttack(attackerIdx, damage){
@@ -692,7 +736,11 @@
     clearSelections();
     playerTurn = false;
     addLog('system','Player ended their turn.');
-    computerTurn();
+    
+    // Only start computer turn if we're past setup phase
+    if(!turnIndicator.textContent.includes('Setup')){
+      setTimeout(()=>computerTurn(), 500);
+    }
   });
 
   // place initial computer slots - but don't fill until player places cards
@@ -701,26 +749,64 @@
     computerSlots.fill(null);
   }
 
-  // computer places cards when battle starts
-  function computerPlaceCards(){
-    const availableSlots = [];
+  // computer strategic initial placement
+  function computerInitialPlacement(){
+    const emptySlots = [];
     for(let i = 0; i < MAX_SLOTS; i++){
       if(computerSlots[i] === null){
-        availableSlots.push(i);
+        emptySlots.push(i);
       }
     }
     
-    // Computer places all its cards (up to available slots)
-    const cardsToPlace = Math.min(computerReserve.length, availableSlots.length);
+    // Place 1-3 cards initially, focusing on slots that oppose player cards
+    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
+    const cardsToPlace = Math.min(Math.max(1, playerOccupiedSlots.length), 3, computerReserve.length);
     
-    for(let i = 0; i < cardsToPlace; i++){
-      const slotIdx = availableSlots[i];
-      const card = computerReserve[i]; // Use cards in order rather than random
-      computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false };
-    }
+    // Prioritize placing cards opposite to player cards
+    const prioritySlots = playerOccupiedSlots.filter(idx => emptySlots.includes(idx));
+    const remainingSlots = emptySlots.filter(idx => !prioritySlots.includes(idx));
+    
+    const targetSlots = [...prioritySlots, ...remainingSlots].slice(0, cardsToPlace);
+    
+    targetSlots.forEach((slotIdx, i) => {
+      if(i < computerReserve.length){
+        const card = computerReserve[i];
+        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false };
+      }
+    });
     
     renderAll();
-    addLog('system', `Computer placed ${cardsToPlace} cards on the battlefield.`);
+    addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+  }
+
+  // computer strategic card placement during battle
+  function computerPlaceCard(){
+    const emptySlots = [];
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
+    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
+    
+    // Count how many cards computer has already placed
+    const placedCount = computerSlots.filter(slot => slot !== null).length;
+    if(placedCount >= computerReserve.length) return false;
+    
+    // Strategic placement: prefer slots opposite player cards, or random if none
+    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
+    const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
+    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
+                      emptySlots[Math.floor(Math.random() * emptySlots.length)];
+    
+    // Use next available card from reserve
+    const cardToPlace = computerReserve[placedCount];
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false };
+    
+    renderAll();
+    addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
+    return true;
   }
 
   // helper log
@@ -769,10 +855,10 @@
     const playerHasCards = playerSlots.some(slot => slot !== null);
     
     if(playerHasCards && turnIndicator.textContent.includes('Setup')){
-      addLog('system', 'Computer is placing its cards...');
+      addLog('system', 'Computer is ready to battle...');
       
-      // Computer places its cards
-      computerPlaceCards();
+      // Computer places 1-2 initial cards strategically
+      computerInitialPlacement();
       
       // Start actual battle after a brief delay
       setTimeout(() => {
