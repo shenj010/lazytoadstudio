@@ -9,7 +9,6 @@
   :root{
     --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
     --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
-    --poison:#8A2BE2; --sleep:#4169E1; --weakness:#FF6347;
   }
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
   .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
@@ -24,13 +23,13 @@
   .hp-segments{display:flex;width:92%;gap:2px}
   .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
   .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
-  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px;}
+  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
   /* battlefield slots */
-  .slots{display:flex;gap:10px;align-items:center;justify-content:center;}
-  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative;}
-  .slot.occupied{border-style:solid;}
-  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease;}
-  .card img{width:100%;height:72%;object-fit:cover;display:block;}
+  .slots{display:flex;gap:10px;align-items:center;justify-content:center}
+  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+  .slot.occupied{border-style:solid}
+  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
+  .card img{width:100%;height:72%;object-fit:cover;display:block}
   .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
   .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
   .card.used{opacity:0.4;filter:grayscale(0.7)}
@@ -83,31 +82,13 @@
     50%{transform:scale(1.08);box-shadow:0 0 20px rgba(56,239,125,0.8)}
     100%{transform:scale(1);box-shadow:0 0 10px rgba(56,239,125,0.6)}
   }
-
+  
   /* damage popup */
-  .dmg-pop {
-    position: absolute;
-    font-size: 16px;
-    font-weight: 700;
-    color: #ff4444;
-    pointer-events: none;
-    animation: damageFloat 1000ms ease-out forwards;
-    z-index: 200;
-    text-shadow: 2px 2px 0 #000;
-  }
-  @keyframes damageFloat {
-    0% {
-      transform: translateY(0) translateX(-50%) scale(0.8);
-      opacity: 0;
-    }
-    20% {
-      transform: translateY(-10px) translateX(-50%) scale(1.2);
-      opacity: 1;
-    }
-    60% {
-      transform: translateY(-40px) translateX(-50%) scale(1);
-      opacity: 1;
-    }
+  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200:text-shadow:2px 2px 0 #000}
+  @keyframes damageFloat{
+    0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
+    20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
+    60%{transform:translateY(-40px) translateX(-50%) scale(1);opacity:1}
     100%{transform:translateY(-70px) translateX(-50%) scale(0.8);opacity:0}
   }
   
@@ -230,67 +211,6 @@
   80%{transform:translateY(50px) scale(1.25)}
   100%{transform:translateY(0) scale(1)}
 }
-
-/* Status effect variables - add to your :root */
-:root{
-  --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
-  --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
-  --poison:#8A2BE2; --sleep:#4169E1; --weakness:#FF6347;
-}
-
-/* Status effect indicators */
-.status-effects{position:absolute;top:-8px;right:-8px;display:flex;gap:2px;z-index:10}
-.status-effect{width:16px;height:16px;border-radius:50%;border:1px solid #fff;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:bold}
-.status-effect.poison{background:var(--poison);color:#fff}
-.status-effect.sleep{background:var(--sleep);color:#fff}
-.status-effect.weakness{background:var(--weakness);color:#fff}
-.status-effect.stunned{background:#FFD700;color:#000}
-
-/* Sleeping card overlay */
-.card.sleeping{filter:brightness(0.6) blur(1px)}
-.card.sleeping::before{content:'💤';position:absolute;top:5px;right:5px;font-size:16px;z-index:5}
-
-/* Poisoned card effect */
-.card.poisoned{animation:poisonPulse 2s infinite}
-@keyframes poisonPulse{
-  0%{filter:brightness(1)}
-  50%{filter:brightness(1.2) hue-rotate(270deg)}
-  100%{filter:brightness(1)}
-}
-
-/* Weakened card effect */
-.card.weakened{filter:saturate(0.5) brightness(0.8)}
-
-/* Status effect popup */
-.status-pop{position:absolute;font-size:14px;font-weight:700;pointer-events:none;animation:statusFloat 1200ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
-@keyframes statusFloat{
-  0%{transform:translateY(0) translateX(-50%) scale(0.6);opacity:0}
-  20%{transform:translateY(-15px) translateX(-50%) scale(1);opacity:1}
-  80%{transform:translateY(-45px) translateX(-50%) scale(0.9);opacity:1}
-  100%{transform:translateY(-70px) translateX(-50%) scale(0.6);opacity:0}
-}
-
-/* Status effect animations */
-.sleep-effect{animation:sleepWave 1200ms ease-in-out forwards}
-@keyframes sleepWave{
-  0%{transform:translateY(0);filter:brightness(1) blur(0)}
-  50%{transform:translateY(30px);filter:brightness(0.6) blur(2px)}
-  100%{transform:translateY(0);filter:brightness(0.7) blur(1px)}
-}
-
-.poison-effect{animation:poisonCloud 1000ms ease-in-out forwards}
-@keyframes poisonCloud{
-  0%{transform:translateY(0);filter:hue-rotate(0deg)}
-  50%{transform:translateY(20px);filter:hue-rotate(270deg) saturate(1.5)}
-  100%{transform:translateY(0);filter:hue-rotate(0deg)}
-}
-
-.weakness-effect{animation:weakenStrike 800ms ease-in-out forwards}
-@keyframes weakenStrike{
-  0%{transform:translateY(0);filter:brightness(1)}
-  50%{transform:translateY(25px);filter:brightness(0.7) saturate(0.5)}
-  100%{transform:translateY(0);filter:brightness(0.8) saturate(0.6)}
-}
 </style>
 </head>
 <body>
@@ -357,63 +277,34 @@
   // ENHANCED CARD DATABASE with unique abilities from your images
 const cardDatabase = {
   "The Stranger": {
-    src: "images/the stranger card format.jpg",  // Fixed path
+    src: "images/cards/the stranger card format.jpg",
     name: "The Stranger",
     attacks: [
-      { 
-        name: "Hidden Strike", 
-        damage: 10, 
-        type: "basic", 
-        effect: "stun",
-        duration: 1,
-        description: "Fast slice hits your opponent for 10 points. Stun opponent for one turn." 
-      },
-      { 
-        name: "Shadow Assault", 
-        damage: 15, 
-        type: "special", 
-        cooldown: 3, 
-        description: "Devastating attack from the shadows" 
-      }
+      { name: "Hidden Strike", damage: 8, type: "basic", description: "Fast slice hits your opponent for low damage" },
+      { name: "Shadow Assault", damage: 15, type: "special", cooldown: 3, description: "Devastating attack from the shadows" }
     ],
     animations: { attack: "stranger-attack", special: "stranger-shadow" }
   },
   "Mad Toad": {
-    src: "images/mad toad card format.jpg",  // Fixed path
+    src: "images/cards/mad toad card format.jpg", 
     name: "Mad Toad",
     attacks: [
       { name: "Flasher", damage: 6, type: "basic", description: "One turn" },
-      { name: "Bubble Slam", damage: 10, type: "special", cooldown: 2, description: "Hitting opponent for ten points" }
+      { name: "Bubble Slam", damage: 12, type: "special", cooldown: 2, description: "Hitting opponent for ten points" }
     ],
     animations: { attack: "mad-frenzy", special: "bubble-slam" }
   },
   "Hypno Toad": {
-    src: "images/hypno toad card format.jpg",  // Fixed path
+    src: "images/cards/hypno toad card format.jpg",
     name: "Hypno Toad",
     attacks: [
-      { 
-        name: "Hypnotize", 
-        damage: 0, 
-        type: "basic", 
-        effect: "sleep",
-        duration: 2,
-        description: "Send the opponent to sleep for 2 turns" 
-      },
-      { 
-        name: "Poison Dart", 
-        damage: 2, 
-        type: "special", 
-        cooldown: 2, 
-        effect: "poison", 
-        duration: 3,
-        damagePerTurn: 5,
-        description: "Poison opponent for 3 turns, 5 damage per turn" 
-      }
+      { name: "Hypnotize", damage: 4, type: "basic", description: "Lets the opponent deal 5 less damage next turn" },
+      { name: "Poison Dart", damage: 10, type: "special", cooldown: 2, effect: "poison", description: "Poison damage over 3 turns" }
     ],
     animations: { attack: "hypno-wave", special: "poison-dart" }
   },
   "Horny Toad": {
-    src: "images/horny toad card format.jpg",  // Fixed path
+    src: "images/cards/horny toad card format.jpg",
     name: "Horny Toad", 
     attacks: [
       { name: "Piercing Strike", damage: 7, type: "basic", description: "Devastating, supercilical attack dealing moderate damage" },
@@ -422,20 +313,11 @@ const cardDatabase = {
     animations: { attack: "horn-strike", special: "horn-charge" }
   },
   "Sumo Toad": {
-    src: "images/sumo toad card format.jpg",  // Fixed path
+    src: "images/cards/sumo toad card format.jpg",
     name: "Sumo Toad",
     attacks: [
       { name: "Body Slam", damage: 8, type: "basic", description: "Basic sumo attack" },
-      { 
-        name: "Oshidashi", 
-        damage: 10, 
-        type: "special", 
-        cooldown: 2, 
-        effect: "weakness",
-        duration: 2,
-        damageReduction: 10,
-        description: "Use sheer force to damage your enemy for 10 and reduce their next attack by 10" 
-      }
+      { name: "Oshidashi", damage: 14, type: "special", cooldown: 2, description: "Use sheer force to charge your opponent for 10 attacks at 10" }
     ],
     animations: { attack: "sumo-slam", special: "oshidashi" }
   }
@@ -525,7 +407,7 @@ const cardDatabase = {
     el.style.cursor='default';
     
     const img = document.createElement('img'); 
-    img.src = 'images/card back.jpeg';  // Fixed path - removed /cards
+    img.src = 'images/cards/card back.jpeg';
     img.alt = 'Hidden Card';
     img.style.width = '100%';
     img.style.height = '100%';
@@ -621,12 +503,6 @@ const cardDatabase = {
     
     const slot = playerSlots[idx];
     if(!slot || slot.used) return;
-    
-    // Check if card is sleeping
-    if(slot.effects.sleep && slot.effects.sleep > 0) {
-      addLog('system', `${slot.card.name} is sleeping and cannot act!`);
-      return;
-    }
 
     hideActionPanel();
     clearSelections();
@@ -652,8 +528,8 @@ const cardDatabase = {
     // Create buttons for each attack
     cardData.attacks.forEach((attack) => {
       const isOnCooldown = slot.cooldowns[attack.name] > 0;
-      const canUse = canAttack || attack.type === 'utility' || attack.effect;
-      const isDisabled = isOnCooldown || (!canUse && attack.damage > 0);
+      const canUse = canAttack || attack.type === 'utility';
+      const isDisabled = isOnCooldown || !canUse;
       
       const btn = document.createElement('div');
       btn.className = `btn ${attack.type === 'special' ? 'special' : ''} ${isDisabled ? 'disabled' : ''}`;
@@ -664,7 +540,7 @@ const cardDatabase = {
       
       btn.textContent = buttonText;
       btn.title = attack.description || '';
-
+      
       btn.addEventListener('click', () => {
         if(!isDisabled) performSpecialAttack(idx, attack);
       });
@@ -804,83 +680,77 @@ const cardDatabase = {
   }
 
   function performSpecialAttack(attackerIdx, attack){
-  const attacker = playerSlots[attackerIdx];
-  const targetIdx = attackerIdx;
-  const target = computerSlots[targetIdx];
-  
-  if(!attacker || attacker.used) return;
-  
-  // For status effect attacks, we need a target unless it's self-buff
-  if(attack.damage > 0 && !target) return;
+    const attacker = playerSlots[attackerIdx];
+    const targetIdx = attackerIdx;
+    const target = computerSlots[targetIdx];
+    
+    if(!attacker || !target || attacker.used) return;
 
-  attacker.used = true;
-  
-  // Set cooldown
-  if(attack.cooldown) {
-    attacker.cooldowns[attack.name] = attack.cooldown;
-  }
+    attacker.used = true;
+    
+    // Set cooldown
+    if(attack.cooldown) {
+      attacker.cooldowns[attack.name] = attack.cooldown;
+    }
 
-  // Get card-specific animation
-  const cardData = getCardData(attacker.card.name);
-  let animationClass = attack.type === 'special' ? 
-    cardData.animations.special : cardData.animations.attack;
-  
-  // Add status effect animation classes
-  if(attack.effect === 'sleep') animationClass += ' sleep-effect';
-  if(attack.effect === 'poison') animationClass += ' poison-effect';
-  if(attack.effect === 'weakness') animationClass += ' weakness-effect';
-  
-  const attackerSlotEl = playerSlotsEl.children[attackerIdx];
-  const targetSlotEl = computerSlotsEl.children[targetIdx];
-  const attackerCardEl = attackerSlotEl.querySelector('.card');
-  const targetCardEl = targetSlotEl.querySelector('.card');
-  
-  // Animate attacker with card-specific animation
-  if(attackerCardEl){
-    const classes = animationClass.split(' ');
-    classes.forEach(cls => attackerCardEl.classList.add(cls));
-    setTimeout(()=>{
-      classes.forEach(cls => attackerCardEl.classList.remove(cls));
-    }, 1200);
-  }
+    // Get card-specific animation
+    const cardData = getCardData(attacker.card.name);
+    const animationClass = attack.type === 'special' ? 
+      cardData.animations.special : cardData.animations.attack;
+    
+    const attackerSlotEl = playerSlotsEl.children[attackerIdx];
+    const targetSlotEl = computerSlotsEl.children[targetIdx];
+    const attackerCardEl = attackerSlotEl.querySelector('.card');
+    const targetCardEl = targetSlotEl.querySelector('.card');
+    
+    // Animate attacker with card-specific animation
+    if(attackerCardEl){
+      attackerCardEl.classList.add(animationClass || 'attacking-forward');
+      setTimeout(()=>attackerCardEl.classList.remove(animationClass || 'attacking-forward'), 1200);
+    }
 
-  setTimeout(() => {
-    if(target) {
-      // Calculate damage with effects
-      let finalDmg = attack.damage;
+    // Calculate damage with effects
+    let finalDmg = attack.damage;
+    
+    // Apply hypnotize debuff (Hypno Toad's special effect)
+    if(target.debuffs && target.debuffs.hypnotized) {
+      finalDmg = Math.max(1, finalDmg - 5);
+      target.debuffs.hypnotized--;
+      if(target.debuffs.hypnotized <= 0) delete target.debuffs.hypnotized;
+    }
+    
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
+
+    setTimeout(() => {
+      showDamagePopup(targetSlotEl, finalDmg, attack.type === 'special' ? '#ff6b35' : '#ff4444');
       
-      // Apply weakness debuff
-      if(attacker.effects && attacker.effects.weakness) {
-        finalDmg = Math.max(1, finalDmg - attacker.effects.weakness.reduction);
+      if(targetCardEl){
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
       }
       
-      if(target.defending){
-        finalDmg = Math.ceil(finalDmg/2);
-        target.defending = false;
-        addLog('system', `${target.card.name} defended – reduced damage!`);
-      }
-
-      if(finalDmg > 0) {
-        showDamagePopup(targetSlotEl, finalDmg, attack.type === 'special' ? '#ff6b35' : '#ff4444');
-        
-        if(targetCardEl){
-          targetCardEl.classList.add('hit', 'flash');
-          setTimeout(()=>{
-            targetCardEl.classList.remove('hit', 'flash');
-          }, 400);
-        }
-        
-        target.hp = Math.max(0, target.hp - finalDmg);
+      target.hp = Math.max(0, target.hp - finalDmg);
+      
+      // Apply special effects based on card abilities
+      if(attack.name === "Hypnotize") {
+        target.debuffs = target.debuffs || {};
+        target.debuffs.hypnotized = 2;
+        addLog('player', `${target.card.name} is hypnotized - will deal 5 less damage next turn!`);
       }
       
-      // Apply status effects
-      if(attack.effect) {
-        applyStatusEffect(target, attack, targetSlotEl);
+      if(attack.effect === "poison") {
+        target.effects = target.effects || {};
+        target.effects.poison = 3;
+        addLog('player', `${target.card.name} is poisoned for 3 turns!`);
       }
       
-      let logMessage = `${attacker.card.name} uses ${attack.name}`;
-      if(finalDmg > 0) logMessage += ` for ${finalDmg} damage`;
-      addLog('player', logMessage);
+      addLog('player', `${attacker.card.name} uses ${attack.name} for ${finalDmg} damage`);
       
       // Death check
       if(target.hp <= 0){
@@ -897,17 +767,11 @@ const cardDatabase = {
       } else {
         updateSlotUI('computer', targetIdx);
       }
-    } else {
-      // Status effect only attack (like sleep without damage)
-      if(attack.effect && attack.damage === 0) {
-        addLog('player', `${attacker.card.name} uses ${attack.name} but finds no target!`);
-      }
-    }
-  }, 400);
+    }, 400);
 
-  hideActionPanel();
-  renderAll();
-}
+    hideActionPanel();
+    renderAll();
+  }
 
   // computer AI: attacks opposite slots, defends sometimes
   function computerTurn(){
@@ -920,20 +784,11 @@ const cardDatabase = {
     addLog('system', 'Computer is thinking...');
     
     setTimeout(()=>{
-      // FIXED: Process status effects for computer cards
-      processStatusEffects(computerSlots, 'computer');
-
       // Reset ALL computer card used status at start of turn
       computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
-          // Reduce cooldowns
-          Object.keys(slot.cooldowns || {}).forEach(ability => {
-            slot.cooldowns[ability]--;
-            if(slot.cooldowns[ability] <= 0) {
-              delete slot.cooldowns[ability];
-            }
-          });
+          // Also clear any defending status from previous turns if needed
         }
       });
 
@@ -953,15 +808,9 @@ const cardDatabase = {
     }
     
     // Option 2: Use existing cards to attack or defend
-    const activeSlots = computerSlots.map((slot, idx) => {
-      if(!slot || slot.hp <= 0 || slot.used) return -1;
-      // Check if sleeping
-      if(slot.effects && slot.effects.sleep && slot.effects.sleep > 0) {
-        addLog('computer', `${slot.card.name} is sleeping and cannot act!`);
-        return -1;
-      }
-      return idx;
-    }).filter(idx => idx !== -1);
+    const activeSlots = computerSlots.map((slot, idx) => 
+      slot && slot.hp > 0 && !slot.used ? idx : -1
+    ).filter(idx => idx !== -1);
 
     if(activeSlots.length === 0){
       setTimeout(()=>endComputerTurn(), 800);
@@ -1095,21 +944,9 @@ const cardDatabase = {
     turnIndicator.textContent = 'Player Turn';
     endTurnBtn.classList.remove('disabled');
     
-    // FIXED: Process status effects for player cards
-    processStatusEffects(playerSlots, 'player');
-    
-    // reset all player card used status and reduce cooldowns
+    // reset all player card used status
     playerSlots.forEach(slot => {
-      if(slot) {
-        slot.used = false;
-        // Reduce cooldowns
-        Object.keys(slot.cooldowns || {}).forEach(ability => {
-          slot.cooldowns[ability]--;
-          if(slot.cooldowns[ability] <= 0) {
-            delete slot.cooldowns[ability];
-          }
-        });
-      }
+      if(slot) slot.used = false;
     });
     
     addLog('system', 'Player turn begins');
@@ -1150,7 +987,7 @@ const cardDatabase = {
     updateGlobalHPUI();
   }
 
-  // create visual card for battlefield slot with status effects
+  // create visual card for battlefield slot
   function makeBattleCardEl(slotObj, owner, slotIndex){
     const wrap = document.createElement('div'); 
     wrap.className = `card ${slotObj.used ? 'used' : ''}`;
@@ -1158,32 +995,9 @@ const cardDatabase = {
     wrap.style.height='120px';
     wrap.style.position = 'relative';
     
-    // Add status effect classes
-    if(slotObj.effects) {
-      if(slotObj.effects.sleep && slotObj.effects.sleep > 0) {
-        wrap.classList.add('sleeping');
-      }
-      if(slotObj.effects.poison && slotObj.effects.poison.duration > 0) {
-        wrap.classList.add('poisoned');
-      }
-      if(slotObj.effects.weakness && slotObj.effects.weakness.duration > 0) {
-        wrap.classList.add('weakened');
-      }
-    }
-    
     const img = document.createElement('img'); 
     img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
-    
-    // ADD THIS ERROR HANDLING:
-    img.onerror = function() {
-      console.log(`Failed to load image: ${slotObj.card.src} for ${slotObj.card.name}`);
-      this.src = 'images/card back.jpeg'; // Fallback image
-    };
-
-    img.onload = function() {
-      console.log(`Successfully loaded: ${slotObj.card.src}`);
-    };
     
     const stats = document.createElement('div'); 
     stats.className='stats';
@@ -1191,38 +1005,6 @@ const cardDatabase = {
     
     wrap.appendChild(img); 
     wrap.appendChild(stats);
-    
-    // Add status effect indicators
-    if(slotObj.effects && Object.keys(slotObj.effects).length > 0) {
-      const statusContainer = document.createElement('div');
-      statusContainer.className = 'status-effects';
-      
-      if(slotObj.effects.poison && slotObj.effects.poison.duration > 0) {
-        const indicator = document.createElement('div');
-        indicator.className = 'status-effect poison';
-        indicator.textContent = slotObj.effects.poison.duration;
-        indicator.title = `Poisoned: ${slotObj.effects.poison.damagePerTurn} damage per turn`;
-        statusContainer.appendChild(indicator);
-      }
-      
-      if(slotObj.effects.sleep && slotObj.effects.sleep.duration > 0) {
-        const indicator = document.createElement('div');
-        indicator.className = 'status-effect sleep';
-        indicator.textContent = slotObj.effects.sleep;
-        indicator.title = `Sleeping for ${slotObj.effects.sleep} turns`;
-        statusContainer.appendChild(indicator);
-      }
-      
-      if(slotObj.effects.weakness && slotObj.effects.weakness.duration > 0) {
-        const indicator = document.createElement('div');
-        indicator.className = 'status-effect weakness';
-        indicator.textContent = slotObj.effects.weakness.duration;
-        indicator.title = `Weakened: -${slotObj.effects.weakness.reduction} damage`;
-        statusContainer.appendChild(indicator);
-      }
-      
-      wrap.appendChild(statusContainer);
-    }
     
     // defending glow
     if(slotObj.defending){
@@ -1347,10 +1129,10 @@ const cardDatabase = {
           card, 
           hp: MAX_HP, 
           defending: false, 
-          used: false,
-          cooldowns: {},  // MISSING - needed for status effects
-          effects: {},    // MISSING - needed for status effects
-          debuffs: {}     // MISSING - needed for status effects
+          used: false, 
+          cooldowns: {},
+          effects: {},
+          debuffs: {}
         };
       }
     });
@@ -1382,15 +1164,7 @@ const cardDatabase = {
     
     // Use next available card from reserve
     const cardToPlace = computerReserve[placedCount];
-    computerSlots[targetSlot] = { 
-      card: cardToPlace, 
-      hp: MAX_HP, 
-      defending: false, 
-      used: false,
-      cooldowns: {},  // MISSING - needed for status effects
-      effects: {},    // MISSING - needed for status effects
-      debuffs: {}     // MISSING - needed for status effects
-    };
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false };
     
     renderAll();
     addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
@@ -1478,109 +1252,6 @@ const cardDatabase = {
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
   }
-
-  // Status effect application function
-function applyStatusEffect(target, attack, targetSlotEl) {
-  if(!attack.effect) return;
-  
-  target.effects = target.effects || {};
-  
-  switch(attack.effect) {
-    case 'poison':
-      target.effects.poison = {
-        duration: attack.duration || 3,
-        damagePerTurn: attack.damagePerTurn || 5
-      };
-      showStatusPopup(targetSlotEl, '☠️ POISONED', '#8A2BE2');
-      addLog('system', `${target.card.name} is poisoned for ${attack.duration} turns!`);
-      break;
-      
-    case 'sleep':
-      target.effects.sleep = attack.duration || 2;
-      showStatusPopup(targetSlotEl, '💤 SLEEPING', '#4169E1');
-      addLog('system', `${target.card.name} falls asleep for ${attack.duration} turns!`);
-      break;
-      
-    case 'weakness':
-      target.effects.weakness = {
-        duration: attack.duration || 2,
-        reduction: attack.damageReduction || 10
-      };
-      showStatusPopup(targetSlotEl, '💪 WEAKENED', '#FF6347');
-      addLog('system', `${target.card.name} is weakened for ${attack.duration} turns!`);
-      break;
-      
-    case 'stun':
-      target.effects.sleep = attack.duration || 1; // Stun is like sleep for 1 turn
-      showStatusPopup(targetSlotEl, '⚡ STUNNED', '#FFD700');
-      addLog('system', `${target.card.name} is stunned for ${attack.duration || 1} turn!`);
-      break;
-  }
-}
-
-// Status effect popup function
-function showStatusPopup(container, text, color){
-  const popup = document.createElement('div'); 
-  popup.className='status-pop'; 
-  popup.style.color = color || '#ff4444'; 
-  popup.textContent = text;
-  popup.style.left = '50%'; 
-  popup.style.top = '10%';
-  container.style.position = 'relative';
-  container.appendChild(popup);
-  setTimeout(()=> popup.remove(), 1200);
-}
-
-// Process status effects at start of turn
-function processStatusEffects(slots, side) {
-  slots.forEach((slot, idx) => {
-    if(!slot || !slot.effects) return;
-    
-    // Process poison
-    if(slot.effects.poison && slot.effects.poison.duration > 0) {
-      const poisonDamage = slot.effects.poison.damagePerTurn;
-      slot.hp = Math.max(0, slot.hp - poisonDamage);
-      slot.effects.poison.duration--;
-      
-      const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
-      showDamagePopup(slotEl, poisonDamage, '#8A2BE2');
-      
-      addLog('system', `${slot.card.name} takes ${poisonDamage} poison damage!`);
-      
-      if(slot.effects.poison.duration <= 0) {
-        delete slot.effects.poison;
-        addLog('system', `${slot.card.name} recovers from poison.`);
-      }
-      
-      if(slot.hp <= 0) {
-        addLog('system', `${slot.card.name} dies from poison!`);
-        setTimeout(() => {
-          slots[idx] = null;
-          renderAll();
-          checkBattleOver();
-        }, 1000);
-      }
-    }
-    
-    // Process sleep
-    if(slot.effects.sleep && slot.effects.sleep > 0) {
-      slot.effects.sleep--;
-      if(slot.effects.sleep <= 0) {
-        delete slot.effects.sleep;
-        addLog('system', `${slot.card.name} wakes up!`);
-      }
-    }
-    
-    // Process weakness
-    if(slot.effects.weakness && slot.effects.weakness.duration > 0) {
-      slot.effects.weakness.duration--;
-      if(slot.effects.weakness.duration <= 0) {
-        delete slot.effects.weakness;
-        addLog('system', `${slot.card.name} recovers from weakness.`);
-      }
-    }
-  });
-}
 
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
