@@ -616,7 +616,6 @@ function onHandClick(index)
 // show action panel next to selected card
 function showCardActions(side, idx)
 {
-    if (side !== 'player' || !playerTurn) return;
     console.log('showCardActions called with:', {side, idx, playerTurn, turnIndicator: turnIndicator.textContent});
     
     if (side !== 'player' || !playerTurn) {
@@ -625,14 +624,12 @@ function showCardActions(side, idx)
     }
 
     // Don't show actions during setup phase
-    if (turnIndicator.textContent.includes('Setup')) return;
     if (turnIndicator.textContent.includes('Setup')) {
         console.log('Early return: still in setup phase');
         return;
     }
 
     const slot = playerSlots[idx];
-    if (!slot || slot.used) return;
     console.log('Slot data:', slot);
     
     if (!slot || slot.used) {
@@ -658,7 +655,6 @@ function showCardActions(side, idx)
 
     const slotEl = playerSlotsEl.children[idx];
     const cardEl = slotEl.querySelector('.card');
-    if (!cardEl) return;
     console.log('Card element found:', !!cardEl);
     
     if (!cardEl) {
@@ -728,8 +724,6 @@ if (!canAttack)
 
 document.body.appendChild(panel);
 currentActionPanel = panel;
-selected = { side: 'player', idx}
-;
 selected = { side: 'player', idx};
 
 console.log('Action panel created and added to DOM');
