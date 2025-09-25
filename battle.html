@@ -903,12 +903,10 @@ const cardDatabase = {
     
     setTimeout(()=>{
       // FIXED: Process status effects for computer cards
-processStatusEffects(computerSlots, 'computer');
+      processStatusEffects(computerSlots, 'computer');
 
-setTimeout(()=>{
-
-  // Reset ALL computer card used status at start of turn
-  computerSlots.forEach(slot => {
+      // Reset ALL computer card used status at start of turn
+      computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
           // Reduce cooldowns
@@ -1179,7 +1177,7 @@ setTimeout(()=>{
         statusContainer.appendChild(indicator);
       }
       
-      if(slotObj.effects.sleep && slotObj.effects.sleep > 0) {
+      if(slotObj.effects.sleep && slotObj.effects.sleep.duration > 0) {
         const indicator = document.createElement('div');
         indicator.className = 'status-effect sleep';
         indicator.textContent = slotObj.effects.sleep;
