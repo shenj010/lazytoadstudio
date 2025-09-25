@@ -278,6 +278,9 @@
   function showCardActions(side, idx){
     if(side !== 'player' || !playerTurn) return;
     
+    // Don't show actions during setup phase
+    if(turnIndicator.textContent.includes('Setup')) return;
+    
     const slot = playerSlots[idx];
     if(!slot || slot.used) return;
 
@@ -404,7 +407,7 @@
 
     hideActionPanel();
     renderAll();
-    updateTurnState();
+    // Don't call updateTurnState() - let player continue until they end turn
   }
 
   function performDefend(slotIdx){
@@ -418,7 +421,7 @@
     
     hideActionPanel();
     renderAll();
-    updateTurnState();
+    // Don't call updateTurnState() - let player continue until they end turn
   }
 
   // computer AI: attacks opposite slots, defends sometimes
@@ -700,24 +703,24 @@
 
   // computer places cards when battle starts
   function computerPlaceCards(){
-    const playerCardCount = playerSlots.filter(slot => slot !== null).length;
-    const slotsToFill = [];
-    
-    // randomly select slots to fill (same number as player has placed)
-    while(slotsToFill.length < Math.min(playerCardCount, computerReserve.length, MAX_SLOTS)){
-      const idx = Math.floor(Math.random() * MAX_SLOTS);
-      if(!slotsToFill.includes(idx)){
-        slotsToFill.push(idx);
+    const availableSlots = [];
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        availableSlots.push(i);
       }
     }
     
-    slotsToFill.forEach(idx => {
-      const card = computerReserve[Math.floor(Math.random() * computerReserve.length)];
-      computerSlots[idx] = { card, hp: MAX_HP, defending: false, used: false };
-    });
+    // Computer places all its cards (up to available slots)
+    const cardsToPlace = Math.min(computerReserve.length, availableSlots.length);
+    
+    for(let i = 0; i < cardsToPlace; i++){
+      const slotIdx = availableSlots[i];
+      const card = computerReserve[i]; // Use cards in order rather than random
+      computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false };
+    }
     
     renderAll();
-    addLog('system', `Computer placed ${slotsToFill.length} cards on the battlefield.`);
+    addLog('system', `Computer placed ${cardsToPlace} cards on the battlefield.`);
   }
 
   // helper log
@@ -756,6 +759,7 @@
   function decideFirstPlayer(){
     playerTurn = true;
     turnIndicator.textContent = 'Player Setup Phase';
+    endTurnBtn.classList.add('disabled'); // Disable end turn during setup
     addLog('system', 'Place your cards on the battlefield first.');
     // Battle will start after player places at least one card
   }
@@ -765,6 +769,8 @@
     const playerHasCards = playerSlots.some(slot => slot !== null);
     
     if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+      addLog('system', 'Computer is placing its cards...');
+      
       // Computer places its cards
       computerPlaceCards();
       
@@ -775,13 +781,15 @@
           turnIndicator.textContent = 'Player Turn';
           addLog('system', 'Battle begins! Player goes first.');
           playerTurn = true;
+          endTurnBtn.classList.remove('disabled');
         } else {
-          turnIndicator.textContent = 'Computer Turn';
+          turnIndicator.textContent = 'Computer Turn';  
           addLog('system', 'Battle begins! Computer goes first.');
           playerTurn = false;
+          endTurnBtn.classList.add('disabled');
           setTimeout(()=>computerTurn(), 1000);
         }
-      }, 800);
+      }, 1500);
     }
   }
 
