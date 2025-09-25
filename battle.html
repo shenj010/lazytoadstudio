@@ -120,109 +120,6 @@
   .log .entry{margin-bottom:6px}
   .log .player{color:var(--accent)}
   .log .computer{color:var(--danger)}
-  
-  /* NEW: Status Effects Styling */
-  .status-effects-container {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 2px;
-    z-index: 10;
-    pointer-events: none;
-  }
-  
-  .status-effect {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    background-color: rgba(0,0,0,0.7);
-    border: 1px solid #fff;
-    color: white;
-    line-height: 1;
-    position: relative;
-  }
-  
-  .status-effect.poison {
-    background-color: rgba(139, 69, 19, 0.7);
-    color: #6fff00;
-    border-color: #6fff00;
-  }
-  
-  .status-effect.stun {
-    background-color: rgba(255, 215, 0, 0.7);
-    color: white;
-    border-color: yellow;
-  }
-  
-  .status-effect.sleep {
-    background-color: rgba(100, 149, 237, 0.7);
-    color: white;
-    border-color: #6495ed;
-  }
-  
-  .status-effect.weaken {
-    background-color: rgba(128, 128, 128, 0.7);
-    color: white;
-    border-color: #aaa;
-  }
-  
-  .status-effect-turns {
-    position: absolute;
-    right: -4px;
-    bottom: -4px;
-    background: black;
-    color: white;
-    font-size: 7px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid white;
-  }
-  
-  /* Sleep ZZZ animation */
-  @keyframes sleepFloat {
-    0% { transform: translateY(0) rotate(5deg); opacity: 0; }
-    25% { opacity: 1; }
-    100% { transform: translateY(-10px) rotate(-5deg); opacity: 0; }
-  }
-  
-  .zzz {
-    position: absolute;
-    top: 5px;
-    right: 3px;
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
-    text-shadow: 1px 1px 1px black;
-    animation: sleepFloat 2s infinite;
-    pointer-events: none;
-  }
-  
-  .zzz:nth-child(2) {
-    font-size: 10px;
-    top: 12px;
-    right: 10px;
-    animation-delay: 0.6s;
-  }
-  
-  .zzz:nth-child(3) {
-    font-size: 8px;
-    top: 18px;
-    right: 15px;
-    animation-delay: 1.2s;
-  }
-  
   /* small responsive */
   @media (max-width:900px){
     .area{flex-direction:column;gap:8px}
@@ -510,12 +407,6 @@
     const slot = playerSlots[idx];
     if(!slot || slot.used) return;
 
-    // Check if card is stunned or sleeping
-    if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
-      addLog('system', `${slot.card.name} cannot act due to status effect!`);
-      return;
-    }
-    
     hideActionPanel();
     clearSelections();
 
@@ -857,8 +748,7 @@
     
     // Option 2: Use existing cards to attack or defend
     const activeSlots = computerSlots.map((slot, idx) => 
-      slot && slot.hp > 0 && !slot.used && 
-      !hasStatusEffect(slot, 'stun') && !hasStatusEffect(slot, 'sleep') ? idx : -1
+      slot && slot.hp > 0 && !slot.used ? idx : -1
     ).filter(idx => idx !== -1);
 
     if(activeSlots.length === 0){
@@ -893,10 +783,7 @@
 
     // Continue with next action after delay if there are more unused cards
     setTimeout(()=> {
-      const remainingActive = computerSlots.filter(slot => 
-        slot && slot.hp > 0 && !slot.used && 
-        !hasStatusEffect(slot, 'stun') && !hasStatusEffect(slot, 'sleep')
-      );
+      const remainingActive = computerSlots.filter(slot => slot && slot.hp > 0 && !slot.used);
       if(remainingActive.length > 0) {
         performComputerActions();
       } else {
@@ -1045,13 +932,6 @@
     // Add status effect to target
     if(!target.statusEffects) target.statusEffects = [];
     
-    // Check if same effect already exists, if so just refresh duration
-    const existingEffect = target.statusEffects.find(e => e.type === effect);
-    if (existingEffect) {
-      existingEffect.turnsRemaining = Math.max(existingEffect.turnsRemaining, duration);
-      return;
-    }
-    
     const statusEffect = {
       type: effect,
       duration: duration,
@@ -1131,7 +1011,7 @@
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
-    return slot.statusEffects.some(effect => effect.type === effectType && effect.turnsRemaining > 0);
+    return slot.statusEffects.some(effect => effect.type === effectType);
   }
 
   // create flying projectile animation
@@ -1216,68 +1096,6 @@
       wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
     }
     
-    // NEW: Add status effect indicators
-    if(slotObj.statusEffects && slotObj.statusEffects.length > 0) {
-      // Create container for status effect icons
-      const statusContainer = document.createElement('div');
-      statusContainer.className = 'status-effects-container';
-      
-      // Add each status effect
-      slotObj.statusEffects.forEach(effect => {
-        if(effect.turnsRemaining <= 0) return;
-        
-        // Special handling for sleep (ZZZ animation)
-        if(effect.type === 'sleep') {
-          // Add ZZZ animations
-          const z1 = document.createElement('div');
-          z1.className = 'zzz';
-          z1.textContent = 'Z';
-          
-          const z2 = document.createElement('div');
-          z2.className = 'zzz';
-          z2.textContent = 'Z';
-          
-          const z3 = document.createElement('div');
-          z3.className = 'zzz';
-          z3.textContent = 'Z';
-          
-          wrap.appendChild(z1);
-          wrap.appendChild(z2);
-          wrap.appendChild(z3);
-        }
-        
-        // Create status effect icon
-        const statusEl = document.createElement('div');
-        statusEl.className = `status-effect ${effect.type}`;
-        
-        // Set icon based on effect type
-        switch(effect.type) {
-          case 'poison':
-            statusEl.innerHTML = '☠';
-            break;
-          case 'stun':
-            statusEl.innerHTML = '⚡';
-            break;
-          case 'sleep':
-            statusEl.innerHTML = '💤';
-            break;
-          case 'weaken':
-            statusEl.innerHTML = '↓';
-            break;
-        }
-        
-        // Add turns counter
-        const turnsEl = document.createElement('div');
-        turnsEl.className = 'status-effect-turns';
-        turnsEl.textContent = effect.turnsRemaining;
-        statusEl.appendChild(turnsEl);
-        
-        statusContainer.appendChild(statusEl);
-      });
-      
-      wrap.appendChild(statusContainer);
-    }
-    
     wrap.dataset.owner = owner;
     wrap.dataset.slot = slotIndex;
     wrap._hpEl = stats.querySelector('.card-hp');
@@ -1291,9 +1109,6 @@
     const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
     if(slot && slotEl.firstChild){
       slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-      
-      // Also update the status effects
-      renderAll();
     }
     updateGlobalHPUI();
   }
@@ -1303,10 +1118,7 @@
     if(!playerTurn) return;
     
     // Check if any player cards can still act
-    const canAct = playerSlots.some(slot => 
-      slot && slot.hp > 0 && !slot.used && 
-      !hasStatusEffect(slot, 'stun') && !hasStatusEffect(slot, 'sleep')
-    );
+    const canAct = playerSlots.some(slot => slot && slot.hp > 0 && !slot.used);
     
     if(!canAct){
       // All player cards have acted or are dead
@@ -1397,4 +1209,133 @@
     
     targetSlots.forEach((slotIdx, i) => {
       if(i < computerReserve.length){
-        const card = computerReserve[
+        const card = computerReserve[i];
+        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
+      }
+    });
+    
+    renderAll();
+    addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+  }
+
+  // computer strategic card placement during battle
+  function computerPlaceCard(){
+    const emptySlots = [];
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
+    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
+    
+    // Count how many cards computer has already placed
+    const placedCount = computerSlots.filter(slot => slot !== null).length;
+    if(placedCount >= computerReserve.length) return false;
+    
+    // Strategic placement: prefer slots opposite player cards, or random if none
+    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
+    const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
+    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
+                      emptySlots[Math.floor(Math.random() * emptySlots.length)];
+    
+    // Use next available card from reserve
+    const cardToPlace = computerReserve[placedCount];
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
+    
+    renderAll();
+    addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
+    return true;
+  }
+
+  // helper log
+  function addLog(type, text){
+    const div = document.createElement('div'); 
+    div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); 
+    div.textContent = text;
+    logEl.appendChild(div); 
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // click outside to hide action panel
+  document.addEventListener('click', (e) => {
+    if(currentActionPanel && !currentActionPanel.contains(e.target) && 
+       !e.target.closest('.slot') && !e.target.closest('.card')){
+      hideActionPanel();
+      clearSelections();
+    }
+  });
+
+  // keyboard support
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      hideActionPanel();
+      clearSelections();
+    }
+    if(e.key === ' ' || e.key === 'Enter'){
+      if(playerTurn && !endTurnBtn.classList.contains('disabled')){
+        endTurnBtn.click();
+        e.preventDefault();
+      }
+    }
+  });
+
+  // choose starting player - always start with player during setup phase
+  function decideFirstPlayer(){
+    playerTurn = true;
+    turnIndicator.textContent = 'Player Setup Phase';
+    endTurnBtn.classList.add('disabled'); // Disable end turn during setup
+    addLog('system', 'Place your cards on the battlefield first.');
+    // Battle will start after player places at least one card
+  }
+
+  // check if battle can begin
+  function checkBattleStart(){
+    const playerHasCards = playerSlots.some(slot => slot !== null);
+    
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+      addLog('system', 'Computer is ready to battle...');
+      
+      // Computer places 1-2 initial cards strategically
+      computerInitialPlacement();
+      
+      // Start actual battle after a brief delay
+      setTimeout(() => {
+        const firstPlayer = Math.random() < 0.5;
+        if(firstPlayer){
+          turnIndicator.textContent = 'Player Turn';
+          addLog('system', 'Battle begins! Player goes first.');
+          playerTurn = true;
+          endTurnBtn.classList.remove('disabled');
+        } else {
+          turnIndicator.textContent = 'Computer Turn';  
+          addLog('system', 'Battle begins! Computer goes first.');
+          playerTurn = false;
+          endTurnBtn.classList.add('disabled');
+          setTimeout(()=>computerTurn(), 1000);
+        }
+      }, 1500);
+    }
+  }
+
+  // initialization
+  function init(){
+    makeSlotsUI();
+    loadPlayerInventory();
+    buildComputerReserve();
+    fillComputerSlots(); // This now just initializes empty slots
+    renderAll(); // This should show the player's hand
+    decideFirstPlayer(); // This now starts in setup phase
+    addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
+    addLog('system','The battle will begin once you place your first card.');
+  }
+
+  // expose for debugging
+  window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
+
+  init();
+
+})();
+</script>
+</body>
+</html>
