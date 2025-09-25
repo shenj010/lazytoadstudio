@@ -115,6 +115,25 @@
   
   .die{animation:dieFade 600ms ease forwards}
   @keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
+  
+  /* Status Effect Visual Indicators */
+  .status-effects-container{position:absolute;top:2px;right:2px;display:flex;flex-direction:column;gap:2px;z-index:10;pointer-events:none}
+  .status-effect{display:flex;align-items:center;background:rgba(0,0,0,0.8);border:1px solid #fff;border-radius:3px;padding:1px 3px;font-size:8px;color:#fff}
+  .status-effect.poison{background:rgba(139,69,19,0.9);border-color:#8B4513}
+  .status-effect.sleep{background:rgba(72,61,139,0.9);border-color:#483D8B}
+  .status-effect.stun{background:rgba(255,215,0,0.9);border-color:#FFD700;color:#000}
+  .status-effect.weaken{background:rgba(220,20,60,0.9);border-color:#DC143C}
+  .status-icon{margin-right:2px;font-size:10px}
+  .status-turns{font-size:7px;min-width:8px;text-align:center}
+  
+  /* Sleep ZZZ floating animation */
+  @keyframes floatingZZZ{0%{transform:translateY(0px);opacity:1}50%{transform:translateY(-8px);opacity:0.7}100%{transform:translateY(-16px);opacity:0}}
+  .zzz-animation{position:absolute;top:-10px;right:50%;font-size:12px;color:#483D8B;animation:floatingZZZ 2s ease-in-out infinite;pointer-events:none}
+  
+  /* Stunned/Sleeping card overlay */
+  .card.stunned::after{content:'STUNNED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,215,0,0.9);color:#000;padding:2px 6px;font-size:7px;border-radius:3px;pointer-events:none;font-weight:bold}
+  .card.sleeping::after{content:'SLEEPING';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(72,61,139,0.9);color:#fff;padding:2px 6px;font-size:7px;border-radius:3px;pointer-events:none;font-weight:bold}
+  
   /* log */
   .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
   .log .entry{margin-bottom:6px}
@@ -406,6 +425,17 @@
     
     const slot = playerSlots[idx];
     if(!slot || slot.used) return;
+    
+    // Check if card is stunned or sleeping - prevent actions
+    if(hasStatusEffect(slot, 'stun')) {
+      addLog('system', `${slot.card.name} is stunned and cannot act!`);
+      return;
+    }
+    
+    if(hasStatusEffect(slot, 'sleep')) {
+      addLog('system', `${slot.card.name} is sleeping and cannot act!`);
+      return;
+    }
 
     hideActionPanel();
     clearSelections();
@@ -941,6 +971,8 @@
     
     target.statusEffects.push(statusEffect);
     
+    console.log(`Applied ${effect} status effect to ${target.card.name} for ${duration} turns`);
+    
     // Log the effect
     const effectMessages = {
       stun: `${target.card.name} is stunned and cannot act!`,
@@ -952,6 +984,9 @@
     if(effectMessages[effect]) {
       addLog('system', effectMessages[effect]);
     }
+    
+    // Trigger visual update
+    renderAll();
   }
 
   // process status effects at the start of each turn
@@ -1080,6 +1115,20 @@
     wrap.style.height='120px';
     wrap.style.position = 'relative';
     
+    // Add status effect classes for visual feedback
+    if(hasStatusEffect(slotObj, 'stun')) {
+      wrap.classList.add('stunned');
+    }
+    if(hasStatusEffect(slotObj, 'sleep')) {
+      wrap.classList.add('sleeping');
+      
+      // Add floating ZZZ animation for sleep
+      const zzzEl = document.createElement('div');
+      zzzEl.className = 'zzz-animation';
+      zzzEl.textContent = 'ZZZ';
+      wrap.appendChild(zzzEl);
+    }
+    
     const img = document.createElement('img'); 
     img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
@@ -1091,6 +1140,12 @@
     wrap.appendChild(img); 
     wrap.appendChild(stats);
     
+    // Add status effects container
+    const statusContainer = createStatusEffectsContainer(slotObj);
+    if(statusContainer) {
+      wrap.appendChild(statusContainer);
+    }
+    
     // defending glow
     if(slotObj.defending){
       wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
@@ -1101,6 +1156,42 @@
     wrap._hpEl = stats.querySelector('.card-hp');
 
     return wrap;
+  }
+
+  // create status effects visual container
+  function createStatusEffectsContainer(slotObj) {
+    if(!slotObj.statusEffects || slotObj.statusEffects.length === 0) {
+      return null;
+    }
+    
+    const container = document.createElement('div');
+    container.className = 'status-effects-container';
+    
+    const statusIcons = {
+      poison: '☠️',
+      sleep: '💤', 
+      stun: '⚡',
+      weaken: '↓'
+    };
+    
+    slotObj.statusEffects.forEach(effect => {
+      const effectEl = document.createElement('div');
+      effectEl.className = `status-effect ${effect.type}`;
+      
+      const iconEl = document.createElement('span');
+      iconEl.className = 'status-icon';
+      iconEl.textContent = statusIcons[effect.type] || '?';
+      
+      const turnsEl = document.createElement('span');
+      turnsEl.className = 'status-turns';
+      turnsEl.textContent = effect.turnsRemaining;
+      
+      effectEl.appendChild(iconEl);
+      effectEl.appendChild(turnsEl);
+      container.appendChild(effectEl);
+    });
+    
+    return container;
   }
 
   // update slot UI
