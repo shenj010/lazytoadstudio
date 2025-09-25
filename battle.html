@@ -9,7 +9,7 @@
   :root{
     --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
     --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
-  }
+ }
   html, body{height:100%; margin: 0; font-family:'Press Start 2P','DotGothic16',monospace; background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3)); color:#fff;overflow:hidden}
   .wrap{ position: relative; width: 100%; height: 100%; display: flex; flex-direction:column; align-items:center; justify-content:flex-start; padding: 14px; box-sizing:border-box}
   .header{width:100%; text-align:center; margin-bottom:8px; z-index:5}
@@ -58,31 +58,31 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
   /* turn indicator */
   .turn-indicator{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); border: 2px solid var(--accent); padding: 8px 16px; border-radius:6px; font-size:12px; z-index:60}
   /* attack animations */
-  .attacking-forward{ animation: attackForward 1000ms ease-in-out forwards; z-index: 1000; }
+  .attacking-forward{ animation: attackForward 1000ms ease-in-out forwards; z-index: 1000;}
                                         @keyframes attackForward{
                                             0%{ transform: translateY(0) scale(1) rotateZ(0deg)}
                                             25%{ transform: translateY(80px) scale(1.2) rotateZ(5deg)}
                                             50%{ transform: translateY(160px) scale(1.3) rotateZ(-3deg)}
                                             75%{ transform: translateY(200px) scale(1.1) rotateZ(2deg)}
                                             100%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                        }
+                                       }
   
-  .attacking-backward{ animation: attackBackward 1000ms ease-in-out forwards; z-index: 1000; }
+  .attacking-backward{ animation: attackBackward 1000ms ease-in-out forwards; z-index: 1000;}
                                         @keyframes attackBackward{
                                             0%{ transform: translateY(0) scale(1) rotateZ(0deg)}
                                             25%{ transform: translateY(-80px) scale(1.2) rotateZ(-5deg)}
                                             50%{ transform: translateY(-160px) scale(1.3) rotateZ(3deg)}
                                             75%{ transform: translateY(-200px) scale(1.1) rotateZ(-2deg)}
                                             100%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                        }
+                                       }
   
   /* flying projectile animation */
-  .flying-attack{ animation: flyToTarget 800ms ease-in-out forwards; z-index: 2000; position: absolute; }
+  .flying-attack{ animation: flyToTarget 800ms ease-in-out forwards; z-index: 2000; position: absolute;}
                                         @keyframes flyToTarget{
-                                            0%{ transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 1; }
-                                            50%{ transform: translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg); opacity: 0.8; }
-                                            100%{ transform: translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg); opacity: 0; }
-                                        }
+                                            0%{ transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 1;}
+                                            50%{ transform: translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg); opacity: 0.8;}
+                                            100%{ transform: translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg); opacity: 0;}
+                                       }
   
   /* defend animation */
   .defending-anim{ animation: defendPulse 600ms ease-in-out forwards}
@@ -90,7 +90,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
                                             0%{ transform: scale(1); box-shadow:0 0 0 rgba(56, 239, 125, 0.8)}
                                             50%{ transform: scale(1.08); box-shadow:0 0 20px rgba(56,239,125,0.8)}
                                             100%{ transform: scale(1); box-shadow:0 0 10px rgba(56,239,125,0.6)}
-                                        }
+                                       }
   
   /* damage popup */
   .dmg-pop{
@@ -100,7 +100,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
                                                 20%{ transform: translateY(-10px) translateX(-50%) scale(1.2); opacity: 1}
                                                 60%{ transform: translateY(-40px) translateX(-50%) scale(1); opacity: 1}
                                                 100%{ transform: translateY(-70px) translateX(-50%) scale(0.8); opacity: 0}
-                                            }
+                                           }
   
   /* hit effects */
   .hit{ animation: hitShake 400ms ease-out forwards}
@@ -113,7 +113,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
                                                 50%{ transform: translateX(-2px) rotateZ(-0.5deg)}
                                                 60%{ transform: translateX(1px) rotateZ(0.2deg)}
                                                 100%{ transform: translateX(0) rotateZ(0deg)}
-                                            }
+                                           }
   
   .flash{ animation: flashHit 300ms ease-out forwards}
                                             @keyframes flashHit{
@@ -122,10 +122,10 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
                                                 50%{ filter: brightness(1.5) contrast(1.2) saturate(0.2)}
                                                 75%{ filter: brightness(1.3) contrast(1.1) saturate(0.6)}
                                                 100%{ filter: brightness(1) contrast(1) saturate(1)}
-                                            }
+                                           }
   
   .die{ animation: dieFade 600ms ease forwards}
-                                            @keyframes dieFade{ 0%{ opacity: 1; transform: scale(1) rotateZ(0deg)} 100%{ opacity: 0; transform: scale(0.3) rotateZ(15deg)} }
+                                            @keyframes dieFade{ 0%{ opacity: 1; transform: scale(1) rotateZ(0deg)} 100%{ opacity: 0; transform: scale(0.3) rotateZ(15deg)}}
   
   /* Status Effect Indicators */
   .status-effects {
@@ -135,7 +135,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     display: flex;
     gap: 2px;
     z-index: 10;
-  }
+ }
   
   .status-effect {
     background: rgba(0, 0, 0, 0.8);
@@ -147,40 +147,40 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     display: flex;
     align-items: center;
     gap: 2px;
-  }
+ }
   
   .status-effect.poison {
     background: rgba(139, 69, 19, 0.9);
     border-color: #8B4513;
     animation: poisonPulse 2s infinite;
-  }
+ }
   
   .status-effect.sleep {
     background: rgba(70, 130, 180, 0.9);
     border-color: #4682B4;
-  }
+ }
   
   .status-effect.stun {
     background: rgba(255, 215, 0, 0.9);
     border-color: #FFD700;
     color: #000;
     animation: stunFlash 1s infinite;
-  }
+ }
   
   .status-effect.weaken {
     background: rgba(128, 0, 128, 0.9);
     border-color: #800080;
-  }
+ }
   
   @keyframes poisonPulse {
-    0%, 100% { opacity: 0.8; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-  }
+    0%, 100% { opacity: 0.8; transform: scale(1);}
+    50% { opacity: 1; transform: scale(1.05);}
+ }
   
   @keyframes stunFlash {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
-  }
+    0%, 100% { opacity: 0.7;}
+    50% { opacity: 1;}
+ }
   
   /* Floating ZZZ animation for sleep */
   .sleep-zzz {
@@ -192,15 +192,15 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     animation: floatingZZZ 3s infinite;
     pointer-events: none;
     z-index: 15;
-  }
+ }
   
   @keyframes floatingZZZ {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    25% { transform: translateY(-8px) rotate(-5deg); opacity: 0.8; }
-    50% { transform: translateY(-16px) rotate(5deg); opacity: 0.6; }
-    75% { transform: translateY(-24px) rotate(-3deg); opacity: 0.4; }
-    100% { transform: translateY(-32px) rotate(0deg); opacity: 0; }
-  }
+    0% { transform: translateY(0) rotate(0deg); opacity: 1;}
+    25% { transform: translateY(-8px) rotate(-5deg); opacity: 0.8;}
+    50% { transform: translateY(-16px) rotate(5deg); opacity: 0.6;}
+    75% { transform: translateY(-24px) rotate(-3deg); opacity: 0.4;}
+    100% { transform: translateY(-32px) rotate(0deg); opacity: 0;}
+ }
   /* log */
   .log{
                                             position: fixed; right: 14px; top: 70px; width: 250px; height: 340px; background: rgba(0, 0, 0, .6); border: 2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
@@ -212,7 +212,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     .area{ flex-direction:column; gap: 8px}
     .player-info{ min-width:140px}
     .slots{ flex-wrap:wrap}
-                                                }
+                                               }
 </style>
 </head>
 <body>
@@ -284,47 +284,47 @@ const cardPool = [
       hp: 80,
       attacks:
 [
-        { name: "Hidden Strike", damage: 10, type: "physical", effect: "stun", duration: 1, description: "Fast slice hits your opponent for 10 points. Stun opponent for one turn." }
+        { name: "Hidden Strike", damage: 10, type: "physical", effect: "stun", duration: 1, description: "Fast slice hits your opponent for 10 points. Stun opponent for one turn."}
       ]
-    },
+   },
     {
 src: "images/cards/horny toad card format.jpg", 
       name: "Horny Toad",
       hp: 80,
       attacks:
     [
-        { name: "Piercing Strike", damage: 20, type: "physical", description: "A devastating, surgical strike deals 20 damage to your opponent." }
+        { name: "Piercing Strike", damage: 20, type: "physical", description: "A devastating, surgical strike deals 20 damage to your opponent."}
       ]
-    },
+   },
     {
 src: "images/cards/hypno toad card format.jpg", 
       name: "Hypno Toad",
       hp: 80,
       attacks:
     [
-        { name: "Hypnotize", damage: 0, type: "mental", effect: "sleep", duration: 2, description: "Send the opponent to sleep for 2 turns." },
-        { name: "Poison Dart", damage: 5, type: "poison", effect: "poison", duration: 5, description: "Poisons your opponent for 5 turns, 5 damage per turn." }
+        { name: "Hypnotize", damage: 0, type: "mental", effect: "sleep", duration: 2, description: "Send the opponent to sleep for 2 turns."},
+        { name: "Poison Dart", damage: 5, type: "poison", effect: "poison", duration: 5, description: "Poisons your opponent for 5 turns, 5 damage per turn."}
       ]
-    },
+   },
     {
 src: "images/cards/sumo toad card format.jpg", 
       name: "Sumo Toad",
       hp: 80,
       attacks:
     [
-        { name: "Oshidashi", damage: 10, type: "physical", effect: "weaken", duration: 1, description: "Use sheer force to damage your enemy for 10 and reduce their next attack by 10." }
+        { name: "Oshidashi", damage: 10, type: "physical", effect: "weaken", duration: 1, description: "Use sheer force to damage your enemy for 10 and reduce their next attack by 10."}
       ]
-    },
+   },
     {
 src: "images/cards/mad toad card format.jpg", 
       name: "Mad Toad",
       hp: 80,
       attacks:
     [
-        { name: "Flasher", damage: 0, type: "mental", effect: "stun", duration: 1, description: "Stun your opponent for one turn." },
-        { name: "Bubble Slam", damage: 10, type: "physical", description: "A rear-end first slam hitting opponent for ten points." }
+        { name: "Flasher", damage: 0, type: "mental", effect: "stun", duration: 1, description: "Stun your opponent for one turn."},
+        { name: "Bubble Slam", damage: 10, type: "physical", description: "A rear-end first slam hitting opponent for ten points."}
       ]
-    }
+   }
   ];
 
 // state
@@ -361,7 +361,7 @@ function makeSlotsUI()
         const cs = document.createElement('div'); cs.className = 'slot'; cs.dataset.i = i; cs.dataset.side = 'computer';
         cs.addEventListener('click', () => onSlotClick('computer', i));
         computerSlotsEl.appendChild(cs);
-    }
+   }
 }
 
 // load player's collected cards
@@ -371,8 +371,8 @@ function loadPlayerInventory()
     try
     {
         stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
-    }
-    catch (e) { stored = []; }
+   }
+    catch (e) { stored = [];}
     // If stored is empty, fall back to cardPool
     if (!stored || stored.length === 0) stored = [...cardPool];
     playerHand = stored.slice(0, 10); // cap hand size
@@ -386,7 +386,7 @@ function buildComputerReserve()
     for (let i = 0; i < playerCardCount; i++)
     {
         cp.push(cardPool[Math.floor(Math.random() * cardPool.length)]);
-    }
+   }
     computerReserve = cp;
 }
 
@@ -397,7 +397,7 @@ function renderHand()
     playerHand.forEach((card, idx) => {
         const c = createHandCardEl(card, idx);
         playerHandEl.appendChild(c);
-    });
+   });
 
     // Show computer's hand as card backs
     computerHandEl.innerHTML = '';
@@ -406,7 +406,7 @@ function renderHand()
     {
         const c = createCardBackEl();
         computerHandEl.appendChild(c);
-    }
+   }
 }
 
 function createCardBackEl()
@@ -443,7 +443,7 @@ el.appendChild(img); el.appendChild(stats);
 const wrap = document.createElement('div'); wrap.style.width = '86px'; wrap.style.height = '120px';
 wrap.appendChild(el);
 return wrap;
-  }
+ }
 
   function createReserveCardEl(card, idx)
 {
@@ -470,7 +470,7 @@ function onSlotClick(side, idx)
             if (playerSlots[idx] === null)
             {
                 const card = playerHand.splice(selected.index, 1)[0];
-                playerSlots[idx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [] }
+                playerSlots[idx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: []}
                 ;
                 selected = null;
                 renderAll();
@@ -478,8 +478,8 @@ function onSlotClick(side, idx)
 
                 // Check if battle can start now
                 checkBattleStart();
-            }
-        }
+           }
+       }
         else
         {
             // show actions for this slot card if it's the player's turn and card exists
@@ -487,9 +487,9 @@ function onSlotClick(side, idx)
             {
                 hideActionPanel();
                 showCardActions('player', idx);
-            }
-        }
-    }
+           }
+       }
+   }
     else
     {
         // computer side - just for targeting (handled in attack action)
@@ -499,19 +499,19 @@ function onSlotClick(side, idx)
             clearSelections();
             const slotEl = computerSlotsEl.children[idx];
             if (slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
-        }
-    }
+       }
+   }
 }
 
 function onHandClick(index)
 {
     hideActionPanel();
     clearSelections();
-    selected = { type: 'hand', index }
+    selected = { type: 'hand', index}
     ;
     document.querySelectorAll('#playerHand .card').forEach((c, i) => {
         if (i === index) c.classList.add('selected'); else c.classList.remove('selected');
-    });
+   });
 }
 
 // show action panel next to selected card
@@ -534,8 +534,8 @@ function showCardActions(side, idx)
             const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
             addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
             return;
-        }
-    }
+       }
+   }
 
     hideActionPanel();
     clearSelections();
@@ -562,12 +562,12 @@ function showCardActions(side, idx)
     // Create attack buttons for each attack the card has
     slot.card.attacks.forEach((attack, attackIndex) => {
         const attackBtn = document.createElement('div');
-        attackBtn.className = `btn ${ !canAttack && attack.damage > 0 ? 'disabled' : ''}`;
+        attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
 
         // Format button text with damage and effect info
         let buttonText = attack.name;
-        if (attack.damage > 0) buttonText += ` (${ attack.damage})`;
-    if (attack.effect) buttonText += ` [${ attack.effect.toUpperCase()}]`;
+        if (attack.damage > 0) buttonText += ` (${attack.damage})`;
+        if (attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
 
     attackBtn.textContent = buttonText;
     attackBtn.title = attack.description; // Tooltip with full description
@@ -576,8 +576,8 @@ function showCardActions(side, idx)
         if (canAttack || attack.damage === 0)
         {
             performUniqueAttack(idx, attackIndex);
-        }
-    });
+       }
+   });
 
     panel.appendChild(attackBtn);
 });
@@ -603,9 +603,9 @@ if (!canAttack)
 
 document.body.appendChild(panel);
 currentActionPanel = panel;
-selected = { side: 'player', idx }
+selected = { side: 'player', idx}
 ;
-  }
+ }
 
   function hideActionPanel()
 {
@@ -613,7 +613,7 @@ selected = { side: 'player', idx }
     {
         currentActionPanel.remove();
         currentActionPanel = null;
-    }
+   }
 }
 
 function clearSelections()
@@ -650,7 +650,7 @@ function performUniqueAttack(attackerIdx, attackIndex)
       damage: attack.damage,
       effect: attack.effect,
       target: target.card.name
-    });
+   });
 
     // Apply defend reduction if active
     let finalDmg = attack.damage;
@@ -659,7 +659,7 @@ function performUniqueAttack(attackerIdx, attackIndex)
         finalDmg = Math.ceil(finalDmg / 2);
         target.defending = false;
         addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
+   }
 
     // Create flying projectile animation
     if (attackerCardEl && targetCardEl && finalDmg > 0)
@@ -675,16 +675,12 @@ function performUniqueAttack(attackerIdx, attackIndex)
         targetCardEl.classList.add('hit', 'flash');
         setTimeout(() => {
             targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
+       }, 400);
 
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
 
-        addLog('player', `${ attacker.card.name}
-        uses ${ attack.name}
-        on ${ target.card.name}
-        for ${ damageToApply}
-        damage`);
+        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
 
         // Apply status effects
         applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
@@ -698,21 +694,19 @@ function performUniqueAttack(attackerIdx, attackIndex)
                     computerSlots[targetIdx] = null;
                     renderAll();
                     checkBattleOver();
-                }, 600);
-            }, 200);
-        }
+               }, 600);
+           }, 200);
+       }
         else
         {
             updateSlotUI('computer', targetIdx);
             checkBattleOver();
-        }
-    }, finalDmg);
+       }
+   }, finalDmg);
 } else
 {
     // No damage attack (like stun/sleep) - apply effects immediately
-    addLog('player', `${ attacker.card.name}
-    uses ${ attack.name}
-    on ${ target.card.name}`);
+    addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
     applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
 
     // Apply poison damage if it's a poison attack
@@ -721,9 +715,7 @@ function performUniqueAttack(attackerIdx, attackIndex)
         setTimeout(() => {
             showDamagePopup(targetSlotEl, attack.damage, '#8B4513');
             target.hp = Math.max(0, target.hp - attack.damage);
-            addLog('system', `${ target.card.name}
-            takes ${ attack.damage}
-            poison damage`);
+            addLog('system', `${target.card.name} takes ${attack.damage} poison damage`);
 
         if (target.hp <= 0)
         {
@@ -733,24 +725,24 @@ function performUniqueAttack(attackerIdx, attackIndex)
                     computerSlots[targetIdx] = null;
                     renderAll();
                     checkBattleOver();
-                }, 600);
-            }, 200);
-        }
+               }, 600);
+           }, 200);
+       }
         else
         {
             updateSlotUI('computer', targetIdx);
             checkBattleOver();
-        }
-    }, 500);
+       }
+   }, 500);
 } else
 {
     checkBattleOver();
 }
-    }
+   }
 
     hideActionPanel();
 renderAll();
-  }
+ }
 
   // perform attack on opposite slot (legacy function for compatibility)
   function performAttack(attackerIdx, damage)
@@ -779,7 +771,7 @@ renderAll();
       originalDamage: damage,
       attackerName: attacker.card.name,
       targetName: target.card.name
-    });
+   });
 
     // Apply defend reduction if active
     let finalDmg = damage;
@@ -787,9 +779,9 @@ renderAll();
     {
         finalDmg = Math.ceil(finalDmg / 2);
         target.defending = false;
-        addLog('system', `${ target.card.name}
+        addLog('system', `${target.card.name}
         defended – reduced damage!`);
-    }
+   }
 
     // Create flying projectile animation
     if (attackerCardEl && targetCardEl)
@@ -805,15 +797,12 @@ renderAll();
         targetCardEl.classList.add('hit', 'flash');
         setTimeout(() => {
             targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
+       }, 400);
 
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
 
-        addLog('player', `${ attacker.card.name}
-        hits ${ target.card.name}
-        for ${ damageToApply}
-        damage`);
+        addLog('player', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
 
         // Death check
         if (target.hp <= 0)
@@ -824,42 +813,39 @@ renderAll();
                     computerSlots[targetIdx] = null;
                     renderAll();
                     checkBattleOver();
-                }, 600);
-            }, 200);
-        }
+               }, 600);
+           }, 200);
+       }
         else
         {
             updateSlotUI('computer', targetIdx);
             checkBattleOver();
-        }
-    }, finalDmg);
+       }
+   }, finalDmg);
 } else
 {
     // Fallback if elements not found
     setTimeout(() => {
     showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
     target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('player', `${ attacker.card.name}
-    hits ${ target.card.name}
-    for ${ finalDmg}
-    damage`);
+    addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
     if (target.hp <= 0)
     {
         computerSlots[targetIdx] = null;
         renderAll();
         checkBattleOver();
-    }
+   }
     else
     {
         updateSlotUI('computer', targetIdx);
         checkBattleOver();
-    }
+   }
 }, 300);
-    }
+   }
 
     hideActionPanel();
 renderAll();
-  }
+ }
 
   function performDefend(slotIdx)
 {
@@ -876,9 +862,9 @@ renderAll();
     {
         cardEl.classList.add('defending-anim');
         setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
-    }
+   }
 
-    addLog('player', `${ slot.card.name}
+    addLog('player', `${slot.card.name}
     takes a defensive stance`);
 
     hideActionPanel();
@@ -906,11 +892,11 @@ function computerTurn()
             {
                 slot.used = false;
                 // Also clear any defending status from previous turns if needed
-            }
-        });
+           }
+       });
 
         performComputerActions();
-    }, 800);
+   }, 800);
 }
 
 function performComputerActions()
@@ -924,7 +910,7 @@ function performComputerActions()
         // Placed a card, continue with other actions
         setTimeout(() => performComputerActions(), 1000);
         return;
-    }
+   }
 
     // Option 2: Use existing cards to attack or defend
     const activeSlots = computerSlots.map((slot, idx) =>
@@ -935,7 +921,7 @@ function performComputerActions()
     {
         setTimeout(() => endComputerTurn(), 800);
         return;
-    }
+   }
 
     const slotIdx = activeSlots[Math.floor(Math.random() * activeSlots.length)];
     const slot = computerSlots[slotIdx];
@@ -949,24 +935,24 @@ function performComputerActions()
     if (!canAttack)
     {
         action = 'defend'; // Can't attack, so defend
-    }
+   }
     else
     {
         // Consider if this computer card might be threatened
         const isThreated = targetSlot && targetSlot.hp > 0;
         const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
         action = shouldAttack ? 'attack' : 'defend';
-    }
+   }
 
     if (action === 'attack' && canAttack)
     {
         const damage = Math.random() > 0.6 ? 10 : 5;
         performComputerAttack(slotIdx, damage);
-    }
+   }
     else
     {
         performComputerDefend(slotIdx);
-    }
+   }
 
     // Continue with next action after delay if there are more unused cards
     setTimeout(() => {
@@ -974,12 +960,12 @@ function performComputerActions()
         if (remainingActive.length > 0)
         {
             performComputerActions();
-        }
+       }
         else
         {
             endComputerTurn();
-        }
-    }, 1500);
+       }
+   }, 1500);
 }
 
 function performComputerAttack(attackerIdx, damage)
@@ -1003,16 +989,16 @@ function performComputerAttack(attackerIdx, damage)
       attackerCardEl: !!attackerCardEl,
       targetSlotEl: !!targetSlotEl,
       targetCardEl: !!targetCardEl
-    });
+   });
 
     let finalDmg = damage;
     if (target.defending)
     {
         finalDmg = Math.ceil(finalDmg / 2);
         target.defending = false;
-        addLog('system', `${ target.card.name}
+        addLog('system', `${target.card.name}
         defended – reduced damage!`);
-    }
+   }
 
     // Create flying projectile animation
     if (attackerCardEl && targetCardEl)
@@ -1028,15 +1014,12 @@ function performComputerAttack(attackerIdx, damage)
         targetCardEl.classList.add('hit', 'flash');
         setTimeout(() => {
             targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
+       }, 400);
 
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
 
-        addLog('computer', `${ attacker.card.name}
-        hits ${ target.card.name}
-        for ${ damageToApply}
-        damage`);
+        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
 
         // Death check
         if (target.hp <= 0)
@@ -1047,41 +1030,38 @@ function performComputerAttack(attackerIdx, damage)
                     playerSlots[attackerIdx] = null;
                     renderAll();
                     checkBattleOver();
-                }, 600);
-            }, 200);
-        }
+               }, 600);
+           }, 200);
+       }
         else
         {
             updateSlotUI('player', attackerIdx);
             checkBattleOver();
-        }
-    }, finalDmg);
+       }
+   }, finalDmg);
 } else
 {
     // Fallback if elements not found
     setTimeout(() => {
     showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
     target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('computer', `${ attacker.card.name}
-    hits ${ target.card.name}
-    for ${ finalDmg}
-    damage`);
+    addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
     if (target.hp <= 0)
     {
         playerSlots[attackerIdx] = null;
         renderAll();
         checkBattleOver();
-    }
+   }
     else
     {
         updateSlotUI('player', attackerIdx);
         checkBattleOver();
-    }
+   }
 }, 300);
-    }
+   }
 
     renderAll();
-  }
+ }
 
   function performComputerDefend(slotIdx)
 {
@@ -1098,9 +1078,9 @@ function performComputerAttack(attackerIdx, damage)
     {
         cardEl.classList.add('defending-anim');
         setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
-    }
+   }
 
-    addLog('computer', `${ slot.card.name}
+    addLog('computer', `${slot.card.name}
     takes a defensive stance`);
     renderAll();
 }
@@ -1117,7 +1097,7 @@ function endComputerTurn()
     // reset all player card used status
     playerSlots.forEach(slot => {
         if (slot) slot.used = false;
-    });
+   });
 
     addLog('system', 'Player turn begins');
     renderAll();
@@ -1129,7 +1109,7 @@ function showDamagePopup(container, damage, color)
     const popup = document.createElement('div');
     popup.className = 'dmg-pop';
     popup.style.color = color || '#ff4444';
-    popup.textContent = `-${ damage}`;
+    popup.textContent = `-${damage}`;
     popup.style.left = '50%';
     popup.style.top = '10%';
     container.style.position = 'relative'; // Ensure container can position the popup
@@ -1150,7 +1130,7 @@ function applyStatusEffect(target, effect, duration, attackerName)
       duration: duration,
       attacker: attackerName,
       turnsRemaining: duration
-    };
+   };
 
 target.statusEffects.push(statusEffect);
 
@@ -1160,13 +1140,13 @@ const effectMessages = {
       sleep: `${target.card.name} falls asleep!`,
       poison: `${target.card.name} is poisoned!`,
       weaken: `${target.card.name} is weakened!`
-    };
+   };
 
 if (effectMessages[effect])
 {
     addLog('system', effectMessages[effect]);
 }
-  }
+ }
 
   // process status effects at the start of each turn
   function processStatusEffects(side)
@@ -1185,28 +1165,25 @@ if (effectMessages[effect])
         {
             const poisonDmg = 5; // Poison damage per turn
             slot.hp = Math.max(0, slot.hp - poisonDmg);
-            addLog('system', `${ slot.card.name}
-            takes ${ poisonDmg}
-            poison damage`);
+            addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
 
         // Show poison damage popup
         const slotEl = slotsEl.children[idx];
         if (slotEl)
         {
             showDamagePopup(slotEl, poisonDmg, '#8B4513');
-        }
-    }
+       }
+   }
 
         // Remove expired effects
         if (effect.turnsRemaining <= 0)
     {
         const expiredMessages = {
-            stun: `${ slot.card.name} is no longer stunned!`,
-            sleep: `${ slot.card.name}
-wakes up!`,
-            poison: `${ slot.card.name} is no longer poisoned!`,
-            weaken: `${ slot.card.name} is no longer weakened!`
-          };
+            stun: `${slot.card.name} is no longer stunned!`,
+            sleep: `${slot.card.name} wakes up!`,
+            poison: `${slot.card.name} is no longer poisoned!`,
+            weaken: `${slot.card.name} is no longer weakened!`
+         };
 
 if (expiredMessages[effect.type])
 {
@@ -1214,10 +1191,10 @@ if (expiredMessages[effect.type])
 }
 
 return false; // Remove this effect
-        }
+       }
         
         return true; // Keep this effect
-      });
+     });
 
 // Update UI if HP changed
 if (slot.hp <= 0)
@@ -1228,10 +1205,10 @@ else
 {
     updateSlotUI(side, idx);
 }
-    });
+   });
 
 renderAll();
-  }
+ }
 
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType)
@@ -1275,7 +1252,7 @@ function createFlyingProjectile(fromElement, toElement, callback, damage)
     setTimeout(() => {
         projectile.remove();
         if (callback) callback(damage);
-    }, 800);
+   }, 800);
 }
 
 // render battlefield slots and global HP segments
@@ -1290,15 +1267,15 @@ function renderAll()
         {
             pSlotEl.classList.add('occupied');
             pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
-        }
+       }
         const cSlotEl = computerSlotsEl.children[i];
         cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
         if (computerSlots[i])
         {
             cSlotEl.classList.add('occupied');
             cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
-        }
-    }
+       }
+   }
     renderHand();
     updateGlobalHPUI();
 }
@@ -1320,7 +1297,7 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
     img.onerror = function() {
         this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODYiIGhlaWdodD0iODYiIHZpZXdCb3g9IjAgMCA4NiA4NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijg2IiBoZWlnaHQ9Ijg2IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjQzIiB5PSI0MyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiPk5PIElNQUdFPC90ZXh0Pgo8L3N2Zz4K';
         this.alt = `${slotObj.card.name} (Image missing)`;
-    };
+   };
 
     const stats = document.createElement('div');
     stats.className = 'stats';
@@ -1345,11 +1322,11 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
                 case 'stun': icon = '⚡'; break;
                 case 'weaken': icon = '↓'; break;
                 default: icon = '?'; break;
-            }
+           }
             
             statusEl.innerHTML = `${icon}${effect.turnsRemaining}`;
             statusContainer.appendChild(statusEl);
-        });
+       });
         
         wrap.appendChild(statusContainer);
         
@@ -1359,14 +1336,14 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
             zzzEl.className = 'sleep-zzz';
             zzzEl.textContent = 'ZZZ';
             wrap.appendChild(zzzEl);
-        }
-    }
+       }
+   }
 
     // defending glow
     if (slotObj.defending)
     {
         wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
-    }
+   }
 
     wrap.dataset.owner = owner;
     wrap.dataset.slot = slotIndex;
@@ -1382,8 +1359,8 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
     const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
     if (slot && slotEl.firstChild)
     {
-        slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${ slot.hp}`;
-    }
+        slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+   }
     updateGlobalHPUI();
 }
 
@@ -1399,7 +1376,7 @@ function updateTurnState()
     {
         // All player cards have acted or are dead
         addLog('system', 'All your cards have acted this turn');
-    }
+   }
 }
 
 // compute and render global HP segments
@@ -1423,10 +1400,10 @@ function renderSegments(container, fraction)
     {
         const s = document.createElement('div'); s.className = 'seg';
         const remain = segmentsToShow - i;
-        if (remain <= 0) { s.style.opacity = 0.12; }
-        else if (remain < 1) { s.classList.add('half'); }
+        if (remain <= 0) { s.style.opacity = 0.12;}
+        else if (remain < 1) { s.classList.add('half');}
         container.appendChild(s);
-    }
+   }
 }
 
 // check battle over
@@ -1437,9 +1414,9 @@ function checkBattleOver()
     if (!playerHas || !compHas)
     {
         const result = compHas ? 'defeat' : 'victory';
-        addLog('system', `Battle over: ${ result.toUpperCase()}`);
+        addLog('system', `Battle over: ${result.toUpperCase()}`);
         setTimeout(() => showGameOver(result), 500);
-    }
+   }
 }
 
 function showGameOver(result)
@@ -1462,7 +1439,7 @@ endTurnBtn.addEventListener('click', () => {
     if (!turnIndicator.textContent.includes('Setup'))
     {
         setTimeout(() => computerTurn(), 500);
-    }
+   }
 });
 
 // place initial computer slots - but don't fill until player places cards
@@ -1481,8 +1458,8 @@ function computerInitialPlacement()
         if (computerSlots[i] === null)
         {
             emptySlots.push(i);
-        }
-    }
+       }
+   }
 
     // Place 1-3 cards initially, focusing on slots that oppose player cards
     const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
@@ -1498,13 +1475,13 @@ function computerInitialPlacement()
         if (i < computerReserve.length)
         {
             const card = computerReserve[i];
-            computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [] }
+            computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: []}
             ;
-        }
-    });
+       }
+   });
 
     renderAll();
-    addLog('system', `Computer placed ${ targetSlots.length}
+    addLog('system', `Computer placed ${targetSlots.length}
     cards strategically.`);
 }
 
@@ -1517,8 +1494,8 @@ function computerPlaceCard()
         if (computerSlots[i] === null)
         {
             emptySlots.push(i);
-        }
-    }
+       }
+   }
 
     if (emptySlots.length === 0 || computerReserve.length === 0) return false;
 
@@ -1534,11 +1511,11 @@ function computerPlaceCard()
 
     // Use next available card from reserve
     const cardToPlace = computerReserve[placedCount];
-    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: [] }
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: []}
     ;
 
     renderAll();
-    addLog('computer', `Computer placed ${ cardToPlace.name} in slot ${ targetSlot + 1}`);
+    addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
     return true;
 }
 
@@ -1559,7 +1536,7 @@ document.addEventListener('click', (e) => {
     {
         hideActionPanel();
         clearSelections();
-    }
+   }
 });
 
 // keyboard support
@@ -1568,15 +1545,15 @@ document.addEventListener('keydown', (e) => {
     {
         hideActionPanel();
         clearSelections();
-    }
+   }
     if (e.key === ' ' || e.key === 'Enter')
     {
         if (playerTurn && !endTurnBtn.classList.contains('disabled'))
         {
             endTurnBtn.click();
             e.preventDefault();
-        }
-    }
+       }
+   }
 });
 
 // choose starting player - always start with player during setup phase
@@ -1610,7 +1587,7 @@ function checkBattleStart()
                 addLog('system', 'Battle begins! Player goes first.');
                 playerTurn = true;
                 endTurnBtn.classList.remove('disabled');
-            }
+           }
             else
             {
                 turnIndicator.textContent = 'Computer Turn';
@@ -1618,9 +1595,9 @@ function checkBattleStart()
                 playerTurn = false;
                 endTurnBtn.classList.add('disabled');
                 setTimeout(() => computerTurn(), 1000);
-            }
-        }, 1500);
-    }
+           }
+       }, 1500);
+   }
 }
 
 // initialization
@@ -1637,12 +1614,12 @@ function init()
 }
 
 // expose for debugging
-window._debug = { playerSlots, computerSlots, playerHand, computerReserve }
+window._debug = { playerSlots, computerSlots, playerHand, computerReserve}
 ;
 
 init();
 
 })();
-</ script >
-</ body >
-</ html >
+</script>
+</body>
+</html>
