@@ -213,6 +213,105 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     .player-info{ min-width:140px}
     .slots{ flex-wrap:wrap}
                                                }
+  
+  /* Status Effect Overlays - NEW ANIMATED OVERLAYS */
+  .status-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 20;
+    pointer-events: none;
+    text-shadow: 2px 2px 0 #000;
+  }
+
+  .poison-overlay {
+    color: #8B4513;
+    animation: poisonSkull 2s infinite ease-in-out;
+  }
+
+  .sleep-overlay {
+    color: #4682B4;
+    animation: sleepFloat 3s infinite ease-in-out;
+  }
+
+  .stun-overlay {
+    color: #FFD700;
+    animation: stunSpin 1s infinite linear;
+  }
+
+  .weaken-overlay {
+    color: #800080;
+    animation: weakenPulse 2s infinite ease-in-out;
+  }
+
+  @keyframes poisonSkull {
+    0%, 100% { 
+      transform: translate(-50%, -50%) scale(1) rotate(0deg); 
+      opacity: 0.8;
+    }
+    25% { 
+      transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); 
+      opacity: 1;
+    }
+    50% { 
+      transform: translate(-50%, -50%) scale(1.2) rotate(0deg); 
+      opacity: 0.9;
+    }
+    75% { 
+      transform: translate(-50%, -50%) scale(1.1) rotate(5deg); 
+      opacity: 1;
+    }
+  }
+
+  @keyframes sleepFloat {
+    0% { 
+      transform: translate(-50%, -50%) translateY(0); 
+      opacity: 1;
+    }
+    25% { 
+      transform: translate(-50%, -50%) translateY(-8px); 
+      opacity: 0.8;
+    }
+    50% { 
+      transform: translate(-50%, -50%) translateY(-16px); 
+      opacity: 0.6;
+    }
+    75% { 
+      transform: translate(-50%, -50%) translateY(-8px); 
+      opacity: 0.8;
+    }
+    100% { 
+      transform: translate(-50%, -50%) translateY(0); 
+      opacity: 1;
+    }
+  }
+
+  @keyframes stunSpin {
+    0% { 
+      transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    50% { 
+      transform: translate(-50%, -50%) rotate(180deg) scale(1.1);
+    }
+    100% { 
+      transform: translate(-50%, -50%) rotate(360deg) scale(1);
+    }
+  }
+
+  @keyframes weakenPulse {
+    0%, 100% { 
+      transform: translate(-50%, -50%) scale(0.9); 
+      opacity: 0.7;
+    }
+    50% { 
+      transform: translate(-50%, -50%) scale(1.1); 
+      opacity: 1;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -515,116 +614,27 @@ function onHandClick(index)
 }
 
 // show action panel next to selected card
-function showCardActions(side, idx){
-    console.log("showCardActions called:", side, idx);
-    
-    if(side !== 'player') {
-        console.log("Not player side");
-        return;
-    }
-    
-    if(!playerTurn) {
-        console.log("Not player turn");
-        return;
-    }
-    
-    // Remove setup phase check for testing
-    // if(turnIndicator.textContent.includes('Setup')) return;
-    
+function showCardActions(side, idx)
+{
+    if (side !== 'player' || !playerTurn) return;
+
+    // Don't show actions during setup phase
+    if (turnIndicator.textContent.includes('Setup')) return;
+
     const slot = playerSlots[idx];
-    if(!slot) {
-        console.log("No slot found");
-        return;
-    }
+    if (!slot || slot.used) return;
     
-    if(slot.used) {
-        console.log("Slot already used");
-        return;
-    }
-
-    // Check status effects
-    if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
-      addLog('system', `${slot.card.name} cannot act due to status effect!`);
-      return;
-    }
-
-    hideActionPanel();
-    clearSelections();
-
-    const slotEl = playerSlotsEl.children[idx];
-    const cardEl = slotEl.querySelector('.card');
-    if(!cardEl) {
-        console.log("No card element found");
-        return;
-    }
-
-    cardEl.classList.add('selected');
-    
-    const panel = document.createElement('div');
-    panel.className = 'card-action-panel';
-    
-    // Better positioning - always visible
-    const rect = slotEl.getBoundingClientRect();
-    panel.style.position = 'fixed';
-    panel.style.left = Math.min(rect.right + 10, window.innerWidth - 150) + 'px';
-    panel.style.top = Math.max(rect.top, 10) + 'px';
-    panel.style.zIndex = '1000';
-
-    const oppositeSlot = computerSlots[idx];
-    const canAttack = oppositeSlot && oppositeSlot.hp > 0;
-
-    console.log("Creating action buttons for:", slot.card.name);
-    console.log("Can attack opposite slot:", canAttack);
-
-    // Create attack buttons
-    slot.card.attacks.forEach((attack, attackIndex) => {
-      const attackBtn = document.createElement('div');
-      attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
-      
-      let buttonText = attack.name;
-      if(attack.damage > 0) buttonText += ` (${attack.damage})`;
-      if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
-      
-      attackBtn.textContent = buttonText;
-      attackBtn.title = attack.description;
-      
-      attackBtn.addEventListener('click', ()=> {
-        console.log("Attack button clicked:", attack.name);
-        if(canAttack || attack.damage === 0) {
-          performUniqueAttack(idx, attackIndex);
-        }
-      });
-      
-      panel.appendChild(attackBtn);
-    });
-
-    // Defend button
-    const defendBtn = document.createElement('div');
-    defendBtn.className = 'btn';
-    defendBtn.textContent = 'Defend';
-    defendBtn.addEventListener('click', ()=> {
-        console.log("Defend button clicked");
-        performDefend(idx);
-    });
-
-    panel.appendChild(defendBtn);
-
-    if(!canAttack) {
-      const noTargetMsg = document.createElement('div');
-      noTargetMsg.style.fontSize = '8px';
-      noTargetMsg.style.color = '#aaa';
-      noTargetMsg.style.textAlign = 'center';
-      noTargetMsg.style.marginTop = '4px';
-      noTargetMsg.textContent = 'No opposite target';
-      panel.appendChild(noTargetMsg);
-    }
-
-    document.body.appendChild(panel);
-    currentActionPanel = panel;
-    selected = { side: 'player', idx };
-    
-    console.log("Action panel created and added to DOM");
-}
+    // Check for status effects that prevent actions
+    if (slot.statusEffects) {
+        const preventingEffects = slot.statusEffects.filter(effect => 
+            effect.type === 'stun' || effect.type === 'sleep'
+        );
+        if (preventingEffects.length > 0) {
+            const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
+            addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
+            return;
+       }
+   }
 
     hideActionPanel();
     clearSelections();
@@ -1406,10 +1416,10 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
             
             let icon = '';
             switch(effect.type) {
-                case 'poison': icon = '☠️'; break;
+                case 'poison': icon = '☠'; break;
                 case 'sleep': icon = '💤'; break;
                 case 'stun': icon = '⚡'; break;
-                case 'weaken': icon = '↓'; break;
+                case 'weaken': icon = '⬇'; break;
                 default: icon = '?'; break;
            }
             
@@ -1419,13 +1429,33 @@ function makeBattleCardEl(slotObj, owner, slotIndex)
         
         wrap.appendChild(statusContainer);
         
-        // Add floating ZZZ for sleep effect
-        if (slotObj.statusEffects.some(effect => effect.type === 'sleep')) {
-            const zzzEl = document.createElement('div');
-            zzzEl.className = 'sleep-zzz';
-            zzzEl.textContent = 'ZZZ';
-            wrap.appendChild(zzzEl);
-       }
+        // ADD ANIMATED STATUS OVERLAYS - NEW FUNCTIONALITY
+        slotObj.statusEffects.forEach(effect => {
+            const overlay = document.createElement('div');
+            overlay.className = `status-overlay ${effect.type}-overlay`;
+            
+            let overlaySymbol = '';
+            switch(effect.type) {
+                case 'poison': 
+                    overlaySymbol = '☠💀'; // Skull and crossbones
+                    break;
+                case 'sleep': 
+                    overlaySymbol = 'ZZZ'; // Animated ZZZ
+                    break;
+                case 'stun': 
+                    overlaySymbol = '⚡⭐'; // Lightning and star
+                    break;
+                case 'weaken': 
+                    overlaySymbol = '⬇📉'; // Down arrows
+                    break;
+                default: 
+                    overlaySymbol = '❓'; // Question mark fallback
+                    break;
+           }
+            
+            overlay.textContent = overlaySymbol;
+            wrap.appendChild(overlay);
+       });
    }
 
     // defending glow
