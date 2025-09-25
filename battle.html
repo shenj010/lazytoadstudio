@@ -423,6 +423,9 @@
 
   // computer AI: attacks opposite slots, defends sometimes
   function computerTurn(){
+    // Don't start computer turn if we're still in setup phase
+    if(turnIndicator.textContent.includes('Setup')) return;
+    
     turnIndicator.textContent = 'Computer Turn';
     endTurnBtn.classList.add('disabled');
     
@@ -443,6 +446,8 @@
       slot && slot.hp > 0 && !slot.used ? idx : -1
     ).filter(idx => idx !== -1);
 
+    console.log('Computer active slots:', activeSlots, computerSlots); // Debug log
+
     if(activeSlots.length === 0){
       endComputerTurn();
       return;
@@ -457,6 +462,8 @@
     
     const action = canAttack && Math.random() > 0.3 ? 'attack' : 'defend';
     
+    console.log(`Computer slot ${slotIdx} performing ${action}, can attack: ${canAttack}`); // Debug log
+    
     if(action === 'attack' && canAttack){
       const damage = Math.random() > 0.6 ? 10 : 5;
       performComputerAttack(slotIdx, damage);
@@ -464,8 +471,15 @@
       performComputerDefend(slotIdx);
     }
 
-    // Continue with next action after delay
-    setTimeout(()=> performComputerActions(), 1200);
+    // Continue with next action after delay if there are more unused cards
+    setTimeout(()=> {
+      const remainingActive = computerSlots.filter(slot => slot && slot.hp > 0 && !slot.used);
+      if(remainingActive.length > 0) {
+        performComputerActions();
+      } else {
+        endComputerTurn();
+      }
+    }, 1200);
   }
 
   function performComputerAttack(attackerIdx, damage){
@@ -749,21 +763,25 @@
   // check if battle can begin
   function checkBattleStart(){
     const playerHasCards = playerSlots.some(slot => slot !== null);
-    const computerHasCards = computerSlots.some(slot => slot !== null);
     
-    if(playerHasCards && computerHasCards && turnIndicator.textContent.includes('Setup')){
-      // Start actual battle
-      const firstPlayer = Math.random() < 0.5;
-      if(firstPlayer){
-        turnIndicator.textContent = 'Player Turn';
-        addLog('system', 'Battle begins! Player goes first.');
-        playerTurn = true;
-      } else {
-        turnIndicator.textContent = 'Computer Turn';
-        addLog('system', 'Battle begins! Computer goes first.');
-        playerTurn = false;
-        setTimeout(()=>computerTurn(), 1000);
-      }
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+      // Computer places its cards
+      computerPlaceCards();
+      
+      // Start actual battle after a brief delay
+      setTimeout(() => {
+        const firstPlayer = Math.random() < 0.5;
+        if(firstPlayer){
+          turnIndicator.textContent = 'Player Turn';
+          addLog('system', 'Battle begins! Player goes first.');
+          playerTurn = true;
+        } else {
+          turnIndicator.textContent = 'Computer Turn';
+          addLog('system', 'Battle begins! Computer goes first.');
+          playerTurn = false;
+          setTimeout(()=>computerTurn(), 1000);
+        }
+      }, 800);
     }
   }
 
@@ -772,11 +790,11 @@
     makeSlotsUI();
     loadPlayerInventory();
     buildComputerReserve();
-    fillComputerSlots();
-    renderAll();
-    decideFirstPlayer();
+    fillComputerSlots(); // This now just initializes empty slots
+    renderAll(); // This should show the player's hand
+    decideFirstPlayer(); // This now starts in setup phase
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
-    addLog('system','Cards can only attack the opposite slot. Click cards to see actions.');
+    addLog('system','The battle will begin once you place your first card.');
   }
 
   // expose for debugging
