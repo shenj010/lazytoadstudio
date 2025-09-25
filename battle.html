@@ -312,6 +312,49 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     }
   }
 
+  /* Attack dropdown styling */
+.attack-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 4px;
+    display: none;
+    z-index: 1000;
+    min-width: 200px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.attack-option {
+    padding: 6px 8px;
+    font-size: 8px;
+    color: #fff;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    transition: background 0.2s;
+    font-family: 'Press Start 2P', monospace;
+}
+
+.attack-option:last-child {
+    border-bottom: none;
+}
+
+.attack-option:hover {
+    background: rgba(56, 239, 125, 0.3);
+}
+
+.attack-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fight-container {
+    position: relative;
+}
 </style>
 </head>
 <body>
@@ -617,28 +660,12 @@ function onHandClick(index)
 function showCardActions(side, idx)
 {
     if (side !== 'player' || !playerTurn) return;
-    console.log('showCardActions called with:', {side, idx, playerTurn, turnIndicator: turnIndicator.textContent});
     
-    if (side !== 'player' || !playerTurn) {
-        console.log('Early return: not player side or not player turn');
-        return;
-    }
-
     // Don't show actions during setup phase
     if (turnIndicator.textContent.includes('Setup')) return;
-    if (turnIndicator.textContent.includes('Setup')) {
-        console.log('Early return: still in setup phase');
-        return;
-    }
 
     const slot = playerSlots[idx];
     if (!slot || slot.used) return;
-    console.log('Slot data:', slot);
-    
-    if (!slot || slot.used) {
-        console.log('Early return: no slot or slot used', {hasSlot: !!slot, used: slot?.used});
-        return;
-    }
     
     // Check for status effects that prevent actions
     if (slot.statusEffects) {
@@ -647,11 +674,10 @@ function showCardActions(side, idx)
         );
         if (preventingEffects.length > 0) {
             const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
-            console.log('Early return: preventing status effect', effectName);
             addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
             return;
-       }
-   }
+        }
+    }
 
     hideActionPanel();
     clearSelections();
@@ -659,12 +685,6 @@ function showCardActions(side, idx)
     const slotEl = playerSlotsEl.children[idx];
     const cardEl = slotEl.querySelector('.card');
     if (!cardEl) return;
-    console.log('Card element found:', !!cardEl);
-    
-    if (!cardEl) {
-        console.log('Early return: no card element found');
-        return;
-    }
 
     cardEl.classList.add('selected');
 
@@ -680,59 +700,97 @@ function showCardActions(side, idx)
     // Find opposite slot (computer slot at same index)
     const oppositeSlot = computerSlots[idx];
     const canAttack = oppositeSlot && oppositeSlot.hp > 0;
-    console.log('Attack capability:', {oppositeSlot: !!oppositeSlot, canAttack, attacks: slot.card.attacks});
 
-    // Create attack buttons for each attack the card has
+    // Create FIGHT button with dropdown
+    const fightContainer = document.createElement('div');
+    fightContainer.className = 'fight-container';
+
+    const fightBtn = document.createElement('div');
+    fightBtn.className = `btn ${!canAttack ? 'disabled' : ''}`;
+    fightBtn.textContent = 'FIGHT';
+
+    // Create dropdown for attack options
+    const dropdown = document.createElement('div');
+    dropdown.className = 'attack-dropdown';
+
+    // Add attack options to dropdown
     slot.card.attacks.forEach((attack, attackIndex) => {
-        const attackBtn = document.createElement('div');
-        attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
+        const attackOption = document.createElement('div');
+        attackOption.className = `attack-option ${(!canAttack && attack.damage > 0) ? 'disabled' : ''}`;
 
-        // Format button text with damage and effect info
-        let buttonText = attack.name;
-        if (attack.damage > 0) buttonText += ` (${attack.damage})`;
-        if (attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+        // Format attack text with damage and effects
+        let attackText = attack.name.toUpperCase();
+        if (attack.damage > 0) attackText += ` (${attack.damage} DMG)`;
+        if (attack.effect) {
+            const effectIcon = {
+                'poison': '☠',
+                'sleep': '💤', 
+                'stun': '⚡',
+                'weaken': '⬇'
+            }[attack.effect] || '?';
+            attackText += ` ${effectIcon}${attack.effect.toUpperCase()}`;
+        }
 
-    attackBtn.textContent = buttonText;
-    attackBtn.title = attack.description; // Tooltip with full description
+        attackOption.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 2px;">${attackText}</div>
+            <div style="font-size: 6px; opacity: 0.8;">${attack.description}</div>
+        `;
 
-    attackBtn.addEventListener('click', () => {
-        if (canAttack || attack.damage === 0)
-        {
-            performUniqueAttack(idx, attackIndex);
-       }
-   });
+        // Click to perform attack
+        attackOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if ((canAttack || attack.damage === 0) && !attackOption.classList.contains('disabled')) {
+                performUniqueAttack(idx, attackIndex);
+            }
+        });
 
-    panel.appendChild(attackBtn);
-    console.log('Added attack button:', buttonText);
-});
+        dropdown.appendChild(attackOption);
+    });
 
-// Defend button
-const defendBtn = document.createElement('div');
-defendBtn.className = 'btn';
-defendBtn.textContent = 'Defend';
-defendBtn.addEventListener('click', () => performDefend(idx));
+    // Show/hide dropdown on hover
+    fightBtn.addEventListener('mouseenter', () => {
+        if (!fightBtn.classList.contains('disabled')) {
+            dropdown.style.display = 'block';
+        }
+    });
 
-panel.appendChild(defendBtn);
-console.log('Added defend button');
+    fightContainer.addEventListener('mouseleave', () => {
+        dropdown.style.display = 'none';
+    });
 
-if (!canAttack)
-{
-    const noTargetMsg = document.createElement('div');
-    noTargetMsg.style.fontSize = '8px';
-    noTargetMsg.style.color = '#aaa';
-    noTargetMsg.style.textAlign = 'center';
-    noTargetMsg.style.marginTop = '4px';
-    noTargetMsg.textContent = 'No opposite target';
-    panel.appendChild(noTargetMsg);
-}
+    // Prevent dropdown from closing when hovering over it
+    dropdown.addEventListener('mouseenter', () => {
+        dropdown.style.display = 'block';
+    });
 
-document.body.appendChild(panel);
-currentActionPanel = panel;
-selected = { side: 'player', idx}
-;
-selected = { side: 'player', idx};
+    fightContainer.appendChild(fightBtn);
+    fightContainer.appendChild(dropdown);
+    panel.appendChild(fightContainer);
 
-console.log('Action panel created and added to DOM');
+    // DEFEND button
+    const defendBtn = document.createElement('div');
+    defendBtn.className = 'btn';
+    defendBtn.textContent = 'DEFEND';
+    defendBtn.addEventListener('click', () => performDefend(idx));
+
+    panel.appendChild(defendBtn);
+
+    // Show info if can't attack
+    if (!canAttack) {
+        const noTargetMsg = document.createElement('div');
+        noTargetMsg.style.cssText = `
+            font-size: 8px;
+            color: #aaa;
+            text-align: center;
+            margin-top: 4px;
+        `;
+        noTargetMsg.textContent = 'No opposite target';
+        panel.appendChild(noTargetMsg);
+    }
+
+    document.body.appendChild(panel);
+    currentActionPanel = panel;
+    selected = { side: 'player', idx };
  }
 
   function hideActionPanel()
