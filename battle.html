@@ -4,357 +4,120 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Toad Battle Arena</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet" >
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
     --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
- }
-  html, body{height:100%; margin: 0; font-family:'Press Start 2P','DotGothic16',monospace; background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3)); color:#fff;overflow:hidden}
-  .wrap{ position: relative; width: 100%; height: 100%; display: flex; flex-direction:column; align-items:center; justify-content:flex-start; padding: 14px; box-sizing:border-box}
-  .header{width:100%; text-align:center; margin-bottom:8px; z-index:5}
-  .title{color:var(--accent); font-size:18px; text-shadow:0 0 6px rgba(0,0,0,.6)}
-  .arena{position:relative; flex: 1; width: 100%; max-width:1100px; display: flex; flex-direction:column; gap: 12px; align-items:center; justify-content:space-between; padding: 12px; box-sizing:border-box}
+  }
+  html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
+  .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
+  .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
+  .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
   /* top area (computer) */
-  .area{width:100%; display: flex; align-items:center; justify-content:space-between; background: rgba(0, 0, 0, 0.45); border: 3px solid #fff;padding:12px;border-radius:8px}
-  .player-info{ display: flex; flex-direction:column; align-items:center; min-width:160px}
-  .name{color:var(--accent); font-size:12px; margin-bottom:6px}
-  .hp-bar{
-width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .hp-segments{ display: flex; width: 92%; gap: 2px}
-  .seg{
-    flex: 1; height: 14px; background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
-  .seg.half::after{
-        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background:#111}
-  .hand{ display: flex; gap: 10px; flex-wrap:wrap; justify-content:center; align-items:center; flex: 1; min-height:140px}
+  .area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
+  .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
+  .name{color:var(--accent);font-size:12px;margin-bottom:6px}
+  .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .hp-segments{display:flex;width:92%;gap:2px}
+  .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
+  .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
+  .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
   /* battlefield slots */
-  .slots{ display: flex; gap: 10px; align-items:center; justify-content:center}
-  .slot{ width: 90px; height: 130px; border: 2px dashed rgba(255, 255, 255, 0.25); border-radius:8px; background: rgba(0, 0, 0, 0.25); display: flex; align-items:center; justify-content:center; position: relative}
-  .slot.occupied{ border-style:solid}
-  .slot.card{
-            width: 86px; height: 120px; border: 3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
-  .card img{ width: 100%; height: 72%; object-fit:cover; display: block}
-  .card .stats{ height: 28%; background: rgba(0, 0, 0, 0.9); padding: 4px; box-sizing:border-box; font-size:10px; text-align:center}
-  .card.selected{ outline: 3px solid var(--accent); transform: translateY(-6px)}
-  .card.used{ opacity: 0.4; filter: grayscale(0.7)}
-  .card.used::after{
-                content: 'USED'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
+  .slots{display:flex;gap:10px;align-items:center;justify-content:center}
+  .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+  .slot.occupied{border-style:solid}
+  .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
+  .card img{width:100%;height:72%;object-fit:cover;display:block}
+  .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
+  .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
+  .card.used{opacity:0.4;filter:grayscale(0.7)}
+  .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
   /* action panel - now positioned relative to selected card */
-  .card-action-panel{ position: absolute; z-index:100; background: rgba(0, 0, 0, 0.9); border: 2px solid var(--accent); border-radius:6px; padding: 8px; display: flex; gap: 8px; flex-direction:column; min-width:120px}
-  .card-action-panel .btn{
-                    background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
-  .card-action-panel .btn:hover{
-                        background: var(--accent); color:#000}
-  .card-action-panel .btn:active{ transform: scale(.98)}
-  .card-action-panel .btn.disabled{
-                            background:#666;color:#333;cursor:not-allowed}
+  .card-action-panel{position:absolute;z-index:100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
+  .card-action-panel .btn{background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
+  .card-action-panel .btn:hover{background:var(--accent);color:#000}
+  .card-action-panel .btn:active{transform:scale(.98)}
+  .card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
   /* turn control panel */
-  .turn-panel{ position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; display: flex; gap: 12px; z-index:50}
-  .btn{
-                                background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
-  .btn:active{ transform: scale(.98)}
-  .btn.disabled{
-                                    background:#666;color:#333;cursor:not-allowed}
+  .turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
+  .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
+  .btn:active{transform:scale(.98)}
+  .btn.disabled{background:#666;color:#333;cursor:not-allowed}
   /* turn indicator */
-  .turn-indicator{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); border: 2px solid var(--accent); padding: 8px 16px; border-radius:6px; font-size:12px; z-index:60}
+  .turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
   /* attack animations */
-  .attacking-forward{ animation: attackForward 1000ms ease-in-out forwards; z-index: 1000;}
-                                        @keyframes attackForward{
-                                            0%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                            25%{ transform: translateY(80px) scale(1.2) rotateZ(5deg)}
-                                            50%{ transform: translateY(160px) scale(1.3) rotateZ(-3deg)}
-                                            75%{ transform: translateY(200px) scale(1.1) rotateZ(2deg)}
-                                            100%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                       }
+  .attacking-forward{animation:attackForward 800ms ease-in-out forwards}
+  @keyframes attackForward{
+    0%{transform:translateY(0) scale(1)}
+    30%{transform:translateY(40px) scale(1.1) translateZ(10px)}
+    60%{transform:translateY(60px) scale(1.15) translateZ(20px)}
+    80%{transform:translateY(30px) scale(1.05) translateZ(5px)}
+    100%{transform:translateY(0) scale(1) translateZ(0px)}
+  }
   
-  .attacking-backward{ animation: attackBackward 1000ms ease-in-out forwards; z-index: 1000;}
-                                        @keyframes attackBackward{
-                                            0%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                            25%{ transform: translateY(-80px) scale(1.2) rotateZ(-5deg)}
-                                            50%{ transform: translateY(-160px) scale(1.3) rotateZ(3deg)}
-                                            75%{ transform: translateY(-200px) scale(1.1) rotateZ(-2deg)}
-                                            100%{ transform: translateY(0) scale(1) rotateZ(0deg)}
-                                       }
-  
-  /* flying projectile animation */
-  .flying-attack{ animation: flyToTarget 800ms ease-in-out forwards; z-index: 2000; position: absolute;}
-                                        @keyframes flyToTarget{
-                                            0%{ transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 1;}
-                                            50%{ transform: translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg); opacity: 0.8;}
-                                            100%{ transform: translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg); opacity: 0;}
-                                       }
+  .attacking-backward{animation:attackBackward 800ms ease-in-out forwards}
+  @keyframes attackBackward{
+    0%{transform:translateY(0) scale(1)}
+    30%{transform:translateY(-40px) scale(1.1) translateZ(10px)}
+    60%{transform:translateY(-60px) scale(1.15) translateZ(20px)}
+    80%{transform:translateY(-30px) scale(1.05) translateZ(5px)}
+    100%{transform:translateY(0) scale(1) translateZ(0px)}
+  }
   
   /* defend animation */
-  .defending-anim{ animation: defendPulse 600ms ease-in-out forwards}
-                                        @keyframes defendPulse{
-                                            0%{ transform: scale(1); box-shadow:0 0 0 rgba(56, 239, 125, 0.8)}
-                                            50%{ transform: scale(1.08); box-shadow:0 0 20px rgba(56,239,125,0.8)}
-                                            100%{ transform: scale(1); box-shadow:0 0 10px rgba(56,239,125,0.6)}
-                                       }
+  .defending-anim{animation:defendPulse 600ms ease-in-out forwards}
+  @keyframes defendPulse{
+    0%{transform:scale(1);box-shadow:0 0 0 rgba(56,239,125,0.8)}
+    50%{transform:scale(1.08);box-shadow:0 0 20px rgba(56,239,125,0.8)}
+    100%{transform:scale(1);box-shadow:0 0 10px rgba(56,239,125,0.6)}
+  }
   
   /* damage popup */
-  .dmg-pop{
-                                        position: absolute; font-size:16px; font-weight:700; color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
+  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
   @keyframes damageFloat{
-                                                0%{ transform: translateY(0) translateX(-50%) scale(0.8); opacity: 0}
-                                                20%{ transform: translateY(-10px) translateX(-50%) scale(1.2); opacity: 1}
-                                                60%{ transform: translateY(-40px) translateX(-50%) scale(1); opacity: 1}
-                                                100%{ transform: translateY(-70px) translateX(-50%) scale(0.8); opacity: 0}
-                                           }
+    0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
+    20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
+    60%{transform:translateY(-40px) translateX(-50%) scale(1);opacity:1}
+    100%{transform:translateY(-70px) translateX(-50%) scale(0.8);opacity:0}
+  }
   
   /* hit effects */
-  .hit{ animation: hitShake 400ms ease-out forwards}
-                                            @keyframes hitShake{
-                                                0%{ transform: translateX(0)}
-                                                10%{ transform: translateX(-8px) rotateZ(-2deg)}
-                                                20%{ transform: translateX(6px) rotateZ(1deg)}
-                                                30%{ transform: translateX(-4px) rotateZ(-1deg)}
-                                                40%{ transform: translateX(3px) rotateZ(0.5deg)}
-                                                50%{ transform: translateX(-2px) rotateZ(-0.5deg)}
-                                                60%{ transform: translateX(1px) rotateZ(0.2deg)}
-                                                100%{ transform: translateX(0) rotateZ(0deg)}
-                                           }
+  .hit{animation:hitShake 400ms ease-out forwards}
+  @keyframes hitShake{
+    0%{transform:translateX(0)}
+    10%{transform:translateX(-8px) rotateZ(-2deg)}
+    20%{transform:translateX(6px) rotateZ(1deg)}
+    30%{transform:translateX(-4px) rotateZ(-1deg)}
+    40%{transform:translateX(3px) rotateZ(0.5deg)}
+    50%{transform:translateX(-2px) rotateZ(-0.5deg)}
+    60%{transform:translateX(1px) rotateZ(0.2deg)}
+    100%{transform:translateX(0) rotateZ(0deg)}
+  }
   
-  .flash{ animation: flashHit 300ms ease-out forwards}
-                                            @keyframes flashHit{
-                                                0%{ filter: brightness(1) contrast(1)}
-                                                25%{ filter: brightness(1.8) contrast(1.3) saturate(0)}
-                                                50%{ filter: brightness(1.5) contrast(1.2) saturate(0.2)}
-                                                75%{ filter: brightness(1.3) contrast(1.1) saturate(0.6)}
-                                                100%{ filter: brightness(1) contrast(1) saturate(1)}
-                                           }
+  .flash{animation:flashHit 300ms ease-out forwards}
+  @keyframes flashHit{
+    0%{filter:brightness(1) contrast(1)}
+    25%{filter:brightness(1.8) contrast(1.3) saturate(0)}
+    50%{filter:brightness(1.5) contrast(1.2) saturate(0.2)}
+    75%{filter:brightness(1.3) contrast(1.1) saturate(0.6)}
+    100%{filter:brightness(1) contrast(1) saturate(1)}
+  }
   
-  .die{ animation: dieFade 600ms ease forwards}
-                                            @keyframes dieFade{ 0%{ opacity: 1; transform: scale(1) rotateZ(0deg)} 100%{ opacity: 0; transform: scale(0.3) rotateZ(15deg)}}
-  
-  /* Status Effect Indicators */
-  .status-effects {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    display: flex;
-    gap: 2px;
-    z-index: 10;
- }
-  
-  .status-effect {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid #fff;
-    border-radius: 3px;
-    padding: 2px 4px;
-    font-size: 8px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 2px;
- }
-  
-  .status-effect.poison {
-    background: rgba(139, 69, 19, 0.9);
-    border-color: #8B4513;
-    animation: poisonPulse 2s infinite;
- }
-  
-  .status-effect.sleep {
-    background: rgba(70, 130, 180, 0.9);
-    border-color: #4682B4;
- }
-  
-  .status-effect.stun {
-    background: rgba(255, 215, 0, 0.9);
-    border-color: #FFD700;
-    color: #000;
-    animation: stunFlash 1s infinite;
- }
-  
-  .status-effect.weaken {
-    background: rgba(128, 0, 128, 0.9);
-    border-color: #800080;
- }
-  
-  @keyframes poisonPulse {
-    0%, 100% { opacity: 0.8; transform: scale(1);}
-    50% { opacity: 1; transform: scale(1.05);}
- }
-  
-  @keyframes stunFlash {
-    0%, 100% { opacity: 0.7;}
-    50% { opacity: 1;}
- }
-  
-  /* Floating ZZZ animation for sleep */
-  .sleep-zzz {
-    position: absolute;
-    top: -10px;
-    right: 10px;
-    font-size: 12px;
-    color: #4682B4;
-    animation: floatingZZZ 3s infinite;
-    pointer-events: none;
-    z-index: 15;
- }
-  
-  @keyframes floatingZZZ {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1;}
-    25% { transform: translateY(-8px) rotate(-5deg); opacity: 0.8;}
-    50% { transform: translateY(-16px) rotate(5deg); opacity: 0.6;}
-    75% { transform: translateY(-24px) rotate(-3deg); opacity: 0.4;}
-    100% { transform: translateY(-32px) rotate(0deg); opacity: 0;}
- }
+  .die{animation:dieFade 600ms ease forwards}
+  @keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
   /* log */
-  .log{
-                                            position: fixed; right: 14px; top: 70px; width: 250px; height: 340px; background: rgba(0, 0, 0, .6); border: 2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
-  .log .entry{ margin-bottom:6px}
-  .log .player{ color: var(--accent)}
-  .log .computer{ color: var(--danger)}
-                                                /* small responsive */
-                                                @media(max-width:900px){
-    .area{ flex-direction:column; gap: 8px}
-    .player-info{ min-width:140px}
-    .slots{ flex-wrap:wrap}
-                                               }
-  
-  /* Status Effect Overlays - NEW ANIMATED OVERLAYS */
-  .status-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    font-weight: bold;
-    z-index: 20;
-    pointer-events: none;
-    text-shadow: 2px 2px 0 #000;
+  .log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
+  .log .entry{margin-bottom:6px}
+  .log .player{color:var(--accent)}
+  .log .computer{color:var(--danger)}
+  /* small responsive */
+  @media (max-width:900px){
+    .area{flex-direction:column;gap:8px}
+    .player-info{min-width:140px}
+    .slots{flex-wrap:wrap}
   }
-
-  .poison-overlay {
-    color: #8B4513;
-    animation: poisonSkull 2s infinite ease-in-out;
-  }
-
-  .sleep-overlay {
-    color: #4682B4;
-    animation: sleepFloat 3s infinite ease-in-out;
-  }
-
-  .stun-overlay {
-    color: #FFD700;
-    animation: stunSpin 1s infinite linear;
-  }
-
-  .weaken-overlay {
-    color: #800080;
-    animation: weakenPulse 2s infinite ease-in-out;
-  }
-
-  @keyframes poisonSkull {
-    0%, 100% { 
-      transform: translate(-50%, -50%) scale(1) rotate(0deg); 
-      opacity: 0.8;
-    }
-    25% { 
-      transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); 
-      opacity: 1;
-    }
-    50% { 
-      transform: translate(-50%, -50%) scale(1.2) rotate(0deg); 
-      opacity: 0.9;
-    }
-    75% { 
-      transform: translate(-50%, -50%) scale(1.1) rotate(5deg); 
-      opacity: 1;
-    }
-  }
-
-  @keyframes sleepFloat {
-    0% { 
-      transform: translate(-50%, -50%) translateY(0); 
-      opacity: 1;
-    }
-    25% { 
-      transform: translate(-50%, -50%) translateY(-8px); 
-      opacity: 0.8;
-    }
-    50% { 
-      transform: translate(-50%, -50%) translateY(-16px); 
-      opacity: 0.6;
-    }
-    75% { 
-      transform: translate(-50%, -50%) translateY(-8px); 
-      opacity: 0.8;
-    }
-    100% { 
-      transform: translate(-50%, -50%) translateY(0); 
-      opacity: 1;
-    }
-  }
-
-  @keyframes stunSpin {
-    0% { 
-      transform: translate(-50%, -50%) rotate(0deg) scale(1);
-    }
-    50% { 
-      transform: translate(-50%, -50%) rotate(180deg) scale(1.1);
-    }
-    100% { 
-      transform: translate(-50%, -50%) rotate(360deg) scale(1);
-    }
-  }
-
-  @keyframes weakenPulse {
-    0%, 100% { 
-      transform: translate(-50%, -50%) scale(0.9); 
-      opacity: 0.7;
-    }
-    50% { 
-      transform: translate(-50%, -50%) scale(1.1); 
-      opacity: 1;
-    }
-  }
-
-  /* Attack dropdown styling */
-.attack-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    border: 2px solid var(--accent);
-    border-radius: 4px;
-    padding: 4px;
-    display: none;
-    z-index: 1000;
-    min-width: 200px;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.attack-option {
-    padding: 6px 8px;
-    font-size: 8px;
-    color: #fff;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    transition: background 0.2s;
-    font-family: 'Press Start 2P', monospace;
-}
-
-.attack-option:last-child {
-    border-bottom: none;
-}
-
-.attack-option:hover {
-    background: rgba(56, 239, 125, 0.3);
-}
-
-.attack-option.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.fight-container {
-    position: relative;
-}
 </style>
 </head>
 <body>
@@ -364,7 +127,7 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
     <div class="turn-indicator" id="turnIndicator">Player Turn</div>
 
     <div class="arena" id="arena">
-      <!--COMPUTER AREA-->
+      <!-- COMPUTER AREA -->
       <div class="area" id="computerArea">
         <div class="player-info">
           <div class="name">Computer</div>
@@ -375,15 +138,15 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
         </div>
 
         <div class="slots" id="computerSlots">
-          <!--5 slots-->
+          <!-- 5 slots -->
         </div>
 
         <div class="hand" id="computerHand">
-          <!--computer reserve cards(small) -->
+          <!-- computer reserve cards (small) -->
         </div>
       </div>
 
-      <!--PLAYER AREA-->
+      <!-- PLAYER AREA -->
       <div class="area" id="playerArea">
         <div class="player-info">
           <div class="name">Player</div>
@@ -394,16 +157,16 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
         </div>
 
         <div class="slots" id="playerSlots">
-          <!--5 slots-->
+          <!-- 5 slots -->
         </div>
 
         <div class="hand" id="playerHand" style="margin-left:12px">
-          <!--player hand cards(click to place on slots) -->
+          <!-- player hand cards (click to place on slots) -->
         </div>
       </div>
     </div>
 
-    <!--turn control panel -->
+    <!-- turn control panel -->
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
@@ -415,283 +178,203 @@ width: 160px; height: 20px; background:#111;border:2px solid #fff;border-radius:
 (function(){
   // config
   const MAX_SLOTS = 5;
-const MAX_HP = 80; // per card
-const SEGMENTS = 8; // 8 segments of 10hp
+  const MAX_HP = 80; // per card
+  const SEGMENTS = 8; // 8 segments of 10hp
 
-// Enhanced card pool with unique attacks and abilities
-const cardPool = [
-    { 
-      src: "images/cards/the stranger card format.jpg", 
-      name: "The Stranger",
-      hp: 80,
-      attacks:
-[
-        { name: "Hidden Strike", damage: 10, type: "physical", effect: "stun", duration: 1, description: "Fast slice hits your opponent for 10 points. Stun opponent for one turn."}
-      ]
-   },
-    {
-src: "images/cards/horny toad card format.jpg", 
-      name: "Horny Toad",
-      hp: 80,
-      attacks:
-    [
-        { name: "Piercing Strike", damage: 20, type: "physical", description: "A devastating, surgical strike deals 20 damage to your opponent."}
-      ]
-   },
-    {
-src: "images/cards/hypno toad card format.jpg", 
-      name: "Hypno Toad",
-      hp: 80,
-      attacks:
-    [
-        { name: "Hypnotize", damage: 0, type: "mental", effect: "sleep", duration: 2, description: "Send the opponent to sleep for 2 turns."},
-        { name: "Poison Dart", damage: 5, type: "poison", effect: "poison", duration: 5, description: "Poisons your opponent for 5 turns, 5 damage per turn."}
-      ]
-   },
-    {
-src: "images/cards/sumo toad card format.jpg", 
-      name: "Sumo Toad",
-      hp: 80,
-      attacks:
-    [
-        { name: "Oshidashi", damage: 10, type: "physical", effect: "weaken", duration: 1, description: "Use sheer force to damage your enemy for 10 and reduce their next attack by 10."}
-      ]
-   },
-    {
-src: "images/cards/mad toad card format.jpg", 
-      name: "Mad Toad",
-      hp: 80,
-      attacks:
-    [
-        { name: "Flasher", damage: 0, type: "mental", effect: "stun", duration: 1, description: "Stun your opponent for one turn."},
-        { name: "Bubble Slam", damage: 10, type: "physical", description: "A rear-end first slam hitting opponent for ten points."}
-      ]
-   }
+  // card pool fallback (if user has no collected cards)
+  const cardPool = [
+    { src: "images/cards/the stranger card format.jpg", name: "The Stranger" },
+    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad" },
+    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad" },
+    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad" },
+    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad" }
   ];
 
-// state
-let playerHand = [];      // full objects {src,name}
-let computerReserve = [];
-let playerSlots = new Array(MAX_SLOTS).fill(null); // slot = {card, hp, defending, used, statusEffects: []}
-let computerSlots = new Array(MAX_SLOTS).fill(null);
-let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
-let playerTurn = true;
-let currentActionPanel = null; // reference to active action panel
+  // state
+  let playerHand = [];      // full objects {src,name}
+  let computerReserve = [];
+  let playerSlots = new Array(MAX_SLOTS).fill(null); // slot = {card, hp, defending, used}
+  let computerSlots = new Array(MAX_SLOTS).fill(null);
+  let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
+  let playerTurn = true;
+  let currentActionPanel = null; // reference to active action panel
 
-// elements
-const playerHandEl = document.getElementById('playerHand');
-const computerHandEl = document.getElementById('computerHand');
-const playerSlotsEl = document.getElementById('playerSlots');
-const computerSlotsEl = document.getElementById('computerSlots');
-const logEl = document.getElementById('battleLog');
-const turnPanel = document.getElementById('turnPanel');
-const endTurnBtn = document.getElementById('endTurnBtn');
-const playerGlobalHP = document.getElementById('playerGlobalHP');
-const computerGlobalHP = document.getElementById('computerGlobalHP');
-const turnIndicator = document.getElementById('turnIndicator');
+  // elements
+  const playerHandEl = document.getElementById('playerHand');
+  const computerHandEl = document.getElementById('computerHand');
+  const playerSlotsEl = document.getElementById('playerSlots');
+  const computerSlotsEl = document.getElementById('computerSlots');
+  const logEl = document.getElementById('battleLog');
+  const turnPanel = document.getElementById('turnPanel');
+  const endTurnBtn = document.getElementById('endTurnBtn');
+  const playerGlobalHP = document.getElementById('playerGlobalHP');
+  const computerGlobalHP = document.getElementById('computerGlobalHP');
+  const turnIndicator = document.getElementById('turnIndicator');
 
-// init interface slots
-function makeSlotsUI()
-{
+  // init interface slots
+  function makeSlotsUI(){
     playerSlotsEl.innerHTML = '';
     computerSlotsEl.innerHTML = '';
-    for (let i = 0; i < MAX_SLOTS; i++)
-    {
-        const ps = document.createElement('div'); ps.className = 'slot'; ps.dataset.i = i; ps.dataset.side = 'player';
-        ps.addEventListener('click', () => onSlotClick('player', i));
-        playerSlotsEl.appendChild(ps);
-        const cs = document.createElement('div'); cs.className = 'slot'; cs.dataset.i = i; cs.dataset.side = 'computer';
-        cs.addEventListener('click', () => onSlotClick('computer', i));
-        computerSlotsEl.appendChild(cs);
-   }
-}
+    for(let i=0;i<MAX_SLOTS;i++){
+      const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
+      ps.addEventListener('click', ()=>onSlotClick('player', i));
+      playerSlotsEl.appendChild(ps);
+      const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
+      cs.addEventListener('click', ()=>onSlotClick('computer', i));
+      computerSlotsEl.appendChild(cs);
+    }
+  }
 
-// load player's collected cards
-function loadPlayerInventory()
-{
+  // load player's collected cards
+  function loadPlayerInventory(){
     let stored = [];
-    try
-    {
-        stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
-   }
-    catch (e) { stored = [];}
+    try {
+      stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
+    } catch(e){ stored = []; }
     // If stored is empty, fall back to cardPool
-    if (!stored || stored.length === 0) stored = [...cardPool];
-    playerHand = stored.slice(0, 10); // cap hand size
-}
+    if(!stored || stored.length === 0) stored = [...cardPool];
+    playerHand = stored.slice(0,10); // cap hand size
+  }
 
-// computer reserve: same amount as player has
-function buildComputerReserve()
-{
+  // computer reserve: same amount as player has
+  function buildComputerReserve(){
     const playerCardCount = playerHand.length;
     const cp = [];
-    for (let i = 0; i < playerCardCount; i++)
-    {
-        cp.push(cardPool[Math.floor(Math.random() * cardPool.length)]);
-   }
+    for(let i=0;i<playerCardCount;i++){
+      cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
+    }
     computerReserve = cp;
-}
+  }
 
-// render player hand UI (cards you can place)
-function renderHand()
-{
+  // render player hand UI (cards you can place)
+  function renderHand(){
     playerHandEl.innerHTML = '';
     playerHand.forEach((card, idx) => {
-        const c = createHandCardEl(card, idx);
-        playerHandEl.appendChild(c);
-   });
-
+      const c = createHandCardEl(card, idx);
+      playerHandEl.appendChild(c);
+    });
+    
     // Show computer's hand as card backs
     computerHandEl.innerHTML = '';
     const remainingCards = computerReserve.length - computerSlots.filter(s => s).length;
-    for (let i = 0; i < remainingCards; i++)
-    {
-        const c = createCardBackEl();
-        computerHandEl.appendChild(c);
-   }
-}
+    for(let i = 0; i < remainingCards; i++){
+      const c = createCardBackEl();
+      computerHandEl.appendChild(c);
+    }
+  }
 
-function createCardBackEl()
-{
-    const el = document.createElement('div');
-    el.className = 'card';
-    el.style.width = '86px';
-    el.style.height = '120px';
-    el.style.cursor = 'default';
-
-    const img = document.createElement('img');
+  function createCardBackEl(){
+    const el = document.createElement('div'); 
+    el.className='card'; 
+    el.style.width='86px'; 
+    el.style.height='120px';
+    el.style.cursor='default';
+    
+    const img = document.createElement('img'); 
     img.src = 'images/cards/card back.jpeg';
     img.alt = 'Hidden Card';
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
-
+    
     el.appendChild(img);
-
-    const wrap = document.createElement('div');
-    wrap.style.width = '86px';
-    wrap.style.height = '120px';
+    
+    const wrap = document.createElement('div'); 
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
     wrap.appendChild(el);
     return wrap;
-}
+  }
 
-function createHandCardEl(card, idx)
-{
-    const el = document.createElement('div'); el.className = 'card'; el.style.width = '86px'; el.style.height = '120px';
-    el.addEventListener('click', () => onHandClick(idx));
-    const img = document.createElement('img'); img.src = card.src; img.alt = card.name;
-    const stats = document.createElement('div'); stats.className = 'stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-el.appendChild(img); el.appendChild(stats);
-const wrap = document.createElement('div'); wrap.style.width = '86px'; wrap.style.height = '120px';
-wrap.appendChild(el);
-return wrap;
- }
+  function createHandCardEl(card, idx){
+    const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
+    el.addEventListener('click', ()=>onHandClick(idx));
+    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
+    el.appendChild(img); el.appendChild(stats);
+    const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
+    wrap.appendChild(el);
+    return wrap;
+  }
 
-  function createReserveCardEl(card, idx)
-{
-    const el = document.createElement('div'); el.className = 'card'; el.style.width = '68px'; el.style.height = '96px';
-    el.style.opacity = '0.85'; el.style.transform = 'scale(.88)'; el.style.cursor = 'default';
-    const img = document.createElement('img'); img.src = card.src; img.alt = card.name;
-    const stats = document.createElement('div'); stats.className = 'stats'; stats.style.fontSize = '9px';
+  function createReserveCardEl(card, idx){
+    const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
+    el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
+    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+    const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px';
     stats.innerHTML = `<div>${card.name}</div>`;
     el.appendChild(img); el.appendChild(stats);
-    const wrap = document.createElement('div'); wrap.style.width = '68px'; wrap.style.height = '96px';
+    const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px';
     wrap.appendChild(el);
     return wrap;
-}
+  }
 
-// slot click: either place a hand card there (if player slot) or show actions if occupied
-function onSlotClick(side, idx)
-{
-    if (side === 'player')
-    {
-        // placing from hand
-        if (selected && selected.type === 'hand')
-        {
-            // place the selected hand card to this slot if empty
-            if (playerSlots[idx] === null)
-            {
-                const card = playerHand.splice(selected.index, 1)[0];
-                playerSlots[idx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: []}
-                ;
-                selected = null;
-                renderAll();
-                addLog('system', `Placed ${card.name} in player slot ${idx + 1}`);
+  // slot click: either place a hand card there (if player slot) or show actions if occupied
+  function onSlotClick(side, idx){
+    if(side === 'player'){
+      // placing from hand
+      if(selected && selected.type==='hand'){
+        // place the selected hand card to this slot if empty
+        if(playerSlots[idx] === null){
+          const card = playerHand.splice(selected.index,1)[0];
+          playerSlots[idx] = { card, hp: MAX_HP, defending:false, used:false };
+          selected = null;
+          renderAll();
+          addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
+          
+          // Check if battle can start now
+          checkBattleStart();
+        }
+      } else {
+        // show actions for this slot card if it's the player's turn and card exists
+        if(playerSlots[idx] && playerTurn){
+          hideActionPanel();
+          showCardActions('player', idx);
+        }
+      }
+    } else {
+      // computer side - just for targeting (handled in attack action)
+      if(computerSlots[idx]) {
+        // visual feedback only
+        clearSelections();
+        const slotEl = computerSlotsEl.children[idx];
+        if(slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
+      }
+    }
+  }
 
-                // Check if battle can start now
-                checkBattleStart();
-           }
-       }
-        else
-        {
-            // show actions for this slot card if it's the player's turn and card exists
-            if (playerSlots[idx] && playerTurn)
-            {
-                hideActionPanel();
-                showCardActions('player', idx);
-           }
-       }
-   }
-    else
-    {
-        // computer side - just for targeting (handled in attack action)
-        if (computerSlots[idx])
-        {
-            // visual feedback only
-            clearSelections();
-            const slotEl = computerSlotsEl.children[idx];
-            if (slotEl && slotEl.firstChild) slotEl.firstChild.classList.add('selected');
-       }
-   }
-}
-
-function onHandClick(index)
-{
+  function onHandClick(index){
     hideActionPanel();
     clearSelections();
-    selected = { type: 'hand', index}
-    ;
-    document.querySelectorAll('#playerHand .card').forEach((c, i) => {
-        if (i === index) c.classList.add('selected'); else c.classList.remove('selected');
-   });
-}
+    selected = { type:'hand', index };
+    document.querySelectorAll('#playerHand .card').forEach((c,i)=>{
+      if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
+    });
+  }
 
-// show action panel next to selected card
-function showCardActions(side, idx)
-{
-    if (side !== 'player' || !playerTurn) return;
+  // show action panel next to selected card
+  function showCardActions(side, idx){
+    if(side !== 'player' || !playerTurn) return;
     
     // Don't show actions during setup phase
-    if (turnIndicator.textContent.includes('Setup')) return;
-
-    const slot = playerSlots[idx];
-    if (!slot || slot.used) return;
+    if(turnIndicator.textContent.includes('Setup')) return;
     
-    // Check for status effects that prevent actions
-    if (slot.statusEffects) {
-        const preventingEffects = slot.statusEffects.filter(effect => 
-            effect.type === 'stun' || effect.type === 'sleep'
-        );
-        if (preventingEffects.length > 0) {
-            const effectName = preventingEffects[0].type === 'stun' ? 'stunned' : 'sleeping';
-            addLog('system', `${slot.card.name} is ${effectName} and cannot act!`);
-            return;
-        }
-    }
+    const slot = playerSlots[idx];
+    if(!slot || slot.used) return;
 
     hideActionPanel();
     clearSelections();
 
     const slotEl = playerSlotsEl.children[idx];
     const cardEl = slotEl.querySelector('.card');
-    if (!cardEl) return;
+    if(!cardEl) return;
 
     cardEl.classList.add('selected');
-
+    
     // Create action panel
     const panel = document.createElement('div');
     panel.className = 'card-action-panel';
-
+    
     // Position it next to the card
     const rect = slotEl.getBoundingClientRect();
     panel.style.left = (rect.right + 10) + 'px';
@@ -701,465 +384,235 @@ function showCardActions(side, idx)
     const oppositeSlot = computerSlots[idx];
     const canAttack = oppositeSlot && oppositeSlot.hp > 0;
 
-    // Create FIGHT button with dropdown
-    const fightContainer = document.createElement('div');
-    fightContainer.className = 'fight-container';
+    // Attack buttons
+    const lightAttackBtn = document.createElement('div');
+    lightAttackBtn.className = `btn ${!canAttack ? 'disabled' : ''}`;
+    lightAttackBtn.textContent = 'Light Attack (5)';
+    lightAttackBtn.addEventListener('click', ()=> canAttack && performAttack(idx, 5));
 
-    const fightBtn = document.createElement('div');
-    fightBtn.className = `btn ${!canAttack ? 'disabled' : ''}`;
-    fightBtn.textContent = 'FIGHT';
+    const heavyAttackBtn = document.createElement('div');
+    heavyAttackBtn.className = `btn ${!canAttack ? 'disabled' : ''}`;
+    heavyAttackBtn.textContent = 'Heavy Attack (10)';
+    heavyAttackBtn.addEventListener('click', ()=> canAttack && performAttack(idx, 10));
 
-    // Create dropdown for attack options
-    const dropdown = document.createElement('div');
-    dropdown.className = 'attack-dropdown';
-
-    // Add attack options to dropdown
-    slot.card.attacks.forEach((attack, attackIndex) => {
-        const attackOption = document.createElement('div');
-        attackOption.className = `attack-option ${(!canAttack && attack.damage > 0) ? 'disabled' : ''}`;
-
-        // Format attack text with damage and effects
-        let attackText = attack.name.toUpperCase();
-        if (attack.damage > 0) attackText += ` (${attack.damage} DMG)`;
-        if (attack.effect) {
-            const effectIcon = {
-                'poison': '☠',
-                'sleep': '💤', 
-                'stun': '⚡',
-                'weaken': '⬇'
-            }[attack.effect] || '?';
-            attackText += ` ${effectIcon}${attack.effect.toUpperCase()}`;
-        }
-
-        attackOption.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 2px;">${attackText}</div>
-            <div style="font-size: 6px; opacity: 0.8;">${attack.description}</div>
-        `;
-
-        // Click to perform attack
-        attackOption.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if ((canAttack || attack.damage === 0) && !attackOption.classList.contains('disabled')) {
-                performUniqueAttack(idx, attackIndex);
-            }
-        });
-
-        dropdown.appendChild(attackOption);
-    });
-
-    // Show/hide dropdown on hover
-    fightBtn.addEventListener('mouseenter', () => {
-        if (!fightBtn.classList.contains('disabled')) {
-            dropdown.style.display = 'block';
-        }
-    });
-
-    fightContainer.addEventListener('mouseleave', () => {
-        dropdown.style.display = 'none';
-    });
-
-    // Prevent dropdown from closing when hovering over it
-    dropdown.addEventListener('mouseenter', () => {
-        dropdown.style.display = 'block';
-    });
-
-    fightContainer.appendChild(fightBtn);
-    fightContainer.appendChild(dropdown);
-    panel.appendChild(fightContainer);
-
-    // DEFEND button
+    // Defend button
     const defendBtn = document.createElement('div');
     defendBtn.className = 'btn';
-    defendBtn.textContent = 'DEFEND';
-    defendBtn.addEventListener('click', () => performDefend(idx));
+    defendBtn.textContent = 'Defend';
+    defendBtn.addEventListener('click', ()=> performDefend(idx));
 
+    panel.appendChild(lightAttackBtn);
+    panel.appendChild(heavyAttackBtn);
     panel.appendChild(defendBtn);
 
-    // Show info if can't attack
-    if (!canAttack) {
-        const noTargetMsg = document.createElement('div');
-        noTargetMsg.style.cssText = `
-            font-size: 8px;
-            color: #aaa;
-            text-align: center;
-            margin-top: 4px;
-        `;
-        noTargetMsg.textContent = 'No opposite target';
-        panel.appendChild(noTargetMsg);
+    if(!canAttack) {
+      const noTargetMsg = document.createElement('div');
+      noTargetMsg.style.fontSize = '8px';
+      noTargetMsg.style.color = '#aaa';
+      noTargetMsg.style.textAlign = 'center';
+      noTargetMsg.style.marginTop = '4px';
+      noTargetMsg.textContent = 'No opposite target';
+      panel.appendChild(noTargetMsg);
     }
 
     document.body.appendChild(panel);
     currentActionPanel = panel;
     selected = { side: 'player', idx };
- }
+  }
 
-  function hideActionPanel()
-{
-    if (currentActionPanel)
-    {
-        currentActionPanel.remove();
-        currentActionPanel = null;
-   }
-}
+  function hideActionPanel(){
+    if(currentActionPanel){
+      currentActionPanel.remove();
+      currentActionPanel = null;
+    }
+  }
 
-function clearSelections()
-{
-    document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+  function clearSelections(){
+    document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
     selected = null;
-}
+  }
 
-// perform unique attack based on card's attack data
-function performUniqueAttack(attackerIdx, attackIndex)
-{
+  // perform attack on opposite slot
+  function performAttack(attackerIdx, damage){
     const attacker = playerSlots[attackerIdx];
     const targetIdx = attackerIdx; // same index on opposite side
     const target = computerSlots[targetIdx];
-
-    if (!attacker || !target || attacker.used) return;
-
-    const attack = attacker.card.attacks[attackIndex];
-    if (!attack) return;
+    
+    if(!attacker || !target || attacker.used) return;
 
     // mark attacker as used
     attacker.used = true;
-
+    
     // Get card elements for animation
     const attackerSlotEl = playerSlotsEl.children[attackerIdx];
     const targetSlotEl = computerSlotsEl.children[targetIdx];
     const attackerCardEl = attackerSlotEl.querySelector('.card');
     const targetCardEl = targetSlotEl.querySelector('.card');
-
-    // Debug: Check attack details
-    console.log('Unique attack:', {
-    attacker: attacker.card.name,
-      attack: attack.name,
-      damage: attack.damage,
-      effect: attack.effect,
-      target: target.card.name
-   });
-
-    // Apply defend reduction if active
-    let finalDmg = attack.damage;
-    if (target.defending && finalDmg > 0)
-    {
-        finalDmg = Math.ceil(finalDmg / 2);
-        target.defending = false;
-        addLog('system', `${target.card.name} defended – reduced damage!`);
-   }
-
-    // Create flying projectile animation
-    if (attackerCardEl && targetCardEl && finalDmg > 0)
-    {
-        createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-        // This runs when the projectile hits
-        console.log('Projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(() => {
-            targetCardEl.classList.remove('hit', 'flash');
-       }, 400);
-
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-
-        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
-
-        // Apply status effects
-        applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
-
-        // Death check
-        if (target.hp <= 0)
-        {
-            setTimeout(() => {
-                targetCardEl.classList.add('die');
-                setTimeout(() => {
-                    computerSlots[targetIdx] = null;
-                    renderAll();
-                    checkBattleOver();
-               }, 600);
-           }, 200);
-       }
-        else
-        {
-            updateSlotUI('computer', targetIdx);
-            checkBattleOver();
-       }
-   }, finalDmg);
-} else
-{
-    // No damage attack (like stun/sleep) - apply effects immediately
-    addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
-    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
-
-    // Apply poison damage if it's a poison attack
-    if (attack.effect === 'poison' && attack.damage > 0)
-    {
-        setTimeout(() => {
-            showDamagePopup(targetSlotEl, attack.damage, '#8B4513');
-            target.hp = Math.max(0, target.hp - attack.damage);
-            addLog('system', `${target.card.name} takes ${attack.damage} poison damage`);
-
-        if (target.hp <= 0)
-        {
-            setTimeout(() => {
-                targetCardEl.classList.add('die');
-                setTimeout(() => {
-                    computerSlots[targetIdx] = null;
-                    renderAll();
-                    checkBattleOver();
-               }, 600);
-           }, 200);
-       }
-        else
-        {
-            updateSlotUI('computer', targetIdx);
-            checkBattleOver();
-       }
-   }, 500);
-} else
-{
-    checkBattleOver();
-}
-   }
-
-    hideActionPanel();
-renderAll();
- }
-
-  // perform attack on opposite slot (legacy function for compatibility)
-  function performAttack(attackerIdx, damage)
-{
-    const attacker = playerSlots[attackerIdx];
-    const targetIdx = attackerIdx; // same index on opposite side
-    const target = computerSlots[targetIdx];
-
-    if (!attacker || !target || attacker.used) return;
-
-    // mark attacker as used
-    attacker.used = true;
-
-    // Get card elements for animation
-    const attackerSlotEl = playerSlotsEl.children[attackerIdx];
-    const targetSlotEl = computerSlotsEl.children[targetIdx];
-    const attackerCardEl = attackerSlotEl.querySelector('.card');
-    const targetCardEl = targetSlotEl.querySelector('.card');
-
-    // Debug: Check if elements exist and damage value
-    console.log('Player attack animation elements:', {
-    attackerSlotEl: !!attackerSlotEl,
-      attackerCardEl: !!attackerCardEl,
-      targetSlotEl: !!targetSlotEl,
-      targetCardEl: !!targetCardEl,
-      originalDamage: damage,
-      attackerName: attacker.card.name,
-      targetName: target.card.name
-   });
-
+    
+    // Animate attacker (player attacks forward toward computer)
+    if(attackerCardEl){
+      attackerCardEl.classList.add('attacking-forward');
+      setTimeout(()=>attackerCardEl.classList.remove('attacking-forward'), 800);
+    }
+    
     // Apply defend reduction if active
     let finalDmg = damage;
-    if (target.defending)
-    {
-        finalDmg = Math.ceil(finalDmg / 2);
-        target.defending = false;
-        addLog('system', `${target.card.name}
-        defended – reduced damage!`);
-   }
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
 
-    // Create flying projectile animation
-    if (attackerCardEl && targetCardEl)
-    {
-        createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-        // This runs when the projectile hits
-        console.log('Projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(() => {
-            targetCardEl.classList.remove('hit', 'flash');
-       }, 400);
-
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-
-        addLog('player', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
-
-        // Death check
-        if (target.hp <= 0)
-        {
-            setTimeout(() => {
-                targetCardEl.classList.add('die');
-                setTimeout(() => {
-                    computerSlots[targetIdx] = null;
-                    renderAll();
-                    checkBattleOver();
-               }, 600);
-           }, 200);
-       }
-        else
-        {
-            updateSlotUI('computer', targetIdx);
-            checkBattleOver();
-       }
-   }, finalDmg);
-} else
-{
-    // Fallback if elements not found
+    // Animate target getting hit after attack animation starts
     setTimeout(() => {
-    showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
-    target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
-    if (target.hp <= 0)
-    {
-        computerSlots[targetIdx] = null;
-        renderAll();
-        checkBattleOver();
-   }
-    else
-    {
+      // Show damage popup above target
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      
+      // Hit effects on target
+      if(targetCardEl){
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+      }
+      
+      // Subtract HP
+      target.hp = Math.max(0, target.hp - finalDmg);
+      
+      addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
+      
+      // Death check
+      if(target.hp <= 0){
+        if(targetCardEl){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              computerSlots[targetIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        } else {
+          computerSlots[targetIdx] = null;
+          renderAll();
+          checkBattleOver();
+        }
+      } else {
         updateSlotUI('computer', targetIdx);
         checkBattleOver();
-   }
-}, 300);
-   }
-
-    hideActionPanel();
-renderAll();
- }
-
-  function performDefend(slotIdx)
-{
-    const slot = playerSlots[slotIdx];
-    if (!slot || slot.used) return;
-
-    slot.used = true;
-    slot.defending = true;
-
-    // Animate defend
-    const slotEl = playerSlotsEl.children[slotIdx];
-    const cardEl = slotEl.querySelector('.card');
-    if (cardEl)
-    {
-        cardEl.classList.add('defending-anim');
-        setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
-   }
-
-    addLog('player', `${slot.card.name}
-    takes a defensive stance`);
+      }
+    }, 300);
 
     hideActionPanel();
     renderAll();
-}
+  }
 
-// computer AI: attacks opposite slots, defends sometimes
-function computerTurn()
-{
+  function performDefend(slotIdx){
+    const slot = playerSlots[slotIdx];
+    if(!slot || slot.used) return;
+
+    slot.used = true;
+    slot.defending = true;
+    
+    // Animate defend
+    const slotEl = playerSlotsEl.children[slotIdx];
+    const cardEl = slotEl.querySelector('.card');
+    if(cardEl){
+      cardEl.classList.add('defending-anim');
+      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+    }
+    
+    addLog('player', `${slot.card.name} takes a defensive stance`);
+    
+    hideActionPanel();
+    renderAll();
+  }
+
+  // computer AI: attacks opposite slots, defends sometimes
+  function computerTurn(){
     // Don't start computer turn if we're still in setup phase
-    if (turnIndicator.textContent.includes('Setup')) return;
-
+    if(turnIndicator.textContent.includes('Setup')) return;
+    
     turnIndicator.textContent = 'Computer Turn';
     endTurnBtn.classList.add('disabled');
-
+    
     addLog('system', 'Computer is thinking...');
+    
+    setTimeout(()=>{
+      // Reset ALL computer card used status at start of turn
+      computerSlots.forEach(slot => {
+        if(slot) {
+          slot.used = false;
+          // Also clear any defending status from previous turns if needed
+        }
+      });
 
-    setTimeout(() => {
-        // Process status effects on computer cards
-        processStatusEffects('computer');
+      performComputerActions();
+    }, 800);
+  }
 
-        // Reset ALL computer card used status at start of turn
-        computerSlots.forEach(slot => {
-            if (slot)
-            {
-                slot.used = false;
-                // Also clear any defending status from previous turns if needed
-           }
-       });
-
-        performComputerActions();
-   }, 800);
-}
-
-function performComputerActions()
-{
+  function performComputerActions(){
     // Computer's strategic decision making each turn
-
+    
     // Option 1: Place a new card (if beneficial)
     const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
-    if (shouldPlaceCard && computerPlaceCard())
-    {
-        // Placed a card, continue with other actions
-        setTimeout(() => performComputerActions(), 1000);
-        return;
-   }
-
+    if(shouldPlaceCard && computerPlaceCard()){
+      // Placed a card, continue with other actions
+      setTimeout(()=> performComputerActions(), 1000);
+      return;
+    }
+    
     // Option 2: Use existing cards to attack or defend
-    const activeSlots = computerSlots.map((slot, idx) =>
+    const activeSlots = computerSlots.map((slot, idx) => 
       slot && slot.hp > 0 && !slot.used ? idx : -1
     ).filter(idx => idx !== -1);
 
-    if (activeSlots.length === 0)
-    {
-        setTimeout(() => endComputerTurn(), 800);
-        return;
-   }
+    if(activeSlots.length === 0){
+      setTimeout(()=>endComputerTurn(), 800);
+      return;
+    }
 
     const slotIdx = activeSlots[Math.floor(Math.random() * activeSlots.length)];
     const slot = computerSlots[slotIdx];
-
+    
     // Check if there's an opposite target
     const targetSlot = playerSlots[slotIdx];
     const canAttack = targetSlot && targetSlot.hp > 0;
-
+    
     // Strategic decision: attack if possible, defend if threatened or randomly
     let action;
-    if (!canAttack)
-    {
-        action = 'defend'; // Can't attack, so defend
-   }
-    else
-    {
-        // Consider if this computer card might be threatened
-        const isThreated = targetSlot && targetSlot.hp > 0;
-        const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
-        action = shouldAttack ? 'attack' : 'defend';
-   }
-
-    if (action === 'attack' && canAttack)
-    {
-        const damage = Math.random() > 0.6 ? 10 : 5;
-        performComputerAttack(slotIdx, damage);
-   }
-    else
-    {
-        performComputerDefend(slotIdx);
-   }
+    if(!canAttack){
+      action = 'defend'; // Can't attack, so defend
+    } else {
+      // Consider if this computer card might be threatened
+      const isThreated = targetSlot && targetSlot.hp > 0;
+      const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
+      action = shouldAttack ? 'attack' : 'defend';
+    }
+    
+    if(action === 'attack' && canAttack){
+      const damage = Math.random() > 0.6 ? 10 : 5;
+      performComputerAttack(slotIdx, damage);
+    } else {
+      performComputerDefend(slotIdx);
+    }
 
     // Continue with next action after delay if there are more unused cards
-    setTimeout(() => {
-        const remainingActive = computerSlots.filter(slot => slot && slot.hp > 0 && !slot.used);
-        if (remainingActive.length > 0)
-        {
-            performComputerActions();
-       }
-        else
-        {
-            endComputerTurn();
-       }
-   }, 1500);
-}
+    setTimeout(()=> {
+      const remainingActive = computerSlots.filter(slot => slot && slot.hp > 0 && !slot.used);
+      if(remainingActive.length > 0) {
+        performComputerActions();
+      } else {
+        endComputerTurn();
+      }
+    }, 1500);
+  }
 
-function performComputerAttack(attackerIdx, damage)
-{
+  function performComputerAttack(attackerIdx, damage){
     const attacker = computerSlots[attackerIdx];
     const target = playerSlots[attackerIdx];
-
-    if (!attacker || !target) return;
+    
+    if(!attacker || !target) return;
 
     attacker.used = true;
 
@@ -1168,665 +621,391 @@ function performComputerAttack(attackerIdx, damage)
     const targetSlotEl = playerSlotsEl.children[attackerIdx];
     const attackerCardEl = attackerSlotEl.querySelector('.card');
     const targetCardEl = targetSlotEl.querySelector('.card');
-
-    // Debug: Check if elements exist
-    console.log('Computer attack animation elements:', {
-    attackerSlotEl: !!attackerSlotEl,
-      attackerCardEl: !!attackerCardEl,
-      targetSlotEl: !!targetSlotEl,
-      targetCardEl: !!targetCardEl
-   });
+    
+    // Animate attacker (computer attacks backward toward player)
+    if(attackerCardEl){
+      attackerCardEl.classList.add('attacking-backward');
+      setTimeout(()=>attackerCardEl.classList.remove('attacking-backward'), 800);
+    }
 
     let finalDmg = damage;
-    if (target.defending)
-    {
-        finalDmg = Math.ceil(finalDmg / 2);
-        target.defending = false;
-        addLog('system', `${target.card.name}
-        defended – reduced damage!`);
-   }
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
 
-    // Create flying projectile animation
-    if (attackerCardEl && targetCardEl)
-    {
-        createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-        // This runs when the projectile hits
-        console.log('Computer projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(() => {
-            targetCardEl.classList.remove('hit', 'flash');
-       }, 400);
-
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-
-        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
-
-        // Death check
-        if (target.hp <= 0)
-        {
-            setTimeout(() => {
-                targetCardEl.classList.add('die');
-                setTimeout(() => {
-                    playerSlots[attackerIdx] = null;
-                    renderAll();
-                    checkBattleOver();
-               }, 600);
-           }, 200);
-       }
-        else
-        {
-            updateSlotUI('player', attackerIdx);
-            checkBattleOver();
-       }
-   }, finalDmg);
-} else
-{
-    // Fallback if elements not found
+    // Animate target getting hit after attack animation starts
     setTimeout(() => {
-    showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
-    target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
-    if (target.hp <= 0)
-    {
-        playerSlots[attackerIdx] = null;
-        renderAll();
-        checkBattleOver();
-   }
-    else
-    {
+      // Show damage popup
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      
+      // Hit effects
+      if(targetCardEl){
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+      }
+
+      target.hp = Math.max(0, target.hp - finalDmg);
+      
+      addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
+
+      if(target.hp <= 0){
+        if(targetCardEl){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              playerSlots[attackerIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        } else {
+          playerSlots[attackerIdx] = null;
+          renderAll();
+          checkBattleOver();
+        }
+      } else {
         updateSlotUI('player', attackerIdx);
-        checkBattleOver();
-   }
-}, 300);
-   }
+      }
+    }, 300);
 
     renderAll();
- }
+  }
 
-  function performComputerDefend(slotIdx)
-{
+  function performComputerDefend(slotIdx){
     const slot = computerSlots[slotIdx];
-    if (!slot) return;
+    if(!slot) return;
 
     slot.used = true;
     slot.defending = true;
-
+    
     // Animate defend
     const slotEl = computerSlotsEl.children[slotIdx];
     const cardEl = slotEl.querySelector('.card');
-    if (cardEl)
-    {
-        cardEl.classList.add('defending-anim');
-        setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
-   }
-
-    addLog('computer', `${slot.card.name}
-    takes a defensive stance`);
+    if(cardEl){
+      cardEl.classList.add('defending-anim');
+      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+    }
+    
+    addLog('computer', `${slot.card.name} takes a defensive stance`);
     renderAll();
-}
+  }
 
-function endComputerTurn()
-{
+  function endComputerTurn(){
     playerTurn = true;
     turnIndicator.textContent = 'Player Turn';
     endTurnBtn.classList.remove('disabled');
-
-    // Process status effects on player cards
-    processStatusEffects('player');
-
+    
     // reset all player card used status
     playerSlots.forEach(slot => {
-        if (slot) slot.used = false;
-   });
-
+      if(slot) slot.used = false;
+    });
+    
     addLog('system', 'Player turn begins');
     renderAll();
-}
+  }
 
-// show damage popup
-function showDamagePopup(container, damage, color)
-{
-    const popup = document.createElement('div');
-    popup.className = 'dmg-pop';
-    popup.style.color = color || '#ff4444';
+  // show damage popup
+  function showDamagePopup(container, damage, color){
+    const popup = document.createElement('div'); 
+    popup.className='dmg-pop'; 
+    popup.style.color = color || '#ff4444'; 
     popup.textContent = `-${damage}`;
-    popup.style.left = '50%';
+    popup.style.left = '50%'; 
     popup.style.top = '10%';
     container.style.position = 'relative'; // Ensure container can position the popup
     container.appendChild(popup);
-    setTimeout(() => popup.remove(), 1000);
-}
+    setTimeout(()=> popup.remove(), 1000);
+  }
 
-// apply status effects to a target
-function applyStatusEffect(target, effect, duration, attackerName)
-{
-    if (!effect || !duration) return;
-
-    // Add status effect to target
-    if (!target.statusEffects) target.statusEffects = [];
-
-    const statusEffect = {
-      type: effect,
-      duration: duration,
-      attacker: attackerName,
-      turnsRemaining: duration
-   };
-
-target.statusEffects.push(statusEffect);
-
-// Log the effect
-const effectMessages = {
-      stun: `${target.card.name} is stunned and cannot act!`,
-      sleep: `${target.card.name} falls asleep!`,
-      poison: `${target.card.name} is poisoned!`,
-      weaken: `${target.card.name} is weakened!`
-   };
-
-if (effectMessages[effect])
-{
-    addLog('system', effectMessages[effect]);
-}
- }
-
-  // process status effects at the start of each turn
-  function processStatusEffects(side)
-{
-    const slots = side === 'player' ? playerSlots : computerSlots;
-    const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
-
-    slots.forEach((slot, idx) => {
-        if (!slot || !slot.statusEffects) return;
-
-        slot.statusEffects = slot.statusEffects.filter(effect => {
-        effect.turnsRemaining--;
-
-        // Apply ongoing effects
-        if (effect.type === 'poison' && effect.turnsRemaining >= 0)
-        {
-            const poisonDmg = 5; // Poison damage per turn
-            slot.hp = Math.max(0, slot.hp - poisonDmg);
-            addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
-
-        // Show poison damage popup
-        const slotEl = slotsEl.children[idx];
-        if (slotEl)
-        {
-            showDamagePopup(slotEl, poisonDmg, '#8B4513');
-       }
-   }
-
-        // Remove expired effects
-        if (effect.turnsRemaining <= 0)
-    {
-        const expiredMessages = {
-            stun: `${slot.card.name} is no longer stunned!`,
-            sleep: `${slot.card.name} wakes up!`,
-            poison: `${slot.card.name} is no longer poisoned!`,
-            weaken: `${slot.card.name} is no longer weakened!`
-         };
-
-if (expiredMessages[effect.type])
-{
-    addLog('system', expiredMessages[effect.type]);
-}
-
-return false; // Remove this effect
-       }
-        
-        return true; // Keep this effect
-     });
-
-    // Update UI if HP changed
-    if (slot.hp <= 0)
-    {
-        slots[idx] = null;
-    }
-    else
-    {
-        updateSlotUI(side, idx);
-    }
-   });
-
-renderAll();
- }
-
-  // check if a slot is affected by a status effect
-  function hasStatusEffect(slot, effectType)
-{
-    if (!slot || !slot.statusEffects) return false;
-    return slot.statusEffects.some(effect => effect.type === effectType);
-}
-
-// create flying projectile animation
-function createFlyingProjectile(fromElement, toElement, callback, damage)
-{
-    // Clone the attacking card
-    const projectile = fromElement.cloneNode(true);
-    projectile.style.position = 'fixed';
-    projectile.style.pointerEvents = 'none';
-    projectile.style.zIndex = '2000';
-
-    // Get positions
-    const fromRect = fromElement.getBoundingClientRect();
-    const toRect = toElement.getBoundingClientRect();
-
-    // Calculate the distance to travel
-    const deltaX = toRect.left - fromRect.left;
-    const deltaY = toRect.top - fromRect.top;
-
-    // Set initial position
-    projectile.style.left = fromRect.left + 'px';
-    projectile.style.top = fromRect.top + 'px';
-
-    // Add to body
-    document.body.appendChild(projectile);
-
-    // Set CSS custom properties for the animation
-    projectile.style.setProperty('--target-x', deltaX + 'px');
-    projectile.style.setProperty('--target-y', deltaY + 'px');
-
-    // Add flying animation class
-    projectile.classList.add('flying-attack');
-
-    // Callback when animation completes
-    setTimeout(() => {
-        projectile.remove();
-        if (callback) callback(damage);
-   }, 800);
-}
-
-// render battlefield slots and global HP segments
-function renderAll()
-{
+  // render battlefield slots and global HP segments
+  function renderAll(){
     // slots
-    for (let i = 0; i < MAX_SLOTS; i++)
-    {
-        const pSlotEl = playerSlotsEl.children[i];
-        pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
-        if (playerSlots[i])
-        {
-            pSlotEl.classList.add('occupied');
-            pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
-       }
-        const cSlotEl = computerSlotsEl.children[i];
-        cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
-        if (computerSlots[i])
-        {
-            cSlotEl.classList.add('occupied');
-            cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
-       }
-   }
+    for(let i=0;i<MAX_SLOTS;i++){
+      const pSlotEl = playerSlotsEl.children[i];
+      pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
+      if(playerSlots[i]){
+        pSlotEl.classList.add('occupied');
+        pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+      }
+      const cSlotEl = computerSlotsEl.children[i];
+      cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
+      if(computerSlots[i]){
+        cSlotEl.classList.add('occupied');
+        cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+      }
+    }
     renderHand();
     updateGlobalHPUI();
-}
+  }
 
-// create visual card for battlefield slot
-function makeBattleCardEl(slotObj, owner, slotIndex)
-{
-    const wrap = document.createElement('div');
+  // create visual card for battlefield slot
+  function makeBattleCardEl(slotObj, owner, slotIndex){
+    const wrap = document.createElement('div'); 
     wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-    wrap.style.width = '86px';
-    wrap.style.height = '120px';
+    wrap.style.width='86px'; 
+    wrap.style.height='120px';
     wrap.style.position = 'relative';
-
-    const img = document.createElement('img');
-    img.src = slotObj.card.src;
+    
+    const img = document.createElement('img'); 
+    img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
     
-    // Add error handling for missing images  
-    img.onerror = function() {
-        this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODYiIGhlaWdodD0iODYiIHZpZXdCb3g9IjAgMCA4NiA4NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijg2IiBoZWlnaHQ9Ijg2IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjQzIiB5PSI0MyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiPk5PIElNQUdFPC90ZXh0Pgo8L3N2Zz4K';
-        this.alt = `${slotObj.card.name} (Image missing)`;
-   };
-
-    const stats = document.createElement('div');
-    stats.className = 'stats';
+    const stats = document.createElement('div'); 
+    stats.className='stats';
     stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
-
-    wrap.appendChild(img);
+    
+    wrap.appendChild(img); 
     wrap.appendChild(stats);
-
-    // Status effects display
-    if (slotObj.statusEffects && slotObj.statusEffects.length > 0) {
-        const statusContainer = document.createElement('div');
-        statusContainer.className = 'status-effects';
-        
-        slotObj.statusEffects.forEach(effect => {
-            const statusEl = document.createElement('div');
-            statusEl.className = `status-effect ${effect.type}`;
-            
-            let icon = '';
-            switch(effect.type) {
-                case 'poison': icon = '☠'; break;
-                case 'sleep': icon = '💤'; break;
-                case 'stun': icon = '⚡'; break;
-                case 'weaken': icon = '⬇'; break;
-                default: icon = '?'; break;
-           }
-            
-            statusEl.innerHTML = `${icon}${effect.turnsRemaining}`;
-            statusContainer.appendChild(statusEl);
-       });
-        
-        wrap.appendChild(statusContainer);
-        
-        // ADD ANIMATED STATUS OVERLAYS - NEW FUNCTIONALITY
-        slotObj.statusEffects.forEach(effect => {
-            const overlay = document.createElement('div');
-            overlay.className = `status-overlay ${effect.type}-overlay`;
-            
-            let overlaySymbol = '';
-            switch(effect.type) {
-                case 'poison': 
-                    overlaySymbol = '☠💀'; // Skull and crossbones
-                    break;
-                case 'sleep': 
-                    overlaySymbol = 'ZZZ'; // Animated ZZZ
-                    break;
-                case 'stun': 
-                    overlaySymbol = '⚡⭐'; // Lightning and star
-                    break;
-                case 'weaken': 
-                    overlaySymbol = '⬇📉'; // Down arrows
-                    break;
-                default: 
-                    overlaySymbol = '❓'; // Question mark fallback
-                    break;
-           }
-            
-            overlay.textContent = overlaySymbol;
-            wrap.appendChild(overlay);
-       });
-   }
-
+    
     // defending glow
-    if (slotObj.defending)
-    {
-        wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
-   }
-
+    if(slotObj.defending){
+      wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+    }
+    
     wrap.dataset.owner = owner;
     wrap.dataset.slot = slotIndex;
     wrap._hpEl = stats.querySelector('.card-hp');
 
     return wrap;
-}
+  }
 
   // update slot UI
-  function updateSlotUI(side, idx)
-{
-    const slot = (side === 'player' ? playerSlots[idx] : computerSlots[idx]);
-    const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
-    if (slot && slotEl.firstChild)
-    {
-        slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-   }
+  function updateSlotUI(side, idx){
+    const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
+    const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+    if(slot && slotEl.firstChild){
+      slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+    }
     updateGlobalHPUI();
-}
+  }
 
-// update turn state and check if player can end turn
-function updateTurnState()
-{
-    if (!playerTurn) return;
-
+  // update turn state and check if player can end turn
+  function updateTurnState(){
+    if(!playerTurn) return;
+    
     // Check if any player cards can still act
     const canAct = playerSlots.some(slot => slot && slot.hp > 0 && !slot.used);
+    
+    if(!canAct){
+      // All player cards have acted or are dead
+      addLog('system', 'All your cards have acted this turn');
+    }
+  }
 
-    if (!canAct)
-    {
-        // All player cards have acted or are dead
-        addLog('system', 'All your cards have acted this turn');
-   }
-}
-
-// compute and render global HP segments
-function updateGlobalHPUI()
-{
-    const sumPlayer = playerSlots.reduce((s, slot) => s + (slot ? slot.hp : 0), 0);
-    const sumComputer = computerSlots.reduce((s, slot) => s + (slot ? slot.hp : 0), 0);
-    playerGlobalHP.innerHTML = '';
+  // compute and render global HP segments
+  function updateGlobalHPUI(){
+    const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+    playerGlobalHP.innerHTML = ''; 
     computerGlobalHP.innerHTML = '';
     const totalPossible = MAX_SLOTS * MAX_HP;
     const playerFrac = sumPlayer / totalPossible;
     const compFrac = sumComputer / totalPossible;
     renderSegments(playerGlobalHP, playerFrac);
     renderSegments(computerGlobalHP, compFrac);
-}
+  }
 
-function renderSegments(container, fraction)
-{
+  function renderSegments(container, fraction){
     const segmentsToShow = fraction * SEGMENTS;
-    for (let i = 0; i < SEGMENTS; i++)
-    {
-        const s = document.createElement('div'); s.className = 'seg';
-        const remain = segmentsToShow - i;
-        if (remain <= 0) { s.style.opacity = 0.12;}
-        else if (remain < 1) { s.classList.add('half');}
-        container.appendChild(s);
-   }
-}
+    for(let i=0;i<SEGMENTS;i++){
+      const s = document.createElement('div'); s.className='seg';
+      const remain = segmentsToShow - i;
+      if(remain <= 0) { s.style.opacity = 0.12; }
+      else if(remain < 1) { s.classList.add('half'); }
+      container.appendChild(s);
+    }
+  }
 
-// check battle over
-function checkBattleOver()
-{
-    const playerHas = playerSlots.some(s => s && s.hp > 0);
-    const compHas = computerSlots.some(s => s && s.hp > 0);
-    if (!playerHas || !compHas)
-    {
-        const result = compHas ? 'defeat' : 'victory';
-        addLog('system', `Battle over: ${result.toUpperCase()}`);
-        setTimeout(() => showGameOver(result), 500);
-   }
-}
+  // check battle over
+  function checkBattleOver(){
+    const playerHas = playerSlots.some(s=>s && s.hp>0);
+    const compHas = computerSlots.some(s=>s && s.hp>0);
+    if(!playerHas || !compHas){
+      const result = compHas ? 'defeat' : 'victory';
+      addLog('system', `Battle over: ${result.toUpperCase()}`);
+      setTimeout(()=>showGameOver(result), 500);
+    }
+  }
 
-function showGameOver(result)
-{
-    alert(result === 'victory' ? 'You won!' : 'You lost!');
+  function showGameOver(result){
+    alert(result==='victory' ? 'You won!' : 'You lost!');
     // return to main index (developer can change)
     // location.href = 'index.html';
-}
+  }
 
-// end turn button handler
-endTurnBtn.addEventListener('click', () => {
-    if (!playerTurn || endTurnBtn.classList.contains('disabled')) return;
-
+  // end turn button handler
+  endTurnBtn.addEventListener('click', ()=>{
+    if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+    
     hideActionPanel();
     clearSelections();
     playerTurn = false;
-    addLog('system', 'Player ended their turn.');
-
+    addLog('system','Player ended their turn.');
+    
     // Only start computer turn if we're past setup phase
-    if (!turnIndicator.textContent.includes('Setup'))
-    {
-        setTimeout(() => computerTurn(), 500);
-   }
-});
+    if(!turnIndicator.textContent.includes('Setup')){
+      setTimeout(()=>computerTurn(), 500);
+    }
+  });
 
-// place initial computer slots - but don't fill until player places cards
-function fillComputerSlots()
-{
+  // place initial computer slots - but don't fill until player places cards
+  function fillComputerSlots(){
     // Don't auto-fill - computer will place cards after player starts
     computerSlots.fill(null);
-}
+  }
 
-// computer strategic initial placement
-function computerInitialPlacement()
-{
+  // computer strategic initial placement
+  function computerInitialPlacement(){
     const emptySlots = [];
-    for (let i = 0; i < MAX_SLOTS; i++)
-    {
-        if (computerSlots[i] === null)
-        {
-            emptySlots.push(i);
-       }
-   }
-
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
     // Place 1-3 cards initially, focusing on slots that oppose player cards
     const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
     const cardsToPlace = Math.min(Math.max(1, playerOccupiedSlots.length), 3, computerReserve.length);
-
+    
     // Prioritize placing cards opposite to player cards
     const prioritySlots = playerOccupiedSlots.filter(idx => emptySlots.includes(idx));
     const remainingSlots = emptySlots.filter(idx => !prioritySlots.includes(idx));
-
+    
     const targetSlots = [...prioritySlots, ...remainingSlots].slice(0, cardsToPlace);
-
+    
     targetSlots.forEach((slotIdx, i) => {
-        if (i < computerReserve.length)
-        {
-            const card = computerReserve[i];
-            computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: []}
-            ;
-       }
-   });
-
+      if(i < computerReserve.length){
+        const card = computerReserve[i];
+        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false };
+      }
+    });
+    
     renderAll();
-    addLog('system', `Computer placed ${targetSlots.length}
-    cards strategically.`);
-}
+    addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+  }
 
-// computer strategic card placement during battle
-function computerPlaceCard()
-{
+  // computer strategic card placement during battle
+  function computerPlaceCard(){
     const emptySlots = [];
-    for (let i = 0; i < MAX_SLOTS; i++)
-    {
-        if (computerSlots[i] === null)
-        {
-            emptySlots.push(i);
-       }
-   }
-
-    if (emptySlots.length === 0 || computerReserve.length === 0) return false;
-
+    for(let i = 0; i < MAX_SLOTS; i++){
+      if(computerSlots[i] === null){
+        emptySlots.push(i);
+      }
+    }
+    
+    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
+    
     // Count how many cards computer has already placed
     const placedCount = computerSlots.filter(slot => slot !== null).length;
-    if (placedCount >= computerReserve.length) return false;
-
+    if(placedCount >= computerReserve.length) return false;
+    
     // Strategic placement: prefer slots opposite player cards, or random if none
     const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
     const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
-    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] :
+    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
                       emptySlots[Math.floor(Math.random() * emptySlots.length)];
-
+    
     // Use next available card from reserve
     const cardToPlace = computerReserve[placedCount];
-    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: []}
-    ;
-
+    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false };
+    
     renderAll();
     addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
     return true;
-}
+  }
 
-// helper log
-function addLog(type, text)
-{
-    const div = document.createElement('div');
-    div.className = 'entry ' + (type === 'player' ? 'player' : type === 'computer' ? 'computer' : 'system');
+  // helper log
+  function addLog(type, text){
+    const div = document.createElement('div'); 
+    div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); 
     div.textContent = text;
-    logEl.appendChild(div);
+    logEl.appendChild(div); 
     logEl.scrollTop = logEl.scrollHeight;
-}
+  }
 
-// click outside to hide action panel
-document.addEventListener('click', (e) => {
-    if (currentActionPanel && !currentActionPanel.contains(e.target) &&
-       !e.target.closest('.slot') && !e.target.closest('.card'))
-    {
-        hideActionPanel();
-        clearSelections();
-   }
-});
+  // click outside to hide action panel
+  document.addEventListener('click', (e) => {
+    if(currentActionPanel && !currentActionPanel.contains(e.target) && 
+       !e.target.closest('.slot') && !e.target.closest('.card')){
+      hideActionPanel();
+      clearSelections();
+    }
+  });
 
-// keyboard support
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape')
-    {
-        hideActionPanel();
-        clearSelections();
-   }
-    if (e.key === ' ' || e.key === 'Enter')
-    {
-        if (playerTurn && !endTurnBtn.classList.contains('disabled'))
-        {
-            endTurnBtn.click();
-            e.preventDefault();
-       }
-   }
-});
+  // keyboard support
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      hideActionPanel();
+      clearSelections();
+    }
+    if(e.key === ' ' || e.key === 'Enter'){
+      if(playerTurn && !endTurnBtn.classList.contains('disabled')){
+        endTurnBtn.click();
+        e.preventDefault();
+      }
+    }
+  });
 
-// choose starting player - always start with player during setup phase
-function decideFirstPlayer()
-{
+  // choose starting player - always start with player during setup phase
+  function decideFirstPlayer(){
     playerTurn = true;
     turnIndicator.textContent = 'Player Setup Phase';
     endTurnBtn.classList.add('disabled'); // Disable end turn during setup
     addLog('system', 'Place your cards on the battlefield first.');
     // Battle will start after player places at least one card
-}
+  }
 
-// check if battle can begin
-function checkBattleStart()
-{
+  // check if battle can begin
+  function checkBattleStart(){
     const playerHasCards = playerSlots.some(slot => slot !== null);
+    
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+      addLog('system', 'Computer is ready to battle...');
+      
+      // Computer places 1-2 initial cards strategically
+      computerInitialPlacement();
+      
+      // Start actual battle after a brief delay
+      setTimeout(() => {
+        const firstPlayer = Math.random() < 0.5;
+        if(firstPlayer){
+          turnIndicator.textContent = 'Player Turn';
+          addLog('system', 'Battle begins! Player goes first.');
+          playerTurn = true;
+          endTurnBtn.classList.remove('disabled');
+        } else {
+          turnIndicator.textContent = 'Computer Turn';  
+          addLog('system', 'Battle begins! Computer goes first.');
+          playerTurn = false;
+          endTurnBtn.classList.add('disabled');
+          setTimeout(()=>computerTurn(), 1000);
+        }
+      }, 1500);
+    }
+  }
 
-    if (playerHasCards && turnIndicator.textContent.includes('Setup'))
-    {
-        addLog('system', 'Computer is ready to battle...');
-
-        // Computer places 1-2 initial cards strategically
-        computerInitialPlacement();
-
-        // Start actual battle after a brief delay
-        setTimeout(() => {
-            const firstPlayer = Math.random() < 0.5;
-            if (firstPlayer)
-            {
-                turnIndicator.textContent = 'Player Turn';
-                addLog('system', 'Battle begins! Player goes first.');
-                playerTurn = true;
-                endTurnBtn.classList.remove('disabled');
-           }
-            else
-            {
-                turnIndicator.textContent = 'Computer Turn';
-                addLog('system', 'Battle begins! Computer goes first.');
-                playerTurn = false;
-                endTurnBtn.classList.add('disabled');
-                setTimeout(() => computerTurn(), 1000);
-           }
-       }, 1500);
-   }
-}
-
-// initialization
-function init()
-{
+  // initialization
+  function init(){
     makeSlotsUI();
     loadPlayerInventory();
     buildComputerReserve();
     fillComputerSlots(); // This now just initializes empty slots
     renderAll(); // This should show the player's hand
     decideFirstPlayer(); // This now starts in setup phase
-    addLog('system', 'Place cards by clicking a hand card, then click an empty player slot.');
-    addLog('system', 'The battle will begin once you place your first card.');
-}
+    addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
+    addLog('system','The battle will begin once you place your first card.');
+  }
 
-// expose for debugging
-window._debug = { playerSlots, computerSlots, playerHand, computerReserve}
-;
+  // expose for debugging
+  window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
 
-init();
+  init();
 
 })();
-
 </script>
 </body>
 </html>
