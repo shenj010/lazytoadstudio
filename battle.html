@@ -354,6 +354,19 @@
     const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
     el.addEventListener('click', ()=>onHandClick(idx));
     const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+    
+    // Add error handling for missing images
+    img.onerror = function() {
+      console.log(`Failed to load hand card image: ${this.src}`);
+      this.style.background = '#555';
+      this.style.display = 'flex';
+      this.style.alignItems = 'center';
+      this.style.justifyContent = 'center';
+      this.innerHTML = 'IMG';
+      this.style.color = '#fff';
+      this.style.fontSize = '12px';
+    };
+    
     const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
     el.appendChild(img); el.appendChild(stats);
     const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
@@ -1132,6 +1145,18 @@
     const img = document.createElement('img'); 
     img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
+    
+    // Add error handling for missing images
+    img.onerror = function() {
+      console.log(`Failed to load image: ${this.src}`);
+      this.style.background = '#555';
+      this.style.display = 'flex';
+      this.style.alignItems = 'center';
+      this.style.justifyContent = 'center';
+      this.innerHTML = 'IMG';
+      this.style.color = '#fff';
+      this.style.fontSize = '12px';
+    };
     
     const stats = document.createElement('div'); 
     stats.className='stats';
