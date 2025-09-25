@@ -11,7 +11,7 @@
     --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
   }
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
   .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
   .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
   .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
@@ -84,7 +84,7 @@
   }
   
   /* damage popup */
-  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200:text-shadow:2px 2px 0 #000}
+  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
   @keyframes damageFloat{
     0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
     20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
@@ -210,6 +210,44 @@
   50%{transform:translateY(70px) scale(1.4)}
   80%{transform:translateY(50px) scale(1.25)}
   100%{transform:translateY(0) scale(1)}
+}
+
+/* Status effect indicators */
+.status-effects {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.status-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  font-size: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: bold;
+}
+
+.status-poison {
+  background: #4a4;
+}
+
+.status-hypnotized {
+  background: #84f;
+}
+
+.card.poisoned {
+  box-shadow: 0 0 8px rgba(68, 170, 68, 0.8) !important;
+}
+
+.card.hypnotized {
+  box-shadow: 0 0 8px rgba(132, 68, 255, 0.8) !important;
 }
 </style>
 </head>
@@ -995,6 +1033,14 @@ const cardDatabase = {
     wrap.style.height='120px';
     wrap.style.position = 'relative';
     
+    // Add status effect classes
+    if (slotObj.effects && slotObj.effects.poison) {
+      wrap.classList.add('poisoned');
+    }
+    if (slotObj.debuffs && slotObj.debuffs.hypnotized) {
+      wrap.classList.add('hypnotized');
+    }
+    
     const img = document.createElement('img'); 
     img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
@@ -1005,6 +1051,30 @@ const cardDatabase = {
     
     wrap.appendChild(img); 
     wrap.appendChild(stats);
+    
+    // Add status effect indicators
+    const statusContainer = document.createElement('div');
+    statusContainer.className = 'status-effects';
+    
+    if (slotObj.effects && slotObj.effects.poison) {
+      const poisonIcon = document.createElement('div');
+      poisonIcon.className = 'status-icon status-poison';
+      poisonIcon.textContent = slotObj.effects.poison;
+      poisonIcon.title = `Poisoned for ${slotObj.effects.poison} turns`;
+      statusContainer.appendChild(poisonIcon);
+    }
+    
+    if (slotObj.debuffs && slotObj.debuffs.hypnotized) {
+      const hypnoIcon = document.createElement('div');
+      hypnoIcon.className = 'status-icon status-hypnotized';
+      hypnoIcon.textContent = slotObj.debuffs.hypnotized;
+      hypnoIcon.title = `Hypnotized for ${slotObj.debuffs.hypnotized} turns`;
+      statusContainer.appendChild(hypnoIcon);
+    }
+    
+    if (statusContainer.children.length > 0) {
+      wrap.appendChild(statusContainer);
+    }
     
     // defending glow
     if(slotObj.defending){
@@ -1090,6 +1160,9 @@ const cardDatabase = {
     clearSelections();
     playerTurn = false;
     addLog('system','Player ended their turn.');
+    
+    // Process status effects at end of player turn  
+    processStatusEffects();
     
     // Only start computer turn if we're past setup phase
     if(!turnIndicator.textContent.includes('Setup')){
@@ -1259,6 +1332,100 @@ const cardDatabase = {
   init();
 
 })();
+
+// Add these functions after your performSpecialAttack function
+
+// Process status effects at the start of each turn
+function processStatusEffects() {
+  // Process player status effects
+  playerSlots.forEach((slot, idx) => {
+    if (slot && slot.effects) {
+      processSlotEffects(slot, 'player', idx);
+    }
+  });
+  
+  // Process computer status effects
+  computerSlots.forEach((slot, idx) => {
+    if (slot && slot.effects) {
+      processSlotEffects(slot, 'computer', idx);
+    }
+  });
+  
+  // Update cooldowns
+  updateCooldowns();
+}
+
+function processSlotEffects(slot, owner, slotIndex) {
+  // Process poison damage
+  if (slot.effects.poison && slot.effects.poison > 0) {
+    const poisonDamage = 3; // 3 damage per turn
+    slot.hp = Math.max(0, slot.hp - poisonDamage);
+    slot.effects.poison--;
+    
+    addLog('system', `${slot.card.name} takes ${poisonDamage} poison damage!`);
+    
+    // Show poison damage popup
+    const slotEl = (owner === 'player' ? playerSlotsEl : computerSlotsEl).children[slotIndex];
+    showDamagePopup(slotEl, poisonDamage, '#4a4');
+    
+    if (slot.effects.poison <= 0) {
+      delete slot.effects.poison;
+      addLog('system', `${slot.card.name} recovers from poison.`);
+    }
+    
+    // Check if card dies from poison
+    if (slot.hp <= 0) {
+      addLog('system', `${slot.card.name} dies from poison!`);
+      if (owner === 'player') {
+        playerSlots[slotIndex] = null;
+      } else {
+        computerSlots[slotIndex] = null;
+      }
+      setTimeout(() => {
+        renderAll();
+        checkBattleOver();
+      }, 500);
+    }
+  }
+}
+
+function updateCooldowns() {
+  // Update player cooldowns
+  playerSlots.forEach(slot => {
+    if (slot && slot.cooldowns) {
+      Object.keys(slot.cooldowns).forEach(ability => {
+        slot.cooldowns[ability]--;
+        if (slot.cooldowns[ability] <= 0) {
+          delete slot.cooldowns[ability];
+        }
+      });
+    }
+  });
+  
+  // Update computer cooldowns
+  computerSlots.forEach(slot => {
+    if (slot && slot.cooldowns) {
+      Object.keys(slot.cooldowns).forEach(ability => {
+        slot.cooldowns[ability]--;
+        if (slot.cooldowns[ability] <= 0) {
+          delete slot.cooldowns[ability];
+        }
+      });
+    }
+  });
+  
+  // Update debuff durations
+  [...playerSlots, ...computerSlots].forEach(slot => {
+    if (slot && slot.debuffs) {
+      Object.keys(slot.debuffs).forEach(debuff => {
+        slot.debuffs[debuff]--;
+        if (slot.debuffs[debuff] <= 0) {
+          delete slot.debuffs[debuff];
+        }
+      });
+    }
+  });
+}
 </script>
 </body>
 </html>
