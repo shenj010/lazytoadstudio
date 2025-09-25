@@ -12,7 +12,7 @@
     --poison:#8A2BE2; --sleep:#4169E1; --weakness:#FF6347;
   }
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
+  .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
   .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
   .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
   .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
@@ -244,7 +244,7 @@
 .card.weakened{filter:saturate(0.5) brightness(0.8)}
 
 /* Status effect popup */
-.status-pop{position:absolute;font-size:14px;font-weight:700;pointer-events:none;animation:statusFloat 1200ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
+.status-pop{position:absolute;font-size:14px;font-weight:700;pointer-events:none;animation:statusFloat 1200ms ease-out forwards;z-index:200:text-shadow:2px 2px 0 #000}
 @keyframes statusFloat{
   0%{transform:translateY(0) translateX(-50%) scale(0.6);opacity:0}
   20%{transform:translateY(-15px) translateX(-50%) scale(1);opacity:1}
@@ -902,13 +902,17 @@ const cardDatabase = {
     addLog('system', 'Computer is thinking...');
     
     setTimeout(()=>{
+      // FIXED: Process status effects for computer cards
+processStatusEffects(computerSlots, 'computer');
 
-      // Reset ALL computer card used status at start of turn
-      computerSlots.forEach(slot => {
+setTimeout(()=>{
+
+  // Reset ALL computer card used status at start of turn
+  computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
           // Reduce cooldowns
-          Object.keys(slot.cooldowns).forEach(ability => {
+          Object.keys(slot.cooldowns || {}).forEach(ability => {
             slot.cooldowns[ability]--;
             if(slot.cooldowns[ability] <= 0) {
               delete slot.cooldowns[ability];
@@ -1075,9 +1079,21 @@ const cardDatabase = {
     turnIndicator.textContent = 'Player Turn';
     endTurnBtn.classList.remove('disabled');
     
-    // reset all player card used status
+    // FIXED: Process status effects for player cards
+    processStatusEffects(playerSlots, 'player');
+    
+    // reset all player card used status and reduce cooldowns
     playerSlots.forEach(slot => {
-      if(slot) slot.used = false;
+      if(slot) {
+        slot.used = false;
+        // Reduce cooldowns
+        Object.keys(slot.cooldowns || {}).forEach(ability => {
+          slot.cooldowns[ability]--;
+          if(slot.cooldowns[ability] <= 0) {
+            delete slot.cooldowns[ability];
+          }
+        });
+      }
     });
     
     addLog('system', 'Player turn begins');
