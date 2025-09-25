@@ -40,6 +40,15 @@
   .card-action-panel .btn:hover{background:var(--accent);color:#000}
   .card-action-panel .btn:active{transform:scale(.98)}
   .card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
+  .card-action-panel .btn.special{
+    background:#ff6b35;
+    color:#fff;
+    border-color:#ff6b35;
+  }
+  .card-action-panel .btn.special:hover{
+    background:#ff8c5a;
+    color:#fff;
+  }
   /* turn control panel */
   .turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
   .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
@@ -75,7 +84,7 @@
   }
   
   /* damage popup */
-  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
+  .dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200:text-shadow:2px 2px 0 #000}
   @keyframes damageFloat{
     0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
     20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
@@ -659,6 +668,111 @@ const cardDatabase = {
     renderAll();
   }
 
+  function getCardData(name) {
+    return cardDatabase[name] || {
+      name: name,
+      attacks: [
+        { name: "Basic Attack", damage: 5, type: "basic" },
+        { name: "Heavy Attack", damage: 10, type: "basic" }
+      ],
+      animations: { attack: "attacking-forward" }
+    };
+  }
+
+  function performSpecialAttack(attackerIdx, attack){
+    const attacker = playerSlots[attackerIdx];
+    const targetIdx = attackerIdx;
+    const target = computerSlots[targetIdx];
+    
+    if(!attacker || !target || attacker.used) return;
+
+    attacker.used = true;
+    
+    // Set cooldown
+    if(attack.cooldown) {
+      attacker.cooldowns[attack.name] = attack.cooldown;
+    }
+
+    // Get card-specific animation
+    const cardData = getCardData(attacker.card.name);
+    const animationClass = attack.type === 'special' ? 
+      cardData.animations.special : cardData.animations.attack;
+    
+    const attackerSlotEl = playerSlotsEl.children[attackerIdx];
+    const targetSlotEl = computerSlotsEl.children[targetIdx];
+    const attackerCardEl = attackerSlotEl.querySelector('.card');
+    const targetCardEl = targetSlotEl.querySelector('.card');
+    
+    // Animate attacker with card-specific animation
+    if(attackerCardEl){
+      attackerCardEl.classList.add(animationClass || 'attacking-forward');
+      setTimeout(()=>attackerCardEl.classList.remove(animationClass || 'attacking-forward'), 1200);
+    }
+
+    // Calculate damage with effects
+    let finalDmg = attack.damage;
+    
+    // Apply hypnotize debuff (Hypno Toad's special effect)
+    if(target.debuffs && target.debuffs.hypnotized) {
+      finalDmg = Math.max(1, finalDmg - 5);
+      target.debuffs.hypnotized--;
+      if(target.debuffs.hypnotized <= 0) delete target.debuffs.hypnotized;
+    }
+    
+    if(target.defending){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
+
+    setTimeout(() => {
+      showDamagePopup(targetSlotEl, finalDmg, attack.type === 'special' ? '#ff6b35' : '#ff4444');
+      
+      if(targetCardEl){
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+      }
+      
+      target.hp = Math.max(0, target.hp - finalDmg);
+      
+      // Apply special effects based on card abilities
+      if(attack.name === "Hypnotize") {
+        target.debuffs = target.debuffs || {};
+        target.debuffs.hypnotized = 2;
+        addLog('player', `${target.card.name} is hypnotized - will deal 5 less damage next turn!`);
+      }
+      
+      if(attack.effect === "poison") {
+        target.effects = target.effects || {};
+        target.effects.poison = 3;
+        addLog('player', `${target.card.name} is poisoned for 3 turns!`);
+      }
+      
+      addLog('player', `${attacker.card.name} uses ${attack.name} for ${finalDmg} damage`);
+      
+      // Death check
+      if(target.hp <= 0){
+        if(targetCardEl){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              computerSlots[targetIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        }
+      } else {
+        updateSlotUI('computer', targetIdx);
+      }
+    }, 400);
+
+    hideActionPanel();
+    renderAll();
+  }
+
   // computer AI: attacks opposite slots, defends sometimes
   function computerTurn(){
     // Don't start computer turn if we're still in setup phase
@@ -1011,7 +1125,15 @@ const cardDatabase = {
     targetSlots.forEach((slotIdx, i) => {
       if(i < computerReserve.length){
         const card = computerReserve[i];
-        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false };
+        computerSlots[slotIdx] = { 
+          card, 
+          hp: MAX_HP, 
+          defending: false, 
+          used: false, 
+          cooldowns: {},
+          effects: {},
+          debuffs: {}
+        };
       }
     });
     
