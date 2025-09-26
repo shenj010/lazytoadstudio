@@ -1110,10 +1110,8 @@ function showCardActions(side, idx){
       if(!slot || !slot.statusEffects) return;
       
       slot.statusEffects = slot.statusEffects.filter(effect => {
-        effect.turnsRemaining--;
-        
-        // Apply ongoing effects
-        if(effect.type === 'poison' && effect.turnsRemaining >= 0) {
+        // Apply ongoing effects BEFORE decrementing turns
+        if(effect.type === 'poison') {
           const poisonDmg = 5; // Poison damage per turn
           slot.hp = Math.max(0, slot.hp - poisonDmg);
           addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
@@ -1124,6 +1122,9 @@ function showCardActions(side, idx){
             showDamagePopup(slotEl, poisonDmg, '#8B4513');
           }
         }
+        
+        // Decrement turns remaining AFTER applying effects
+        effect.turnsRemaining--;
         
         // Remove expired effects
         if(effect.turnsRemaining <= 0) {
