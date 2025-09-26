@@ -514,81 +514,70 @@
        
       // Update: direct attack execution without additional function
       attackBtn.addEventListener('click', ()=> {
-        if(canAttack || attack.damage === 0) {
-          // legacy damage variable for compatibility
-          let damage = attack.damage;
-          const target = computerSlots[idx];
-          
-          // If attack has an effect (like stun or poison), handle that immediately
-          if(attack.effect){
-            // Apply the effect to the target
-            applyStatusEffect(target, attack.effect, attack.duration, slot.card.name);
-            
-            // For poison, also deal initial damage
-            if(attack.effect === 'poison' && attack.damage > 0) {
-              damage = attack.damage;
-            } else {
-              damage = 0; // No direct damage if effect is applied
-            }
-          } 
-          
-          // regular attack execution (for attacked based on damage)
-          if(damage > 0) {
-            // Compute final damage considering defending
-            let finalDmg = damage;
-            if(target.defending && finalDmg > 0){
-              finalDmg = Math.ceil(finalDmg/2);
-              target.defending = false;
-              addLog('system', `${target.card.name} defended – reduced damage!`);
-            }
-            
-            // Create flying projectile animation
-            if(cardEl && target && target.hp > 0) {
-              createFlyingProjectile(cardEl, targetEl, (damageToApply) => {
-                // This runs when the projectile hits
-                console.log('Projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-                
-                // Show damage popup above target
-                showDamagePopup(targetEl, damageToApply, '#ff4444');
-                
-                // Hit effects on target
-                targetEl.classList.add('hit', 'flash');
-                setTimeout(()=>{ targetEl.classList.remove('hit', 'flash'); }, 400);
-                
-                // Subtract HP
-                target.hp = Math.max(0, target.hp - damageToApply);
-                
-                addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
-                
-                // Death check
-                if(target.hp <= 0){
-                  setTimeout(() => {
-                    targetEl.classList.add('die');
-                    setTimeout(()=>{ computerSlots[idx] = null; renderAll(); checkBattleOver(); }, 600);
-                  }, 200);
-                } else {
-                  updateSlotUI('computer', idx);
-                  checkBattleOver();
-                }
-              }, finalDmg);
-            } else {
-              // Fallback for immediate damage application (no animation)
-              console.log('Immediate damage application:', damage, 'to', target.card.name);
-              target.hp = Math.max(0, target.hp - damage);
-              addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
-              updateSlotUI('computer', idx);
+  if(canAttack || attack.damage === 0) {
+    // Mark attacker as used
+    slot.used = true;
+    
+    const target = computerSlots[idx];
+    const targetSlotEl = computerSlotsEl.children[idx];
+    const targetCardEl = targetSlotEl.querySelector('.card'); // Properly define targetCardEl
+    
+    // Apply defend reduction if active
+    let finalDmg = attack.damage;
+    if(target.defending && finalDmg > 0){
+      finalDmg = Math.ceil(finalDmg/2);
+      target.defending = false;
+      addLog('system', `${target.card.name} defended – reduced damage!`);
+    }
+    
+    // Apply status effects immediately
+    if(attack.effect) {
+      applyStatusEffect(target, attack.effect, attack.duration, slot.card.name);
+    }
+    
+    // Handle damage with flying animation if there is damage
+    if(finalDmg > 0) {
+      createFlyingProjectile(cardEl, targetCardEl, (damageToApply) => {
+        // Show damage popup above target
+        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+        
+        // Hit effects on target
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(()=>{
+          targetCardEl.classList.remove('hit', 'flash');
+        }, 400);
+        
+        // Subtract HP
+        target.hp = Math.max(0, target.hp - damageToApply);
+        
+        addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
+        
+        // Death check
+        if(target.hp <= 0){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{
+              computerSlots[idx] = null;
+              renderAll();
               checkBattleOver();
-            }
-          } else if(attack.damage === 0) {
-            // For attacks like stun with no damage, just apply the effect
-            addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
-            applyStatusEffect(target, attack.effect, attack.duration, slot.card.name);
-          }
+            }, 600);
+          }, 200);
+        } else {
+          updateSlotUI('computer', idx);
+          checkBattleOver();
         }
-      });
-      
-      panel.appendChild(attackBtn);
-    });
+      }, finalDmg);
+    } else {
+      // No damage attack (like pure stun/sleep) - just log and check battle state
+      addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
+      checkBattleOver();
+    }
+    
+    // Hide action panel and re-render
+    hideActionPanel();
+    renderAll();
+  }
+});
 
     // Defend button
     const defendBtn = document.createElement('div');
