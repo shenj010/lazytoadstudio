@@ -58,24 +58,25 @@
   /* turn indicator */
   .turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
   /* attack animations */
-  .attacking-forward{animation:attackForward 800ms ease-in-out forwards}
-  @keyframes attackForward{
-    0%{transform:translateY(0) scale(1)}
-    30%{transform:translateY(40px) scale(1.1) translateZ(10px)}
-    60%{transform:translateY(60px) scale(1.15) translateZ(20px)}
-    80%{transform:translateY(30px) scale(1.05) translateZ(5px)}
-    100%{transform:translateY(0) scale(1) translateZ(0px)}
-  }
-  
-  .attacking-backward{animation:attackBackward 800ms ease-in-out forwards}
-  @keyframes attackBackward{
-    0%{transform:translateY(0) scale(1)}
-    30%{transform:translateY(-40px) scale(1.1) translateZ(10px)}
-    60%{transform:translateY(-60px) scale(1.15) translateZ(20px)}
-    80%{transform:translateY(-30px) scale(1.05) translateZ(5px)}
-    100%{transform:translateY(0) scale(1) translateZ(0px)}
-  }
-  
+  .attacking-forward{animation:attackForward 1000ms ease-in-out forwards}
+@keyframes attackForward{
+  0%{transform:translateY(0) scale(1) rotate(0deg)}
+  20%{transform:translateY(-10px) scale(1.05) rotate(-2deg)}
+  40%{transform:translateY(50px) scale(1.2) rotate(1deg)}
+  70%{transform:translateY(80px) scale(1.3) rotate(-1deg)}
+  85%{transform:translateY(40px) scale(1.1) rotate(0deg)}
+  100%{transform:translateY(0) scale(1) rotate(0deg)}
+}
+
+.attacking-backward{animation:attackBackward 1000ms ease-in-out forwards}
+@keyframes attackBackward{
+  0%{transform:translateY(0) scale(1) rotate(0deg)}
+  20%{transform:translateY(10px) scale(1.05) rotate(2deg)}
+  40%{transform:translateY(-50px) scale(1.2) rotate(-1deg)}
+  70%{transform:translateY(-80px) scale(1.3) rotate(1deg)}
+  85%{transform:translateY(-40px) scale(1.1) rotate(0deg)}
+  100%{transform:translateY(0) scale(1) rotate(0deg)}
+}
   /* defend animation */
   .defending-anim{animation:defendPulse 600ms ease-in-out forwards}
   @keyframes defendPulse{
@@ -94,26 +95,37 @@
   }
   
   /* hit effects */
-  .hit{animation:hitShake 400ms ease-out forwards}
-  @keyframes hitShake{
-    0%{transform:translateX(0)}
-    10%{transform:translateX(-8px) rotateZ(-2deg)}
-    20%{transform:translateX(6px) rotateZ(1deg)}
-    30%{transform:translateX(-4px) rotateZ(-1deg)}
-    40%{transform:translateX(3px) rotateZ(0.5deg)}
-    50%{transform:translateX(-2px) rotateZ(-0.5deg)}
-    60%{transform:translateX(1px) rotateZ(0.2deg)}
-    100%{transform:translateX(0) rotateZ(0deg)}
-  }
+  .hit{animation:hitShake 600ms ease-out forwards}
+@keyframes hitShake{
+  0%{transform:translateX(0) rotate(0deg)}
+  8%{transform:translateX(-12px) rotate(-3deg)}
+  16%{transform:translateX(10px) rotate(2deg)}
+  24%{transform:translateX(-8px) rotate(-2deg)}
+  32%{transform:translateX(6px) rotate(1deg)}
+  40%{transform:translateX(-4px) rotate(-1deg)}
+  48%{transform:translateX(3px) rotate(0.5deg)}
+  56%{transform:translateX(-2px) rotate(-0.5deg)}
+  64%{transform:translateX(1px) rotate(0.2deg)}
+  100%{transform:translateX(0) rotate(0deg)}
+}
   
-  .flash{animation:flashHit 300ms ease-out forwards}
-  @keyframes flashHit{
-    0%{filter:brightness(1) contrast(1)}
-    25%{filter:brightness(1.8) contrast(1.3) saturate(0)}
-    50%{filter:brightness(1.5) contrast(1.2) saturate(0.2)}
-    75%{filter:brightness(1.3) contrast(1.1) saturate(0.6)}
-    100%{filter:brightness(1) contrast(1) saturate(1)}
-  }
+ .flash{animation:flashHit 500ms ease-out forwards}
+@keyframes flashHit{
+  0%{filter:brightness(1) contrast(1)}
+  15%{filter:brightness(2.5) contrast(1.8) saturate(0) hue-rotate(0deg)}
+  30%{filter:brightness(2) contrast(1.5) saturate(0.3) hue-rotate(10deg)}
+  50%{filter:brightness(1.8) contrast(1.3) saturate(0.5) hue-rotate(5deg)}
+  70%{filter:brightness(1.5) contrast(1.2) saturate(0.8) hue-rotate(2deg)}
+  85%{filter:brightness(1.2) contrast(1.1) saturate(0.9) hue-rotate(1deg)}
+  100%{filter:brightness(1) contrast(1) saturate(1) hue-rotate(0deg)}
+}
+  .impact{animation:impactPulse 400ms ease-out forwards}
+@keyframes impactPulse{
+  0%{box-shadow:0 0 0 rgba(255,68,68,0)}
+  30%{box-shadow:0 0 30px rgba(255,68,68,0.8), inset 0 0 20px rgba(255,255,255,0.3)}
+  60%{box-shadow:0 0 20px rgba(255,68,68,0.6), inset 0 0 15px rgba(255,255,255,0.2)}
+  100%{box-shadow:0 0 0 rgba(255,68,68,0), inset 0 0 0 rgba(255,255,255,0)}
+}
   
   .die{animation:dieFade 600ms ease forwards}
   @keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
@@ -885,7 +897,6 @@ const cardDatabase = {
   const target = computerSlots[targetIdx];
   
   if(!attacker || !target || attacker.used) return;
-
   attacker.used = true;
   
   // Set cooldown
@@ -931,10 +942,10 @@ const cardDatabase = {
       showDamagePopup(targetSlotEl, finalDmg, attack.type === 'special' ? '#ff6b35' : '#ff4444');
       
       if(targetCardEl){
-        targetCardEl.classList.add('hit', 'flash');
+        targetCardEl.classList.add('hit', 'flash', 'impact');
         setTimeout(()=>{
-          targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
+          targetCardEl.classList.remove('hit', 'flash', 'impact');
+        }, 600);
       }
       
       target.hp = Math.max(0, target.hp - finalDmg);
@@ -966,7 +977,7 @@ const cardDatabase = {
     } else {
       updateSlotUI('computer', targetIdx);
     }
-  }, 400);
+  }, 500);
 
   hideActionPanel();
   renderAll();
@@ -1052,92 +1063,125 @@ const cardDatabase = {
     }, 1500);
   }
 
-  function performComputerAttack(attackerIdx, damage){
-    const attacker = computerSlots[attackerIdx];
-    const target = playerSlots[attackerIdx];
+ function performComputerAttack(attackerIdx, damage){
+  const attacker = computerSlots[attackerIdx];
+  const target = playerSlots[attackerIdx];
+  
+  if(!attacker || !target) return;
+
+  attacker.used = true;
+
+  // Get the computer card's actual abilities
+  const cardData = getCardData(attacker.card.name);
+  
+  // Choose between basic and special attacks (70% basic, 30% special if available and not on cooldown)
+  let chosenAttack;
+  const availableAttacks = cardData.attacks.filter(attack => 
+    !attacker.cooldowns[attack.name] || attacker.cooldowns[attack.name] <= 0
+  );
+  
+  if (availableAttacks.length === 0) {
+    // Fallback if all attacks are on cooldown (shouldn't normally happen)
+    chosenAttack = cardData.attacks[0];
+  } else {
+    // Prefer special attacks 30% of the time if available
+    const specialAttacks = availableAttacks.filter(attack => attack.type === 'special');
+    const basicAttacks = availableAttacks.filter(attack => attack.type === 'basic');
     
-    if(!attacker || !target) return;
-
-    attacker.used = true;
-
-    // Get card elements for animation
-    const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-    const targetSlotEl = playerSlotsEl.children[attackerIdx];
-    const attackerCardEl = attackerSlotEl.querySelector('.card');
-    const targetCardEl = targetSlotEl.querySelector('.card');
-    
-    // Animate attacker (computer attacks backward toward player)
-    if(attackerCardEl){
-      attackerCardEl.classList.add('attacking-backward');
-      setTimeout(()=>attackerCardEl.classList.remove('attacking-backward'), 800);
+    if (specialAttacks.length > 0 && Math.random() < 0.3) {
+      chosenAttack = specialAttacks[Math.floor(Math.random() * specialAttacks.length)];
+    } else if (basicAttacks.length > 0) {
+      chosenAttack = basicAttacks[Math.floor(Math.random() * basicAttacks.length)];
+    } else {
+      chosenAttack = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
     }
+  }
 
-    let finalDmg = damage;
-    if(target.defending){
-      finalDmg = Math.ceil(finalDmg/2);
-      target.defending = false;
-      addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
+  // Set cooldown if the attack has one
+  if (chosenAttack.cooldown) {
+    attacker.cooldowns[chosenAttack.name] = chosenAttack.cooldown;
+  }
 
-    // Animate target getting hit after attack animation starts
-    setTimeout(() => {
-      // Show damage popup
-      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+  // Get card elements for animation
+  const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[attackerIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card');
+  const targetCardEl = targetSlotEl.querySelector('.card');
+  
+  // Use card-specific animation
+  const animationClass = chosenAttack.type === 'special' ? 
+    cardData.animations.special : cardData.animations.attack;
+  
+  // Animate attacker (computer attacks backward toward player)
+  if(attackerCardEl){
+    attackerCardEl.classList.add(animationClass || 'attacking-backward');
+    setTimeout(()=>attackerCardEl.classList.remove(animationClass || 'attacking-backward'), 1200);
+  }
+
+  // Use the attack's actual damage
+  let finalDmg = chosenAttack.damage || 0;
+  
+  // Apply player's status effects that might reduce damage
+  if(target.statusEffects && target.statusEffects.weaken) {
+    const reduction = target.statusEffects.weaken.effectReduction || 0;
+    finalDmg = Math.max(0, finalDmg - reduction);
+  }
+  
+  if(target.defending){
+    finalDmg = Math.ceil(finalDmg/2);
+    target.defending = false;
+    addLog('system', `${target.card.name} defended — reduced damage!`);
+  }
+
+  // Animate target getting hit after attack animation starts
+  setTimeout(() => {
+    // Apply damage if any
+    if (finalDmg > 0) {
+      showDamagePopup(targetSlotEl, finalDmg, chosenAttack.type === 'special' ? '#ff6b35' : '#ff4444');
       
-      // Hit effects
       if(targetCardEl){
-        targetCardEl.classList.add('hit', 'flash');
+        targetCardEl.classList.add('hit', 'flash', 'impact'); // Added 'impact' effect
         setTimeout(()=>{
-          targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
+          targetCardEl.classList.remove('hit', 'flash', 'impact');
+        }, 600); // Extended timing for longer effects
       }
-
-      target.hp = Math.max(0, target.hp - finalDmg);
       
-      addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
-
-      if(target.hp <= 0){
-        if(targetCardEl){
-          setTimeout(() => {
-            targetCardEl.classList.add('die');
-            setTimeout(()=>{
-              playerSlots[attackerIdx] = null;
-              renderAll();
-              checkBattleOver();
-            }, 600);
-          }, 200);
-        } else {
-          playerSlots[attackerIdx] = null;
-          renderAll();
-          checkBattleOver();
-        }
-      } else {
-        updateSlotUI('player', attackerIdx);
-      }
-    }, 300);
-
-    renderAll();
-  }
-
-  function performComputerDefend(slotIdx){
-    const slot = computerSlots[slotIdx];
-    if(!slot) return;
-
-    slot.used = true;
-    slot.defending = true;
-    
-    // Animate defend
-    const slotEl = computerSlotsEl.children[slotIdx];
-    const cardEl = slotEl.querySelector('.card');
-    if(cardEl){
-      cardEl.classList.add('defending-anim');
-      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
+      target.hp = Math.max(0, target.hp - finalDmg);
     }
     
-    addLog('computer', `${slot.card.name} takes a defensive stance`);
-    renderAll();
-  }
+    // Apply status effects from computer attacks
+    if(chosenAttack.effect && chosenAttack.effectDuration) {
+      const effectData = {
+        effectDamage: chosenAttack.effectDamage,
+        effectReduction: chosenAttack.effectReduction
+      };
+      applyStatusEffect(target, chosenAttack.effect, chosenAttack.effectDuration, effectData);
+    }
+    
+    addLog('computer', `${attacker.card.name} uses ${chosenAttack.name}${finalDmg > 0 ? ` for ${finalDmg} damage` : ''}!`);
 
+    if(target.hp <= 0){
+      if(targetCardEl){
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(()=>{
+            playerSlots[attackerIdx] = null;
+            renderAll();
+            checkBattleOver();
+          }, 600);
+        }, 200);
+      } else {
+        playerSlots[attackerIdx] = null;
+        renderAll();
+        checkBattleOver();
+      }
+    } else {
+      updateSlotUI('player', attackerIdx);
+    }
+  }, 500); // Changed from 400ms to 500ms for better timing coordination
+
+  renderAll();
+}
   function endComputerTurn(){
   playerTurn = true;
   turnIndicator.textContent = 'Player Turn';
