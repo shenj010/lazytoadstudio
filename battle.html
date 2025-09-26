@@ -847,16 +847,13 @@ function showCardActions(side, idx){
     addLog('system', 'Computer is thinking...');
     
     setTimeout(()=>{
-      // Process status effects on computer cards
       // Process status effects on computer cards FIRST
       processStatusEffects('computer');
       
-      // Reset ALL computer card used status at start of turn
       // Reset ALL computer card used status at start of turn (but after status processing)
       computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
-          // Also clear any defending status from previous turns if needed
           // Clear defending status from previous turns
           slot.defending = false;
         }
@@ -1036,10 +1033,8 @@ function showCardActions(side, idx){
     // Process status effects on player cards
     processStatusEffects('player');
     
-    // reset all player card used status
     // Reset all player card used status and clear defending from previous turns
     playerSlots.forEach(slot => {
-      if(slot) slot.used = false;
       if(slot) {
         slot.used = false;
         slot.defending = false; // Clear defending status from previous turns
@@ -1074,7 +1069,6 @@ function showCardActions(side, idx){
     type: effect,
     duration: duration,
     attacker: attackerName,
-    turnsRemaining: duration
     turnsRemaining: duration,
     justApplied: true // Flag to prevent immediate processing
   };
@@ -1180,10 +1174,6 @@ function showCardActions(side, idx){
         return true; // Keep this effect
       });
       
-      // Update UI if HP changed
-      if(slot.hp <= 0) {
-        slots[idx] = null;
-      } else {
       // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
       if(slot.hp > 0) {
         updateSlotUI(side, idx);
@@ -1196,7 +1186,6 @@ function showCardActions(side, idx){
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
-    return slot.statusEffects.some(effect => effect.type === effectType);
     return slot.statusEffects.some(effect => effect.type === effectType && effect.turnsRemaining > 0);
   }
 
@@ -1253,7 +1242,6 @@ function updateStatusIcons(slotElement, statusEffects) {
   if (statusEffects && statusEffects.length > 0) {
     statusEffects.forEach((effect, index) => {
       if (effect.turnsRemaining > 0) {
-        const icon = createStatusIcon(effect.type, effect.turnsRemaining, index);
         // Show the actual remaining turns (add 1 if just applied since it hasn't been processed yet)
         const displayTurns = effect.justApplied ? effect.turnsRemaining : effect.turnsRemaining;
         const icon = createStatusIcon(effect.type, displayTurns, index);
