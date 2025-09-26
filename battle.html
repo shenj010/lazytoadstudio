@@ -7,8 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
-    --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
+  --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
+  --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
+  --poison:#9d4edd; --stun:#ffd60a; --weaken:#ef233c;
   }
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
   .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
@@ -1190,41 +1191,44 @@ const cardDatabase = {
 
   // create visual card for battlefield slot
   function makeBattleCardEl(slotObj, owner, slotIndex){
-    const wrap = document.createElement('div'); 
-    wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-    wrap.style.width='86px'; 
-    wrap.style.height='120px';
-    wrap.style.position = 'relative';
-    
-    const img = document.createElement('img'); 
-    img.src = slotObj.card.src; 
-    img.alt = slotObj.card.name;
-    
-    const stats = document.createElement('div'); 
-    stats.className='stats';
-    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
-    
-    wrap.appendChild(img); 
-    wrap.appendChild(stats);
-    
-    // defending glow
-    if(slotObj.defending){
-      wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
-    }
-    
-    wrap.dataset.owner = owner;
-    wrap.dataset.slot = slotIndex;
-    wrap._hpEl = stats.querySelector('.card-hp');
+  const wrap = document.createElement('div'); 
+  wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+  wrap.style.width='86px'; 
+  wrap.style.height='120px';
+  wrap.style.position = 'relative';
+  
+  const img = document.createElement('img'); 
+  img.src = slotObj.card.src; 
+  img.alt = slotObj.card.name;
+  
+  const stats = document.createElement('div'); 
+  stats.className='stats';
+  stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+  
+  wrap.appendChild(img); 
+  wrap.appendChild(stats);
+  
+  // defending glow
+  if(slotObj.defending){
+    wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+  }
+  
+  wrap.dataset.owner = owner;
+  wrap.dataset.slot = slotIndex;
+  wrap._hpEl = stats.querySelector('.card-hp');
+  
+  // Add status effect tracking and rendering
+  wrap._slotReference = slotObj;
+  renderStatusEffects(slotObj, wrap);
 
-    return wrap;
-   wrap._slotReference = slotObj; // For status effect tracking
-renderStatusEffects(slotObj, wrap);
+  // Add status effect visual classes
+  if (slotObj.statusEffects) {
+    Object.keys(slotObj.statusEffects).forEach(effect => {
+      wrap.classList.add(effect + 'ed');
+    });
+  }
 
-// Add status effect visual classes
-if (slotObj.statusEffects) {
-  Object.keys(slotObj.statusEffects).forEach(effect => {
-    wrap.classList.add(effect + 'ed');
-  });
+  return wrap;
 }
 
   // update slot UI
@@ -1564,17 +1568,13 @@ function renderStatusEffects(slotObj, cardEl) {
   
   // Add this line:
   processStatusEffects(playerSlots, 'player');
+} else {
+  turnIndicator.textContent = 'Computer Turn';  
+  addLog('system', 'Battle begins! Computer goes first.');
+  playerTurn = false;
+  endTurnBtn.classList.add('disabled');
+  setTimeout(()=>computerTurn(), 1000);
 }
-        } else {
-          turnIndicator.textContent = 'Computer Turn';  
-          addLog('system', 'Battle begins! Computer goes first.');
-          playerTurn = false;
-          endTurnBtn.classList.add('disabled');
-          setTimeout(()=>computerTurn(), 1000);
-        }
-      }, 1500);
-    }
-  }
 
   // initialization
   function init(){
