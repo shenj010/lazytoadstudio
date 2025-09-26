@@ -10,7 +10,7 @@
   --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
   --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
   --poison:#9d4edd; --stun:#ffd60a; --weaken:#ef233c;
-  }
+}
   html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
   .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
   .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
@@ -1217,7 +1217,7 @@ const cardDatabase = {
   wrap.dataset.slot = slotIndex;
   wrap._hpEl = stats.querySelector('.card-hp');
   
-  // Add status effect tracking and rendering
+  // Add status effect tracking
   wrap._slotReference = slotObj;
   renderStatusEffects(slotObj, wrap);
 
@@ -1359,7 +1359,7 @@ function processStatusEffects(slots, side) {
         case 'poison':
           const poisonDamage = effect.effectDamage || 5;
           slot.hp = Math.max(0, slot.hp - poisonDamage);
-          showDamagePopup(getSlotElement(side, idx), poisonDamage, var(--poison));
+          showDamagePopup(getSlotElement(side, idx), poisonDamage, '#9d4edd');
           addLog('system', `${slot.card.name} takes ${poisonDamage} poison damage!`);
           break;
           
@@ -1549,31 +1549,33 @@ function renderStatusEffects(slotObj, cardEl) {
 
   // check if battle can begin
   function checkBattleStart(){
-    const playerHasCards = playerSlots.some(slot => slot !== null);
-    
-    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
-      addLog('system', 'Computer is ready to battle...');
-      
-      // Computer places 1-2 initial cards strategically
-      computerInitialPlacement();
-      
-      // Start actual battle after a brief delay
-      setTimeout(() => {
-        const firstPlayer = Math.random() < 0.5;
-        if(firstPlayer){
-  turnIndicator.textContent = 'Player Turn';
-  addLog('system', 'Battle begins! Player goes first.');
-  playerTurn = true;
-  endTurnBtn.classList.remove('disabled');
+  const playerHasCards = playerSlots.some(slot => slot !== null);
   
-  // Add this line:
-  processStatusEffects(playerSlots, 'player');
-} else {
-  turnIndicator.textContent = 'Computer Turn';  
-  addLog('system', 'Battle begins! Computer goes first.');
-  playerTurn = false;
-  endTurnBtn.classList.add('disabled');
-  setTimeout(()=>computerTurn(), 1000);
+  if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+    addLog('system', 'Computer is ready to battle...');
+    
+    // Computer places 1-2 initial cards strategically
+    computerInitialPlacement();
+    
+    // Start actual battle after a brief delay
+    setTimeout(() => {
+      const firstPlayer = Math.random() < 0.5;
+      if(firstPlayer){
+        turnIndicator.textContent = 'Player Turn';
+        addLog('system', 'Battle begins! Player goes first.');
+        playerTurn = true;
+        endTurnBtn.classList.remove('disabled');
+        
+        processStatusEffects(playerSlots, 'player');
+      } else {
+        turnIndicator.textContent = 'Computer Turn';  
+        addLog('system', 'Battle begins! Computer goes first.');
+        playerTurn = false;
+        endTurnBtn.classList.add('disabled');
+        setTimeout(()=>computerTurn(), 1000);
+      }
+    }, 1500);
+  }
 }
 
   // initialization
