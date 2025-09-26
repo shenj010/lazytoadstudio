@@ -497,6 +497,55 @@
     height: 85px !important;
   }
 }
+
+/* Touch and hold expansion for hand cards */
+@media (max-width: 768px) {
+  /* ... your existing mobile styles ... */
+  
+  /* Touch and hold expansion */
+  .hand .card.touch-expanded {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(1.5) !important;
+    width: 86px !important;
+    height: 120px !important;
+    z-index: 1000 !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+    border: 3px solid var(--accent) !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  /* Expanded card gets full-size readable text */
+  .hand .card.touch-expanded .stats {
+    font-size: 10px !important;
+    padding: 4px !important;
+  }
+  
+  /* Backdrop for expanded card */
+  .touch-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .touch-backdrop.show {
+    opacity: 1;
+  }
+}
+
+/* Very small screens - even bigger expansion */
+@media (max-width: 480px) {
+  .hand .card.touch-expanded {
+    transform: translate(-50%, -50%) scale(1.8) !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -2041,7 +2090,100 @@ function getAttackCooldown(slot, attackIndex) {
   if(!slot || !slot.attackCooldowns) return 0;
   return slot.attackCooldowns[attackIndex] || 0;
 }
-})();
+
+// Touch and hold functionality for mobile
+let touchTimer = null;
+let touchStarted = false;
+
+function addTouchHoldListeners() {
+  document.addEventListener('touchstart', handleTouchStart, { passive: false });
+  document.addEventListener('touchend', handleTouchEnd);
+  document.addEventListener('touchmove', handleTouchMove);
+}
+
+function handleTouchStart(e) {
+  const card = e.target.closest('.hand .card');
+  if (!card || window.innerWidth > 768) return;
+  
+  touchStarted = true;
+  
+  // Start timer for long press (500ms)
+  touchTimer = setTimeout(() => {
+    if (touchStarted) {
+      expandCard(card);
+    }
+  }, 500);
+}
+
+function handleTouchMove(e) {
+  // Cancel expansion if user moves finger
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+  touchStarted = false;
+}
+
+function handleTouchEnd(e) {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+  touchStarted = false;
+  
+  // Check if we're ending a touch on expanded card or backdrop
+  if (e.target.classList.contains('touch-backdrop') || 
+      e.target.closest('.card.touch-expanded')) {
+    collapseCard();
+  }
+}
+
+function expandCard(card) {
+  // Prevent scrolling when expanded
+  document.body.style.overflow = 'hidden';
+  
+  // Create backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'touch-backdrop';
+  document.body.appendChild(backdrop);
+  
+  // Expand card
+  card.classList.add('touch-expanded');
+  
+  // Show backdrop with animation
+  setTimeout(() => {
+    backdrop.classList.add('show');
+  }, 10);
+  
+  // Store references for cleanup
+  card._backdrop = backdrop;
+}
+
+function collapseCard() {
+  const expandedCard = document.querySelector('.hand .card.touch-expanded');
+  if (!expandedCard) return;
+  
+  // Remove expansion
+  expandedCard.classList.remove('touch-expanded');
+  
+  // Remove backdrop
+  if (expandedCard._backdrop) {
+    expandedCard._backdrop.classList.remove('show');
+    setTimeout(() => {
+      if (expandedCard._backdrop && expandedCard._backdrop.parentNode) {
+        expandedCard._backdrop.parentNode.removeChild(expandedCard._backdrop);
+      }
+      expandedCard._backdrop = null;
+    }, 300);
+  }
+  
+  // Restore scrolling
+  document.body.style.overflow = '';
+}
+
+// Initialize touch listeners after DOM is ready
+addTouchHoldListeners();
+})(document);
 </script>
 </body>
 </html>
