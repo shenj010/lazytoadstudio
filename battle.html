@@ -224,6 +224,29 @@
   80%{transform:translateY(50px) scale(1.25)}
   100%{transform:translateY(0) scale(1)}
 }
+/* Status effect popup animation */
+@keyframes statusFloat {
+  0% {
+    transform: translateY(0) translateX(-50%) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-15px) translateX(-50%) scale(1.3);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-30px) translateX(-50%) scale(1.1);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-50px) translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) translateX(-50%) scale(0.8);
+    opacity: 0;
+  }
+}
   /* Status effect indicators */
 /* Status effect indicators with symbols */
 .status-effects {
@@ -1369,9 +1392,25 @@ function applyStatusEffect(target, effect, duration, extraData = {}) {
     ...extraData
   };
   
-  // Add visual class with slight delay for better effect
+  // Find the target card element and show status popup
   const targetEl = getCardElement(target);
   if (targetEl) {
+    const slotEl = targetEl.closest('.slot');
+    if (slotEl) {
+      // Get color for the effect
+      let color;
+      switch(effect) {
+        case 'poison': color = '#9d4edd'; break;
+        case 'stun': color = '#ffd60a'; break;
+        case 'sleep': color = '#4a148c'; break;
+        case 'weaken': color = '#ef233c'; break;
+        default: color = '#fff';
+      }
+      
+      showStatusPopup(slotEl, effect, color);
+    }
+    
+    // Add visual class with slight delay for better effect
     setTimeout(() => {
       targetEl.classList.add(effect + 'ed');
       
@@ -1438,6 +1477,52 @@ function getCardElement(slot) {
     }
   }
   return null;
+}
+
+// Show status effect popup when applied
+function showStatusPopup(container, effectName, color) {
+  const popup = document.createElement('div');
+  popup.className = 'status-popup';
+  popup.style.position = 'absolute';
+  popup.style.left = '50%';
+  popup.style.top = '20%';
+  popup.style.fontSize = '20px';
+  popup.style.fontWeight = 'bold';
+  popup.style.color = color || '#fff';
+  popup.style.pointerEvents = 'none';
+  popup.style.zIndex = '250';
+  popup.style.textShadow = '2px 2px 0 #000';
+  popup.style.animation = 'statusFloat 1200ms ease-out forwards';
+  
+  // Set the symbol and text based on effect
+  let symbol, text;
+  switch(effectName) {
+    case 'poison':
+      symbol = '☠';
+      text = 'POISONED';
+      break;
+    case 'stun':
+      symbol = '⚡';
+      text = 'STUNNED';
+      break;
+    case 'sleep':
+      symbol = '😴';
+      text = 'SLEEPING';
+      break;
+    case 'weaken':
+      symbol = '💔';
+      text = 'WEAKENED';
+      break;
+    default:
+      symbol = '⚠';
+      text = effectName.toUpperCase();
+  }
+  
+  popup.innerHTML = `<div style="font-size:24px">${symbol}</div><div style="font-size:12px">${text}</div>`;
+  
+  container.style.position = 'relative';
+  container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1200);
 }
 
 function getSlotElement(side, idx) {
