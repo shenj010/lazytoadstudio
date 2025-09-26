@@ -222,6 +222,48 @@
 .status-icon:nth-child(n+2) { 
   right: calc(8px + (var(--icon-index) * 26px)); 
 }
+
+/* Poison damage overlay animation */
+.poison-damage-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 300;
+  animation: poisonPulse 1500ms ease-in-out forwards;
+}
+
+@keyframes poisonPulse {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.8); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.9) 0%, rgba(139, 69, 19, 0.5) 50%, transparent 100%);
+  }
+  25% { 
+    opacity: 1; 
+    transform: scale(1.05); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.8) 0%, rgba(139, 69, 19, 0.4) 50%, transparent 100%);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%);
+  }
+  75% { 
+    opacity: 0.6; 
+    transform: scale(0.95); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.5) 0%, rgba(139, 69, 19, 0.2) 50%, transparent 100%);
+  }
+  100% { 
+    opacity: 0; 
+    transform: scale(0.9); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.3) 0%, rgba(139, 69, 19, 0.1) 50%, transparent 100%);
+  }
+}
 </style>
 </head>
 <body>
@@ -366,16 +408,65 @@
     }
   }
 
-  // load player's collected cards
-  function loadPlayerInventory(){
-    let stored = [];
-    try {
-      stored = JSON.parse(localStorage.getItem('collectedCards')) || [];
-    } catch(e){ stored = []; }
-    // If stored is empty, fall back to cardPool
-    if(!stored || stored.length === 0) stored = [...cardPool];
-    playerHand = stored.slice(0,10); // cap hand size
+ // load player's collected cards
+function loadPlayerInventory(){
+  let stored = [];
+  try {
+    const storedData = localStorage.getItem('collectedCards');
+    console.log('Raw localStorage data:', storedData); // Debug log
+    
+    if(storedData) {
+      stored = JSON.parse(storedData);
+      console.log('Parsed stored cards:', stored); // Debug log
+    }
+    
+    // Validate and fix stored cards structure
+    if(stored && Array.isArray(stored)) {
+      stored = stored.map(card => {
+        if(!card || !card.name) return null;
+        
+        // Find matching card from cardPool to get proper structure
+        const matchingCard = cardPool.find(poolCard => 
+          poolCard.name === card.name || 
+          poolCard.src === card.src ||
+          // Also try partial name matching
+          poolCard.name.toLowerCase().includes(card.name.toLowerCase()) ||
+          card.name.toLowerCase().includes(poolCard.name.toLowerCase())
+        );
+        
+        if(matchingCard) {
+          // Use the cardPool version with proper attacks array
+          return { ...matchingCard };
+        }
+        
+        // If no match found, create a basic structure with default attack
+        return {
+          src: card.src || "images/cards/default.jpg",
+          name: card.name,
+          hp: 80,
+          attacks: [
+            { name: "Basic Attack", damage: 10, type: "physical", description: "A simple attack." }
+          ]
+        };
+      }).filter(card => card !== null);
+    } else {
+      stored = [];
+    }
+    
+  } catch(e) { 
+    console.error('Error loading cards from localStorage:', e);
+    stored = []; 
   }
+  
+  // If stored is empty or invalid, fall back to cardPool
+  if(!stored || stored.length === 0) {
+    console.log('Using fallback cardPool');
+    stored = [...cardPool];
+  }
+  
+  playerHand = stored.slice(0,10); // cap hand size
+  console.log('Final playerHand:', playerHand); // Debug log
+}
 
   // computer reserve: same amount as player has
   function buildComputerReserve(){
