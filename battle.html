@@ -2131,9 +2131,9 @@ function handleTouchEnd(e) {
   }
   touchStarted = false;
   
-  // Check if we're ending a touch on expanded card or backdrop
+  // Check if we're ending a touch on expanded image or backdrop
   if (e.target.classList.contains('touch-backdrop') || 
-      e.target.closest('.card.touch-expanded')) {
+      e.target.closest('.touch-expanded-image')) {
     collapseCard();
   }
 }
@@ -2147,8 +2147,32 @@ function expandCard(card) {
   backdrop.className = 'touch-backdrop';
   document.body.appendChild(backdrop);
   
-  // Expand card
-  card.classList.add('touch-expanded');
+  // Get the image source from the card
+  const cardImg = card.querySelector('img');
+  const imageSrc = cardImg ? cardImg.src : '';
+  
+  // Create expanded image element (just the image, no stats)
+  const expandedImage = document.createElement('img');
+  expandedImage.className = 'touch-expanded-image';
+  expandedImage.src = imageSrc;
+  expandedImage.alt = cardImg ? cardImg.alt : 'Card Image';
+  expandedImage.style.cssText = `
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    width: auto !important;
+    height: auto !important;
+    z-index: 1000 !important;
+    border: 3px solid var(--accent) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+    object-fit: contain !important;
+  `;
+  
+  document.body.appendChild(expandedImage);
   
   // Show backdrop with animation
   setTimeout(() => {
@@ -2157,23 +2181,34 @@ function expandCard(card) {
   
   // Store references for cleanup
   card._backdrop = backdrop;
+  card._expandedImage = expandedImage;
 }
 
 function collapseCard() {
-  const expandedCard = document.querySelector('.hand .card.touch-expanded');
-  if (!expandedCard) return;
+  const expandedImage = document.querySelector('.touch-expanded-image');
+  if (!expandedImage) return;
   
-  // Remove expansion
-  expandedCard.classList.remove('touch-expanded');
+  // Find the card that owns this expansion
+  const cards = document.querySelectorAll('.hand .card');
+  let ownerCard = null;
+  cards.forEach(card => {
+    if (card._expandedImage === expandedImage) {
+      ownerCard = card;
+    }
+  });
+  
+  // Remove expanded image
+  expandedImage.remove();
   
   // Remove backdrop
-  if (expandedCard._backdrop) {
-    expandedCard._backdrop.classList.remove('show');
+  if (ownerCard && ownerCard._backdrop) {
+    ownerCard._backdrop.classList.remove('show');
     setTimeout(() => {
-      if (expandedCard._backdrop && expandedCard._backdrop.parentNode) {
-        expandedCard._backdrop.parentNode.removeChild(expandedCard._backdrop);
+      if (ownerCard._backdrop && ownerCard._backdrop.parentNode) {
+        ownerCard._backdrop.parentNode.removeChild(ownerCard._backdrop);
       }
-      expandedCard._backdrop = null;
+      ownerCard._backdrop = null;
+      ownerCard._expandedImage = null;
     }, 300);
   }
   
