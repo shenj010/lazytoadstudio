@@ -848,17 +848,24 @@ function showCardActions(side, idx){
     
     setTimeout(()=>{
       // Process status effects on computer cards
+      // Process status effects on computer cards FIRST
       processStatusEffects('computer');
       
       // Reset ALL computer card used status at start of turn
+      // Reset ALL computer card used status at start of turn (but after status processing)
       computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
           // Also clear any defending status from previous turns if needed
+          // Clear defending status from previous turns
+          slot.defending = false;
         }
       });
 
-      performComputerActions();
+      // Small delay to let poison animations play out before continuing
+      setTimeout(() => {
+        performComputerActions();
+      }, 500);
     }, 800);
   }
 
@@ -1030,8 +1037,13 @@ function showCardActions(side, idx){
     processStatusEffects('player');
     
     // reset all player card used status
+    // Reset all player card used status and clear defending from previous turns
     playerSlots.forEach(slot => {
       if(slot) slot.used = false;
+      if(slot) {
+        slot.used = false;
+        slot.defending = false; // Clear defending status from previous turns
+      }
     });
     
     addLog('system', 'Player turn begins');
@@ -1063,6 +1075,8 @@ function showCardActions(side, idx){
     duration: duration,
     attacker: attackerName,
     turnsRemaining: duration
+    turnsRemaining: duration,
+    justApplied: true // Flag to prevent immediate processing
   };
   
   target.statusEffects.push(statusEffect);
@@ -1110,6 +1124,12 @@ function showCardActions(side, idx){
       if(!slot || !slot.statusEffects) return;
       
       slot.statusEffects = slot.statusEffects.filter(effect => {
+        // Skip processing effects that were just applied this turn
+        if(effect.justApplied) {
+          effect.justApplied = false; // Clear the flag for next turn
+          return true; // Keep the effect but don't process it yet
+        }
+        
         // Apply ongoing effects BEFORE decrementing turns
         if(effect.type === 'poison') {
           const poisonDmg = 5; // Poison damage per turn
@@ -1120,6 +1140,21 @@ function showCardActions(side, idx){
           const slotEl = slotsEl.children[idx];
           if(slotEl) {
             showDamagePopup(slotEl, poisonDmg, '#8B4513');
+          }
+          
+          // Check if card dies from poison
+          if(slot.hp <= 0) {
+            setTimeout(() => {
+              const cardEl = slotEl.querySelector('.card');
+              if(cardEl) {
+                cardEl.classList.add('die');
+                setTimeout(() => {
+                  slots[idx] = null;
+                  renderAll();
+                  checkBattleOver();
+                }, 600);
+              }
+            }, 500);
           }
         }
         
@@ -1149,6 +1184,8 @@ function showCardActions(side, idx){
       if(slot.hp <= 0) {
         slots[idx] = null;
       } else {
+      // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
+      if(slot.hp > 0) {
         updateSlotUI(side, idx);
       }
     });
@@ -1160,6 +1197,7 @@ function showCardActions(side, idx){
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
     return slot.statusEffects.some(effect => effect.type === effectType);
+    return slot.statusEffects.some(effect => effect.type === effectType && effect.turnsRemaining > 0);
   }
 
   // Function to create status effect icons
@@ -1216,6 +1254,9 @@ function updateStatusIcons(slotElement, statusEffects) {
     statusEffects.forEach((effect, index) => {
       if (effect.turnsRemaining > 0) {
         const icon = createStatusIcon(effect.type, effect.turnsRemaining, index);
+        // Show the actual remaining turns (add 1 if just applied since it hasn't been processed yet)
+        const displayTurns = effect.justApplied ? effect.turnsRemaining : effect.turnsRemaining;
+        const icon = createStatusIcon(effect.type, displayTurns, index);
         slotElement.appendChild(icon);
       }
     });
