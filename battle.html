@@ -165,6 +165,32 @@
   background: #800080;
   color: #fff;
 }
+/* Cooldown effect styling */
+.status-icon.cooldown {
+  background: #666;
+  color: #ccc;
+  border: 2px solid #999;
+}
+
+.card-action-panel .btn.cooldown {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.card-action-panel .btn.cooldown::after {
+  content: 'CD: ' attr(data-cooldown);
+  position: absolute;
+  top: -18px;
+  right: -5px;
+  background: #ff4444;
+  color: #fff;
+  font-size: 7px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+}
 
 @keyframes statusPulse {
   0%, 100% { transform: scale(1); opacity: 0.9; }
@@ -432,7 +458,22 @@
         // place the selected hand card to this slot if empty
         if(playerSlots[idx] === null){
           const card = playerHand.splice(selected.index,1)[0];
-          playerSlots[idx] = { card, hp: MAX_HP, defending:false, used:false, statusEffects: [] };
+          // Initialize cooldowns for each attack
+          const attackCooldowns = {};
+          card.attacks.forEach((attack, attackIdx) => {
+            if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+              attackCooldowns[attackIdx] = 0; // 0 means ready to use
+            }
+          });
+          
+          playerSlots[idx] = { 
+            card, 
+            hp: MAX_HP, 
+            defending: false, 
+            used: false, 
+            statusEffects: [],
+            attackCooldowns: attackCooldowns 
+          };
           selected = null;
           renderAll();
           addLog('system', `Placed ${card.name} in player slot ${idx+1}`);
@@ -507,90 +548,97 @@ function showCardActions(side, idx){
 
     // Create attack buttons for each attack the card has
     slot.card.attacks.forEach((attack, attackIndex) => {
+      const isOnCooldown = isAttackOnCooldown(slot, attackIndex);
+      const cooldownTurns = getAttackCooldown(slot, attackIndex);
+      const isDisabled = (!canAttack && attack.damage > 0) || isOnCooldown;
+      
       const attackBtn = document.createElement('div');
-      attackBtn.className = `btn ${!canAttack && attack.damage > 0 ? 'disabled' : ''}`;
+      attackBtn.className = `btn ${isDisabled ? 'disabled' : ''} ${isOnCooldown ? 'cooldown' : ''}`;
       
       // Format button text with damage and effect info
       let buttonText = attack.name;
       if(attack.damage > 0) buttonText += ` (${attack.damage})`;
       if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+      if(isOnCooldown) buttonText += ` (CD: ${cooldownTurns})`;
       
       attackBtn.textContent = buttonText;
-      attackBtn.title = attack.description; // Tooltip with full description
+      attackBtn.title = attack.description + (isOnCooldown ? ` - Cooldown: ${cooldownTurns} turns` : '');
+      
+      if(isOnCooldown) {
+        attackBtn.setAttribute('data-cooldown', cooldownTurns);
+      }
        
-      // Update: direct attack execution without additional function
+      // Update: direct attack execution with cooldown handling
       attackBtn.addEventListener('click', ()=> {
-  if(canAttack || attack.damage === 0) {
-    // Mark attacker as used
-    slot.used = true;
-    
-    const target = computerSlots[idx];
-    const targetSlotEl = computerSlotsEl.children[idx];
-    const targetCardEl = targetSlotEl.querySelector('.card'); // Properly define targetCardEl
-    
-    // Apply defend reduction if active
-    let finalDmg = attack.damage;
-    
-    // Apply weaken effect (reduce damage by 10 if attacker is weakened)
-    if(hasStatusEffect(slot, 'weaken')) {
-      finalDmg = Math.max(0, finalDmg - 10);
-      addLog('system', `${slot.card.name}'s attack is weakened!`);
-    }
-    
-    if(target.defending && finalDmg > 0){
-      finalDmg = Math.ceil(finalDmg/2);
-      target.defending = false;
-      addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
-    
-    // Apply status effects immediately
-    if(attack.effect) {
-      applyStatusEffect(target, attack.effect, attack.duration, slot.card.name);
-    }
-    
-    // Handle damage with flying animation if there is damage
-    if(finalDmg > 0) {
-      createFlyingProjectile(cardEl, targetCardEl, (damageToApply) => {
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-        
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{
-          targetCardEl.classList.remove('hit', 'flash');
-        }, 400);
-        
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-        
-        addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
-        
-        // Death check
-        if(target.hp <= 0){
-          setTimeout(() => {
-            targetCardEl.classList.add('die');
-            setTimeout(()=>{
-              computerSlots[idx] = null;
-              renderAll();
-              checkBattleOver();
-            }, 600);
-          }, 200);
-        } else {
-          updateSlotUI('computer', idx);
-          checkBattleOver();
+        if((canAttack || attack.damage === 0) && !isOnCooldown) {
+          // Set cooldown for status effect attacks
+          if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            slot.attackCooldowns[attackIndex] = 3; // 3 turn cooldown
+            addLog('system', `${attack.name} will be on cooldown for 3 turns`);
+          }
+          
+          // Mark attacker as used
+          slot.used = true;
+          
+          const target = computerSlots[idx];
+          const targetSlotEl = computerSlotsEl.children[idx];
+          const targetCardEl = targetSlotEl.querySelector('.card');
+          
+          // Apply defend reduction if active
+          let finalDmg = attack.damage;
+          
+          // Apply weaken effect (reduce damage by 10 if attacker is weakened)
+          if(hasStatusEffect(slot, 'weaken')) {
+            finalDmg = Math.max(0, finalDmg - 10);
+            addLog('system', `${slot.card.name}'s attack is weakened!`);
+          }
+          
+          if(target.defending && finalDmg > 0){
+            finalDmg = Math.ceil(finalDmg/2);
+            target.defending = false;
+            addLog('system', `${target.card.name} defended – reduced damage!`);
+          }
+          
+          // Apply status effects immediately
+          if(attack.effect) {
+            applyStatusEffect(target, attack.effect, attack.duration, slot.card.name);
+          }
+          
+          // Handle damage with flying animation if there is damage
+          if(finalDmg > 0) {
+            createFlyingProjectile(cardEl, targetCardEl, (damageToApply) => {
+              showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+              targetCardEl.classList.add('hit', 'flash');
+              setTimeout(()=>{
+                targetCardEl.classList.remove('hit', 'flash');
+              }, 400);
+              
+              target.hp = Math.max(0, target.hp - damageToApply);
+              addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
+              
+              if(target.hp <= 0){
+                setTimeout(() => {
+                  targetCardEl.classList.add('die');
+                  setTimeout(()=>{
+                    computerSlots[idx] = null;
+                    renderAll();
+                    checkBattleOver();
+                  }, 600);
+                }, 200);
+              } else {
+                updateSlotUI('computer', idx);
+                checkBattleOver();
+              }
+            }, finalDmg);
+          } else {
+            addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
+            checkBattleOver();
+          }
+          
+          hideActionPanel();
+          renderAll();
         }
-      }, finalDmg);
-    } else {
-      // No damage attack (like pure stun/sleep) - just log and check battle state
-      addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
-      checkBattleOver();
-    }
-    
-    // Hide action panel and re-render
-    hideActionPanel();
-    renderAll();
-  }
-});
+      });
       panel.appendChild(attackBtn);
     });
 
@@ -850,12 +898,20 @@ function showCardActions(side, idx){
       // Process status effects on computer cards FIRST
       processStatusEffects('computer');
       
-      // Reset ALL computer card used status at start of turn (but after status processing)
+      // Reset ALL computer card used status and process cooldowns
       computerSlots.forEach(slot => {
         if(slot) {
           slot.used = false;
-          // Clear defending status from previous turns
           slot.defending = false;
+          
+          // Reduce cooldowns for computer cards too
+          if(slot.attackCooldowns) {
+            Object.keys(slot.attackCooldowns).forEach(attackIdx => {
+              if(slot.attackCooldowns[attackIdx] > 0) {
+                slot.attackCooldowns[attackIdx]--;
+              }
+            });
+          }
         }
       });
 
@@ -953,6 +1009,15 @@ function showCardActions(side, idx){
     availableAttacks[Math.floor(Math.random() * availableAttacks.length)] : 
     { name: "Basic Attack", damage: damage, type: "physical" };
 
+  // Set cooldown for computer status effect attacks
+  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+    // Find the attack index and set cooldown
+    const attackIndex = attacker.card.attacks.findIndex(a => a.name === attack.name);
+    if(attackIndex !== -1 && attacker.attackCooldowns) {
+      attacker.attackCooldowns[attackIndex] = 3;
+    }
+  }
+  
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
   const targetSlotEl = playerSlotsEl.children[attackerIdx];
@@ -1033,11 +1098,24 @@ function showCardActions(side, idx){
     // Process status effects on player cards
     processStatusEffects('player');
     
-    // Reset all player card used status and clear defending from previous turns
+    // Process cooldowns and reset turn status
     playerSlots.forEach(slot => {
       if(slot) {
         slot.used = false;
-        slot.defending = false; // Clear defending status from previous turns
+        slot.defending = false;
+        
+        // Reduce cooldowns
+        if(slot.attackCooldowns) {
+          Object.keys(slot.attackCooldowns).forEach(attackIdx => {
+            if(slot.attackCooldowns[attackIdx] > 0) {
+              slot.attackCooldowns[attackIdx]--;
+              if(slot.attackCooldowns[attackIdx] === 0) {
+                const attackName = slot.card.attacks[parseInt(attackIdx)].name;
+                addLog('system', `${slot.card.name}'s ${attackName} is ready to use again!`);
+              }
+            }
+          });
+        }
       }
     });
     
@@ -1473,7 +1551,22 @@ function updateStatusIcons(slotElement, statusEffects) {
     targetSlots.forEach((slotIdx, i) => {
       if(i < computerReserve.length){
         const card = computerReserve[i];
-        computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
+        // Initialize cooldowns for computer cards too
+        const attackCooldowns = {};
+        card.attacks.forEach((attack, attackIdx) => {
+          if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            attackCooldowns[attackIdx] = 0;
+          }
+        });
+        
+        computerSlots[slotIdx] = { 
+          card, 
+          hp: MAX_HP, 
+          defending: false, 
+          used: false, 
+          statusEffects: [],
+          attackCooldowns: attackCooldowns 
+        };
       }
     });
     
@@ -1504,8 +1597,23 @@ function updateStatusIcons(slotElement, statusEffects) {
     
     // Use next available card from reserve
     const cardToPlace = computerReserve[placedCount];
-    computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, used: false, statusEffects: [] };
-    
+    // Initialize cooldowns for newly placed computer cards
+    const attackCooldowns = {};
+    cardToPlace.attacks.forEach((attack, attackIdx) => {
+      if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+        attackCooldowns[attackIdx] = 0;
+      }
+    });
+
+    computerSlots[targetSlot] = { 
+      card: cardToPlace, 
+      hp: MAX_HP, 
+      defending: false, 
+      used: false, 
+      statusEffects: [],
+      attackCooldowns: attackCooldowns 
+    };
+
     renderAll();
     addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
     return true;
@@ -1598,6 +1706,17 @@ function updateStatusIcons(slotElement, statusEffects) {
 
   init();
 
+// Check if an attack is on cooldown
+function isAttackOnCooldown(slot, attackIndex) {
+  if(!slot || !slot.attackCooldowns) return false;
+  return slot.attackCooldowns[attackIndex] > 0;
+}
+
+// Get cooldown remaining for an attack
+function getAttackCooldown(slot, attackIndex) {
+  if(!slot || !slot.attackCooldowns) return 0;
+  return slot.attackCooldowns[attackIndex] || 0;
+}
 })();
 </script>
 </body>
