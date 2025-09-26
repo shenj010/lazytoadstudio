@@ -283,7 +283,7 @@
       hp: 80,
       attacks: [
         { name: "Hypnotize", damage: 0, type: "mental", effect: "sleep", duration: 2, description: "Send the opponent to sleep for 2 turns." },
-        { name: "Poison Dart", damage: 5, type: "poison", effect: "poison", duration: 5, description: "Poisons your opponent for 5 turns, 5 damage per turn." }
+        { name: "Poison Dart", damage: 3, type: "poison", effect: "poison", duration: 5, description: "Shoots a poison dart for 3 initial damage, then poisons opponent for 5 turns dealing 5 damage per turn." }
       ]
     },
     { 
@@ -462,7 +462,7 @@
     hideActionPanel();
     clearSelections();
     selected = { type:'hand', index };
-    document.querySelectorAll('#playerHand .card').forEach((c,i)=>{
+    document.querySelectorAll('#playerHand .card').forEach((c,i) => {
       if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
     });
   }
@@ -1079,12 +1079,17 @@ function showCardActions(side, idx){
   const effectMessages = {
     stun: `${target.card.name} is stunned and cannot act!`,
     sleep: `${target.card.name} falls asleep!`,
-    poison: `${target.card.name} is poisoned!`,
+    poison: `${target.card.name} is poisoned for ${duration} turns!`,
     weaken: `${target.card.name} is weakened!`
   };
   
   if(effectMessages[effect]) {
     addLog('system', effectMessages[effect]);
+  }
+  
+  // Debug log for poison
+  if(effect === 'poison') {
+    console.log(`Poison applied to ${target.card.name}: ${duration} turns remaining`);
   }
   
   // Show animated status effect popup on the slot
@@ -1118,13 +1123,13 @@ function showCardActions(side, idx){
       if(!slot || !slot.statusEffects) return;
       
       slot.statusEffects = slot.statusEffects.filter(effect => {
-        // Skip processing effects that were just applied this turn
+        // For newly applied effects, clear the flag but don't process yet
         if(effect.justApplied) {
           effect.justApplied = false; // Clear the flag for next turn
           return true; // Keep the effect but don't process it yet
         }
         
-        // Apply ongoing effects BEFORE decrementing turns
+        // Process ongoing effects BEFORE decrementing turns
         if(effect.type === 'poison') {
           const poisonDmg = 5; // Poison damage per turn
           slot.hp = Math.max(0, slot.hp - poisonDmg);
@@ -1134,10 +1139,18 @@ function showCardActions(side, idx){
           const slotEl = slotsEl.children[idx];
           if(slotEl) {
             showDamagePopup(slotEl, poisonDmg, '#8B4513');
+            
+            // Add hit effects for poison damage
+            const cardEl = slotEl.querySelector('.card');
+            if(cardEl) {
+              cardEl.classList.add('hit');
+              setTimeout(() => cardEl.classList.remove('hit'), 400);
+            }
           }
           
           // Check if card dies from poison
           if(slot.hp <= 0) {
+            addLog('system', `${slot.card.name} dies from poison!`);
             setTimeout(() => {
               const cardEl = slotEl.querySelector('.card');
               if(cardEl) {
@@ -1149,6 +1162,7 @@ function showCardActions(side, idx){
                 }, 600);
               }
             }, 500);
+            return false; // Remove the effect since the card is dead
           }
         }
         
@@ -1160,7 +1174,7 @@ function showCardActions(side, idx){
           const expiredMessages = {
             stun: `${slot.card.name} is no longer stunned!`,
             sleep: `${slot.card.name} wakes up!`,
-            poison: `${slot.card.name} is no longer poisoned!`,
+            poison: `${slot.card.name} recovers from poison!`,
             weaken: `${slot.card.name} is no longer weakened!`
           };
           
@@ -1175,7 +1189,7 @@ function showCardActions(side, idx){
       });
       
       // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
-      if(slot.hp > 0) {
+      if(slot && slot.hp > 0) {
         updateSlotUI(side, idx);
       }
     });
