@@ -222,6 +222,48 @@
 .status-icon:nth-child(n+2) { 
   right: calc(8px + (var(--icon-index) * 26px)); 
 }
+
+/* Poison damage overlay animation */
+.poison-damage-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 300;
+  animation: poisonPulse 1500ms ease-in-out forwards;
+}
+
+@keyframes poisonPulse {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.8); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.9) 0%, rgba(139, 69, 19, 0.5) 50%, transparent 100%);
+  }
+  25% { 
+    opacity: 1; 
+    transform: scale(1.05); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.8) 0%, rgba(139, 69, 19, 0.4) 50%, transparent 100%);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%);
+  }
+  75% { 
+    opacity: 0.6; 
+    transform: scale(0.95); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.5) 0%, rgba(139, 69, 19, 0.2) 50%, transparent 100%);
+  }
+  100% { 
+    opacity: 0; 
+    transform: scale(0.9); 
+    background: radial-gradient(circle, rgba(139, 69, 19, 0.3) 0%, rgba(139, 69, 19, 0.1) 50%, transparent 100%);
+  }
+}
 </style>
 </head>
 <body>
