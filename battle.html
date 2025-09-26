@@ -973,7 +973,6 @@ const cardDatabase = {
   // computer AI: attacks opposite slots, defends sometimes
   function computerTurn(){
     processStatusEffects(computerSlots, 'computer');
-    processStatusEffects(playerSlots, 'player');
     // Don't start computer turn if we're still in setup phase
     if(turnIndicator.textContent.includes('Setup')) return;
     
@@ -1139,18 +1138,21 @@ const cardDatabase = {
   }
 
   function endComputerTurn(){
-    playerTurn = true;
-    turnIndicator.textContent = 'Player Turn';
-    endTurnBtn.classList.remove('disabled');
-    
-    // reset all player card used status
-    playerSlots.forEach(slot => {
-      if(slot) slot.used = false;
-    });
-    
-    addLog('system', 'Player turn begins');
-    renderAll();
-  }
+  playerTurn = true;
+  turnIndicator.textContent = 'Player Turn';
+  endTurnBtn.classList.remove('disabled');
+  
+  // Add this line here:
+  processStatusEffects(playerSlots, 'player');
+  
+  // reset all player card used status
+  playerSlots.forEach(slot => {
+    if(slot) slot.used = false;
+  });
+  
+  addLog('system', 'Player turn begins');
+  renderAll();
+}
 
   // show damage popup
   function showDamagePopup(container, damage, color){
@@ -1555,10 +1557,14 @@ function renderStatusEffects(slotObj, cardEl) {
       setTimeout(() => {
         const firstPlayer = Math.random() < 0.5;
         if(firstPlayer){
-          turnIndicator.textContent = 'Player Turn';
-          addLog('system', 'Battle begins! Player goes first.');
-          playerTurn = true;
-          endTurnBtn.classList.remove('disabled');
+  turnIndicator.textContent = 'Player Turn';
+  addLog('system', 'Battle begins! Player goes first.');
+  playerTurn = true;
+  endTurnBtn.classList.remove('disabled');
+  
+  // Add this line:
+  processStatusEffects(playerSlots, 'player');
+}
         } else {
           turnIndicator.textContent = 'Computer Turn';  
           addLog('system', 'Battle begins! Computer goes first.');
