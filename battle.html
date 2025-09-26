@@ -467,15 +467,21 @@
     });
   }
 
-  // show action panel next to selected card
-  function showCardActions(side, idx){
-    if(side !== 'player' || !playerTurn) return;
-    
-    // Don't show actions during setup phase
-    if(turnIndicator.textContent.includes('Setup')) return;
-    
-    const slot = playerSlots[idx];
-    if(!slot || slot.used) return;
+// Add this check at the beginning of showCardActions
+function showCardActions(side, idx){
+  if(side !== 'player' || !playerTurn) return;
+  
+  // Don't show actions during setup phase
+  if(turnIndicator.textContent.includes('Setup')) return;
+  
+  const slot = playerSlots[idx];
+  if(!slot || slot.used) return;
+
+  // Check if card is stunned or asleep
+  if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+    addLog('system', `${slot.card.name} cannot act due to status effects!`);
+    return; // Prevent action panel from showing
+  }
 
     hideActionPanel();
     clearSelections();
@@ -524,6 +530,13 @@
     
     // Apply defend reduction if active
     let finalDmg = attack.damage;
+    
+    // Apply weaken effect (reduce damage by 10 if attacker is weakened)
+    if(hasStatusEffect(slot, 'weaken')) {
+      finalDmg = Math.max(0, finalDmg - 10);
+      addLog('system', `${slot.card.name}'s attack is weakened!`);
+    }
+    
     if(target.defending && finalDmg > 0){
       finalDmg = Math.ceil(finalDmg/2);
       target.defending = false;
@@ -861,11 +874,21 @@
     }
     
     // Option 2: Use existing cards to attack or defend
-    const activeSlots = computerSlots.map((slot, idx) => 
-      slot && slot.hp > 0 && !slot.used ? idx : -1
-    ).filter(idx => idx !== -1);
+    const activeSlots = computerSlots.map((slot, idx) => {
+      if(!slot || slot.hp <= 0 || slot.used) return -1;
+      
+      // Check if computer card is stunned or asleep
+      if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+        addLog('system', `${slot.card.name} cannot act due to status effects!`);
+        return -1;
+      }
+      
+      return idx;
+    }).filter(idx => idx !== -1);
 
+    // If no cards can act, end turn immediately
     if(activeSlots.length === 0){
+      addLog('system', 'Computer has no available actions - ending turn');
       setTimeout(()=>endComputerTurn(), 800);
       return;
     }
@@ -897,7 +920,13 @@
 
     // Continue with next action after delay if there are more unused cards
     setTimeout(()=> {
-      const remainingActive = computerSlots.filter(slot => slot && slot.hp > 0 && !slot.used);
+      const remainingActive = computerSlots.filter(slot => {
+        if(!slot || slot.hp <= 0 || slot.used) return false;
+        // Also check for status effects in the continuation check
+        if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) return false;
+        return true;
+      });
+      
       if(remainingActive.length > 0) {
         performComputerActions();
       } else {
@@ -906,83 +935,72 @@
     }, 1500);
   }
 
-  function performComputerAttack(attackerIdx, damage){
-    const attacker = computerSlots[attackerIdx];
-    const target = playerSlots[attackerIdx];
-    
-    if(!attacker || !target) return;
+ function performComputerAttack(attackerIdx, damage){
+  const attacker = computerSlots[attackerIdx];
+  const target = playerSlots[attackerIdx];
+  
+  if(!attacker || !target) return;
 
-    attacker.used = true;
+  attacker.used = true;
 
-    // Get card elements for animation
-    const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-    const targetSlotEl = playerSlotsEl.children[attackerIdx];
-    const attackerCardEl = attackerSlotEl.querySelector('.card');
-    const targetCardEl = targetSlotEl.querySelector('.card');
-    
-    // Debug: Check if elements exist
-    console.log('Computer attack animation elements:', {
-      attackerSlotEl: !!attackerSlotEl,
-      attackerCardEl: !!attackerCardEl,
-      targetSlotEl: !!targetSlotEl,
-      targetCardEl: !!targetCardEl
-    });
-    
-    let finalDmg = damage;
-    if(target.defending){
-      finalDmg = Math.ceil(finalDmg/2);
-      target.defending = false;
-      addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
+  // Choose a random attack from the computer card's attacks
+  const availableAttacks = attacker.card.attacks || [];
+  const attack = availableAttacks.length > 0 ? 
+    availableAttacks[Math.floor(Math.random() * availableAttacks.length)] : 
+    { name: "Basic Attack", damage: damage, type: "physical" };
 
-    // Create flying projectile animation
-    if(attackerCardEl && targetCardEl) {
-      createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-        // This runs when the projectile hits
-        console.log('Computer projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-        
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-        
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
-        
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-        
-        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
-        
-        // Death check
-        if(target.hp <= 0){
-          setTimeout(() => {
-            targetCardEl.classList.add('die');
-            setTimeout(()=>{ playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
-          }, 200);
-        } else {
-          updateSlotUI('player', attackerIdx);
-          checkBattleOver();
-        }
-      }, finalDmg);
-    } else {
-      // Fallback if elements not found
-      setTimeout(() => {
-        showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
-        target.hp = Math.max(0, target.hp - finalDmg);
-        addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
-        if(target.hp <= 0){
-          playerSlots[attackerIdx] = null;
-          renderAll();
-          checkBattleOver();
-        } else {
-          updateSlotUI('player', attackerIdx);
-          checkBattleOver();
-        }
-      }, 300);
-    }
-
-    renderAll();
+  // Get card elements for animation
+  const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[attackerIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card');
+  const targetCardEl = targetSlotEl.querySelector('.card');
+  
+  let finalDmg = attack.damage;
+  // Apply weaken effect (reduce damage by 10 if attacker is weakened)
+  if(hasStatusEffect(attacker, 'weaken')) {
+    finalDmg = Math.max(0, finalDmg - 10);
+    addLog('system', `${attacker.card.name}'s attack is weakened!`);
   }
+  
+  if(target.defending && finalDmg > 0){
+    finalDmg = Math.ceil(finalDmg/2);
+    target.defending = false;
+    addLog('system', `${target.card.name} defended – reduced damage!`);
+  }
+
+  // Apply status effects immediately
+  if(attack.effect) {
+    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+  }
+
+  // Handle damage with animation if there is damage
+  if(finalDmg > 0) {
+    createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
+      showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+      
+      target.hp = Math.max(0, target.hp - damageToApply);
+      addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
+      
+      if(target.hp <= 0){
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => { playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
+        }, 200);
+      } else {
+        updateSlotUI('player', attackerIdx);
+        checkBattleOver();
+      }
+    }, finalDmg);
+  } else {
+    // No damage attack (like pure stun/sleep)
+    addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+    checkBattleOver();
+  }
+
+  renderAll();
+}
 
   function performComputerDefend(slotIdx){
     const slot = computerSlots[slotIdx];
