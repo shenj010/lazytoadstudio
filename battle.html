@@ -284,7 +284,7 @@ html,body{
 }
 
 html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
-.wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
+.wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
 .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
 .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
@@ -319,7 +319,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn indicator */
-.turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index=60}
+.turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
  /* attack animations */
 .attacking-forward{animation:attackForward 1000ms ease-in-out forwards; z-index: 1000;}
 @keyframes attackForward{
@@ -895,7 +895,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
-  </div>  <!-- Close wrap div -->
+  </div  <!-- Close wrap div -->
 
 <script>
 (function(){
@@ -1096,27 +1096,47 @@ function loadPlayerInventory(){
   }
 
   function createHandCardEl(card, idx){
-    const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
-    el.addEventListener('click', ()=>onHandClick(idx));
-    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-    el.appendChild(img); el.appendChild(stats);
-    const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
-    wrap.appendChild(el);
-    return wrap;
-  }
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.width = '86px';
+  el.style.height = '120px';
+  el.addEventListener('click', ()=>onHandClick(idx));
+  const img = document.createElement('img');
+  img.src = card.src;
+  img.alt = card.name;
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'contain'; // Show full image, not cropped
+  el.appendChild(img);
+  // No stats overlay
+  const wrap = document.createElement('div');
+  wrap.style.width = '86px';
+  wrap.style.height = '120px';
+  wrap.appendChild(el);
+  return wrap;
+}
 
-  function createReserveCardEl(card, idx){
-    const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
-    el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
-    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px';
-    stats.innerHTML = `<div>${card.name}</div>`;
-    el.appendChild(img); el.appendChild(stats);
-    const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px';
-    wrap.appendChild(el);
-    return wrap;
+function makeBattleCardEl(slotObj, owner, slotIndex){
+  const wrap = document.createElement('div');
+  wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+  wrap.style.width = '86px';
+  wrap.style.height = '120px';
+  wrap.style.position = 'relative';
+  const img = document.createElement('img');
+  img.src = slotObj.card.src;
+  img.alt = slotObj.card.name;
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'contain'; // Show full image, not cropped
+  wrap.appendChild(img);
+  // No stats overlay
+  if(slotObj.defending){
+    wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
   }
+  wrap.dataset.owner = owner;
+  wrap.dataset.slot = slotIndex;
+  return wrap;
+}
 
   // slot click: either place a hand card there (if player slot) or show actions if occupied
   function onSlotClick(side, idx){
@@ -2082,20 +2102,20 @@ function updateStatusIcons(slotElement, statusEffects) {
   function makeBattleCardEl(slotObj, owner, slotIndex){
     const wrap = document.createElement('div'); 
     wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-    wrap.style.width='86px'; 
-    wrap.style.height='120px';
+    wrap.style.width = '86px'; 
+    wrap.style.height = '120px';
     wrap.style.position = 'relative';
     
     const img = document.createElement('img'); 
     img.src = slotObj.card.src; 
     img.alt = slotObj.card.name;
-    
-    const stats = document.createElement('div'); 
-    stats.className='stats';
-    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain'; // Show full image, not cropped
     
     wrap.appendChild(img); 
-    wrap.appendChild(stats);
+    
+    // No stats overlay
     
     // defending glow
     if(slotObj.defending){
