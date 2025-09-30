@@ -133,29 +133,54 @@ html,body{
   justify-content:center;
 }
 
-.slot{
-  width:180px; /* Larger slots */
-  height:240px; /* Taller slots */
-  border:2px dashed rgba(255,255,255,0.25);
-  border-radius:18px;
-  background:rgba(0,0,0,0.25);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
+.slot {
+  width: 140px; /* Moderate size */
+  height: 180px;
+  border: 2px dashed rgba(255,255,255,0.25);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .slot .card,
-.hand .card{
-  width:170px; /* Larger cards */
-  height:230px; /* Taller cards */
-  border-radius:14px;
-  background:#222;
-  overflow:hidden;
-  cursor:pointer;
-  display:flex;
-  flex-direction:column;
-  transition:opacity 0.3s ease;
+.hand .card {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background: #222;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+  position: relative;
+}
+
+.card img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+  border-radius: 14px;
+}
+
+.card-hp-bar {
+  width: 150px;
+  height: 20px;
+  margin: 6px auto 0 auto;
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+.card-hp-seg {
+  height: 100%;
+  border-radius: 4px;
+  background: #38EF7D;
+  opacity: 1;
+  transition: background 0.2s, opacity 0.2s;
 }
 
 /* Larger hand area */
@@ -299,10 +324,10 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
 .slots{display:flex;gap:32px;align-items:center;justify-content:center}
-.slot{width:180px;height:240px;border:2px dashed rgba(255,255,255,0.25);border-radius:18px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+.slot {  width: 140px; /* Moderate size */  height: 180px;  border: 2px dashed rgba(255,255,255,0.25);  border-radius: 14px;  background: rgba(0,0,0,0.25);  display: flex;  align-items: center;  justify-content: center;  position: relative;}
 .slot.occupied{border-style:solid}
-.slot .card, .hand .card{width:170px;height:230px;border-radius:14px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
-.card img{width:100% !important;height:100% !important;object-fit:contain !important;display:block;}
+.slot .card, .hand .card{width:100%;height:100%;border-radius:14px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
+.card img{width:100% !important;height:100% !important;object-fit:cover !important;display:block;border-radius:14px}
 .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
 .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
 .card.used{opacity:0.4;filter:grayscale(0.7)}
@@ -1088,54 +1113,69 @@ function loadPlayerInventory(){
   }
 
   function createCardBackEl(){
-    const el = document.createElement('div'); 
-    el.className='card'; 
-    el.style.width='86px'; 
-    el.style.height='120px';
+    const el = document.createElement('div');
+    el.className='card';
+    el.style.width='100%';
+    el.style.height='100%';
     el.style.cursor='default';
-    
-    const img = document.createElement('img'); 
+
+    const img = document.createElement('img');
     img.src = 'images/cards/card back.jpeg';
     img.alt = 'Hidden Card';
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
-    
+    img.style.borderRadius = '14px';
     el.appendChild(img);
-    
-    const wrap = document.createElement('div'); 
-    wrap.style.width='86px'; 
-    wrap.style.height='120px';
-    wrap.appendChild(el);
-    return wrap;
+
+    // Add a dummy HP bar for visual consistency
+    const hpBar = document.createElement('div');
+    hpBar.className = 'card-hp-bar';
+    for(let i=0; i<8; i++){
+      const seg = document.createElement('div');
+      seg.className = 'card-hp-seg';
+      seg.style.background = '#38EF7D';
+      seg.style.opacity = '1';
+      hpBar.appendChild(seg);
+    }
+    el.appendChild(hpBar);
+
+    return el;
   }
 
   function createHandCardEl(card, idx){
   const el = document.createElement('div');
   el.className = 'card';
-  el.style.width = '86px';
-  el.style.height = '120px';
+  el.style.width = '100%';
+  el.style.height = '100%';
   el.addEventListener('click', ()=>onHandClick(idx));
   const img = document.createElement('img');
   img.src = card.src;
   img.alt = card.name;
   img.style.width = '100%';
   img.style.height = '100%';
-  img.style.objectFit = 'contain'; // Show full image, not cropped
+  img.style.objectFit = 'cover';
+  img.style.borderRadius = '14px';
   el.appendChild(img);
-  // No stats overlay
-  const wrap = document.createElement('div');
-  wrap.style.width = '86px';
-  wrap.style.height = '120px';
-  wrap.appendChild(el);
-  return wrap;
+  // Segmented HP bar (always under image)
+  const hpBar = document.createElement('div');
+  hpBar.className = 'card-hp-bar';
+  for(let i=0; i<8; i++){
+    const seg = document.createElement('div');
+    seg.className = 'card-hp-seg';
+    seg.style.background = '#38EF7D';
+    seg.style.opacity = '1';
+    hpBar.appendChild(seg);
+  }
+  el.appendChild(hpBar);
+  return el;
 }
 
 function makeBattleCardEl(slotObj, owner, slotIndex){
   const wrap = document.createElement('div');
   wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-  wrap.style.width = '86px';
-  wrap.style.height = '120px';
+  wrap.style.width = '100%';
+  wrap.style.height = '100%';
   wrap.style.position = 'relative';
 
   const img = document.createElement('img');
@@ -1143,26 +1183,17 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
   img.alt = slotObj.card.name;
   img.style.width = '100%';
   img.style.height = '100%';
-  img.style.objectFit = 'contain';
+  img.style.objectFit = 'cover';
+  img.style.borderRadius = '14px';
   wrap.appendChild(img);
 
-  // Segmented HP bar
+  // Segmented HP bar (always under image)
   const hpBar = document.createElement('div');
   hpBar.className = 'card-hp-bar';
-  hpBar.style.width = '150px';
-  hpBar.style.height = '20px';
-  hpBar.style.margin = '6px auto 0 auto';
-  hpBar.style.display = 'flex';
-  hpBar.style.gap = '2px';
-  hpBar.style.justifyContent = 'center';
-
   // 8 segments for 80 HP
   for(let i=0; i<8; i++){
     const seg = document.createElement('div');
     seg.className = 'card-hp-seg';
-    seg.style.flex = '1';
-    seg.style.height = '100%';
-    seg.style.borderRadius = '4px';
     seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
     seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
     hpBar.appendChild(seg);
@@ -2141,8 +2172,8 @@ function updateStatusIcons(slotElement, statusEffects) {
   function makeBattleCardEl(slotObj, owner, slotIndex){
     const wrap = document.createElement('div'); 
     wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-    wrap.style.width = '86px'; 
-    wrap.style.height = '120px';
+    wrap.style.width = '100%'; 
+    wrap.style.height = '100%';
     wrap.style.position = 'relative';
     
     const img = document.createElement('img'); 
@@ -2150,27 +2181,17 @@ function updateStatusIcons(slotElement, statusEffects) {
     img.alt = slotObj.card.name;
     img.style.width = '100%';
     img.style.height = '100%';
-    img.style.objectFit = 'contain'; // Show full image, not cropped
+    img.style.objectFit = 'cover'; // Show full image, not cropped
     
     wrap.appendChild(img); 
     
     // Segmented HP bar
     const hpBar = document.createElement('div');
     hpBar.className = 'card-hp-bar';
-    hpBar.style.width = '150px';
-    hpBar.style.height = '20px';
-    hpBar.style.margin = '6px auto 0 auto';
-    hpBar.style.display = 'flex';
-    hpBar.style.gap = '2px';
-    hpBar.style.justifyContent = 'center';
-
     // 8 segments for 80 HP
     for(let i=0; i<8; i++){
       const seg = document.createElement('div');
       seg.className = 'card-hp-seg';
-      seg.style.flex = '1';
-      seg.style.height = '100%';
-      seg.style.borderRadius = '4px';
       seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
       seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
       hpBar.appendChild(seg);
@@ -2193,7 +2214,7 @@ function updateStatusIcons(slotElement, statusEffects) {
     // Update segmented HP bar
     const hpBar = slotEl.firstChild.querySelector('.card-hp-bar');
     if(hpBar){
-      for(let i=0; i<8; i++){
+      for(let i=0;i<8;i++){
         const seg = hpBar.children[i];
         seg.style.background = (slot.hp >= (i+1)*10) ? '#38EF7D' : '#222';
         seg.style.opacity = (slot.hp >= (i+1)*10) ? '1' : '0.25';
