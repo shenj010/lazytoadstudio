@@ -61,13 +61,13 @@ html,body{
   flex:1;
   display:flex;
   flex-direction:column;
-  gap:16px; /* Larger gaps */
+  gap:32px;  /* Larger gaps */
   align-items:center;
   justify-content:space-between;
-  padding:16px;
+  padding:32px;
   box-sizing:border-box;
   background: rgba(0,0,0,0.2); /* Subtle background */
-  border-radius: 12px;
+  border-radius: 20px;
   border: 2px solid rgba(255,255,255,0.1);
 }
 
@@ -79,9 +79,9 @@ html,body{
   justify-content:space-between;
   background:rgba(0,0,0,0.45);
   border:3px solid #fff;
-  padding:20px; /* More padding */
-  border-radius:12px;
-  min-height: 200px; /* Ensure minimum height */
+  padding:36px; /* More padding */
+  border-radius:20px;
+  min-height: 320px; /* Ensure minimum height */
 }
 
 .player-info{
@@ -98,11 +98,11 @@ html,body{
 }
 
 .hp-bar{
-  width:180px; /* Wider HP bar */
-  height:24px; /* Taller HP bar */
+  width:150px; /* Wider HP bar */
+  height:20px; /* Taller HP bar */
   background:#111;
   border:2px solid #fff;
-  border-radius:8px;
+  border-radius:4px;
   overflow:hidden;
   display:flex;
   align-items:center;
@@ -128,16 +128,16 @@ html,body{
 /* Larger battlefield slots */
 .slots{
   display:flex;
-  gap:14px; /* More spacing */
+  gap:32px; /* More spacing */
   align-items:center;
   justify-content:center;
 }
 
 .slot{
-  width:110px; /* Larger slots */
-  height:150px; /* Taller slots */
+  width:180px; /* Larger slots */
+  height:240px; /* Taller slots */
   border:2px dashed rgba(255,255,255,0.25);
-  border-radius:10px;
+  border-radius:18px;
   background:rgba(0,0,0,0.25);
   display:flex;
   align-items:center;
@@ -145,11 +145,11 @@ html,body{
   position:relative;
 }
 
-.slot .card{
-  width:104px; /* Larger cards */
-  height:140px; /* Taller cards */
-  border:3px solid #fff;
-  border-radius:8px;
+.slot .card,
+.hand .card{
+  width:170px; /* Larger cards */
+  height:230px; /* Taller cards */
+  border-radius:14px;
   background:#222;
   overflow:hidden;
   cursor:pointer;
@@ -287,21 +287,21 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;box-sizing:border-box}
 .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
-.arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
+.arena{position:relative;flex:1;width:100%;max-width:1400px;display:flex;flex-direction:column;gap:32px;align-items:center;justify-content:space-between;padding:32px;box-sizing:border-box}
  /* top area (computer) */
-.area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
+.area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:36px;border-radius:20px}
 .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
 .name{color:var(--accent);font-size:12px;margin-bottom:6px}
-.hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.hp-bar{width:150px;height:20px;background:#111;border:2px solid #fff;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hp-segments{display:flex;width:92%;gap:2px}
 .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
-.slots{display:flex;gap:10px;align-items:center;justify-content:center}
-.slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
+.slots{display:flex;gap:32px;align-items:center;justify-content:center}
+.slot{width:180px;height:240px;border:2px dashed rgba(255,255,255,0.25);border-radius:18px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
 .slot.occupied{border-style:solid}
-.slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
+.slot .card, .hand .card{width:170px;height:230px;border-radius:14px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
 .card img{width:100% !important;height:100% !important;object-fit:contain !important;display:block;}
 .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
 .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
@@ -836,17 +836,16 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   }
 }
 .card-hp-bar {
-  width: 80px;
-  height: 12px;
-  margin: 2px auto 0 auto;
+  width: 150px;
+  height: 20px;
+  margin: 6px auto 0 auto;
   display: flex;
   gap: 2px;
   justify-content: center;
 }
 .card-hp-seg {
-  flex: 1;
   height: 100%;
-  border-radius: 2px;
+  border-radius: 4px;
   background: #38EF7D;
   opacity: 1;
   transition: background 0.2s, opacity 0.2s;
@@ -1150,9 +1149,9 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
   // Segmented HP bar
   const hpBar = document.createElement('div');
   hpBar.className = 'card-hp-bar';
-  hpBar.style.width = '80px';
-  hpBar.style.height = '12px';
-  hpBar.style.margin = '2px auto 0 auto';
+  hpBar.style.width = '150px';
+  hpBar.style.height = '20px';
+  hpBar.style.margin = '6px auto 0 auto';
   hpBar.style.display = 'flex';
   hpBar.style.gap = '2px';
   hpBar.style.justifyContent = 'center';
@@ -1163,7 +1162,7 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
     seg.className = 'card-hp-seg';
     seg.style.flex = '1';
     seg.style.height = '100%';
-    seg.style.borderRadius = '2px';
+    seg.style.borderRadius = '4px';
     seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
     seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
     hpBar.appendChild(seg);
@@ -2158,9 +2157,9 @@ function updateStatusIcons(slotElement, statusEffects) {
     // Segmented HP bar
     const hpBar = document.createElement('div');
     hpBar.className = 'card-hp-bar';
-    hpBar.style.width = '80px';
-    hpBar.style.height = '12px';
-    hpBar.style.margin = '2px auto 0 auto';
+    hpBar.style.width = '150px';
+    hpBar.style.height = '20px';
+    hpBar.style.margin = '6px auto 0 auto';
     hpBar.style.display = 'flex';
     hpBar.style.gap = '2px';
     hpBar.style.justifyContent = 'center';
@@ -2171,7 +2170,7 @@ function updateStatusIcons(slotElement, statusEffects) {
       seg.className = 'card-hp-seg';
       seg.style.flex = '1';
       seg.style.height = '100%';
-      seg.style.borderRadius = '2px';
+      seg.style.borderRadius = '4px';
       seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
       seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
       hpBar.appendChild(seg);
@@ -2539,7 +2538,7 @@ function expandCard(card) {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%) scale(1.5) !important;
     max-width: 90vw !important;
     max-height: 90vh !important;
     width: auto !important;
