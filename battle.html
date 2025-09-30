@@ -302,7 +302,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
 .slot.occupied{border-style:solid}
 .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
-.card img{width:100%;height:72%;object-fit:cover;display:block}
+.card img{width:100% !important;height:100% !important;object-fit:contain !important;display:block;}
 .card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
 .card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
 .card.used{opacity:0.4;filter:grayscale(0.7)}
@@ -835,6 +835,22 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     transform: translate(-50%, -50%) scale(1.8) !important;
   }
 }
+.card-hp-bar {
+  width: 80px;
+  height: 12px;
+  margin: 2px auto 0 auto;
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+.card-hp-seg {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+  background: #38EF7D;
+  opacity: 1;
+  transition: background 0.2s, opacity 0.2s;
+}
 </style>
 </head>
 <body>
@@ -1122,14 +1138,38 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
   wrap.style.width = '86px';
   wrap.style.height = '120px';
   wrap.style.position = 'relative';
+
   const img = document.createElement('img');
   img.src = slotObj.card.src;
   img.alt = slotObj.card.name;
   img.style.width = '100%';
   img.style.height = '100%';
-  img.style.objectFit = 'contain'; // Show full image, not cropped
+  img.style.objectFit = 'contain';
   wrap.appendChild(img);
-  // No stats overlay
+
+  // Segmented HP bar
+  const hpBar = document.createElement('div');
+  hpBar.className = 'card-hp-bar';
+  hpBar.style.width = '80px';
+  hpBar.style.height = '12px';
+  hpBar.style.margin = '2px auto 0 auto';
+  hpBar.style.display = 'flex';
+  hpBar.style.gap = '2px';
+  hpBar.style.justifyContent = 'center';
+
+  // 8 segments for 80 HP
+  for(let i=0; i<8; i++){
+    const seg = document.createElement('div');
+    seg.className = 'card-hp-seg';
+    seg.style.flex = '1';
+    seg.style.height = '100%';
+    seg.style.borderRadius = '2px';
+    seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
+    seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
+    hpBar.appendChild(seg);
+  }
+  wrap.appendChild(hpBar);
+
   if(slotObj.defending){
     wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
   }
@@ -1413,7 +1453,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1427,7 +1467,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(() => { computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1449,7 +1489,7 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+              setTimeout(() => { computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
             }, 200);
           } else {
             updateSlotUI('computer', targetIdx);
@@ -1512,7 +1552,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1523,7 +1563,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(() => { computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -2115,17 +2155,34 @@ function updateStatusIcons(slotElement, statusEffects) {
     
     wrap.appendChild(img); 
     
-    // No stats overlay
-    
-    // defending glow
+    // Segmented HP bar
+    const hpBar = document.createElement('div');
+    hpBar.className = 'card-hp-bar';
+    hpBar.style.width = '80px';
+    hpBar.style.height = '12px';
+    hpBar.style.margin = '2px auto 0 auto';
+    hpBar.style.display = 'flex';
+    hpBar.style.gap = '2px';
+    hpBar.style.justifyContent = 'center';
+
+    // 8 segments for 80 HP
+    for(let i=0; i<8; i++){
+      const seg = document.createElement('div');
+      seg.className = 'card-hp-seg';
+      seg.style.flex = '1';
+      seg.style.height = '100%';
+      seg.style.borderRadius = '2px';
+      seg.style.background = (slotObj.hp >= (i+1)*10) ? '#38EF7D' : '#222';
+      seg.style.opacity = (slotObj.hp >= (i+1)*10) ? '1' : '0.25';
+      hpBar.appendChild(seg);
+    }
+    wrap.appendChild(hpBar);
+
     if(slotObj.defending){
       wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
     }
-    
     wrap.dataset.owner = owner;
     wrap.dataset.slot = slotIndex;
-    wrap._hpEl = stats.querySelector('.card-hp');
-
     return wrap;
   }
 
@@ -2133,10 +2190,16 @@ function updateStatusIcons(slotElement, statusEffects) {
   function updateSlotUI(side, idx){
   const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
   const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-  
   if(slot && slotEl.firstChild){
-    slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-    // Update status icons on the slot container
+    // Update segmented HP bar
+    const hpBar = slotEl.firstChild.querySelector('.card-hp-bar');
+    if(hpBar){
+      for(let i=0; i<8; i++){
+        const seg = hpBar.children[i];
+        seg.style.background = (slot.hp >= (i+1)*10) ? '#38EF7D' : '#222';
+        seg.style.opacity = (slot.hp >= (i+1)*10) ? '1' : '0.25';
+      }
+    }
     updateStatusIcons(slotEl, slot.statusEffects);
   }
   updateGlobalHPUI();
