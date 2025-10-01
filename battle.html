@@ -1902,13 +1902,11 @@ function showCardActions(side, idx){
               if(cardEl) {
                 cardEl.classList.add('die');
                 setTimeout(() => {
-                  slots[idx] = null;
-                  renderAll();
-                  checkBattleOver();
-                }, 600);
-              }
-            }, 500);
-            return false; // Remove the effect since the card is dead
+                slots[idx] = null;
+                renderAll();
+                checkBattleOver();
+              }, 600);
+            }
           }
         }
         
@@ -2516,5 +2514,9 @@ function collapseCard() {
 addTouchHoldListeners();
 })(document);
 </script>
+<style>
+/* === Additive override: hide in-card overlay stats for full image visibility === */
+.card .stats{display:none !important;}
+</style>
 </body>
 </html>
