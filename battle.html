@@ -314,7 +314,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card-action-panel .btn:active{transform:scale(.98)}
 .card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn control panel */
-.turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
+.turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom=22px;display:flex;gap:12px;z-index:50}
 .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
@@ -835,6 +835,701 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     transform: translate(-50%, -50%) scale(1.8) !important;
   }
 }
+
+/* Discard + per-card HP bars */
+.discard-piles{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:10px}
+.discard-pile{background:rgba(0,0,0,0.45);border:2px solid #fff;border-radius:8px;padding:4px 8px;min-width:110px;text-align:center}
+.discard-pile span{color:var(--accent)}
+
+.card-container{display:flex;flex-direction:column;align-items:center;gap:4px}
+.card-hp-bar{width:86px;height:14px;background:#111;border:2px solid #fff;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card-hp-segments{display:flex;width:92%;gap:2px}
+.card-hp-seg{flex:1;height:10px;background:#fff;border-radius:2px;opacity:1;position:relative}
+.card-hp-seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
+
+/* Remove in‑card overlay text */
+.card .stats{display:none!important}
+
+/* Update discard UI function */
+function updateDiscardUI(){
+  playerDiscardCount.textContent = playerDiscard.length;
+  computerDiscardCount.textContent = computerDiscard.length;
+}
+
+// New function to handle card death and moving to discard pile
+function handleCardDeath(side, idx){
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const discard = side === 'player' ? playerDiscard : computerDiscard;
+  const dead = slots[idx];
+  if(!dead) return;
+  discard.push(dead.card);
+  slots[idx] = null;
+  updateDiscardUI();
+  renderAll();
+  checkBattleOver();
+}
+
+// Build card HP bar UI element
+function buildCardHPBar(currentHp){
+  const bar = document.createElement('div');
+  bar.className = 'card-hp-bar';
+  const segWrap = document.createElement('div');
+  segWrap.className = 'card-hp-segments';
+  const fraction = currentHp / MAX_HP;
+  const show = fraction * SEGMENTS;
+  for(let i=0;i<SEGMENTS;i++){
+    const seg = document.createElement('div');
+    seg.className = 'card-hp-seg';
+    const remain = show - i;
+    if(remain <= 0) seg.style.opacity = 0.15;
+    else if(remain < 1) seg.classList.add('half');
+    segWrap.appendChild(seg);
+  }
+  bar.appendChild(segWrap);
+  return bar;
+}
+
+/* Battle card element creation - swapped to use new wrapper */
+function makeBattleCardEl(slotObj, owner, slotIndex){
+  const container = document.createElement('div');
+  container.className = 'card-container';
+  const card = document.createElement('div');
+  card.className = `card ${slotObj.used ? 'used' : ''}`;
+  card.style.width = '86px';
+  card.style.height = '120px';
+  const img = document.createElement('img');
+  img.src = slotObj.card.src;
+  img.alt = slotObj.card.name;
+  card.appendChild(img);
+  if(slotObj.defending){
+    card.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+  }
+  container.appendChild(card);
+  const hpBar = buildCardHPBar(slotObj.hp);
+  container.appendChild(hpBar);
+  container.dataset.owner = owner;
+  container.dataset.slot = slotIndex;
+  container._hpBar = hpBar;
+  return container;
+}
+
+/* Debounce function - limit how often a function can fire */
+function debounce(func, delay) {
+  let timeout;
+  return (...args) => {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+
+/* Throttle function - limit how often a function can fire on successive calls */
+function throttle(func, limit) {
+  let lastFunc;
+  let lastRan;
+  return function() {
+    const context = this;
+    const args = arguments;
+    if (!lastRan) {
+      func.apply(context, args);
+      lastRan = Date.now();
+    } else if (Date.now() - lastRan >= limit) {
+      clearTimeout(lastFunc);
+      func.apply(context, args);
+      lastRan = Date.now();
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        func.apply(context, args);
+        lastRan = Date.now();
+      }, limit - (Date.now() - lastRan));
+    }
+  }
+}
+
+/* Log formatting - differentiate system and combat logs */
+.log .entry {
+  position: relative;
+  padding-left: 18px;
+}
+
+.entry.system:before {
+  content: 'System: ';
+  position: absolute;
+  left: 0;
+  color: #38EF7D;
+}
+
+.entry.player:before {
+  content: 'You: ';
+  position: absolute;
+  left: 0;
+  color: #38A1DB;
+}
+
+.entry.computer:before {
+  content: 'Enemy: ';
+  position: absolute;
+  left: 0;
+  color: #DB3838;
+}
+
+/* Larger tooltip for attack descriptions */
+.card-action-panel .btn:hover {
+  position: relative;
+}
+
+.card-action-panel .btn:hover:after {
+  content: attr(data-description);
+  position: absolute;
+  width: max-content;
+  max-width: 160px;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  top: -5px;
+  left: 100%;
+  margin-left: 8px;
+  white-space: nowrap;
+  z-index: 100;
+  font-size: 10px;
+}
+
+.card-action-panel .btn.cooldown {
+  position: relative;
+}
+
+.card-action-panel .btn.cooldown:after {
+  content: attr(data-cooldown);
+  position: absolute;
+  width: max-content;
+  background: rgba(255,255,255,0.2);
+  color: #ff4444;
+  padding: 2px 4px;
+  border-radius: 3px;
+  top: -4px;
+  right: -4px;
+  z-index: 101;
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* Desktop gradient background animation */
+body {
+  animation: gradientBG 10s ease infinite;
+  background: linear-gradient(135deg, #2D1B69, #11998E, #38EF7D);
+  background-size: 300% 300%;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced card hover effect - smooth scaling and shadow */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+/* Stylish scrollbar for logs */
+.log {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Card impact animation - scale and overlay effect */
+.card.impact {
+  animation: cardImpact 0.5s ease-out forwards;
+}
+
+@keyframes cardImpact {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* New slot design - larger, with clear boundaries */
+.slot {
+  position: relative;
+  width: 100px;
+  height: 140px;
+  border: 3px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  transition: background 0.3s ease;
+}
+
+.slot:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Detailed card stats panel */
+.card-stats-panel {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  display: none;
+  z-index: 200;
+}
+
+.card:hover .card-stats-panel {
+  display: block;
+}
+
+/* Hand area - improved spacing and alignment */
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0 4px;
+  width: calc(100% + 8px);
+  margin-left: -4px;
+}
+
+/* Responsive design - stack areas on small screens */
+@media (max-width: 600px) {
+  .game-container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .arena {
+    width: 100%;
+    padding: 8px;
+    display: block;
+  }
+  
+  .area {
+    width: calc(50% - 16px);
+    margin: 8px;
+  }
+  
+  .player-info, .slots, .hand {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .name {
+    font-size: 16px;
+  }
+  
+  .hp-bar {
+    width: 100%;
+  }
+  
+  .hp-segments {
+    width: 100%;
+  }
+  
+  .seg {
+    height: 12px;
+  }
+  
+  .slots {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .slot {
+    width: 80px;
+    height: 110px;
+  }
+  
+  .slot .card {
+    width: 76px;
+    height: 102px;
+  }
+  
+  .card .stats {
+    font-size: 8px;
+    padding: 2px;
+  }
+  
+  /* Mobile hand area - centered and stacked cards */
+  .hand {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-left: 0;
+    padding: 0;
+  }
+}
+
+/* Enhanced touch feedback for buttons */
+.btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Cooldown visual indicator - pulsating effect */
+.card-action-panel .btn.cooldown {
+  animation: cooldownPulse 1.2s infinite;
+}
+
+@keyframes cooldownPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+/* Tactical view mode - cards and slots larger, clearer details */
+.tactical .card {
+  width: 120px;
+  height: 160px;
+}
+
+.tactical .slot {
+  width: 110px;
+  height: 150px;
+}
+
+.tactical .hand .card {
+  width: 100px;
+  height: 140px;
+}
+
+/* High contrast mode - for better visibility */
+.high-contrast {
+  filter: contrast(1.2) brightness(1.1);
+}
+
+/* Night mode - darker theme with glowing effects */
+.night-mode {
+  background: #121212;
+  color: #e0e0e0;
+}
+
+.night-mode .wrap {
+  background: #121212;
+}
+
+.night-mode .header {
+  background: #1f1f1f;
+  border-bottom: 1px solid #333;
+}
+
+.night-mode .btn {
+  background: #333;
+  color: #fff;
+}
+
+.night-mode .btn:hover {
+  background: #444;
+}
+
+.night-mode .arena {
+  background: #1e1e1e;
+  border: 1px solid #333;
+}
+
+.night-mode .area {
+  background: rgba(255, 255, 255, 0.05);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.night-mode .card {
+  background: #2c2c2c;
+  border: 3px solid #444;
+  color: #fff;
+}
+
+.night-mode .card.selected {
+  border-color: #38EF7D;
+}
+
+.night-mode .log {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.night-mode .turn-indicator {
+  background: rgba(56, 239, 125, 0.9);
+  border: 2px solid #38EF7D;
+}
+
+.night-mode .title {
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+/* Announcement banner - for重要游戏消息 */
+.announcement-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 999;
+  border-bottom: 2px solid #38EF7D;
+  display: none; /* Hidden by default */
+}
+
+/* Show banner when active */
+.announcement-banner.active {
+  display: block;
+}
+
+/* Flashing effect for important announcements */
+@keyframes flashAnnouncement {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+.announcement-banner.important {
+  animation: flashAnnouncement 1.5s ease-in-out infinite;
+}
+
+/* New discard pile design - improved visibility and interaction */
+.discard-piles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.discard-pile {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 120px;
+  text-align: center;
+  position: relative;
+}
+
+.discard-pile span {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* Tooltip styling for discard pile information */
+.discard-pile:hover:after {
+  content: attr(data-info);
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 10px;
+  z-index: 10;
+}
+
+/* Animation for card movement to discard pile */
+.moving-to-discard {
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 0.7;
+}
+
+/* Card highlight effect for selected or targeted cards */
+.card.highlight {
+  border: 3px dashed #38EF7D;
+  box-shadow: 0 0 15px rgba(56, 239, 125, 0.6);
+}
+
+/* Combat log enhancements - clearer separation and timestamps */
+.log .entry {
+  margin-bottom: 10px;
+  padding: 4px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.log .entry:before {
+  content: attr(data-time);
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Setup phase - instructive banner */
+.setup-banner {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 1000;
+  border-radius: 8px;
+}
+
+/* Animated border for the setup banner */
+.setup-banner:before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, transparent, #38EF7D, transparent);
+  z-index: -1;
+  animation: borderGlow 2s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+}
+
+/* Media queries for responsive adjustments */
+@media (max-width: 768px) {
+  /* Compact log for small screens */
+  .log {
+    width: 100%;
+    height: 120px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: auto;
+    border-top: 2px solid #fff;
+    padding: 6px;
+    font-size: 9px;
+    z-index: 40;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+  
+  .log .entry {
+    margin-bottom: 3px;
+    line-height: 1.2;
+    font-size: 10px;
+  }
+  
+  /* Stacks slots in two columns on small devices */
+  .slots {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  .slot {
+    width: calc(50% - 4px);
+    height: 110px;
+  }
+  
+  /* Adjusts player and computer areas to stack vertically */
+  .arena {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  /* Compact player info for small screens */
+  .player-info {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .name {
+    font-size: 12px;
+  }
+  
+  .hp-bar {
+    width: 80px;
+    height: 16px;
+  }
+  
+  /* Responsively scales hand cards */
+  .hand .card {
+    width: 50px;
+    height: 70px;
+  }
+  
+  .hand .card.selected {
+    width: 60px;
+    height: 85px;
+    transform: translateY(-8px) scale(1.1);
+    z-index: 200;
+  }
+}
+
+/* Debugging styles - to be removed or disabled in production */
+.debug-outline {
+  outline: 2px dashed red;
+  position: relative;
+}
+
+.debug-outline::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 10;
+}
 </style>
 </head>
 <body>
@@ -889,13 +1584,17 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
       <div class="log" id="battleLog">
         <div class="entry system">Battle ready – place cards to begin.</div>
       </div>
-    </div>  <!-- Close game-container div -->
+    </div  <!-- Close game-container div -->
 
     <!-- turn control panel -->
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
-  </div>  <!-- Close wrap div -->
+  </div  <!-- Close wrap div -->
+
+<div class="discard-piles">
+  <div class="discard-pile" id="computerDiscardPile">Discard: <span id="computerDiscardCount">0</span></div>
+</div>
 
 <script>
 (function(){
@@ -958,7 +1657,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
   let playerTurn = true;
   let currentActionPanel = null; // reference to active action panel
-
+  let playerDiscard = [];
+let computerDiscard = [];
   // elements
   const playerHandEl = document.getElementById('playerHand');
   const computerHandEl = document.getElementById('computerHand');
@@ -970,6 +1670,9 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   const playerGlobalHP = document.getElementById('playerGlobalHP');
   const computerGlobalHP = document.getElementById('computerGlobalHP');
   const turnIndicator = document.getElementById('turnIndicator');
+  const playerDiscardPile = document.getElementById('playerDiscardPile');
+  const playerDiscardCount = document.getElementById('playerDiscardCount');
+  const computerDiscardCount = document.getElementById('computerDiscardCount');
 
   // init interface slots
   function makeSlotsUI(){
@@ -1099,8 +1802,7 @@ function loadPlayerInventory(){
     const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
     el.addEventListener('click', ()=>onHandClick(idx));
     const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-    el.appendChild(img); el.appendChild(stats);
+    el.appendChild(img);
     const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
     wrap.appendChild(el);
     return wrap;
@@ -1393,7 +2095,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1407,7 +2109,11 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(() => {
+              computerSlots[idx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1429,7 +2135,11 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+              setTimeout(() => {
+                computerSlots[idx] = null;
+                renderAll();
+                checkBattleOver();
+              }, 600);
             }, 200);
           } else {
             updateSlotUI('computer', targetIdx);
@@ -1492,7 +2202,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1503,7 +2213,11 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(() => {
+              computerSlots[idx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1723,7 +2437,11 @@ function showCardActions(side, idx){
       if(target.hp <= 0){
         setTimeout(() => {
           targetCardEl.classList.add('die');
-          setTimeout(() => { playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
+          setTimeout(() => {
+            computerSlots[idx] = null;
+            renderAll();
+            checkBattleOver();
+          }, 600);
         }, 200);
       } else {
         updateSlotUI('player', attackerIdx);
@@ -1896,7 +2614,6 @@ function showCardActions(side, idx){
           
           // Check if card dies from poison
           if(slot.hp <= 0) {
-            addLog('system', `${slot.card.name} dies from poison!`);
             setTimeout(() => {
               const cardEl = slotEl.querySelector('.card');
               if(cardEl) {
@@ -2111,12 +2828,18 @@ function updateStatusIcons(slotElement, statusEffects) {
 
   // update slot UI
   function updateSlotUI(side, idx){
-  const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
-  const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
-  
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  const slot = slots[idx];
+  const slotEl = slotsEl.children[idx];
   if(slot && slotEl.firstChild){
-    slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
-    // Update status icons on the slot container
+    // Rebuild hp bar
+    const container = slotEl.firstChild;
+    const oldBar = container._hpBar;
+    if(oldBar) oldBar.remove();
+    const newBar = buildCardHPBar(slot.hp);
+    container.appendChild(newBar);
+    container._hpBar = newBar;
     updateStatusIcons(slotEl, slot.statusEffects);
   }
   updateGlobalHPUI();
@@ -2514,7 +3237,6 @@ function collapseCard() {
 
 // Initialize touch listeners after DOM is ready
 addTouchHoldListeners();
-})(document);
 </script>
 </body>
 </html>
