@@ -955,6 +955,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   // state
   let playerHand = [];      // full objects {src,name}
   let computerReserve = [];
+  let computerPlacedCount = 0; // tracks how many reserve cards have been deployed (additive)
   let playerSlots = new Array(MAX_SLOTS).fill(null); // slot = {card, hp, defending, used, statusEffects: []}
   let computerSlots = new Array(MAX_SLOTS).fill(null);
   let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
@@ -1059,6 +1060,7 @@ function loadPlayerInventory(){
       cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
     }
     computerReserve = cp;
+    computerPlacedCount = 0; // reset counter when building new reserve
   }
 
   // render player hand UI (cards you can place)
@@ -1068,11 +1070,11 @@ function loadPlayerInventory(){
       const c = createHandCardEl(card, idx);
       playerHandEl.appendChild(c);
     });
-    
-    // Show computer's hand as card backs
+
+    // Computer reserve (unused only) as card backs
     computerHandEl.innerHTML = '';
-    const remainingCards = computerReserve.length - computerSlots.filter(s => s).length;
-    for(let i = 0; i < remainingCards; i++){
+    const remaining = computerReserve.length - computerPlacedCount;
+    for(let i = 0; i < remaining; i++){
       const c = createCardBackEl();
       computerHandEl.appendChild(c);
     }
@@ -1397,7 +1399,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(()=> targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1878,7 +1880,7 @@ function showCardActions(side, idx){
         if(effect.type === 'poison'){
           const poisonDmg = 5;
           slot.hp = Math.max(0, slot.hp - poisonDmg);
-          addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
+          addLog('system', `${slot.card.name} takes ${poisonDmage} poison damage`);
           const slotEl = slotsEl.children[idx];
           if(slotEl) showDamagePopup(slotEl, poisonDmg, '#8B4513');
           if(slot.hp <= 0){
@@ -1977,43 +1979,6 @@ function updateStatusIcons(slotElement, statusEffects) {
     });
   }
 }
-
-  // create flying projectile animation
-  function createFlyingProjectile(fromElement, toElement, callback, damage) {
-    // Clone the attacking card
-    const projectile = fromElement.cloneNode(true);
-    projectile.style.position = 'fixed';
-    projectile.style.pointerEvents = 'none';
-    projectile.style.zIndex = '2000';
-    
-    // Get positions
-    const fromRect = fromElement.getBoundingClientRect();
-    const toRect = toElement.getBoundingClientRect();
-    
-    // Calculate the distance to travel
-    const deltaX = toRect.left - fromRect.left;
-    const deltaY = toRect.top - fromRect.top;
-    
-    // Set initial position
-    projectile.style.left = fromRect.left + 'px';
-    projectile.style.top = fromRect.top + 'px';
-    
-    // Add to body
-    document.body.appendChild(projectile);
-    
-    // Set CSS custom properties for the animation
-    projectile.style.setProperty('--target-x', deltaX + 'px');
-    projectile.style.setProperty('--target-y', deltaY + 'px');
-    
-    // Add flying animation class
-    projectile.classList.add('flying-attack');
-    
-    // Callback when animation completes
-    setTimeout(() => {
-      projectile.remove();
-      if(callback) callback(damage);
-    }, 800);
-  }
 
   // render battlefield slots and global HP segments
   function renderAll(){
@@ -2168,162 +2133,102 @@ function updateStatusIcons(slotElement, statusEffects) {
 
   // computer strategic initial placement
   function computerInitialPlacement(){
-    const emptySlots = [];
-    for(let i = 0; i < MAX_SLOTS; i++){
-      if(computerSlots[i] === null){
-        emptySlots.push(i);
-      }
+    // Strategic limited initial placement
+    const playerOccupiedSlots = playerSlots.map((s,i)=>s?i:-1).filter(i=>i!==-1);
+    const desired = Math.min(Math.max(1, playerOccupiedSlots.length), 3);
+    for(let k=0;k<desired;k++){
+      const choice = pickBestPlacement();
+      if(!choice) break;
+      placeComputerCard(choice);
     }
-    
-    // Place 1-3 cards initially, focusing on slots that oppose player cards
-    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
-    const cardsToPlace = Math.min(Math.max(1, playerOccupiedSlots.length), 3, computerReserve.length);
-    
-    // Prioritize placing cards opposite to player cards
-    const prioritySlots = playerOccupiedSlots.filter(idx => emptySlots.includes(idx));
-    const remainingSlots = emptySlots.filter(idx => !prioritySlots.includes(idx));
-    
-    const targetSlots = [...prioritySlots, ...remainingSlots].slice(0, cardsToPlace);
-    
-    targetSlots.forEach((slotIdx, i) => {
-      if(i < computerReserve.length){
-        const card = computerReserve[i];
-        // Initialize cooldowns for computer cards too
-        const attackCooldowns = {};
-        card.attacks.forEach((attack, attackIdx) => {
-          if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            attackCooldowns[attackIdx] = 0;
-          }
+    renderAll();
+    addLog('system', 'Computer completes initial deployment.');
+  }
+
+  // --- Strategic AI Helpers (clean, single definitions) ---
+  function scorePlacement(card, slotIdx){
+    const playerSlot = playerSlots[slotIdx];
+    let score = 0;
+    if(playerSlot){
+      score += 30; // base incentive to contest lane
+      if(playerSlot.hp > 60) score += 10; // focus high HP targets early
+      if(hasStatusEffect(playerSlot,'stun') || hasStatusEffect(playerSlot,'sleep')) score -= 8; // avoid over-disabling
+      if(hasStatusEffect(playerSlot,'poison')) score -= 6; // avoid redundant poison
+      if(card.attacks){
+        card.attacks.forEach(a=>{
+          if(a.effect === 'poison' && !hasStatusEffect(playerSlot,'poison')) score += 18;
+          if(a.effect === 'sleep' && !(hasStatusEffect(playerSlot,'sleep')||hasStatusEffect(playerSlot,'stun'))) score += 15;
+            // prefer stun only if not already disabled
+          if(a.effect === 'stun' && !(hasStatusEffect(playerSlot,'sleep')||hasStatusEffect(playerSlot,'stun'))) score += 12;
+          if(a.effect === 'weaken') score += 8;
+          if(!a.effect && a.damage >= 15 && playerSlot.hp <= 30) score += 10; // finisher potential
         });
-        
-        computerSlots[slotIdx] = { 
-          card, 
-          hp: MAX_HP, 
-          defending: false, 
-          used: false, 
-          statusEffects: [],
-          attackCooldowns: attackCooldowns 
-        };
       }
-    });
-    
-    renderAll();
-    addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+      if(playerSlot.hp > 40 && !computerSlots[slotIdx]) score += 12; // respond to beefy foe
+    } else {
+      // Empty lane – only if behind or need board spread
+      const playerActive = playerSlots.filter(s=>s).length;
+      const compActive = computerSlots.filter(s=>s).length;
+      if(compActive < playerActive) score += 14; else score += 4;
+      if(card.attacks) card.attacks.forEach(a=>{ if(a.effect) score -= 4; }); // save control effects for real targets
+    }
+    // Preserve reserve – penalize over-filling when already ahead
+    const compActive = computerSlots.filter(s=>s).length;
+    if(compActive >= playerSlots.filter(s=>s).length + 1) score -= 15;
+    return score;
   }
 
-  // computer strategic card placement during battle
-  function computerPlaceCard(){
+  function pickBestPlacement(){
     const emptySlots = [];
-    for(let i = 0; i < MAX_SLOTS; i++){
-      if(computerSlots[i] === null){
-        emptySlots.push(i);
-      }
-    }
-    
-    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
-    
-    // Count how many cards computer has already placed
-    const placedCount = computerSlots.filter(slot => slot !== null).length;
-    if(placedCount >= computerReserve.length) return false;
-    
-    // Strategic placement: prefer slots opposite player cards, or random if none
-    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
-    const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
-    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
-                      emptySlots[Math.floor(Math.random() * emptySlots.length)];
-    
-    // Use next available card from reserve
-    const cardToPlace = computerReserve[placedCount];
-    // Initialize cooldowns for newly placed computer cards
-    const attackCooldowns = {};
-    cardToPlace.attacks.forEach((attack, attackIdx) => {
-      if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-        attackCooldowns[attackIdx] = 0;
-      }
+    for(let i=0;i<MAX_SLOTS;i++) if(!computerSlots[i]) emptySlots.push(i);
+    if(emptySlots.length === 0) return null;
+    const remainingCards = computerReserve.slice(computerPlacedCount);
+    if(remainingCards.length === 0) return null;
+    let best = null;
+    remainingCards.forEach((card, relIdx) => {
+      emptySlots.forEach(slotIdx => {
+        const sc = scorePlacement(card, slotIdx);
+        if(!best || sc > best.score) best = {card, relIdx, slotIdx, score: sc};
+      });
     });
+    if(!best || best.score <= 0) return null; // do not place if no positive intent
+    return best;
+  }
 
-    computerSlots[targetSlot] = { 
-      card: cardToPlace, 
-      hp: MAX_HP, 
-      defending: false, 
-      used: false, 
-      statusEffects: [],
-      attackCooldowns: attackCooldowns 
-    };
+  function placeComputerCard(choice){
+    const absoluteIdx = computerPlacedCount + choice.relIdx;
+    if(absoluteIdx !== computerPlacedCount){
+      const tmp = computerReserve[computerPlacedCount];
+      computerReserve[computerPlacedCount] = computerReserve[absoluteIdx];
+      computerReserve[absoluteIdx] = tmp;
+    }
+    const card = computerReserve[computerPlacedCount];
+    computerPlacedCount++;
+    const attackCooldowns = {};
+    card.attacks.forEach((a,i)=>{ if(a.effect && ['stun','sleep','poison'].includes(a.effect)) attackCooldowns[i]=0; });
+    computerSlots[choice.slotIdx] = { card, hp:MAX_HP, defending:false, used:false, statusEffects:[], attackCooldowns };
+    addLog('computer', `Computer deploys ${card.name} to lane ${choice.slotIdx+1}`);
+  }
 
+  function computerInitialPlacement(){
+    const playerOccupiedSlots = playerSlots.map((s,i)=>s?i:-1).filter(i=>i!==-1);
+    const desired = Math.min(Math.max(1, playerOccupiedSlots.length), 3);
+    for(let k=0;k<desired;k++){
+      const choice = pickBestPlacement();
+      if(!choice) break;
+      placeComputerCard(choice);
+    }
     renderAll();
-    addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
+    addLog('system', 'Computer completes initial deployment.');
+  }
+
+  function computerPlaceCard(){
+    if(computerPlacedCount >= computerReserve.length) return false;
+    const choice = pickBestPlacement();
+    if(!choice) return false; // strategic pass
+    placeComputerCard(choice);
+    renderAll();
     return true;
-  }
-
-  // helper log
-  function addLog(type, text){
-    const div = document.createElement('div'); 
-    div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); 
-    div.textContent = text;
-    logEl.appendChild(div); 
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  // click outside to hide action panel
-  document.addEventListener('click', (e) => {
-    if(currentActionPanel && !currentActionPanel.contains(e.target) && 
-       !e.target.closest('.slot') && !e.target.closest('.card')){
-      hideActionPanel();
-      clearSelections();
-    }
-  });
-
-  // keyboard support
-  document.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape'){
-      hideActionPanel();
-      clearSelections();
-    }
-    if(e.key === ' ' || e.key === 'Enter'){
-      if(playerTurn && !endTurnBtn.classList.contains('disabled')){
-        endTurnBtn.click();
-        e.preventDefault();
-      }
-    }
-  });
-
-  // choose starting player - always start with player during setup phase
-  function decideFirstPlayer(){
-    playerTurn = true;
-    turnIndicator.textContent = 'Player Setup Phase';
-    endTurnBtn.classList.add('disabled'); // Disable end turn during setup
-    addLog('system', 'Place your cards on the battlefield first.');
-    // Battle will start after player places at least one card
-  }
-
-  // check if battle can begin
-  function checkBattleStart(){
-    const playerHasCards = playerSlots.some(slot => slot !== null);
-    
-    if(playerHasCards && turnIndicator.textContent.includes('Setup')) {
-      addLog('system', 'Computer is ready to battle...');
-      
-      // Computer places 1-2 initial cards strategically
-      computerInitialPlacement();
-      
-      // Start actual battle after a brief delay
-      setTimeout(() => {
-        const firstPlayer = Math.random() < 0.5;
-        if(firstPlayer){
-          turnIndicator.textContent = 'Player Turn';
-          addLog('system', 'Battle begins! Player goes first.');
-          playerTurn = true;
-          endTurnBtn.classList.remove('disabled');
-        } else {
-          turnIndicator.textContent = 'Computer Turn';  
-          addLog('system', 'Battle begins! Computer goes first.');
-          playerTurn = false;
-          endTurnBtn.classList.add('disabled');
-          setTimeout(()=>computerTurn(), 1000);
-        }
-      }, 1500);
-    }
   }
 
   // initialization
@@ -2493,7 +2398,6 @@ addTouchHoldListeners();
 .slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
 /* Keep stats in DOM for JS but hide visually */
 .card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
-
 /* Discard pile styling (additive) */
 .discard-pile{margin-top:6px;font-size:10px;color:#ccc;letter-spacing:0.5px}
 .discard-pile span{color:var(--accent);}
