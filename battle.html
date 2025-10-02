@@ -308,7 +308,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card.used{opacity:0.4;filter:grayscale(0.7)}
 .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
  /* action panel - now positioned relative to selected card */
-.card-action-panel{position:absolute;z-index:100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
+.card-action-panel{position:absolute;z-index=100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
 .card-action-panel .btn{background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
 .card-action-panel .btn:hover{background:var(--accent);color:#000}
 .card-action-panel .btn:active{transform:scale(.98)}
@@ -853,6 +853,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
             <div class="hp-bar" title="Computer total HP">
               <div class="hp-segments" id="computerGlobalHP"></div>
             </div>
+            <div class="discard-pile">Discard: <span id="computerDiscardCount">0</span></div>
             <div style="height:6px"></div>
           </div>
 
@@ -872,6 +873,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
             </div>
+            <div class="discard-pile">Discard: <span id="playerDiscardCount">0</span></div>
             <div style="height:6px"></div>
           </div>
 
@@ -958,6 +960,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
   let playerTurn = true;
   let currentActionPanel = null; // reference to active action panel
+  let playerDiscard = []; // additive discard pile
+  let computerDiscard = []; // discarded computer cards
 
   // elements
   const playerHandEl = document.getElementById('playerHand');
@@ -970,6 +974,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   const playerGlobalHP = document.getElementById('playerGlobalHP');
   const computerGlobalHP = document.getElementById('computerGlobalHP');
   const turnIndicator = document.getElementById('turnIndicator');
+  const playerDiscardCount = document.getElementById('playerDiscardCount');
+  const computerDiscardCount = document.getElementById('computerDiscardCount');
 
   // init interface slots
   function makeSlotsUI(){
@@ -1288,9 +1294,7 @@ function showCardActions(side, idx){
                 setTimeout(() => {
                   targetCardEl.classList.add('die');
                   setTimeout(()=>{
-                    computerSlots[idx] = null;
-                    renderAll();
-                    checkBattleOver();
+                    handleCardDeath('computer', idx, 'is defeated');
                   }, 600);
                 }, 200);
               } else {
@@ -1407,7 +1411,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1429,7 +1433,7 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+              setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
             }, 200);
           } else {
             updateSlotUI('computer', targetIdx);
@@ -1503,7 +1507,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1517,9 +1521,7 @@ function showCardActions(side, idx){
         target.hp = Math.max(0, target.hp - finalDmg);
         addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
         if(target.hp <= 0){
-          computerSlots[targetIdx] = null;
-          renderAll();
-          checkBattleOver();
+          handleCardDeath('computer', targetIdx, 'is defeated');
         } else {
           updateSlotUI('computer', targetIdx);
           checkBattleOver();
@@ -1691,7 +1693,7 @@ function showCardActions(side, idx){
   
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[targetIdx];
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
@@ -1726,10 +1728,10 @@ function showCardActions(side, idx){
       if(target.hp <= 0){
         setTimeout(() => {
           targetCardEl.classList.add('die');
-          setTimeout(() => { playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
+          setTimeout(()=>{ handleCardDeath('player', targetIdx, 'is defeated'); }, 600);
         }, 200);
       } else {
-        updateSlotUI('player', attackerIdx);
+        updateSlotUI('player', targetIdx);
         checkBattleOver();
       }
     }, finalDmg);
@@ -1885,7 +1887,7 @@ function showCardActions(side, idx){
             setTimeout(()=>{
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
-              setTimeout(()=>{ slots[idx] = null; renderAll(); checkBattleOver(); },600);
+              setTimeout(()=>{ handleCardDeath(side, idx, 'succumbs to poison'); },600);
             },400);
             return false; // remove effect (card dead)
           }
@@ -2041,6 +2043,7 @@ function updateStatusIcons(slotElement, statusEffects) {
   }
   renderHand();
   updateGlobalHPUI();
+  updateDiscardUI();
 }
 
   // create visual card for battlefield slot
@@ -2085,6 +2088,7 @@ function updateStatusIcons(slotElement, statusEffects) {
     updateStatusIcons(slotEl, slot.statusEffects);
   }
   updateGlobalHPUI();
+  updateDiscardUI();
 }
 
   // update turn state and check if player can end turn
@@ -2297,7 +2301,7 @@ function updateStatusIcons(slotElement, statusEffects) {
   function checkBattleStart(){
     const playerHasCards = playerSlots.some(slot => slot !== null);
     
-    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')) {
       addLog('system', 'Computer is ready to battle...');
       
       // Computer places 1-2 initial cards strategically
@@ -2332,6 +2336,7 @@ function updateStatusIcons(slotElement, statusEffects) {
     decideFirstPlayer(); // This now starts in setup phase
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
+    updateDiscardUI();
   }
 
   // expose for debugging
@@ -2488,6 +2493,10 @@ addTouchHoldListeners();
 .slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
 /* Keep stats in DOM for JS but hide visually */
 .card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
+
+/* Discard pile styling (additive) */
+.discard-pile{margin-top:6px;font-size:10px;color:#ccc;letter-spacing:0.5px}
+.discard-pile span{color:var(--accent);}
 </style>
 </body>
 </html>
