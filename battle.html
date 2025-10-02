@@ -294,7 +294,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .name{color:var(--accent);font-size:12px;margin-bottom:6px}
 .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hp-segments{display:flex;width:92%;gap:2px}
-.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing;border-box;position:relative}
+.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
@@ -308,7 +308,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card.used{opacity:0.4;filter:grayscale(0.7)}
 .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
  /* action panel - now positioned relative to selected card */
-.card-action-panel{position:absolute;z-index=100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
+.card-action-panel{position:absolute;z-index:100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
 .card-action-panel .btn{background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
 .card-action-panel .btn:hover{background:var(--accent);color:#000}
 .card-action-panel .btn:active{transform:scale(.98)}
@@ -853,7 +853,6 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
             <div class="hp-bar" title="Computer total HP">
               <div class="hp-segments" id="computerGlobalHP"></div>
             </div>
-            <div class="discard-pile">Discard: <span id="computerDiscardCount">0</span></div>
             <div style="height:6px"></div>
           </div>
 
@@ -873,7 +872,6 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
             </div>
-            <div class="discard-pile">Discard: <span id="playerDiscardCount">0</span></div>
             <div style="height:6px"></div>
           </div>
 
@@ -897,7 +895,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
-  </div  <!-- Close wrap div -->
+  </div>  <!-- Close wrap div -->
 
 <script>
 (function(){
@@ -960,8 +958,6 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
   let playerTurn = true;
   let currentActionPanel = null; // reference to active action panel
-  let playerDiscard = []; // additive discard pile
-  let computerDiscard = []; // discarded computer cards
 
   // elements
   const playerHandEl = document.getElementById('playerHand');
@@ -974,8 +970,6 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   const playerGlobalHP = document.getElementById('playerGlobalHP');
   const computerGlobalHP = document.getElementById('computerGlobalHP');
   const turnIndicator = document.getElementById('turnIndicator');
-  const playerDiscardCount = document.getElementById('playerDiscardCount');
-  const computerDiscardCount = document.getElementById('computerDiscardCount');
 
   // init interface slots
   function makeSlotsUI(){
@@ -1294,7 +1288,9 @@ function showCardActions(side, idx){
                 setTimeout(() => {
                   targetCardEl.classList.add('die');
                   setTimeout(()=>{
-                    handleCardDeath('computer', idx, 'is defeated');
+                    computerSlots[idx] = null;
+                    renderAll();
+                    checkBattleOver();
                   }, 600);
                 }, 200);
               } else {
@@ -1411,7 +1407,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
+            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1433,7 +1429,7 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
+              setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
             }, 200);
           } else {
             updateSlotUI('computer', targetIdx);
@@ -1507,7 +1503,7 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ handleCardDeath('computer', targetIdx, 'is defeated'); }, 600);
+            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1521,7 +1517,9 @@ function showCardActions(side, idx){
         target.hp = Math.max(0, target.hp - finalDmg);
         addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
         if(target.hp <= 0){
-          handleCardDeath('computer', targetIdx, 'is defeated');
+          computerSlots[targetIdx] = null;
+          renderAll();
+          checkBattleOver();
         } else {
           updateSlotUI('computer', targetIdx);
           checkBattleOver();
@@ -1673,31 +1671,28 @@ function showCardActions(side, idx){
 
   attacker.used = true;
 
-  // Build list of attacks with their indices
-  const attackEntries = (attacker.card.attacks || []).map((a,i)=>({attack:a,index:i}));
-  // Filter out attacks that are on cooldown
-  const offCooldown = attackEntries.filter(entry => {
-    const cdMap = attacker.attackCooldowns || {};
-    return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
-  });
-  // Choose from offCooldown if available, otherwise from all (fallback)
-  const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
-  const attack = chosen ? chosen.attack : { name: "Basic Attack", damage: damage, type: "physical" };
-  const chosenIndex = chosen ? chosen.index : -1;
+  // Choose a random attack from the computer card's attacks
+  const availableAttacks = attacker.card.attacks || [];
+  const attack = availableAttacks.length > 0 ? 
+    availableAttacks[Math.floor(Math.random() * availableAttacks.length)] : 
+    { name: "Basic Attack", damage: damage, type: "physical" };
 
-  // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
-  if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
-    if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
-    attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
+  // Set cooldown for computer status effect attacks
+  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+    // Find the attack index and set cooldown
+    const attackIndex = attacker.card.attacks.findIndex(a => a.name === attack.name);
+    if(attackIndex !== -1 && attacker.attackCooldowns) {
+      attacker.attackCooldowns[attackIndex] = 3;
+    }
   }
   
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[targetIdx];
+  const targetSlotEl = playerSlotsEl.children[attackerIdx];
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
-  let finalDmg = attack.damage ?? damage;
+  let finalDmg = attack.damage;
   // Apply weaken effect (reduce damage by 10 if attacker is weakened)
   if(hasStatusEffect(attacker, 'weaken')) {
     finalDmg = Math.max(0, finalDmg - 10);
@@ -1710,7 +1705,7 @@ function showCardActions(side, idx){
     addLog('system', `${target.card.name} defended – reduced damage!`);
   }
 
-  // Apply status effects immediately (only if not on cooldown since we filtered)
+  // Apply status effects immediately
   if(attack.effect) {
     applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
   }
@@ -1728,10 +1723,10 @@ function showCardActions(side, idx){
       if(target.hp <= 0){
         setTimeout(() => {
           targetCardEl.classList.add('die');
-          setTimeout(()=>{ handleCardDeath('player', targetIdx, 'is defeated'); }, 600);
+          setTimeout(() => { playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
         }, 200);
       } else {
-        updateSlotUI('player', targetIdx);
+        updateSlotUI('player', attackerIdx);
         checkBattleOver();
       }
     }, finalDmg);
@@ -1866,50 +1861,88 @@ function showCardActions(side, idx){
 }
 
   // process status effects at the start of each turn
-  function processStatusEffects(side){
+  function processStatusEffects(side) {
     const slots = side === 'player' ? playerSlots : computerSlots;
     const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
-    slots.forEach((slot, idx)=>{
+    
+    slots.forEach((slot, idx) => {
       if(!slot || !slot.statusEffects) return;
-      slot.statusEffects = slot.statusEffects.filter(effect=>{
-        // Skip processing on the same turn it was applied
-        if(effect.justApplied){ effect.justApplied = false; return true; }
-        // Ongoing poison damage
-        if(effect.type === 'poison'){
-          const poisonDmg = 5;
+      
+      slot.statusEffects = slot.statusEffects.filter(effect => {
+        // For newly applied effects, clear the flag but don't process yet
+        if(effect.justApplied) {
+          effect.justApplied = false; // Clear the flag for next turn
+          return true; // Keep the effect but don't process it yet
+        }
+        
+        // Process ongoing effects BEFORE decrementing turns
+        if(effect.type === 'poison') {
+          const poisonDmg = 5; // Poison damage per turn
           slot.hp = Math.max(0, slot.hp - poisonDmg);
           addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
+          
+          // Show poison damage popup
           const slotEl = slotsEl.children[idx];
-          if(slotEl) showDamagePopup(slotEl, poisonDmg, '#8B4513');
-          if(slot.hp <= 0){
+          if(slotEl) {
+            showDamagePopup(slotEl, poisonDmg, '#8B4513');
+            
+            // Add hit effects for poison damage
+            const cardEl = slotEl.querySelector('.card');
+            if(cardEl) {
+              cardEl.classList.add('hit');
+              setTimeout(() => cardEl.classList.remove('hit'), 400);
+            }
+          }
+          
+          // Check if card dies from poison
+          if(slot.hp <= 0) {
             addLog('system', `${slot.card.name} dies from poison!`);
-            const parentEl = slotsEl.children[idx];
-            setTimeout(()=>{
-              const cardEl = parentEl && parentEl.querySelector('.card');
-              if(cardEl) cardEl.classList.add('die');
-              setTimeout(()=>{ handleCardDeath(side, idx, 'succumbs to poison'); },600);
-            },400);
-            return false; // remove effect (card dead)
+            setTimeout(() => {
+              const cardEl = slotEl.querySelector('.card');
+              if(cardEl) {
+                cardEl.classList.add('die');
+                setTimeout(() => {
+                  slots[idx] = null;
+                  renderAll();
+                  checkBattleOver();
+                }, 600);
+              }
+            }, 500);
+            return false; // Remove the effect since the card is dead
           }
         }
-        // Decrement duration
+        
+        // Decrement turns remaining AFTER applying effects
         effect.turnsRemaining--;
-        if(effect.turnsRemaining <= 0){
+        
+        // Remove expired effects
+        if(effect.turnsRemaining <= 0) {
           const expiredMessages = {
             stun: `${slot.card.name} is no longer stunned!`,
             sleep: `${slot.card.name} wakes up!`,
             poison: `${slot.card.name} recovers from poison!`,
             weaken: `${slot.card.name} is no longer weakened!`
           };
-          if(expiredMessages[effect.type]) addLog('system', expiredMessages[effect.type]);
-          return false; // remove expired
+          
+          if(expiredMessages[effect.type]) {
+            addLog('system', expiredMessages[effect.type]);
+          }
+          
+          return false; // Remove this effect
         }
-        return true; // keep
+        
+        return true; // Keep this effect
       });
-      if(slot && slot.hp > 0) updateSlotUI(side, idx);
+      
+      // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
+      if(slot && slot.hp > 0) {
+        updateSlotUI(side, idx);
+      }
     });
+    
     renderAll();
   }
+
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
@@ -2043,7 +2076,6 @@ function updateStatusIcons(slotElement, statusEffects) {
   }
   renderHand();
   updateGlobalHPUI();
-  updateDiscardUI();
 }
 
   // create visual card for battlefield slot
@@ -2088,7 +2120,6 @@ function updateStatusIcons(slotElement, statusEffects) {
     updateStatusIcons(slotEl, slot.statusEffects);
   }
   updateGlobalHPUI();
-  updateDiscardUI();
 }
 
   // update turn state and check if player can end turn
@@ -2301,7 +2332,7 @@ function updateStatusIcons(slotElement, statusEffects) {
   function checkBattleStart(){
     const playerHasCards = playerSlots.some(slot => slot !== null);
     
-    if(playerHasCards && turnIndicator.textContent.includes('Setup')) {
+    if(playerHasCards && turnIndicator.textContent.includes('Setup')){
       addLog('system', 'Computer is ready to battle...');
       
       // Computer places 1-2 initial cards strategically
@@ -2336,7 +2367,6 @@ function updateStatusIcons(slotElement, statusEffects) {
     decideFirstPlayer(); // This now starts in setup phase
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
-    updateDiscardUI();
   }
 
   // expose for debugging
@@ -2486,17 +2516,5 @@ function collapseCard() {
 addTouchHoldListeners();
 })(document);
 </script>
-<style>
-/* === Additive visual override: full-image cards (non-destructive) === */
-/* Preserve all logic; only change presentation so JPG is fully visible */
-.slot .card, .hand .card {display:block !important; position:relative;}
-.slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
-/* Keep stats in DOM for JS but hide visually */
-.card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
-
-/* Discard pile styling (additive) */
-.discard-pile{margin-top:6px;font-size:10px;color:#ccc;letter-spacing:0.5px}
-.discard-pile span{color:var(--accent);}
-</style>
 </body>
 </html>
