@@ -895,7 +895,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
-  </div>  <!-- Close wrap div -->
+  </div  <!-- Close wrap div -->
 
 <script>
 (function(){
@@ -2479,8 +2479,12 @@ addTouchHoldListeners();
 })(document);
 </script>
 <style>
-/* === Additive override: hide in-card overlay stats for full image visibility === */
-.card .stats{display:none !important;}
+/* === Additive visual override: full-image cards (non-destructive) === */
+/* Preserve all logic; only change presentation so JPG is fully visible */
+.slot .card, .hand .card {display:block !important; position:relative;}
+.slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
+/* Keep stats in DOM for JS but hide visually */
+.card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
 </style>
 </body>
 </html>
