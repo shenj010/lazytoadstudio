@@ -294,7 +294,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .name{color:var(--accent);font-size:12px;margin-bottom:6px}
 .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hp-segments{display:flex;width:92%;gap:2px}
-.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
+.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing;border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
@@ -1671,19 +1671,22 @@ function showCardActions(side, idx){
 
   attacker.used = true;
 
-  // Choose a random attack from the computer card's attacks
-  const availableAttacks = attacker.card.attacks || [];
-  const attack = availableAttacks.length > 0 ? 
-    availableAttacks[Math.floor(Math.random() * availableAttacks.length)] : 
-    { name: "Basic Attack", damage: damage, type: "physical" };
+  // Build list of attacks with their indices
+  const attackEntries = (attacker.card.attacks || []).map((a,i)=>({attack:a,index:i}));
+  // Filter out attacks that are on cooldown
+  const offCooldown = attackEntries.filter(entry => {
+    const cdMap = attacker.attackCooldowns || {};
+    return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
+  });
+  // Choose from offCooldown if available, otherwise from all (fallback)
+  const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
+  const attack = chosen ? chosen.attack : { name: "Basic Attack", damage: damage, type: "physical" };
+  const chosenIndex = chosen ? chosen.index : -1;
 
-  // Set cooldown for computer status effect attacks
-  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-    // Find the attack index and set cooldown
-    const attackIndex = attacker.card.attacks.findIndex(a => a.name === attack.name);
-    if(attackIndex !== -1 && attacker.attackCooldowns) {
-      attacker.attackCooldowns[attackIndex] = 3;
-    }
+  // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
+  if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
+    if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+    attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
   }
   
   // Get card elements for animation
@@ -1692,7 +1695,7 @@ function showCardActions(side, idx){
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
-  let finalDmg = attack.damage;
+  let finalDmg = attack.damage ?? damage;
   // Apply weaken effect (reduce damage by 10 if attacker is weakened)
   if(hasStatusEffect(attacker, 'weaken')) {
     finalDmg = Math.max(0, finalDmg - 10);
@@ -1705,7 +1708,7 @@ function showCardActions(side, idx){
     addLog('system', `${target.card.name} defended – reduced damage!`);
   }
 
-  // Apply status effects immediately
+  // Apply status effects immediately (only if not on cooldown since we filtered)
   if(attack.effect) {
     applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
   }
