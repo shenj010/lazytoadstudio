@@ -294,7 +294,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .name{color:var(--accent);font-size:12px;margin-bottom:6px}
 .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hp-segments{display:flex;width:92%;gap:2px}
-.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing:border-box;position:relative}
+.seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing;border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
@@ -895,7 +895,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     <div class="turn-panel" id="turnPanel">
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
-  </div>  <!-- Close wrap div -->
+  </div  <!-- Close wrap div -->
 
 <script>
 (function(){
@@ -1671,19 +1671,22 @@ function showCardActions(side, idx){
 
   attacker.used = true;
 
-  // Choose a random attack from the computer card's attacks
-  const availableAttacks = attacker.card.attacks || [];
-  const attack = availableAttacks.length > 0 ? 
-    availableAttacks[Math.floor(Math.random() * availableAttacks.length)] : 
-    { name: "Basic Attack", damage: damage, type: "physical" };
+  // Build list of attacks with their indices
+  const attackEntries = (attacker.card.attacks || []).map((a,i)=>({attack:a,index:i}));
+  // Filter out attacks that are on cooldown
+  const offCooldown = attackEntries.filter(entry => {
+    const cdMap = attacker.attackCooldowns || {};
+    return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
+  });
+  // Choose from offCooldown if available, otherwise from all (fallback)
+  const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
+  const attack = chosen ? chosen.attack : { name: "Basic Attack", damage: damage, type: "physical" };
+  const chosenIndex = chosen ? chosen.index : -1;
 
-  // Set cooldown for computer status effect attacks
-  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-    // Find the attack index and set cooldown
-    const attackIndex = attacker.card.attacks.findIndex(a => a.name === attack.name);
-    if(attackIndex !== -1 && attacker.attackCooldowns) {
-      attacker.attackCooldowns[attackIndex] = 3;
-    }
+  // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
+  if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
+    if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+    attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
   }
   
   // Get card elements for animation
@@ -1692,7 +1695,7 @@ function showCardActions(side, idx){
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
-  let finalDmg = attack.damage;
+  let finalDmg = attack.damage ?? damage;
   // Apply weaken effect (reduce damage by 10 if attacker is weakened)
   if(hasStatusEffect(attacker, 'weaken')) {
     finalDmg = Math.max(0, finalDmg - 10);
@@ -1705,7 +1708,7 @@ function showCardActions(side, idx){
     addLog('system', `${target.card.name} defended – reduced damage!`);
   }
 
-  // Apply status effects immediately
+  // Apply status effects immediately (only if not on cooldown since we filtered)
   if(attack.effect) {
     applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
   }
@@ -1861,88 +1864,50 @@ function showCardActions(side, idx){
 }
 
   // process status effects at the start of each turn
-  function processStatusEffects(side) {
+  function processStatusEffects(side){
     const slots = side === 'player' ? playerSlots : computerSlots;
     const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
-    
-    slots.forEach((slot, idx) => {
+    slots.forEach((slot, idx)=>{
       if(!slot || !slot.statusEffects) return;
-      
-      slot.statusEffects = slot.statusEffects.filter(effect => {
-        // For newly applied effects, clear the flag but don't process yet
-        if(effect.justApplied) {
-          effect.justApplied = false; // Clear the flag for next turn
-          return true; // Keep the effect but don't process it yet
-        }
-        
-        // Process ongoing effects BEFORE decrementing turns
-        if(effect.type === 'poison') {
-          const poisonDmg = 5; // Poison damage per turn
+      slot.statusEffects = slot.statusEffects.filter(effect=>{
+        // Skip processing on the same turn it was applied
+        if(effect.justApplied){ effect.justApplied = false; return true; }
+        // Ongoing poison damage
+        if(effect.type === 'poison'){
+          const poisonDmg = 5;
           slot.hp = Math.max(0, slot.hp - poisonDmg);
           addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
-          
-          // Show poison damage popup
           const slotEl = slotsEl.children[idx];
-          if(slotEl) {
-            showDamagePopup(slotEl, poisonDmg, '#8B4513');
-            
-            // Add hit effects for poison damage
-            const cardEl = slotEl.querySelector('.card');
-            if(cardEl) {
-              cardEl.classList.add('hit');
-              setTimeout(() => cardEl.classList.remove('hit'), 400);
-            }
-          }
-          
-          // Check if card dies from poison
-          if(slot.hp <= 0) {
+          if(slotEl) showDamagePopup(slotEl, poisonDmg, '#8B4513');
+          if(slot.hp <= 0){
             addLog('system', `${slot.card.name} dies from poison!`);
-            setTimeout(() => {
-              const cardEl = slotEl.querySelector('.card');
-              if(cardEl) {
-                cardEl.classList.add('die');
-                setTimeout(() => {
-                  slots[idx] = null;
-                  renderAll();
-                  checkBattleOver();
-                }, 600);
-              }
-            }, 500);
-            return false; // Remove the effect since the card is dead
+            const parentEl = slotsEl.children[idx];
+            setTimeout(()=>{
+              const cardEl = parentEl && parentEl.querySelector('.card');
+              if(cardEl) cardEl.classList.add('die');
+              setTimeout(()=>{ slots[idx] = null; renderAll(); checkBattleOver(); },600);
+            },400);
+            return false; // remove effect (card dead)
           }
         }
-        
-        // Decrement turns remaining AFTER applying effects
+        // Decrement duration
         effect.turnsRemaining--;
-        
-        // Remove expired effects
-        if(effect.turnsRemaining <= 0) {
+        if(effect.turnsRemaining <= 0){
           const expiredMessages = {
             stun: `${slot.card.name} is no longer stunned!`,
             sleep: `${slot.card.name} wakes up!`,
             poison: `${slot.card.name} recovers from poison!`,
             weaken: `${slot.card.name} is no longer weakened!`
           };
-          
-          if(expiredMessages[effect.type]) {
-            addLog('system', expiredMessages[effect.type]);
-          }
-          
-          return false; // Remove this effect
+          if(expiredMessages[effect.type]) addLog('system', expiredMessages[effect.type]);
+          return false; // remove expired
         }
-        
-        return true; // Keep this effect
+        return true; // keep
       });
-      
-      // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
-      if(slot && slot.hp > 0) {
-        updateSlotUI(side, idx);
-      }
+      if(slot && slot.hp > 0) updateSlotUI(side, idx);
     });
-    
     renderAll();
   }
-
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
@@ -2516,5 +2481,13 @@ function collapseCard() {
 addTouchHoldListeners();
 })(document);
 </script>
+<style>
+/* === Additive visual override: full-image cards (non-destructive) === */
+/* Preserve all logic; only change presentation so JPG is fully visible */
+.slot .card, .hand .card {display:block !important; position:relative;}
+.slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
+/* Keep stats in DOM for JS but hide visually */
+.card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
+</style>
 </body>
 </html>
