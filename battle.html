@@ -1861,86 +1861,50 @@ function showCardActions(side, idx){
 }
 
   // process status effects at the start of each turn
-  function processStatusEffects(side) {
+  function processStatusEffects(side){
     const slots = side === 'player' ? playerSlots : computerSlots;
     const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
-    
-    slots.forEach((slot, idx) => {
+    slots.forEach((slot, idx)=>{
       if(!slot || !slot.statusEffects) return;
-      
-      slot.statusEffects = slot.statusEffects.filter(effect => {
-        // For newly applied effects, clear the flag but don't process yet
-        if(effect.justApplied) {
-          effect.justApplied = false; // Clear the flag for next turn
-          return true; // Keep the effect but don't process it yet
-        }
-        
-        // Process ongoing effects BEFORE decrementing turns
-        if(effect.type === 'poison') {
-          const poisonDmg = 5; // Poison damage per turn
+      slot.statusEffects = slot.statusEffects.filter(effect=>{
+        // Skip processing on the same turn it was applied
+        if(effect.justApplied){ effect.justApplied = false; return true; }
+        // Ongoing poison damage
+        if(effect.type === 'poison'){
+          const poisonDmg = 5;
           slot.hp = Math.max(0, slot.hp - poisonDmg);
           addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
-          
-          // Show poison damage popup
           const slotEl = slotsEl.children[idx];
-          if(slotEl) {
-            showDamagePopup(slotEl, poisonDmg, '#8B4513');
-            
-            // Add hit effects for poison damage
-            const cardEl = slotEl.querySelector('.card');
-            if(cardEl) {
-              cardEl.classList.add('hit');
-              setTimeout(() => cardEl.classList.remove('hit'), 400);
-            }
-          }
-          
-          // Check if card dies from poison
-          if(slot.hp <= 0) {
+          if(slotEl) showDamagePopup(slotEl, poisonDmg, '#8B4513');
+          if(slot.hp <= 0){
             addLog('system', `${slot.card.name} dies from poison!`);
-            setTimeout(() => {
-              const cardEl = slotEl.querySelector('.card');
-              if(cardEl) {
-                cardEl.classList.add('die');
-                setTimeout(() => {
-                slots[idx] = null;
-                renderAll();
-                checkBattleOver();
-              }, 600);
-            }
+            const parentEl = slotsEl.children[idx];
+            setTimeout(()=>{
+              const cardEl = parentEl && parentEl.querySelector('.card');
+              if(cardEl) cardEl.classList.add('die');
+              setTimeout(()=>{ slots[idx] = null; renderAll(); checkBattleOver(); },600);
+            },400);
+            return false; // remove effect (card dead)
           }
         }
-        
-        // Decrement turns remaining AFTER applying effects
+        // Decrement duration
         effect.turnsRemaining--;
-        
-        // Remove expired effects
-        if(effect.turnsRemaining <= 0) {
+        if(effect.turnsRemaining <= 0){
           const expiredMessages = {
             stun: `${slot.card.name} is no longer stunned!`,
             sleep: `${slot.card.name} wakes up!`,
             poison: `${slot.card.name} recovers from poison!`,
             weaken: `${slot.card.name} is no longer weakened!`
           };
-          
-          if(expiredMessages[effect.type]) {
-            addLog('system', expiredMessages[effect.type]);
-          }
-          
-          return false; // Remove this effect
+          if(expiredMessages[effect.type]) addLog('system', expiredMessages[effect.type]);
+          return false; // remove expired
         }
-        
-        return true; // Keep this effect
+        return true; // keep
       });
-      
-      // Update UI if HP changed (but don't clear slots here, let poison death animation handle it)
-      if(slot && slot.hp > 0) {
-        updateSlotUI(side, idx);
-      }
+      if(slot && slot.hp > 0) updateSlotUI(side, idx);
     });
-    
     renderAll();
   }
-
   // check if a slot is affected by a status effect
   function hasStatusEffect(slot, effectType) {
     if(!slot || !slot.statusEffects) return false;
