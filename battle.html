@@ -1444,16 +1444,15 @@ function showCardActions(side, idx){
             setTimeout(() => {
               targetCardEl.classList.add('die');
               setTimeout(() => { 
-                // Save reserve index before clearing the slot
-                const reserveIndex = target.reserveIndex;
-                addToDiscardPile(target.card, 'Player', reserveIndex);
-                computerSlots[targetIdx] = null;
-                renderAll();
-                checkBattleOver();
+                // FIXED LINE: Use attackerIdx instead of targetIdx (which is undefined)
+                addToDiscardPile(target.card, 'Computer', target.reserveIndex);
+                playerSlots[attackerIdx] = null; // FIXED: Use attackerIdx not targetIdx 
+                renderAll(); 
+                checkBattleOver(); 
               }, 600);
             }, 200);
           } else {
-            updateSlotUI('computer', idx);
+            updateSlotUI('player', attackerIdx);
             checkBattleOver();
           }
             }, finalDmg);
@@ -1567,9 +1566,8 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => { 
-              // Save reserve index before clearing the slot
-              const reserveIndex = target.reserveIndex;
-              addToDiscardPile(target.card, 'Player', reserveIndex);
+              // Add to discard pile with the correct owner
+              addToDiscardPile(target.card, 'Computer', target.reserveIndex);
               computerSlots[targetIdx] = null; 
               renderAll(); 
               checkBattleOver(); 
@@ -1596,9 +1594,8 @@ function showCardActions(side, idx){
             setTimeout(() => {
               targetCardEl.classList.add('die');
               setTimeout(() => { 
-                // Save reserve index before clearing the slot
-                const reserveIndex = target.reserveIndex;
-                addToDiscardPile(target.card, 'Player', reserveIndex);
+                // Add to discard pile with the correct owner
+                addToDiscardPile(target.card, 'Computer', target.reserveIndex);
                 computerSlots[targetIdx] = null; 
                 renderAll(); 
                 checkBattleOver(); 
@@ -1677,9 +1674,8 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => { 
-              // Save reserve index before clearing the slot
-              const reserveIndex = target.reserveIndex;
-              addToDiscardPile(target.card, 'Player', reserveIndex);
+              // Add to discard pile with the correct owner
+              addToDiscardPile(target.card, 'Computer', target.reserveIndex);
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -1980,10 +1976,9 @@ function showCardActions(side, idx){
         setTimeout(() => {
           targetCardEl.classList.add('die');
           setTimeout(() => { 
-            // Save reserve index before clearing the slot
-            const reserveIndex = target.reserveIndex;
-            addToDiscardPile(target.card, 'Player', reserveIndex);
-            computerSlots[targetIdx] = null; 
+            // FIXED LINE: Use attackerIdx instead of targetIdx (which is undefined)
+            addToDiscardPile(target.card, 'Computer', target.reserveIndex);
+            playerSlots[attackerIdx] = null; // FIXED: Use attackerIdx not targetIdx 
             renderAll(); 
             checkBattleOver(); 
           }, 600);
