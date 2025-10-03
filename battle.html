@@ -460,6 +460,45 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   color: #ccc;
   border: 2px solid #999;
 }
+  /* Individual card HP bars below battlefield cards */
+.card-hp-bar {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 14px;
+  background: #111;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.card-hp-bar .hp-seg {
+  flex: 1;
+  height: 100%;
+  background: #38EF7D;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.card-hp-bar .hp-seg.empty {
+  background: #333;
+  opacity: 0.3;
+}
+
+.card-hp-bar .hp-seg.damaged {
+  background: #FFA500;
+}
+
+.card-hp-bar .hp-seg.critical {
+  background: #ff4444;
+}
 
 .card-action-panel .btn.cooldown {
   background: #444;
@@ -2044,47 +2083,120 @@ function updateStatusIcons(slotElement, statusEffects) {
 }
 
   // create visual card for battlefield slot
-  function makeBattleCardEl(slotObj, owner, slotIndex){
-    const wrap = document.createElement('div'); 
-    wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-    wrap.style.width='86px'; 
-    wrap.style.height='120px';
-    wrap.style.position = 'relative';
-    
-    const img = document.createElement('img'); 
-    img.src = slotObj.card.src; 
-    img.alt = slotObj.card.name;
-    
-    const stats = document.createElement('div'); 
-    stats.className='stats';
-    stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
-    
-    wrap.appendChild(img); 
-    wrap.appendChild(stats);
-    
-    // defending glow
-    if(slotObj.defending){
-      wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
-    }
-    
-    wrap.dataset.owner = owner;
-    wrap.dataset.slot = slotIndex;
-    wrap._hpEl = stats.querySelector('.card-hp');
-
-    return wrap;
+function makeBattleCardEl(slotObj, owner, slotIndex){
+  const wrap = document.createElement('div'); 
+  wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+  wrap.style.width='86px'; 
+  wrap.style.height='120px';
+  wrap.style.position = 'relative';
+  
+  const img = document.createElement('img'); 
+  img.src = slotObj.card.src; 
+  img.alt = slotObj.card.name;
+  
+  const stats = document.createElement('div'); 
+  stats.className='stats';
+  stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+  
+  wrap.appendChild(img); 
+  wrap.appendChild(stats);
+  
+  // Add individual HP bar
+  const hpBar = createCardHPBar(slotObj.hp, MAX_HP);
+  wrap.appendChild(hpBar);
+  
+  // defending glow
+  if(slotObj.defending){
+    wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
   }
+  
+  wrap.dataset.owner = owner;
+  wrap.dataset.slot = slotIndex;
+  wrap._hpEl = stats.querySelector('.card-hp');
+  wrap._hpBar = hpBar;
+
+  return wrap;
+}
 
   // update slot UI
-  function updateSlotUI(side, idx){
+  // update slot UI
+function updateSlotUI(side, idx){
   const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
   const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
   
   if(slot && slotEl.firstChild){
-    slotEl.firstChild.querySelector('.card-hp').textContent = `HP: ${slot.hp}`;
+    const cardEl = slotEl.firstChild;
+    const hpTextEl = cardEl.querySelector('.card-hp');
+    if(hpTextEl) hpTextEl.textContent = `HP: ${slot.hp}`;
+    
+    // Update individual HP bar
+    const hpBar = cardEl._hpBar;
+    if(hpBar) {
+      updateCardHPBar(hpBar, slot.hp, MAX_HP);
+    }
+    
     // Update status icons on the slot container
     updateStatusIcons(slotEl, slot.statusEffects);
   }
   updateGlobalHPUI();
+}
+// New function: Create segmented HP bar for individual cards
+function createCardHPBar(currentHP, maxHP) {
+  const hpBar = document.createElement('div');
+  hpBar.className = 'card-hp-bar';
+  
+  const segments = 8; // 8 segments of 10hp each
+  const hpPerSegment = maxHP / segments;
+  
+  for(let i = 0; i < segments; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'hp-seg';
+    
+    const segmentStartHP = i * hpPerSegment;
+    const segmentEndHP = (i + 1) * hpPerSegment;
+    
+    if(currentHP <= segmentStartHP) {
+      seg.classList.add('empty');
+    } else if(currentHP < segmentEndHP) {
+      // Partially filled segment
+      const percentInSegment = (currentHP - segmentStartHP) / hpPerSegment;
+      if(percentInSegment < 0.5) {
+        seg.classList.add('critical');
+      } else {
+        seg.classList.add('damaged');
+      }
+    }
+    
+    hpBar.appendChild(seg);
+  }
+  
+  return hpBar;
+}
+
+// Update HP bar when damage is taken
+function updateCardHPBar(hpBarElement, currentHP, maxHP) {
+  if(!hpBarElement) return;
+  
+  const segments = hpBarElement.querySelectorAll('.hp-seg');
+  const hpPerSegment = maxHP / segments.length;
+  
+  segments.forEach((seg, i) => {
+    const segmentStartHP = i * hpPerSegment;
+    const segmentEndHP = (i + 1) * hpPerSegment;
+    
+    seg.classList.remove('empty', 'damaged', 'critical');
+    
+    if(currentHP <= segmentStartHP) {
+      seg.classList.add('empty');
+    } else if(currentHP < segmentEndHP) {
+      const percentInSegment = (currentHP - segmentStartHP) / hpPerSegment;
+      if(percentInSegment < 0.5) {
+        seg.classList.add('critical');
+      } else {
+        seg.classList.add('damaged');
+      }
+    }
+  });
 }
 
   // update turn state and check if player can end turn
