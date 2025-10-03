@@ -2383,7 +2383,8 @@ function renderAll(){
       updateStatusIcons(cSlotEl, computerSlots[i].statusEffects);
     }
   }
-  renderHand();
+  renderHand('player');
+  renderHand('computer');
   updateGlobalHPUI();
 }
 // create visual card for battlefield slot
