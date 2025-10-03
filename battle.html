@@ -394,6 +394,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .log .entry{margin-bottom:6px}
 .log .player{color:var(--accent)}
 .log .computer{color:var(--danger)}
+
 /* small responsive */
 @media (max-width:900px){
   .area{flex-direction:column;gap:8px}
@@ -1193,7 +1194,15 @@ function loadPlayerInventory(){
     
     // Show computer's hand as card backs
     computerHandEl.innerHTML = '';
-    const remainingCards = computerReserve.length - computerSlots.filter(s => s).length;
+    
+    // Count how many active cards are on the board
+    const activeComputerCards = computerSlots.filter(s => s).length;
+    // Count how many computer cards are in the discard pile
+    const discardedComputerCards = discardPile.filter(item => item.owner === 'Computer').length;
+    
+    // Calculate remaining cards as total minus played (active + discarded)
+    const remainingCards = computerReserve.length - activeComputerCards - discardedComputerCards;
+    
     for(let i = 0; i < remainingCards; i++){
       const c = createCardBackEl();
       computerHandEl.appendChild(c);
@@ -1522,7 +1531,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1536,7 +1545,12 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(() => { 
+              addToDiscardPile(target.card, 'Player');
+              computerSlots[targetIdx] = null; 
+              renderAll(); 
+              checkBattleOver(); 
+            }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1558,7 +1572,12 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+              setTimeout(()=>{ 
+                addToDiscardPile(target.card, 'Player');
+                computerSlots[targetIdx] = null; 
+                renderAll(); 
+                checkBattleOver(); 
+              }, 600);
             }, 200);
           } else {
             updateSlotUI('computer', targetIdx);
@@ -1621,7 +1640,7 @@ function showCardActions(side, idx){
         
         // Hit effects on target
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(()=>{ targetCardEl.classList.remove('hit', 'flash'); }, 400);
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
         
         // Subtract HP
         target.hp = Math.max(0, target.hp - damageToApply);
@@ -1632,7 +1651,12 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            setTimeout(()=>{
+              addToDiscardPile(target.card, 'Player');
+              computerSlots[targetIdx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
           }, 200);
         } else {
           updateSlotUI('computer', targetIdx);
@@ -1833,7 +1857,7 @@ function showCardActions(side, idx){
   
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[targetIdx];
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
@@ -2030,6 +2054,7 @@ function showCardActions(side, idx){
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
+                // Add to discard pile with the correct owner
                 addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player');
                 slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
@@ -2412,7 +2437,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     targetSlots.forEach((slotIdx, i) => {
       if(i < computerReserve.length){
         const card = computerReserve[i];
-        // Initialize cooldowns for computer cards too
+        // Initialize cooldowns for each attack
         const attackCooldowns = {};
         card.attacks.forEach((attack, attackIdx) => {
           if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
@@ -2426,7 +2451,8 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
           defending: false, 
           used: false, 
           statusEffects: [],
-          attackCooldowns: attackCooldowns 
+          attackCooldowns: attackCooldowns,
+          reserveIndex: i // Track which reserve index this came from
         };
       }
     });
@@ -2446,9 +2472,14 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     
     if(emptySlots.length === 0 || computerReserve.length === 0) return false;
     
-    // Count how many cards computer has already placed
-    const placedCount = computerSlots.filter(slot => slot !== null).length;
-    if(placedCount >= computerReserve.length) return false;
+    // Count how many unique cards have been played from the reserve
+    // Include both active cards and those in the discard pile that were computer's
+    const playedComputerCards = discardPile.filter(item => item.owner === 'Computer').map(item => item.card);
+    const activeComputerCards = computerSlots.filter(slot => slot !== null).map(slot => slot.card);
+    const totalPlayedCount = activeComputerCards.length;
+    
+    // Don't place more cards than available in reserve
+    if(totalPlayedCount >= computerReserve.length) return false;
     
     // Strategic placement: prefer slots opposite player cards, or random if none
     const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
@@ -2456,9 +2487,15 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
                       emptySlots[Math.floor(Math.random() * emptySlots.length)];
     
-    // Use next available card from reserve
-    const cardToPlace = computerReserve[placedCount];
-    // Initialize cooldowns for newly placed computer cards
+    // Find the next available card from reserve
+    // We need to find a card that hasn't been played yet
+    let cardToPlace;
+    let reserveIndex = totalPlayedCount;
+    
+    // Get the next card from the reserve
+    cardToPlace = computerReserve[reserveIndex];
+    
+    // Initialize cooldowns for each attack
     const attackCooldowns = {};
     cardToPlace.attacks.forEach((attack, attackIdx) => {
       if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
@@ -2472,7 +2509,8 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       defending: false, 
       used: false, 
       statusEffects: [],
-      attackCooldowns: attackCooldowns 
+      attackCooldowns: attackCooldowns,
+      reserveIndex: reserveIndex // Track which reserve index this came from
     };
 
     renderAll();
@@ -2539,7 +2577,7 @@ function renderDiscardPile() {
 }
 
 function showDiscardedCardDetails(entry) {
-  const attacksList = entry.card.attacks.map(a => `• ${a.name} (${a.damage} dmg)`).join('\n');
+  const attacksList = entry.card.attacks.map(a => `• ${a.name} (${a.damage} dmg)`.replace(/undefined/g, '')).join('\n');
   alert(`${entry.card.name}\n\nDefeated by: ${entry.owner}\nMax HP: ${MAX_HP}\n\nAttacks:\n${attacksList}`);
 }
   // keyboard support
