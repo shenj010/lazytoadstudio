@@ -1808,9 +1808,6 @@ function showCardActions(side, idx){
     return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
   });
   
-  // Replace this line:
-  // const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
-  
   // With this code that properly respects cooldowns:
   let chosen = null;
   let attack = null;
@@ -1822,9 +1819,10 @@ function showCardActions(side, idx){
     attack = chosen.attack;
     chosenIndex = chosen.index;
   } else {
-    // All special attacks are on cooldown, use a basic attack with no status effects
-    attack = { name: "Basic Attack", damage: damage, type: "physical" };
-    addLog('system', `${attacker.card.name}'s special attacks are on cooldown.`);
+    // All special attacks are on cooldown, so skip this card's turn
+    addLog('system', `${attacker.card.name}'s attacks are all on cooldown - skipping turn.`);
+    updateSlotUI('computer', attackerIdx);
+    return; // Exit the function early - this card can't attack
   }
   
   // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
