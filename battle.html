@@ -173,19 +173,10 @@ html,body{
   z-index: 999 !important;
 }
 
-/* New Log & Graveyard Container */
-.log-container {
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  height: 100%;
-  gap: 16px;
-}
-
 /* Integrated log panel */
 .log{
-  flex: 1; /* Allow log to grow */
-  width: 100%; /* Take full width of container */
+  width: 300px; /* Wider log */
+  height: 100%;
   background: rgba(0,0,0,0.8);
   border: 2px solid #fff;
   border-radius: 12px;
@@ -195,7 +186,6 @@ html,body{
   z-index: 60;
   display: flex;
   flex-direction: column;
-  /* Removed height, position, and wider log comment */
 }
 
 .log .entry{
@@ -311,7 +301,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing;border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
 .hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
- /* battlefield slots */
+/* battlefield slots */
 .slots{display:flex;gap:10px;align-items:center;justify-content:center}
 .slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
 .slot.occupied{border-style:solid}
@@ -322,8 +312,11 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card.used{opacity:0.4;filter:grayscale(0.7)}
 .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
  /* action panel - now positioned relative to selected card */
-.card-action-panel{position:absolute;z-index=100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
+.card-action-panel{position:absolute;z-index:100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
 .card-action-panel .btn{background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
+.card-action-panel .btn:hover{background:var(--accent);color:#000}
+.card-action-panel .btn:active{transform:scale(.98)}
+.card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn control panel */
 .turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom=22px;display:flex;gap:12px;z-index:50}
 .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
@@ -532,16 +525,17 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   pointer-events: none;
 }
   .discard-pile {
-  width: 100%; /* Match container width */
+  position: fixed;
+  bottom: 160px;
+  right: 20px;
+  width: 160px;
   background: rgba(0,0,0,0.9);
   border: 3px solid #ff4444;
   border-radius: 8px;
   padding: 10px;
   z-index: 55;
-  max-height: 240px; /* Define its own max-height */
+  max-height: 220px;
   overflow-y: auto;
-  /* Removed all positioning and margin styles */
-  box-sizing: border-box; /* Ensure padding is included */
 }
 
 .discard-pile .title {
@@ -679,13 +673,11 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   /* Allow scrolling on mobile */
 
   .discard-pile {
-    flex-basis: 140px; /* Set a base width */
-    flex-shrink: 0; /* Prevent shrinking */
-    height: 100% !important; /* Match log container height */
-    max-height: none !important; /* Override desktop max-height */
-    border-radius: 0 !important;
-    border: none !important;
-    border-left: 2px solid #fff !important;
+    bottom: 250px !important;
+    right: 10px !important;
+    width: 130px !important;
+    max-height: 180px !important;
+    padding: 8px !important;
   }
   
   .discard-pile .mini-card {
@@ -805,8 +797,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     top: -12px !important;
   }
   
-  /* Mobile log container - bottom overlay */
-  .log-container {
+  /* Mobile log - bottom overlay instead of right side */
+  .log { 
     position: fixed !important;
     bottom: 0 !important;
     right: 0 !important;
@@ -814,20 +806,12 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     top: auto !important;
     width: 100% !important;
     height: 120px !important;
-    z-index: 40 !important;
-    flex-direction: row !important; /* Arrange side-by-side */
-    gap: 0 !important;
-  }
-
-  /* Mobile log - occupies remaining space */
-  .log { 
-    flex: 1 !important; /* Takes up remaining space */
-    height: 100% !important;
     background: rgba(0,0,0,0.9) !important;
     border: none !important;
     border-top: 2px solid #fff !important;
     padding: 6px !important;
     font-size: 9px !important;
+    z-index: 40 !important;
     border-radius: 0 !important;
     overflow-y: auto !important;
   }
@@ -1027,16 +1011,9 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
         </div>
       </div>  <!-- Close arena div -->
 
-      <!-- New container for log and graveyard -->
-      <div class="log-container">
-        <div class="log" id="battleLog">
-          <div class="entry system">Battle ready – place cards to begin.</div>
-        </div>
-        <div class="discard-pile" id="discardPile">
-          <div class="title">💀 GRAVEYARD</div>
-          <div class="discarded-cards" id="discardedCards"></div>
-          <div class="count" id="discardCount">0 defeated</div>
-        </div>
+      <!-- Integrated log panel -->
+      <div class="log" id="battleLog">
+        <div class="entry system">Battle ready – place cards to begin.</div>
       </div>
     </div>  <!-- Close game-container div -->
 
@@ -1045,7 +1022,12 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
   </div  <!-- Close wrap div -->
-  
+  <!-- Discard pile -->
+    <div class="discard-pile" id="discardPile">
+      <div class="title">💀 GRAVEYARD</div>
+      <div class="discarded-cards" id="discardedCards"></div>
+      <div class="count" id="discardCount">0 defeated</div>
+    </div>
 
 <script>
 (function(){
@@ -1336,7 +1318,7 @@ function renderHand(side) {
 
   const stats = document.createElement('div');
   stats.className = 'stats';
-  stats.innerHTML = `<
+  stats.innerHTML = `
     <div style="font-size:10px">${card.name}</div>
     <div style="font-size:10px">HP:${card.hp}</div>
   `;
@@ -1417,7 +1399,7 @@ function renderHand(side) {
     });
   }
 
-  // Add this check at the beginning of showCardActions
+// Add this check at the beginning of showCardActions
 function showCardActions(side, idx){
   if(side !== 'player' || !playerTurn) return;
   
@@ -1522,14 +1504,13 @@ function showCardActions(side, idx){
                 targetCardEl.classList.remove('hit', 'flash');
               }, 400);
               
-
               target.hp = Math.max(0, target.hp - damageToApply);
               addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
               
               if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(()=>{ 
+              setTimeout(()=>{
                 addToDiscardPile(target.card, 'Computer');
                 computerSlots[idx] = null;
                 renderAll();
@@ -1756,9 +1737,9 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(()=>{ 
+            setTimeout(()=>{
               addToDiscardPile(target.card, 'Computer');
-              playerSlots[attackerIdx] = null;
+              computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
             }, 600);
@@ -1836,7 +1817,6 @@ function showCardActions(side, idx){
     });
     
     setTimeout(()=>{
-
       // Process status effects on computer cards FIRST
       processStatusEffects('computer');
       
@@ -2214,7 +2194,6 @@ function showCardActions(side, idx){
     const slots = side === 'player' ? playerSlots : computerSlots;
     const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
     slots.forEach((slot, idx)=>{
-
       if(!slot || !slot.statusEffects) return;
       slot.statusEffects = slot.statusEffects.filter(effect=>{
         // Skip processing on the same turn it was applied
@@ -2229,7 +2208,7 @@ function showCardActions(side, idx){
           if(slot.hp <= 0){
             addLog('system', `${slot.card.name} dies from poison!`);
             const parentEl = slotsEl.children[idx];
-            setTimeout(()=>{ 
+            setTimeout(()=>{
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
@@ -2243,15 +2222,6 @@ function showCardActions(side, idx){
         // Decrement duration
         effect.turnsRemaining--;
         if(effect.turnsRemaining <= 0){
-
-          // If the effect is weaken, also reset the attack power
-          if(effect.type === 'weaken' && slot.card.attacks) {
-            slot.card.attacks.forEach(attack => {
-              attack.damage = attack.baseDamage; // Reset to base damage
-            });
-            addLog('system', `${slot.card.name} regains full attack power!`);
-          }
-
           const expiredMessages = {
             stun: `${slot.card.name} is no longer stunned!`,
             sleep: `${slot.card.name} wakes up!`,
@@ -2640,7 +2610,8 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
           defending: false, 
           used: false, 
           statusEffects: [],
-          attackCooldowns: attackCooldowns 
+          attackCooldowns: attackCooldowns,
+          reserveIndex: i // Track which reserve index this came from
         };
       }
     });
@@ -2763,7 +2734,6 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       clearSelections();
     }
   });
-  
 // Discard pile management
 const discardPile = [];
 const discardPileEl = document.getElementById('discardPile');
