@@ -526,9 +526,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 }
   .discard-pile {
   position: fixed;
-  bottom: 160px;
-  right: 20px;
-  width: 160px;
+  right: 14px; /* Match log position */
+  width: 300px; /* Match log width */
   background: rgba(0,0,0,0.9);
   border: 3px solid #ff4444;
   border-radius: 8px;
@@ -536,6 +535,9 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   z-index: 55;
   max-height: 220px;
   overflow-y: auto;
+  /* Desktop: connect to bottom of log */
+  top: calc(70px + 340px + 10px); /* log top + log height + gap */
+  bottom: auto;
 }
 
 .discard-pile .title {
@@ -673,12 +675,20 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   /* Allow scrolling on mobile */
 
   .discard-pile {
-    bottom: 250px !important;
-    right: 10px !important;
-    width: 130px !important;
-    max-height: 180px !important;
-    padding: 8px !important;
-  }
+  position: fixed !important;
+  bottom: 100px !important; /* Sits on top of log */
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 70px !important;
+  max-height: 70px !important;
+  padding: 6px !important;
+  border-bottom: none !important;
+  border-top: 2px solid #ff4444 !important;
+  border-left: 2px solid #ff4444 !important;
+  border-radius: 0 !important;
+  z-index: 41 !important;
+}
   
   .discard-pile .mini-card {
     width: 28px !important;
@@ -805,7 +815,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     left: 0 !important;
     top: auto !important;
     width: 100% !important;
-    height: 120px !important;
+    height: 100px !important;
     background: rgba(0,0,0,0.9) !important;
     border: none !important;
     border-top: 2px solid #fff !important;
@@ -823,14 +833,16 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   
   /* Adjust panels to not overlap mobile log */
   .turn-panel { 
-    bottom: 130px !important;
+    bottom: 180px !important;
   }
   
   .card-action-panel { 
-    bottom: 140px !important;
+    bottom: 190px !important;
   }
 }
-
+ .wrap {
+  padding-bottom: 200px !important;
+} 
 /* Mobile card sizing fixes */
 @media (max-width: 768px) {
   /* Mobile hand cards - smaller by default */
