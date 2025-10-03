@@ -1408,7 +1408,6 @@ function showCardActions(side, idx){
               setTimeout(()=>{
                 targetCardEl.classList.remove('hit', 'flash');
               }, 400);
-              }, finalDmg, attack.animation || 'flying-attack'); // ADD animation parameter
               
               target.hp = Math.max(0, target.hp - damageToApply);
               addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
@@ -1849,7 +1848,6 @@ function showCardActions(side, idx){
       showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
       targetCardEl.classList.add('hit', 'flash');
       setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-      }, finalDmg, attack.animation || 'flying-attack'); // ADD animation parameter
       
       target.hp = Math.max(0, target.hp - damageToApply);
       addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
