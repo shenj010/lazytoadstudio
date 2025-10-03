@@ -284,7 +284,7 @@ html,body{
   --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
 }
 
-html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2, var(--bg3));color:#fff;overflow:hidden}
+html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
 .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
 .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
@@ -1195,32 +1195,13 @@ function loadPlayerInventory(){
     // Show computer's hand as card backs
     computerHandEl.innerHTML = '';
     
-    // Create a Set of reserve indices that have been used (both active and discarded)
-    const usedReserveIndices = new Set();
+    // Count how many active cards are on the board
+    const activeComputerCards = computerSlots.filter(s => s).length;
+    // Count how many computer cards are in the discard pile
+    const discardedComputerCards = discardPile.filter(item => item.owner === 'Computer').length;
     
-    // Track reserve indices from active cards on the battlefield
-    computerSlots.forEach(slot => {
-      if(slot && typeof slot.reserveIndex === 'number') {
-        usedReserveIndices.add(slot.reserveIndex);
-      }
-    });
-    
-    // Track cards that went to the discard pile - check if they have reserveIndex stored
-    discardPile.forEach(entry => {
-      if(entry.owner === 'Computer' && entry.reserveIndex !== undefined) {
-        usedReserveIndices.add(entry.reserveIndex);
-      }
-    });
-    
-    // Calculate how many cards remain in computer's hand
-    const remainingCards = computerReserve.length - usedReserveIndices.size;
-    
-    // Debug
-    console.log('Computer cards tracking:', {
-      reserveTotal: computerReserve.length,
-      usedIndices: [...usedReserveIndices],
-      remainingCards
-    });
+    // Calculate remaining cards as total minus played (active + discarded)
+    const remainingCards = computerReserve.length - activeComputerCards - discardedComputerCards;
     
     for(let i = 0; i < remainingCards; i++){
       const c = createCardBackEl();
@@ -1443,16 +1424,15 @@ function showCardActions(side, idx){
               if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // FIXED LINE: Use attackerIdx instead of targetIdx (which is undefined)
-                addToDiscardPile(target.card, 'Computer', target.reserveIndex);
-                playerSlots[attackerIdx] = null; // FIXED: Use attackerIdx not targetIdx 
-                renderAll(); 
-                checkBattleOver(); 
+              setTimeout(()=>{
+                addToDiscardPile(target.card, 'Player');
+                computerSlots[idx] = null;
+                renderAll();
+                checkBattleOver();
               }, 600);
             }, 200);
           } else {
-            updateSlotUI('player', attackerIdx);
+            updateSlotUI('computer', idx);
             checkBattleOver();
           }
             }, finalDmg);
@@ -1566,8 +1546,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => { 
-              // Add to discard pile with the correct owner
-              addToDiscardPile(target.card, 'Computer', target.reserveIndex);
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null; 
               renderAll(); 
               checkBattleOver(); 
@@ -1593,9 +1572,8 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // Add to discard pile with the correct owner
-                addToDiscardPile(target.card, 'Computer', target.reserveIndex);
+              setTimeout(()=>{ 
+                addToDiscardPile(target.card, 'Player');
                 computerSlots[targetIdx] = null; 
                 renderAll(); 
                 checkBattleOver(); 
@@ -1673,9 +1651,8 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(() => { 
-              // Add to discard pile with the correct owner
-              addToDiscardPile(target.card, 'Computer', target.reserveIndex);
+            setTimeout(()=>{
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -1976,9 +1953,8 @@ function showCardActions(side, idx){
         setTimeout(() => {
           targetCardEl.classList.add('die');
           setTimeout(() => { 
-            // FIXED LINE: Use attackerIdx instead of targetIdx (which is undefined)
-            addToDiscardPile(target.card, 'Computer', target.reserveIndex);
-            playerSlots[attackerIdx] = null; // FIXED: Use attackerIdx not targetIdx 
+            addToDiscardPile(target.card, 'Computer');
+            playerSlots[attackerIdx] = null; 
             renderAll(); 
             checkBattleOver(); 
           }, 600);
@@ -2589,13 +2565,6 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       }
     });
     
-    // Track cards that went to the discard pile - check if they have reserveIndex stored
-    discardPile.forEach(entry => {
-      if(entry.owner === 'Computer' && entry.reserveIndex !== undefined) {
-        usedCardIndices.add(entry.reserveIndex);
-      }
-    });
-    
     // Count all cards used (active on board + discarded)
     const totalCardsUsed = activeCards.length + discardedCards.length;
     
@@ -2684,20 +2653,8 @@ const discardPileEl = document.getElementById('discardPile');
 const discardedCardsEl = document.getElementById('discardedCards');
 const discardCountEl = document.getElementById('discardCount');
 
-function addToDiscardPile(card, owner, reserveIndex) {
-  // Store card info, owner, and reserve index if it's a computer card
-  const entry = { 
-    card, 
-    owner, 
-    timestamp: Date.now() 
-  };
-  
-  // Only add reserveIndex for computer cards (from computerSlots)
-  if(owner === 'Computer' && reserveIndex !== undefined) {
-    entry.reserveIndex = reserveIndex;
-  }
-  
-  discardPile.push(entry);
+function addToDiscardPile(card, owner) {
+  discardPile.push({ card, owner, timestamp: Date.now() });
   renderDiscardPile();
   
   // Add visual feedback
