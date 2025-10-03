@@ -2569,7 +2569,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     
     // Get cards that have been discarded (defeated)
     const discardedCards = discardPile
-      .filter(item => item.owner === 'Computer')
+      .filter(item => item.owner === 'Player')
       .map(item => item.card);
     
     // Calculate which cards from reserve have been used already (active + discarded)
