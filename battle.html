@@ -1188,56 +1188,90 @@ function loadPlayerInventory(){
   }
 
   // render player hand UI (cards you can place)
-  function renderHand(side) {
+  // render player or computer hand
+function renderHand(side) {
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
   const hand = side === 'player' ? playerHand : computerHand;
 
+  // Clear
   handEl.innerHTML = '';
-  if (hand.length === 0) return;
+  if (!hand) return;
 
   const cardWidth = 86;
-  const containerWidth = handEl.clientWidth;
+  const containerWidth = handEl.clientWidth || 400;
 
-  if (hand.length <= 3) {
+  // ======================
+  // PLAYER HAND
+  // ======================
+  if (side === 'player') {
+    if (hand.length === 0) return;
+
+    if (hand.length <= 3) {
+      hand.forEach((card, i) => {
+        const c = createHandCardEl(card, i, 'player');
+        c.style.position = 'relative';
+        c.style.margin = '0 5px';
+        handEl.appendChild(c);
+      });
+      return;
+    }
+
+    let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+
     hand.forEach((card, i) => {
-      const c = createHandCardEl(card, i, side);
-      c.style.position = 'relative';
-      c.style.margin = '0 5px';
+      const c = createHandCardEl(card, i, 'player');
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
+      c.style.zIndex = i;
       handEl.appendChild(c);
     });
+
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
+    handEl.style.overflow = 'hidden';
     return;
   }
 
-  let overlap = (containerWidth - cardWidth) / (hand.length - 1);
-  overlap = Math.min(overlap, cardWidth * 0.4);
+  // ======================
+  // COMPUTER HAND
+  // ======================
+  if (side === 'computer') {
+    const activeComputerCards = computerSlots.filter(s => s).length;
+    const discardedComputerCards = (discardPile || []).filter(item => item.owner === 'Computer').length;
+    const totalReserve = computerReserve ? computerReserve.length : 0;
+    const remainingCards = Math.max(0, totalReserve - activeComputerCards - discardedComputerCards);
 
-  hand.forEach((card, i) => {
-    const c = createHandCardEl(card, i, side);
-    c.style.position = 'absolute';
-    c.style.left = `${i * overlap}px`;
-    c.style.top = '0';
-    c.style.zIndex = i;
-    handEl.appendChild(c);
-  });
+    if (remainingCards === 0) return;
+
+    if (remainingCards <= 3) {
+      for (let i = 0; i < remainingCards; i++) {
+        const c = createCardBackEl();
+        c.style.position = 'relative';
+        c.style.margin = '0 3px';
+        handEl.appendChild(c);
+      }
+      return;
+    }
+
+    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+
+    for (let i = 0; i < remainingCards; i++) {
+      const c = createCardBackEl();
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
+      c.style.zIndex = i;
+      handEl.appendChild(c);
+    }
+
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
+    handEl.style.overflow = 'hidden';
+  }
 }
-  // For >3 cards, stack with overlap
-  // Calculate overlap so the entire hand fits inside the container
-  let overlap = (containerWidth - cardWidth) / (hand.length - 1);
-  overlap = Math.min(overlap, cardWidth * 0.4); // clamp so at least 60% of each card is visible
-
-  hand.forEach((card, i) => {
-    const c = createHandCardEl(card, i, side);
-
-    // Absolute positioning for stacking
-    c.style.position = 'absolute';
-    c.style.left = `${i * overlap}px`;
-    c.style.top = '0';
-    c.style.zIndex = i; // ensure rightmost card is on top
-
-    handEl.appendChild(c);
-  });
-}
-
   function createCardBackEl(){
     const el = document.createElement('div'); 
     el.className='card'; 
