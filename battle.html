@@ -461,13 +461,13 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   color: #ccc;
   border: 2px solid #999;
 }
-  /* Individual card HP bars below battlefield cards */
+/* Individual card HP bars below battlefield cards */
 .card-hp-bar {
   position: absolute;
-  bottom: -20px;
+  bottom: 10px; /* Position from bottom of slot container */
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
+  width: 85%;
   height: 14px;
   background: #111;
   border: 2px solid #fff;
@@ -519,6 +519,75 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   padding: 1px 4px;
   border-radius: 3px;
   pointer-events: none;
+}
+  .discard-pile {
+  position: fixed;
+  bottom: 160px;
+  right: 20px;
+  width: 160px;
+  background: rgba(0,0,0,0.9);
+  border: 3px solid #ff4444;
+  border-radius: 8px;
+  padding: 10px;
+  z-index: 55;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.discard-pile .title {
+  color: #ff4444;
+  font-size: 11px;
+  text-align: center;
+  margin-bottom: 8px;
+  border-bottom: 2px solid #ff4444;
+  padding-bottom: 6px;
+  font-weight: bold;
+}
+
+.discard-pile .discarded-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.discard-pile .mini-card {
+  width: 32px;
+  height: 44px;
+  border: 2px solid #666;
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.discard-pile .mini-card:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  z-index: 10;
+  border-color: #ff4444;
+}
+
+.discard-pile .mini-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.8);
+}
+
+.discard-pile .mini-card:hover img {
+  filter: grayscale(0);
+}
+
+.discard-pile .count {
+  font-size: 9px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #444;
 }
 
 @keyframes statusPulse {
@@ -598,6 +667,19 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 /* Mobile-specific overrides - only apply on mobile devices */
 @media (max-width: 768px) {
   /* Allow scrolling on mobile */
+
+  .discard-pile {
+    bottom: 250px !important;
+    right: 10px !important;
+    width: 130px !important;
+    max-height: 180px !important;
+    padding: 8px !important;
+  }
+  
+  .discard-pile .mini-card {
+    width: 28px !important;
+    height: 38px !important;
+  }
   html, body { 
     overflow-y: auto !important; 
     overflow-x: hidden !important; 
@@ -936,6 +1018,12 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
       <div class="btn" id="endTurnBtn">END TURN</div>
     </div>
   </div  <!-- Close wrap div -->
+  <!-- Discard pile -->
+    <div class="discard-pile" id="discardPile">
+      <div class="title">💀 GRAVEYARD</div>
+      <div class="discarded-cards" id="discardedCards"></div>
+      <div class="count" id="discardCount">0 defeated</div>
+    </div>
 
 <script>
 (function(){
@@ -1320,23 +1408,25 @@ function showCardActions(side, idx){
               setTimeout(()=>{
                 targetCardEl.classList.remove('hit', 'flash');
               }, 400);
+              }, finalDmg, attack.animation || 'flying-attack'); // ADD animation parameter
               
               target.hp = Math.max(0, target.hp - damageToApply);
               addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
               
               if(target.hp <= 0){
-                setTimeout(() => {
-                  targetCardEl.classList.add('die');
-                  setTimeout(()=>{
-                    computerSlots[idx] = null;
-                    renderAll();
-                    checkBattleOver();
-                  }, 600);
-                }, 200);
-              } else {
-                updateSlotUI('computer', idx);
+            setTimeout(() => {
+              targetCardEl.classList.add('die');
+              setTimeout(()=>{
+                addToDiscardPile(target.card, 'Player');
+                computerSlots[idx] = null;
+                renderAll();
                 checkBattleOver();
-              }
+              }, 600);
+            }, 200);
+          } else {
+            updateSlotUI('computer', idx);
+            checkBattleOver();
+          }
             }, finalDmg);
           } else {
             addLog('player', `${slot.card.name} uses ${attack.name} on ${target.card.name}`);
@@ -1759,6 +1849,7 @@ function showCardActions(side, idx){
       showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
       targetCardEl.classList.add('hit', 'flash');
       setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+      }, finalDmg, attack.animation || 'flying-attack'); // ADD animation parameter
       
       target.hp = Math.max(0, target.hp - damageToApply);
       addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
@@ -1766,7 +1857,9 @@ function showCardActions(side, idx){
       if(target.hp <= 0){
         setTimeout(() => {
           targetCardEl.classList.add('die');
-          setTimeout(() => { playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
+          setTimeout(() => { 
+            addToDiscardPile(target.card, 'Computer');
+            playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
         }, 200);
       } else {
         updateSlotUI('player', attackerIdx);
@@ -1925,7 +2018,9 @@ function showCardActions(side, idx){
             setTimeout(()=>{
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
-              setTimeout(()=>{ slots[idx] = null; renderAll(); checkBattleOver(); },600);
+              setTimeout(()=>{ 
+                addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player');
+                slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
             return false; // remove effect (card dead)
           }
@@ -2017,44 +2112,45 @@ function updateStatusIcons(slotElement, statusEffects) {
 }
 
   // create flying projectile animation
-  function createFlyingProjectile(fromElement, toElement, callback, damage) {
-    // Clone the attacking card
-    const projectile = fromElement.cloneNode(true);
-    projectile.style.position = 'fixed';
-    projectile.style.pointerEvents = 'none';
-    projectile.style.zIndex = '2000';
-    
-    // Get positions
-    const fromRect = fromElement.getBoundingClientRect();
-    const toRect = toElement.getBoundingClientRect();
-    
-    // Calculate the distance to travel
-    const deltaX = toRect.left - fromRect.left;
-    const deltaY = toRect.top - fromRect.top;
-    
-    // Set initial position
-    projectile.style.left = fromRect.left + 'px';
-    projectile.style.top = fromRect.top + 'px';
-    
-    // Add to body
-    document.body.appendChild(projectile);
-    
-    // Set CSS custom properties for the animation
-    projectile.style.setProperty('--target-x', deltaX + 'px');
-    projectile.style.setProperty('--target-y', deltaY + 'px');
-    
-    // Add flying animation class
-    projectile.classList.add('flying-attack');
-    
-    // Callback when animation completes
-    setTimeout(() => {
-      projectile.remove();
-      if(callback) callback(damage);
-    }, 800);
-  }
+function createFlyingProjectile(fromElement, toElement, callback, damage, animationClass = 'flying-attack') {
+  // Clone the attacking card
+  const projectile = fromElement.cloneNode(true);
+  projectile.style.position = 'fixed';
+  projectile.style.pointerEvents = 'none';
+  projectile.style.zIndex = '2000';
+  
+  // Get positions
+  const fromRect = fromElement.getBoundingClientRect();
+  const toRect = toElement.getBoundingClientRect();
+  
+  // Calculate the distance to travel
+  const deltaX = toRect.left - fromRect.left;
+  const deltaY = toRect.top - fromRect.top;
+  
+  // Set initial position
+  projectile.style.left = fromRect.left + 'px';
+  projectile.style.top = fromRect.top + 'px';
+  
+  // Add to body
+  document.body.appendChild(projectile);
+  
+  // Set CSS custom properties for the animation
+  projectile.style.setProperty('--target-x', deltaX + 'px');
+  projectile.style.setProperty('--target-y', deltaY + 'px');
+  
+  // Add animation class (use custom or default)
+  projectile.classList.add(animationClass);
+  
+  // Callback when animation completes
+  setTimeout(() => {
+    projectile.remove();
+    if(callback) callback(damage);
+  }, 800);
+}
 
   // render battlefield slots and global HP segments
   // render battlefield slots and global HP segments
+// render battlefield slots and global HP segments
 function renderAll(){
   // slots
   for(let i=0;i<MAX_SLOTS;i++){
@@ -2066,6 +2162,12 @@ function renderAll(){
       pSlotEl.classList.add('occupied');
       const cardEl = makeBattleCardEl(playerSlots[i], 'player', i);
       pSlotEl.appendChild(cardEl);
+      
+      // Add HP bar directly to slot container
+      const hpBar = createCardHPBar(playerSlots[i].hp, MAX_HP);
+      pSlotEl.appendChild(hpBar);
+      cardEl._hpBar = hpBar; // Store reference on card element
+      
       // Add status icons to the slot container
       updateStatusIcons(pSlotEl, playerSlots[i].statusEffects);
     }
@@ -2078,6 +2180,12 @@ function renderAll(){
       cSlotEl.classList.add('occupied');
       const cardEl = makeBattleCardEl(computerSlots[i], 'computer', i);
       cSlotEl.appendChild(cardEl);
+      
+      // Add HP bar directly to slot container
+      const hpBar = createCardHPBar(computerSlots[i].hp, MAX_HP);
+      cSlotEl.appendChild(hpBar);
+      cardEl._hpBar = hpBar; // Store reference on card element
+      
       // Add status icons to the slot container
       updateStatusIcons(cSlotEl, computerSlots[i].statusEffects);
     }
@@ -2085,7 +2193,7 @@ function renderAll(){
   renderHand();
   updateGlobalHPUI();
 }
-  // create visual card for battlefield slot
+// create visual card for battlefield slot
 function makeBattleCardEl(slotObj, owner, slotIndex){
   const wrap = document.createElement('div'); 
   wrap.className = `card ${slotObj.used ? 'used' : ''}`;
@@ -2104,10 +2212,6 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
   wrap.appendChild(img); 
   wrap.appendChild(stats);
   
-  // Add individual HP bar
-  const hpBar = createCardHPBar(slotObj.hp, MAX_HP);
-  wrap.appendChild(hpBar);
-  
   // defending glow
   if(slotObj.defending){
     wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
@@ -2116,7 +2220,6 @@ function makeBattleCardEl(slotObj, owner, slotIndex){
   wrap.dataset.owner = owner;
   wrap.dataset.slot = slotIndex;
   wrap._hpEl = stats.querySelector('.card-hp');
-  wrap._hpBar = hpBar;
 
   return wrap;
 }
@@ -2384,7 +2487,51 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       clearSelections();
     }
   });
+// Discard pile management
+const discardPile = [];
+const discardPileEl = document.getElementById('discardPile');
+const discardedCardsEl = document.getElementById('discardedCards');
+const discardCountEl = document.getElementById('discardCount');
 
+function addToDiscardPile(card, owner) {
+  discardPile.push({ card, owner, timestamp: Date.now() });
+  renderDiscardPile();
+  
+  // Add visual feedback
+  discardPileEl.style.animation = 'none';
+  setTimeout(() => {
+    discardPileEl.style.animation = 'statusPulse 0.5s ease-in-out';
+  }, 10);
+}
+
+function renderDiscardPile() {
+  discardedCardsEl.innerHTML = '';
+  
+  // Show most recent cards first
+  const recentFirst = [...discardPile].reverse();
+  
+  recentFirst.forEach((entry, idx) => {
+    const miniCard = document.createElement('div');
+    miniCard.className = 'mini-card';
+    miniCard.title = `${entry.card.name}\nDefeated by: ${entry.owner}`;
+    
+    const img = document.createElement('img');
+    img.src = entry.card.src;
+    img.alt = entry.card.name;
+    
+    miniCard.appendChild(img);
+    miniCard.addEventListener('click', () => showDiscardedCardDetails(entry));
+    
+    discardedCardsEl.appendChild(miniCard);
+  });
+  
+  discardCountEl.textContent = `${discardPile.length} defeated`;
+}
+
+function showDiscardedCardDetails(entry) {
+  const attacksList = entry.card.attacks.map(a => `• ${a.name} (${a.damage} dmg)`).join('\n');
+  alert(`${entry.card.name}\n\nDefeated by: ${entry.owner}\nMax HP: ${MAX_HP}\n\nAttacks:\n${attacksList}`);
+}
   // keyboard support
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape'){
