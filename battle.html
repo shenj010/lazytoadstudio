@@ -1191,7 +1191,7 @@ function loadPlayerInventory(){
   // render player or computer hand
 function renderHand(side) {
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
-  const hand = side === 'player' ? playerHand : computerReserve;
+  const hand = side === 'player' ? playerHand : computerHand;
 
   // Clear
   handEl.innerHTML = '';
@@ -2997,40 +2997,6 @@ addTouchHoldListeners();
 .slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
 /* Keep stats in DOM for JS but hide visually */
 .card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
-/* Enhanced card styling for full images and rounded corners */
-.slot .card, .hand .card {
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  position: relative !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
-}
-
-.slot .card img, .hand .card img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important; /* Changed from cover to contain */
-  display: block !important;
-  border-radius: 8px !important;
-}
-
-/* Add padding inside cards to prevent image from touching the borders */
-.slot .card, .hand .card {
-  padding: 3px !important;
-  background-color: rgba(0,0,0,0.7) !important;
-}
-
-/* Smoother hover effect for hand cards */
-.hand .card:hover {
-  transform: translateY(-10px) scale(1.1) !important;
-  box-shadow: 0 5px 15px rgba(56,239,125,0.5) !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Used cards styling improvement */
-.card.used {
-  opacity: 0.5 !important;
-  filter: grayscale(0.6) !important;
-}
 </style>
 </body>
 </html>
