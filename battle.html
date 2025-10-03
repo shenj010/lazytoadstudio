@@ -320,7 +320,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn indicator */
-.turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index=60}
+.turn-indicator{position:fixed;top=20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index=60}
  /* attack animations */
 .attacking-forward{animation:attackForward 1000ms ease-in-out forwards; z-index: 1000;}
 @keyframes attackForward{
@@ -1715,6 +1715,21 @@ function showCardActions(side, idx){
     
     addLog('system', 'Computer is thinking...');
     
+    // Make sure we have proper initialization for all cards
+    computerSlots.forEach(slot => {
+      if(slot) {
+        // Ensure attack cooldowns are properly initialized
+        if(!slot.attackCooldowns) {
+          slot.attackCooldowns = {};
+          slot.card.attacks.forEach((attack, attackIdx) => {
+            if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+              slot.attackCooldowns[attackIdx] = 0;
+            }
+          });
+        }
+      }
+    });
+    
     setTimeout(()=>{
       // Process status effects on computer cards FIRST
       processStatusEffects('computer');
@@ -1725,11 +1740,19 @@ function showCardActions(side, idx){
           slot.used = false;
           slot.defending = false;
           
-          // Reduce cooldowns for computer cards too
+          // Reduce cooldowns for computer cards
           if(slot.attackCooldowns) {
             Object.keys(slot.attackCooldowns).forEach(attackIdx => {
               if(slot.attackCooldowns[attackIdx] > 0) {
                 slot.attackCooldowns[attackIdx]--;
+                if(slot.attackCooldowns[attackIdx] === 0) {
+                  try {
+                    const attackName = slot.card.attacks[parseInt(attackIdx)].name;
+                    addLog('system', `Computer's ${slot.card.name}'s ${attackName} is ready again!`);
+                  } catch (e) {
+                    console.error("Error accessing attack name:", e);
+                  }
+                }
               }
             });
           }
@@ -1738,6 +1761,13 @@ function showCardActions(side, idx){
 
       // Small delay to let poison animations play out before continuing
       setTimeout(() => {
+        // Do a second check for any cards that died during status effect processing
+        if(!computerSlots.some(slot => slot && slot.hp > 0)) {
+          addLog('system', 'All computer cards are defeated - player wins!');
+          setTimeout(() => checkBattleOver(), 500);
+          return;
+        }
+        
         performComputerActions();
       }, 500);
     }, 800);
@@ -1761,7 +1791,23 @@ function showCardActions(side, idx){
       // Check if computer card is stunned or asleep
       if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
         addLog('system', `${slot.card.name} cannot act due to status effects!`);
+        // Mark as used so it doesn't get considered again
+        slot.used = true;
         return -1;
+      }
+      
+      // Check if all attacks are on cooldown
+      if(slot.card.attacks && slot.card.attacks.length > 0) {
+        const allAttacksOnCooldown = slot.card.attacks.every((attack, attackIdx) => 
+          isAttackOnCooldown(slot, attackIdx)
+        );
+        
+        if(allAttacksOnCooldown) {
+          addLog('system', `${slot.card.name}'s attacks are all on cooldown!`);
+          // Mark as used so it doesn't get considered again
+          slot.used = true;
+          return -1;
+        }
       }
       
       return idx;
@@ -1799,18 +1845,18 @@ function showCardActions(side, idx){
       performComputerDefend(slotIdx);
     }
 
-    // Continue with next action after delay if there are more unused cards
+    // Continue with next action after delay
     setTimeout(()=> {
-      const remainingActive = computerSlots.filter(slot => {
-        if(!slot || slot.hp <= 0 || slot.used) return false;
-        // Also check for status effects in the continuation check
-        if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) return false;
-        return true;
-      });
+      // Check for any remaining active cards after current action
+      const remainingActive = computerSlots.filter(slot => 
+        slot && slot.hp > 0 && !slot.used && 
+        !(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep'))
+      );
       
       if(remainingActive.length > 0) {
         performComputerActions();
       } else {
+        // No more cards can act - end turn
         endComputerTurn();
       }
     }, 1500);
@@ -1820,7 +1866,11 @@ function showCardActions(side, idx){
   const attacker = computerSlots[attackerIdx];
   const target = playerSlots[attackerIdx];
   
-  if(!attacker || !target) return;
+  if(!attacker || !target) {
+    // Mark as used anyway so we don't get stuck
+    if(attacker) attacker.used = true;
+    return;
+  }
 
   attacker.used = true;
 
@@ -1843,10 +1893,11 @@ function showCardActions(side, idx){
     attack = chosen.attack;
     chosenIndex = chosen.index;
   } else {
-    // All special attacks are on cooldown, so skip this card's turn
-    addLog('system', `${attacker.card.name}'s attacks are all on cooldown - skipping turn.`);
-    updateSlotUI('computer', attackerIdx);
-    return; // Exit the function early - this card can't attack
+    // All special attacks are on cooldown, so use defend instead
+    addLog('system', `${attacker.card.name}'s attacks are all on cooldown - defending instead.`);
+    // Switch to defense since we can't attack
+    performComputerDefend(attackerIdx);
+    return; // Exit the function early - this card will defend instead
   }
   
   // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
@@ -1857,9 +1908,18 @@ function showCardActions(side, idx){
   
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[targetIdx];
+  const targetSlotEl = playerSlotsEl.children[attackerIdx];
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
+  
+  if (!attackerCardEl || !targetCardEl) {
+    // If we can't find the elements, just log the attack without animation
+    const finalDmg = attack.damage ?? damage;
+    target.hp = Math.max(0, target.hp - finalDmg);
+    addLog('computer', `${attacker.card.name} attacks ${target.card.name} for ${finalDmg} damage`);
+    updateSlotUI('player', attackerIdx);
+    return;
+  }
   
   let finalDmg = attack.damage ?? damage;
   // Apply weaken effect (reduce damage by 10 if attacker is weakened)
@@ -1894,7 +1954,10 @@ function showCardActions(side, idx){
           targetCardEl.classList.add('die');
           setTimeout(() => { 
             addToDiscardPile(target.card, 'Computer');
-            playerSlots[attackerIdx] = null; renderAll(); checkBattleOver(); }, 600);
+            playerSlots[attackerIdx] = null; 
+            renderAll(); 
+            checkBattleOver(); 
+          }, 600);
         }, 200);
       } else {
         updateSlotUI('player', attackerIdx);
@@ -1930,16 +1993,21 @@ function showCardActions(side, idx){
   }
 
   function endComputerTurn(){
+    // Set global turn flag to player
     playerTurn = true;
     turnIndicator.textContent = 'Player Turn';
     endTurnBtn.classList.remove('disabled');
     
+    // Log transition
+    addLog('system', 'Computer turn ends. Player turn begins.');
+    
     // Process status effects on player cards
     processStatusEffects('player');
     
-    // Process cooldowns and reset turn status
+    // Process cooldowns and reset turn status for player cards
     playerSlots.forEach(slot => {
       if(slot) {
+        // Reset per-turn flags
         slot.used = false;
         slot.defending = false;
         
@@ -1949,8 +2017,12 @@ function showCardActions(side, idx){
             if(slot.attackCooldowns[attackIdx] > 0) {
               slot.attackCooldowns[attackIdx]--;
               if(slot.attackCooldowns[attackIdx] === 0) {
-                const attackName = slot.card.attacks[parseInt(attackIdx)].name;
-                addLog('system', `${slot.card.name}'s ${attackName} is ready to use again!`);
+                try {
+                  const attackName = slot.card.attacks[parseInt(attackIdx)].name;
+                  addLog('system', `${slot.card.name}'s ${attackName} is ready to use again!`);
+                } catch (e) {
+                  console.error("Error accessing attack name:", e);
+                }
               }
             }
           });
@@ -2384,7 +2456,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     if(!playerHas || !compHas){
       const result = compHas ? 'defeat' : 'victory';
       addLog('system', `Battle over: ${result.toUpperCase()}`);
-      setTimeout(()=>showGameOver(result), 500);
+      setTimeout(() => showGameOver(result), 500);
     }
   }
 
@@ -2470,30 +2542,69 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       }
     }
     
-    if(emptySlots.length === 0 || computerReserve.length === 0) return false;
+    if(emptySlots.length === 0) {
+      console.log("No empty slots for computer to place card");
+      return false;
+    }
     
-    // Count how many unique cards have been played from the reserve
-    // Include both active cards and those in the discard pile that were computer's
-    const playedComputerCards = discardPile.filter(item => item.owner === 'Computer').map(item => item.card);
-    const activeComputerCards = computerSlots.filter(slot => slot !== null).map(slot => slot.card);
-    const totalPlayedCount = activeComputerCards.length;
+    // Get cards that are currently in play
+    const activeCards = computerSlots.filter(slot => slot !== null).map(slot => slot.card);
     
-    // Don't place more cards than available in reserve
-    if(totalPlayedCount >= computerReserve.length) return false;
+    // Get cards that have been discarded (defeated)
+    const discardedCards = discardPile
+      .filter(item => item.owner === 'Computer')
+      .map(item => item.card);
     
-    // Strategic placement: prefer slots opposite player cards, or random if none
-    const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
+    // Calculate which cards from reserve have been used already (active + discarded)
+    const usedCardIndices = new Set();
+    
+    // Track used reserve indices from active cards
+    computerSlots.forEach(slot => {
+      if(slot && typeof slot.reserveIndex === 'number') {
+        usedCardIndices.add(slot.reserveIndex);
+      }
+    });
+    
+    // Count all cards used (active on board + discarded)
+    const totalCardsUsed = activeCards.length + discardedCards.length;
+    
+    // If all cards have been used, can't place any more
+    if(totalCardsUsed >= computerReserve.length) {
+      console.log("Computer has used all available cards", {
+        activeCards: activeCards.length,
+        discardedCards: discardedCards.length,
+        reserveLength: computerReserve.length
+      });
+      return false;
+    }
+    
+    // Find the next unused card index
+    let nextCardIndex = 0;
+    while(usedCardIndices.has(nextCardIndex) && nextCardIndex < computerReserve.length) {
+      nextCardIndex++;
+    }
+    
+    if(nextCardIndex >= computerReserve.length) {
+      console.log("No more cards available in computer's reserve");
+      return false;
+    }
+    
+    // Get the card to place
+    const cardToPlace = computerReserve[nextCardIndex];
+    if(!cardToPlace) {
+      console.log("No card found at index", nextCardIndex);
+      return false;
+    }
+    
+    // Strategic placement: prefer slots opposite player cards
+    const playerOccupiedSlots = playerSlots
+      .map((slot, idx) => slot && slot.hp > 0 ? idx : -1)
+      .filter(idx => idx !== -1);
+      
     const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
-    const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : 
-                      emptySlots[Math.floor(Math.random() * emptySlots.length)];
-    
-    // Find the next available card from reserve
-    // We need to find a card that hasn't been played yet
-    let cardToPlace;
-    let reserveIndex = totalPlayedCount;
-    
-    // Get the next card from the reserve
-    cardToPlace = computerReserve[reserveIndex];
+    const targetSlot = goodSlots.length > 0 
+      ? goodSlots[Math.floor(Math.random() * goodSlots.length)]
+      : emptySlots[Math.floor(Math.random() * emptySlots.length)];
     
     // Initialize cooldowns for each attack
     const attackCooldowns = {};
@@ -2503,6 +2614,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       }
     });
 
+    // Place the card in the chosen slot
     computerSlots[targetSlot] = { 
       card: cardToPlace, 
       hp: MAX_HP, 
@@ -2510,7 +2622,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       used: false, 
       statusEffects: [],
       attackCooldowns: attackCooldowns,
-      reserveIndex: reserveIndex // Track which reserve index this came from
+      reserveIndex: nextCardIndex // Track which reserve index this came from
     };
 
     renderAll();
