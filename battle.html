@@ -315,7 +315,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card-action-panel .btn:active{transform:scale(.98)}
 .card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn control panel */
-.turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;display:flex;gap:12px;z-index:50}
+.turn-panel{position:fixed;left:50%;transform:translateX(-50%);bottom=22px;display:flex;gap:12px;z-index:50}
 .btn{background:#fff;color:#000;border:2px solid #000;padding:10px 16px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer}
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
@@ -1807,11 +1807,26 @@ function showCardActions(side, idx){
     const cdMap = attacker.attackCooldowns || {};
     return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
   });
-  // Choose from offCooldown if available, otherwise from all (fallback)
-  const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
-  const attack = chosen ? chosen.attack : { name: "Basic Attack", damage: damage, type: "physical" };
-  const chosenIndex = chosen ? chosen.index : -1;
-
+  
+  // Replace this line:
+  // const chosen = (offCooldown.length ? offCooldown : attackEntries)[Math.floor(Math.random() * (offCooldown.length ? offCooldown.length : attackEntries.length))];
+  
+  // With this code that properly respects cooldowns:
+  let chosen = null;
+  let attack = null;
+  let chosenIndex = -1;
+  
+  if (offCooldown.length > 0) {
+    // We have attacks available - choose one randomly from those not on cooldown
+    chosen = offCooldown[Math.floor(Math.random() * offCooldown.length)];
+    attack = chosen.attack;
+    chosenIndex = chosen.index;
+  } else {
+    // All special attacks are on cooldown, use a basic attack with no status effects
+    attack = { name: "Basic Attack", damage: damage, type: "physical" };
+    addLog('system', `${attacker.card.name}'s special attacks are on cooldown.`);
+  }
+  
   // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
   if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
     if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
@@ -2148,7 +2163,6 @@ function createFlyingProjectile(fromElement, toElement, callback, damage, animat
 
   // render battlefield slots and global HP segments
   // render battlefield slots and global HP segments
-// render battlefield slots and global HP segments
 function renderAll(){
   // slots
   for(let i=0;i<MAX_SLOTS;i++){
