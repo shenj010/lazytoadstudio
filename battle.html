@@ -309,7 +309,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .card.used{opacity:0.4;filter:grayscale(0.7)}
 .card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
  /* action panel - now positioned relative to selected card */
-.card-action-panel{position:absolute;z-index=100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
+.card-action-panel{position:absolute;z-index:100;background:rgba(0,0,0,0.9);border:2px solid var(--accent);border-radius:6px;padding:8px;display:flex;gap:8px;flex-direction:column;min-width:120px}
 .card-action-panel .btn{background:#fff;color:#000;border:2px solid #000;padding:6px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;text-align:center}
 .card-action-panel .btn:hover{background:var(--accent);color:#000}
 .card-action-panel .btn:active{transform:scale(.98)}
@@ -1186,41 +1186,28 @@ function loadPlayerInventory(){
 
   // render player hand UI (cards you can place)
   function renderHand(){
-  playerHandEl.innerHTML = '';
-  playerHand.forEach((card, idx) => {
-    const c = createHandCardEl(card, idx);
-    playerHandEl.appendChild(c);
-  });
-  
-  // Show computer's hand as card backs
-  computerHandEl.innerHTML = '';
-  
-  // Track used card indices from active cards AND discarded cards
-  const usedCardIndices = new Set();
-  
-  // Add indices from active cards on board
-  computerSlots.forEach(slot => {
-    if(slot && typeof slot.reserveIndex === 'number') {
-      usedCardIndices.add(slot.reserveIndex);
+    playerHandEl.innerHTML = '';
+    playerHand.forEach((card, idx) => {
+      const c = createHandCardEl(card, idx);
+      playerHandEl.appendChild(c);
+    });
+    
+    // Show computer's hand as card backs
+    computerHandEl.innerHTML = '';
+    
+    // Count how many active cards are on the board
+    const activeComputerCards = computerSlots.filter(s => s).length;
+    // Count how many computer cards are in the discard pile
+    const discardedComputerCards = discardPile.filter(item => item.owner === 'Computer').length;
+    
+    // Calculate remaining cards as total minus played (active + discarded)
+    const remainingCards = computerReserve.length - activeComputerCards - discardedComputerCards;
+    
+    for(let i = 0; i < remainingCards; i++){
+      const c = createCardBackEl();
+      computerHandEl.appendChild(c);
     }
-  });
-  
-  // IMPORTANT FIX: Also track cards in the discard pile
-  discardPile.forEach(entry => {
-    if(entry.owner === 'Computer' && entry.reserveIndex !== undefined) {
-      usedCardIndices.add(entry.reserveIndex);
-    }
-  });
-  
-  // Calculate remaining cards as total minus used indices
-  const remainingCards = computerReserve.length - usedCardIndices.size;
-  
-  // Create card backs for remaining cards
-  for(let i = 0; i < remainingCards; i++){
-    const c = createCardBackEl();
-    computerHandEl.appendChild(c);
   }
-}
 
   function createCardBackEl(){
     const el = document.createElement('div'); 
@@ -1437,9 +1424,8 @@ function showCardActions(side, idx){
               if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // Pass the reserveIndex when adding to discard pile
-                addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              setTimeout(()=>{
+                addToDiscardPile(target.card, 'Player');
                 computerSlots[idx] = null;
                 renderAll();
                 checkBattleOver();
@@ -1560,8 +1546,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => { 
-              // Pass the reserveIndex when adding to discard pile
-              addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null; 
               renderAll(); 
               checkBattleOver(); 
@@ -1587,9 +1572,8 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // Pass the reserveIndex when adding to discard pile
-                addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              setTimeout(()=>{ 
+                addToDiscardPile(target.card, 'Player');
                 computerSlots[targetIdx] = null; 
                 renderAll(); 
                 checkBattleOver(); 
@@ -1667,9 +1651,8 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(() => { 
-              // Pass the reserveIndex when adding to discard pile
-              addToDiscardPile(target.card, 'Player', target.reserveIndex);
+            setTimeout(()=>{
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -1797,7 +1780,7 @@ function showCardActions(side, idx){
     const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
     if(shouldPlaceCard && computerPlaceCard()){
       // Placed a card, continue with other actions
-      setTimeout(() => performComputerActions(), 1000);
+      setTimeout(()=> performComputerActions(), 1000);
       return;
     }
     
@@ -1934,13 +1917,6 @@ function showCardActions(side, idx){
     const finalDmg = attack.damage ?? damage;
     target.hp = Math.max(0, target.hp - finalDmg);
     addLog('computer', `${attacker.card.name} attacks ${target.card.name} for ${finalDmg} damage`);
-    
-    // Check if target died from this attack
-    if (target.hp <= 0) {
-      addToDiscardPile(target.card, 'Computer', null);
-      playerSlots[attackerIdx] = null; // Fix: properly remove the defeated player card
-    }
-    
     updateSlotUI('player', attackerIdx);
     return;
   }
@@ -1977,15 +1953,14 @@ function showCardActions(side, idx){
         setTimeout(() => {
           targetCardEl.classList.add('die');
           setTimeout(() => { 
-            // Pass the reserveIndex when adding to discard pile
-            addToDiscardPile(target.card, 'Computer', null);
-            playerSlots[attackerIdx] = null; // FIX: Use correct index and actually remove the player card
+            addToDiscardPile(target.card, 'Computer');
+            playerSlots[attackerIdx] = null; 
             renderAll(); 
             checkBattleOver(); 
           }, 600);
         }, 200);
       } else {
-        updateSlotUI('player', attackerIdx); // FIX: Use correct index
+        updateSlotUI('player', attackerIdx);
         checkBattleOver();
       }
     }, finalDmg);
@@ -1998,397 +1973,7 @@ function showCardActions(side, idx){
   renderAll();
 }
 
-  // perform attack on opposite slot (legacy function for compatibility)
-  function performAttack(attackerIdx, damage){
-    const attacker = playerSlots[attackerIdx];
-    const targetIdx = attackerIdx; // same index on opposite side
-    const target = computerSlots[targetIdx];
-    
-    if(!attacker || !target || attacker.used) return;
-
-    // mark attacker as used
-    attacker.used = true;
-    
-    // Get card elements for animation
-    const attackerSlotEl = playerSlotsEl.children[attackerIdx];
-    const targetSlotEl = computerSlotsEl.children[targetIdx];
-    const attackerCardEl = attackerSlotEl.querySelector('.card');
-    const targetCardEl = targetSlotEl.querySelector('.card');
-    
-    // Debug: Check if elements exist and damage value
-    console.log('Player attack animation elements:', {
-      attackerSlotEl: !!attackerSlotEl,
-      attackerCardEl: !!attackerCardEl,
-      targetSlotEl: !!targetSlotEl,
-      targetCardEl: !!targetCardEl,
-      originalDamage: damage,
-      attackerName: attacker.card.name,
-      targetName: target.card.name
-    });
-    
-    // Apply defend reduction if active
-    let finalDmg = damage;
-    if(target.defending){
-      finalDmg = Math.ceil(finalDmg/2);
-      target.defending = false;
-      addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
-
-    // Create flying projectile animation
-    if(attackerCardEl && targetCardEl) {
-      createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-        // This runs when the projectile hits
-        console.log('Projectile hit callback - applying damage:', damageToApply, 'to', target.card.name);
-        
-        // Show damage popup above target
-        showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-        
-        // Hit effects on target
-        targetCardEl.classList.add('hit', 'flash');
-        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-        
-        // Subtract HP
-        target.hp = Math.max(0, target.hp - damageToApply);
-        
-        addLog('player', `${attacker.card.name} hits ${target.card.name} for ${damageToApply} damage`);
-        
-        // Death check
-        if(target.hp <= 0){
-          setTimeout(() => {
-            targetCardEl.classList.add('die');
-            setTimeout(() => { 
-              // Pass the reserveIndex when adding to discard pile
-              addToDiscardPile(target.card, 'Player', target.reserveIndex);
-              computerSlots[targetIdx] = null;
-              renderAll();
-              checkBattleOver();
-            }, 600);
-          }, 200);
-        } else {
-          updateSlotUI('computer', targetIdx);
-          checkBattleOver();
-        }
-      }, finalDmg);
-    } else {
-      // Fallback if elements not found
-      setTimeout(() => {
-        showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
-        target.hp = Math.max(0, target.hp - finalDmg);
-        addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg} damage`);
-        if(target.hp <= 0){
-          computerSlots[targetIdx] = null;
-          renderAll();
-          checkBattleOver();
-        } else {
-          updateSlotUI('computer', targetIdx);
-          checkBattleOver();
-        }
-      }, 300);
-    }
-
-    hideActionPanel();
-    renderAll();
-  }
-
-  function performDefend(slotIdx){
-    const slot = playerSlots[slotIdx];
-    if(!slot || slot.used) return;
-
-    slot.used = true;
-    slot.defending = true;
-    
-    // Animate defend
-    const slotEl = playerSlotsEl.children[slotIdx];
-    const cardEl = slotEl.querySelector('.card');
-    if(cardEl){
-      cardEl.classList.add('defending-anim');
-      setTimeout(()=>cardEl.classList.remove('defending-anim'), 600);
-    }
-    
-    addLog('player', `${slot.card.name} takes a defensive stance`);
-    
-    hideActionPanel();
-    renderAll();
-  }
-
-  // computer AI: attacks opposite slots, defends sometimes
-  function computerTurn(){
-    // Don't start computer turn if we're still in setup phase
-    if(turnIndicator.textContent.includes('Setup')) return;
-    
-    turnIndicator.textContent = 'Computer Turn';
-    endTurnBtn.classList.add('disabled');
-    
-    addLog('system', 'Computer is thinking...');
-    
-    // Make sure we have proper initialization for all cards
-    computerSlots.forEach(slot => {
-      if(slot) {
-        // Ensure attack cooldowns are properly initialized
-        if(!slot.attackCooldowns) {
-          slot.attackCooldowns = {};
-          slot.card.attacks.forEach((attack, attackIdx) => {
-            if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-              slot.attackCooldowns[attackIdx] = 0;
-            }
-          });
-        }
-      }
-    });
-    
-    setTimeout(()=>{
-      // Process status effects on computer cards FIRST
-      processStatusEffects('computer');
-      
-      // Reset ALL computer card used status and process cooldowns
-      computerSlots.forEach(slot => {
-        if(slot) {
-          slot.used = false;
-          slot.defending = false;
-          
-          // Reduce cooldowns for computer cards
-          if(slot.attackCooldowns) {
-            Object.keys(slot.attackCooldowns).forEach(attackIdx => {
-              if(slot.attackCooldowns[attackIdx] > 0) {
-                slot.attackCooldowns[attackIdx]--;
-                if(slot.attackCooldowns[attackIdx] === 0) {
-                  try {
-                    const attackName = slot.card.attacks[parseInt(attackIdx)].name;
-                    addLog('system', `Computer's ${slot.card.name}'s ${attackName} is ready again!`);
-                  } catch (e) {
-                    console.error("Error accessing attack name:", e);
-                  }
-                }
-              }
-            });
-          }
-        }
-      });
-
-      // Small delay to let poison animations play out before continuing
-      setTimeout(() => {
-        // Do a second check for any cards that died during status effect processing
-        if(!computerSlots.some(slot => slot && slot.hp > 0)) {
-          addLog('system', 'All computer cards are defeated - player wins!');
-          setTimeout(() => checkBattleOver(), 500);
-          return;
-        }
-        
-        performComputerActions();
-      }, 500);
-    }, 800);
-  }
-
-  function performComputerActions(){
-    // Computer's strategic decision making each turn
-    
-    // Option 1: Place a new card (if beneficial)
-    const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
-    if(shouldPlaceCard && computerPlaceCard()){
-      // Placed a card, continue with other actions
-      setTimeout(() => performComputerActions(), 1000);
-      return;
-    }
-    
-    // Option 2: Use existing cards to attack or defend
-    const activeSlots = computerSlots.map((slot, idx) => {
-      if(!slot || slot.hp <= 0 || slot.used) return -1;
-      
-      // Check if computer card is stunned or asleep
-      if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
-        addLog('system', `${slot.card.name} cannot act due to status effects!`);
-        // Mark as used so it doesn't get considered again
-        slot.used = true;
-        return -1;
-      }
-      
-      // Check if all attacks are on cooldown
-      if(slot.card.attacks && slot.card.attacks.length > 0) {
-        const allAttacksOnCooldown = slot.card.attacks.every((attack, attackIdx) => 
-          isAttackOnCooldown(slot, attackIdx)
-        );
-        
-        if(allAttacksOnCooldown) {
-          addLog('system', `${slot.card.name}'s attacks are all on cooldown!`);
-          // Mark as used so it doesn't get considered again
-          slot.used = true;
-          return -1;
-        }
-      }
-      
-      return idx;
-    }).filter(idx => idx !== -1);
-
-    // If no cards can act, end turn immediately
-    if(activeSlots.length === 0){
-      addLog('system', 'Computer has no available actions - ending turn');
-      setTimeout(()=>endComputerTurn(), 800);
-      return;
-    }
-
-    const slotIdx = activeSlots[Math.floor(Math.random() * activeSlots.length)];
-    const slot = computerSlots[slotIdx];
-    
-    // Check if there's an opposite target
-    const targetSlot = playerSlots[slotIdx];
-    const canAttack = targetSlot && targetSlot.hp > 0;
-    
-    // Strategic decision: attack if possible, defend if threatened or randomly
-    let action;
-    if(!canAttack){
-      action = 'defend'; // Can't attack, so defend
-    } else {
-      // Consider if this computer card might be threatened
-      const isThreated = targetSlot && targetSlot.hp > 0;
-      const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
-      action = shouldAttack ? 'attack' : 'defend';
-    }
-    
-    if(action === 'attack' && canAttack){
-      const damage = Math.random() > 0.6 ? 10 : 5;
-      performComputerAttack(slotIdx, damage);
-    } else {
-      performComputerDefend(slotIdx);
-    }
-
-    // Continue with next action after delay
-    setTimeout(()=> {
-      // Check for any remaining active cards after current action
-      const remainingActive = computerSlots.filter(slot => 
-        slot && slot.hp > 0 && !slot.used && 
-        !(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep'))
-      );
-      
-      if(remainingActive.length > 0) {
-        performComputerActions();
-      } else {
-        // No more cards can act - end turn
-        endComputerTurn();
-      }
-    }, 1500);
-  }
-
- function performComputerAttack(attackerIdx, damage){
-  const attacker = computerSlots[attackerIdx];
-  const target = playerSlots[attackerIdx];
-  
-  if(!attacker || !target) {
-    // Mark as used anyway so we don't get stuck
-    if(attacker) attacker.used = true;
-    return;
-  }
-
-  attacker.used = true;
-
-  // Build list of attacks with their indices
-  const attackEntries = (attacker.card.attacks || []).map((a,i)=>({attack:a,index:i}));
-  // Filter out attacks that are on cooldown
-  const offCooldown = attackEntries.filter(entry => {
-    const cdMap = attacker.attackCooldowns || {};
-    return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
-  });
-  
-  // With this code that properly respects cooldowns:
-  let chosen = null;
-  let attack = null;
-  let chosenIndex = -1;
-  
-  if (offCooldown.length > 0) {
-    // We have attacks available - choose one randomly from those not on cooldown
-    chosen = offCooldown[Math.floor(Math.random() * offCooldown.length)];
-    attack = chosen.attack;
-    chosenIndex = chosen.index;
-  } else {
-    // All special attacks are on cooldown, so use defend instead
-    addLog('system', `${attacker.card.name}'s attacks are all on cooldown - defending instead.`);
-    // Switch to defense since we can't attack
-    performComputerDefend(attackerIdx);
-    return; // Exit the function early - this card will defend instead
-  }
-  
-  // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
-  if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
-    if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
-    attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
-  }
-  
-  // Get card elements for animation
-  const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[attackerIdx];
-  const attackerCardEl = attackerSlotEl.querySelector('.card');
-  const targetCardEl = targetSlotEl.querySelector('.card');
-  
-  if (!attackerCardEl || !targetCardEl) {
-    // If we can't find the elements, just log the attack without animation
-    const finalDmg = attack.damage ?? damage;
-    target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('computer', `${attacker.card.name} attacks ${target.card.name} for ${finalDmg} damage`);
-    
-    // Check if target died from this attack
-    if (target.hp <= 0) {
-      addToDiscardPile(target.card, 'Computer', null);
-      playerSlots[attackerIdx] = null; // Fix: properly remove the defeated player card
-    }
-    
-    updateSlotUI('player', attackerIdx);
-    return;
-  }
-  
-  let finalDmg = attack.damage ?? damage;
-  // Apply weaken effect (reduce damage by 10 if attacker is weakened)
-  if(hasStatusEffect(attacker, 'weaken')) {
-    finalDmg = Math.max(0, finalDmg - 10);
-    addLog('system', `${attacker.card.name}'s attack is weakened!`);
-  }
-  
-  if(target.defending && finalDmg > 0){
-    finalDmg = Math.ceil(finalDmg/2);
-    target.defending = false;
-    addLog('system', `${target.card.name} defended – reduced damage!`);
-  }
-
-  // Apply status effects immediately (only if not on cooldown since we filtered)
-  if(attack.effect) {
-    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
-  }
-
-  // Handle damage with animation if there is damage
-  if(finalDmg > 0) {
-    createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-      showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-      targetCardEl.classList.add('hit', 'flash');
-      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-      
-      target.hp = Math.max(0, target.hp - damageToApply);
-      addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
-      
-      if(target.hp <= 0){
-        setTimeout(() => {
-          targetCardEl.classList.add('die');
-          setTimeout(() => { 
-            // Pass the reserveIndex when adding to discard pile
-            addToDiscardPile(target.card, 'Computer', null);
-            playerSlots[attackerIdx] = null; // FIX: Use correct index and actually remove the player card
-            renderAll(); 
-            checkBattleOver(); 
-          }, 600);
-        }, 200);
-      } else {
-        updateSlotUI('player', attackerIdx); // FIX: Use correct index
-        checkBattleOver();
-      }
-    }, finalDmg);
-  } else {
-    // No damage attack (like pure stun/sleep)
-    addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
-    checkBattleOver();
-  }
-
-  renderAll();
-}
-
-  // perform defend on opposite slot (legacy function for compatibility)
-  function performDefend(slotIdx){
+  function performComputerDefend(slotIdx){
     const slot = computerSlots[slotIdx];
     if(!slot) return;
 
@@ -2542,7 +2127,7 @@ function showCardActions(side, idx){
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
                 // Add to discard pile with the correct owner
-                addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player', slot.reserveIndex);
+                addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player');
                 slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
             return false; // remove effect (card dead)
@@ -2928,7 +2513,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
         const attackCooldowns = {};
         card.attacks.forEach((attack, attackIdx) => {
           if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            attackCooldowns[attackIdx] = 0; // 0 means ready to use
+            attackCooldowns[attackIdx] = 0;
           }
         });
         
@@ -2967,7 +2552,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     
     // Get cards that have been discarded (defeated)
     const discardedCards = discardPile
-      .filter(item => item.owner === 'Player')
+      .filter(item => item.owner === 'Computer')
       .map(item => item.card);
     
     // Calculate which cards from reserve have been used already (active + discarded)
@@ -2977,14 +2562,6 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     computerSlots.forEach(slot => {
       if(slot && typeof slot.reserveIndex === 'number') {
         usedCardIndices.add(slot.reserveIndex);
-      }
-    });
-    
-    // IMPORTANT FIX: Also track discarded cards
-    discardedCards.forEach(card => {
-      const index = computerReserve.indexOf(card);
-      if(index !== -1) {
-        usedCardIndices.add(index);
       }
     });
     
@@ -3076,17 +2653,8 @@ const discardPileEl = document.getElementById('discardPile');
 const discardedCardsEl = document.getElementById('discardedCards');
 const discardCountEl = document.getElementById('discardCount');
 
-// OPTION 1: Update addToDiscardPile to store reserveIndex
-function addToDiscardPile(card, owner, reserveIndex) {
-  // Create the discard pile entry
-  const entry = { 
-    card, 
-    owner, 
-    timestamp: Date.now(),
-    reserveIndex // Always store reserveIndex regardless of owner
-  };
-  
-  discardPile.push(entry);
+function addToDiscardPile(card, owner) {
+  discardPile.push({ card, owner, timestamp: Date.now() });
   renderDiscardPile();
   
   // Add visual feedback
@@ -3318,7 +2886,7 @@ function collapseCard() {
   // Remove backdrop
   if (ownerCard && ownerCard._backdrop) {
     ownerCard._backdrop.classList.remove('show');
-    setTimeout(() => { 
+    setTimeout(() => {
       if (ownerCard._backdrop && ownerCard._backdrop.parentNode) {
         ownerCard._backdrop.parentNode.removeChild(ownerCard._backdrop);
       }
