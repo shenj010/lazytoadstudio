@@ -686,10 +686,10 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   border-bottom: none !important;
   border-top: 2px solid #ff4444 !important;
   border-left: 2px solid #ff4444 !important;
+  border-right: 2px solid #ff4444 !important;
   border-radius: 0 !important;
   z-index: 41 !important;
 }
-  
   .discard-pile .mini-card {
     width: 28px !important;
     height: 38px !important;
@@ -840,12 +840,13 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     bottom: 190px !important;
   }
 }
- .wrap {
-  padding-bottom: 200px !important;
-} 
+
 /* Mobile card sizing fixes */
 @media (max-width: 768px) {
   /* Mobile hand cards - smaller by default */
+  .wrap {
+  padding-bottom: 200px !important;
+  } 
   .hand .card { 
     width: 45px !important; 
     height: 62px !important;
