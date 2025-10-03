@@ -1192,25 +1192,34 @@ function loadPlayerInventory(){
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
   const hand = side === 'player' ? playerHand : computerHand;
 
-  // Clear existing cards
   handEl.innerHTML = '';
-
   if (hand.length === 0) return;
 
-  const cardWidth = 86; // match your card image width
+  const cardWidth = 86;
   const containerWidth = handEl.clientWidth;
-  
-  // If ≤3 cards, just space them normally (no overlap)
+
   if (hand.length <= 3) {
     hand.forEach((card, i) => {
       const c = createHandCardEl(card, i, side);
       c.style.position = 'relative';
-      c.style.margin = '0 5px'; // small gap
+      c.style.margin = '0 5px';
       handEl.appendChild(c);
     });
     return;
   }
 
+  let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+  overlap = Math.min(overlap, cardWidth * 0.4);
+
+  hand.forEach((card, i) => {
+    const c = createHandCardEl(card, i, side);
+    c.style.position = 'absolute';
+    c.style.left = `${i * overlap}px`;
+    c.style.top = '0';
+    c.style.zIndex = i;
+    handEl.appendChild(c);
+  });
+}
   // For >3 cards, stack with overlap
   // Calculate overlap so the entire hand fits inside the container
   let overlap = (containerWidth - cardWidth) / (hand.length - 1);
@@ -1252,16 +1261,39 @@ function loadPlayerInventory(){
     return wrap;
   }
 
-  function createHandCardEl(card, idx){
-    const el = document.createElement('div'); el.className='card'; el.style.width='86px'; el.style.height='120px';
-    el.addEventListener('click', ()=>onHandClick(idx));
-    const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
-    const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${MAX_HP}</div>`;
-    el.appendChild(img); el.appendChild(stats);
-    const wrap = document.createElement('div'); wrap.style.width='86px'; wrap.style.height='120px';
-    wrap.appendChild(el);
-    return wrap;
+  function createHandCardEl(card, idx, side) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.width = '86px';
+  el.style.height = '120px';
+
+  // Only allow clicks on player hand
+  if (side === 'player') {
+    el.addEventListener('click', () => onHandClick(idx));
+    el.style.cursor = 'pointer';
+  } else {
+    el.style.cursor = 'default';
   }
+
+  const img = document.createElement('img');
+  img.src = card.src;
+  img.alt = card.name;
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'cover';
+
+  const stats = document.createElement('div');
+  stats.className = 'stats';
+  stats.innerHTML = `
+    <div style="font-size:10px">${card.name}</div>
+    <div style="font-size:10px">HP:${card.hp}</div>
+  `;
+
+  el.appendChild(img);
+  el.appendChild(stats);
+
+  return el; // ⚠️ return the card itself, not a wrapper
+}
 
   function createReserveCardEl(card, idx){
     const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
