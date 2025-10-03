@@ -133,16 +133,17 @@ html,body{
   justify-content:center;
 }
 
-.slot{
-  width:110px; /* Larger slots */
-  height:150px; /* Taller slots */
-  border:2px dashed rgba(255,255,255,0.25);
-  border-radius:10px;
-  background:rgba(0,0,0,0.25);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
+.slot {
+  width: 110px;
+  height: 170px; /* Increase height to accommodate HP bar */
+  border: 2px dashed rgba(255,255,255,0.25);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-bottom: 20px; /* Add padding for HP bar */
 }
 
 .slot .card{
@@ -2053,7 +2054,8 @@ function updateStatusIcons(slotElement, statusEffects) {
   }
 
   // render battlefield slots and global HP segments
-  function renderAll(){
+  // render battlefield slots and global HP segments
+function renderAll(){
   // slots
   for(let i=0;i<MAX_SLOTS;i++){
     const pSlotEl = playerSlotsEl.children[i];
@@ -2062,7 +2064,8 @@ function updateStatusIcons(slotElement, statusEffects) {
     
     if(playerSlots[i]){
       pSlotEl.classList.add('occupied');
-      pSlotEl.appendChild(makeBattleCardEl(playerSlots[i], 'player', i));
+      const cardEl = makeBattleCardEl(playerSlots[i], 'player', i);
+      pSlotEl.appendChild(cardEl);
       // Add status icons to the slot container
       updateStatusIcons(pSlotEl, playerSlots[i].statusEffects);
     }
@@ -2073,7 +2076,8 @@ function updateStatusIcons(slotElement, statusEffects) {
     
     if(computerSlots[i]){
       cSlotEl.classList.add('occupied');
-      cSlotEl.appendChild(makeBattleCardEl(computerSlots[i], 'computer', i));
+      const cardEl = makeBattleCardEl(computerSlots[i], 'computer', i);
+      cSlotEl.appendChild(cardEl);
       // Add status icons to the slot container
       updateStatusIcons(cSlotEl, computerSlots[i].statusEffects);
     }
@@ -2081,7 +2085,6 @@ function updateStatusIcons(slotElement, statusEffects) {
   renderHand();
   updateGlobalHPUI();
 }
-
   // create visual card for battlefield slot
 function makeBattleCardEl(slotObj, owner, slotIndex){
   const wrap = document.createElement('div'); 
