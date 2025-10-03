@@ -1186,41 +1186,28 @@ function loadPlayerInventory(){
 
   // render player hand UI (cards you can place)
   function renderHand(){
-  playerHandEl.innerHTML = '';
-  playerHand.forEach((card, idx) => {
-    const c = createHandCardEl(card, idx);
-    playerHandEl.appendChild(c);
-  });
-  
-  // Show computer's hand as card backs
-  computerHandEl.innerHTML = '';
-  
-  // Track used card indices from active cards AND discarded cards
-  const usedCardIndices = new Set();
-  
-  // Add indices from active cards on board
-  computerSlots.forEach(slot => {
-    if(slot && typeof slot.reserveIndex === 'number') {
-      usedCardIndices.add(slot.reserveIndex);
+    playerHandEl.innerHTML = '';
+    playerHand.forEach((card, idx) => {
+      const c = createHandCardEl(card, idx);
+      playerHandEl.appendChild(c);
+    });
+    
+    // Show computer's hand as card backs
+    computerHandEl.innerHTML = '';
+    
+    // Count how many active cards are on the board
+    const activeComputerCards = computerSlots.filter(s => s).length;
+    // Count how many computer cards are in the discard pile
+    const discardedComputerCards = discardPile.filter(item => item.owner === 'Computer').length;
+    
+    // Calculate remaining cards as total minus played (active + discarded)
+    const remainingCards = computerReserve.length - activeComputerCards - discardedComputerCards;
+    
+    for(let i = 0; i < remainingCards; i++){
+      const c = createCardBackEl();
+      computerHandEl.appendChild(c);
     }
-  });
-  
-  // IMPORTANT FIX: Also track cards in the discard pile
-  discardPile.forEach(entry => {
-    if(entry.owner === 'Computer' && entry.reserveIndex !== undefined) {
-      usedCardIndices.add(entry.reserveIndex);
-    }
-  });
-  
-  // Calculate remaining cards as total minus used indices
-  const remainingCards = computerReserve.length - usedCardIndices.size;
-  
-  // Create card backs for remaining cards
-  for(let i = 0; i < remainingCards; i++){
-    const c = createCardBackEl();
-    computerHandEl.appendChild(c);
   }
-}
 
   function createCardBackEl(){
     const el = document.createElement('div'); 
@@ -1437,9 +1424,8 @@ function showCardActions(side, idx){
               if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // Pass the reserveIndex when adding to discard pile
-                addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              setTimeout(()=>{
+                addToDiscardPile(target.card, 'Player');
                 computerSlots[idx] = null;
                 renderAll();
                 checkBattleOver();
@@ -1560,8 +1546,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => { 
-              // Pass the reserveIndex when adding to discard pile
-              addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null; 
               renderAll(); 
               checkBattleOver(); 
@@ -1587,9 +1572,8 @@ function showCardActions(side, idx){
           if(target.hp <= 0){
             setTimeout(() => {
               targetCardEl.classList.add('die');
-              setTimeout(() => { 
-                // Pass the reserveIndex when adding to discard pile
-                addToDiscardPile(target.card, 'Player', target.reserveIndex);
+              setTimeout(()=>{ 
+                addToDiscardPile(target.card, 'Player');
                 computerSlots[targetIdx] = null; 
                 renderAll(); 
                 checkBattleOver(); 
@@ -1667,9 +1651,8 @@ function showCardActions(side, idx){
         if(target.hp <= 0){
           setTimeout(() => {
             targetCardEl.classList.add('die');
-            setTimeout(() => { 
-              // Pass the reserveIndex when adding to discard pile
-              addToDiscardPile(target.card, 'Player', target.reserveIndex);
+            setTimeout(()=>{
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -1797,7 +1780,7 @@ function showCardActions(side, idx){
     const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
     if(shouldPlaceCard && computerPlaceCard()){
       // Placed a card, continue with other actions
-      setTimeout(() => performComputerActions(), 1000);
+      setTimeout(()=> performComputerActions(), 1000);
       return;
     }
     
@@ -1970,15 +1953,14 @@ function showCardActions(side, idx){
         setTimeout(() => {
           targetCardEl.classList.add('die');
           setTimeout(() => { 
-            // Pass the reserveIndex when adding to discard pile
-            addToDiscardPile(target.card, 'Player', target.reserveIndex);
-            computerSlots[targetIdx] = null;
-            renderAll();
-            checkBattleOver();
+            addToDiscardPile(target.card, 'Computer');
+            playerSlots[attackerIdx] = null; 
+            renderAll(); 
+            checkBattleOver(); 
           }, 600);
         }, 200);
       } else {
-        updateSlotUI('player', targetIdx);
+        updateSlotUI('player', attackerIdx);
         checkBattleOver();
       }
     }, finalDmg);
@@ -2531,7 +2513,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
         const attackCooldowns = {};
         card.attacks.forEach((attack, attackIdx) => {
           if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            attackCooldowns[attackIdx] = 0; // 0 means ready to use
+            attackCooldowns[attackIdx] = 0;
           }
         });
         
@@ -2580,14 +2562,6 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     computerSlots.forEach(slot => {
       if(slot && typeof slot.reserveIndex === 'number') {
         usedCardIndices.add(slot.reserveIndex);
-      }
-    });
-    
-    // IMPORTANT FIX: Also track discarded cards
-    discardedCards.forEach(card => {
-      const index = computerReserve.indexOf(card);
-      if(index !== -1) {
-        usedCardIndices.add(index);
       }
     });
     
@@ -2679,21 +2653,8 @@ const discardPileEl = document.getElementById('discardPile');
 const discardedCardsEl = document.getElementById('discardedCards');
 const discardCountEl = document.getElementById('discardCount');
 
-// OPTION 1: Update addToDiscardPile to store reserveIndex
-function addToDiscardPile(card, owner, reserveIndex) {
-  // Create the discard pile entry
-  const entry = { 
-    card, 
-    owner, 
-    timestamp: Date.now() 
-  };
-  
-  // Store the reserveIndex for computer cards
-  if (owner === 'Computer' && reserveIndex !== undefined) {
-    entry.reserveIndex = reserveIndex;
-  }
-  
-  discardPile.push(entry);
+function addToDiscardPile(card, owner) {
+  discardPile.push({ card, owner, timestamp: Date.now() });
   renderDiscardPile();
   
   // Add visual feedback
