@@ -1338,7 +1338,7 @@ function renderHand(side) {
     return wrap;
   }
 
-  function createHandCardEl(card, idx, side) {
+    function createHandCardEl(card, idx, side) {
   const el = document.createElement('div');
   el.className = 'card';
   el.style.width = '104px';
@@ -1347,6 +1347,7 @@ function renderHand(side) {
   // Only allow clicks on player hand
   if (side === 'player') {
     el.addEventListener('click', () => onHandClick(idx));
+    el.addEventListener('dblclick', () => showFullCardImage(card)); // Show full image on double-click
     el.style.cursor = 'pointer';
   } else {
     el.style.cursor = 'default';
@@ -1370,7 +1371,35 @@ function renderHand(side) {
   el.appendChild(stats);
 
   return el; // ⚠️ return the card itself, not a wrapper
-}
+    }
+    
+    function showFullCardImage(card) {
+  // This feature is for desktop only
+  if (window.innerWidth <= 768) return;
+
+  // Prevent multiple viewers
+  if (document.querySelector('.desktop-card-viewer')) return;
+
+  // Create backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'desktop-card-viewer';
+
+  // Create image element
+  const cardImage = document.createElement('img');
+  cardImage.src = card.src;
+
+  backdrop.appendChild(cardImage);
+  document.body.appendChild(backdrop);
+
+  // Show with fade-in effect
+  setTimeout(() => backdrop.classList.add('show'), 10);
+
+  // Click anywhere on the backdrop to close
+  backdrop.addEventListener('click', () => {
+    backdrop.classList.remove('show');
+        setTimeout(() => backdrop.remove(), 300); // Remove after transition
+      });
+    }
 
   function createReserveCardEl(card, idx){
     const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px';
