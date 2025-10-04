@@ -18,8 +18,7 @@ html,body{
   font-family:'Press Start 2P','DotGothic16',monospace;
   background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
   color:#fff;
-  overflow-x:hidden;    /* prevent horizontal scrollbars */
-  overflow-y:visible;   /* ✅ allow upward expansion from top hand */
+  overflow:hidden;
 }
 
 .wrap{
@@ -163,13 +162,11 @@ html,body{
 /* Larger hand area */
 .hand {
   position: relative;
-  height: 300px;      /* match your card height */
+  height: 120px;      /* match your card height */
   width: 100%;        /* fit to gameboard width */
-  overflow-x: hidden;   /* prevent sideways scroll/clipping */
-  overflow-y: visible !important; /* allow upward expansion */
+  overflow: visible;   /* stop cards spilling outside */
   display: flex;
   justify-content: center;
-  z-index: 10; /* keeps cards above nearby elements */
 }
 .hand .card:hover {
   transform: translateY(-10px) scale(1.1);
@@ -177,7 +174,7 @@ html,body{
 }
   .hand .card {
   border-radius: 8px;
-  overflow: visible; /* ensures image stays inside the rounded shape */
+  overflow: hidden; /* ensures image stays inside the rounded shape */
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   transition: transform 0.2s ease;
 }
@@ -1275,10 +1272,7 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-// allow cards to expand upward/out of the hand container
-    handEl.style.overflowX = 'hidden';
-    handEl.style.overflowY = 'visible';
-    handEl.style.position = 'relative';
+    handEl.style.overflow = 'hidden';
     return;
   }
 
@@ -1317,10 +1311,7 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-// allow cards to expand upward/out of the hand container
-    handEl.style.overflowX = 'hidden';
-    handEl.style.overflowY = 'visible';
-    handEl.style.position = 'relative';
+    handEl.style.overflow = 'hidden';
   }
 }
   function createCardBackEl(){
@@ -2961,7 +2952,7 @@ function handleTouchEnd(e) {
 
 function expandCard(card) {
   // Prevent scrolling when expanded
-  document.body.style.overflow = 'visible';
+  document.body.style.overflow = 'hidden';
   
   // Create backdrop
   const backdrop = document.createElement('div');
@@ -3004,15 +2995,7 @@ function expandCard(card) {
   card._backdrop = backdrop;
   card._expandedImage = expandedImage;
 }
-function ensureHandOverflowVisible(){
-  [playerHandEl, computerHandEl].forEach(el => {
-    if(!el) return;
-    el.style.overflowX = 'hidden';
-    el.style.overflowY = 'visible';
-    el.style.position = 'relative';
-    el.style.zIndex = '60';
-  });
-}  
+
 function collapseCard() {
   const expandedImage = document.querySelector('.touch-expanded-image');
   if (!expandedImage) return;
@@ -3044,7 +3027,7 @@ function collapseCard() {
   // Restore scrolling
   document.body.style.overflow = '';
 }
-  
+
 // Initialize touch listeners after DOM is ready
 addTouchHoldListeners();
 })(document);
@@ -3061,16 +3044,9 @@ addTouchHoldListeners();
 }
 
 .wrap {
-  overflow-x: hidden;   /* stop sideways scrollbars */
-  overflow-y: visible;  /* allow vertical expansion */
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
-}
-  /* --- force hands to allow upward expansion (desktop) --- */
-#playerHand, #computerHand, .hand {
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-  position: relative !important;
-  z-index: 60 !important;
 }
 </style>
 </body>
