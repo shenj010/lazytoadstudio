@@ -209,7 +209,23 @@ html,body{
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none; /* Initially not interactive */
 }
+
+.desktop-card-viewer.show {
+  opacity: 1;
+  pointer-events: auto; /* Make it interactive when shown */
+}
+
+.desktop-card-viewer img {
+  max-width: 80vw;
+  max-height: 80vh;
+  border: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
+  object-fit: contain;
+}
+
 
 /* Integrated log panel */
 .log{
