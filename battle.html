@@ -3004,7 +3004,15 @@ function expandCard(card) {
   card._backdrop = backdrop;
   card._expandedImage = expandedImage;
 }
-
+function ensureHandOverflowVisible(){
+  [playerHandEl, computerHandEl].forEach(el => {
+    if(!el) return;
+    el.style.overflowX = 'hidden';
+    el.style.overflowY = 'visible';
+    el.style.position = 'relative';
+    el.style.zIndex = '60';
+  });
+}  
 function collapseCard() {
   const expandedImage = document.querySelector('.touch-expanded-image');
   if (!expandedImage) return;
@@ -3036,7 +3044,7 @@ function collapseCard() {
   // Restore scrolling
   document.body.style.overflow = '';
 }
-
+  
 // Initialize touch listeners after DOM is ready
 addTouchHoldListeners();
 })(document);
