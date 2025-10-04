@@ -3055,6 +3055,13 @@ addTouchHoldListeners();
   overflow-y: visible;  /* allow vertical expansion */
   position: relative;
 }
+  /* --- force hands to allow upward expansion (desktop) --- */
+#playerHand, #computerHand, .hand {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  position: relative !important;
+  z-index: 60 !important;
+}
 </style>
 </body>
 </html>
