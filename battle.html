@@ -172,6 +172,26 @@ html,body{
   transform: translateY(-10px) scale(1.1);
   z-index: 999 !important;
 }
+  .hand .card {
+  border-radius: 8px;
+  overflow: hidden; /* ensures image stays inside the rounded shape */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease;
+}
+
+.hand .card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.hand .card.selected {
+  transform: translateY(-10px) scale(1.1);
+  border-radius: 8px;
+  z-index: 999 !important;
+}
+
 
 /* Integrated log panel */
 .log{
@@ -796,10 +816,13 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     padding: 2px !important;
   }
 
-  .hand { 
-    min-height: 90px !important; 
+  .hand {
+    min-height: 90px !important;
     gap: 6px !important;
     order: 1 !important;
+    overflow: visible !important;  /* allow pop-up cards to overflow */
+    position: relative !important;
+    z-index: 5 !important;
   }
   
   /* Mobile turn panel */
@@ -3019,6 +3042,15 @@ addTouchHoldListeners();
 .slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
 /* Keep stats in DOM for JS but hide visually */
 .card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
+  .area {
+  overflow: visible !important;
+}
+
+.wrap {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
 </style>
 </body>
 </html>
