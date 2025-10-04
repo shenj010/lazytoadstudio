@@ -165,10 +165,10 @@ html,body{
   position: relative;
   height: 120px;      /* match your card height */
   width: 100%;        /* fit to gameboard width */
-  overflow: visible;   /* allow cards to pop out */
-  display: flex;
-  justify-content: center;
-  z-index: 10; /* Ensure hand context is above other elements */
+      overflow: visible;   /* allow cards to pop out */
+      display: flex;
+      justify-content: center;
+      z-index: 10; /* Ensure hand context is above other elements */
 }
 .hand .card:hover {
   transform: translateY(-10px) scale(1.1);
@@ -1274,7 +1274,6 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-    handEl.style.overflow = 'hidden';
     return;
   }
 
@@ -1313,7 +1312,7 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-    handEl.style.overflow = 'hidden';
+    handEl.style.overflow = 'visible';
   }
 }
   function createCardBackEl(){
@@ -1955,7 +1954,7 @@ function showCardActions(side, idx){
     
     // Check if there's an opposite target
     const targetSlot = playerSlots[slotIdx];
-    const canAttack = targetSlot && targetSlot.hp > 0;
+    const canAttack = targetSlot && targetSlot.hp >  0;
     
     // Strategic decision: attack if possible, defend if threatened or randomly
     let action;
