@@ -1239,87 +1239,87 @@ function renderHand(side) {
 
   // Clear
   handEl.innerHTML = '';
-  if (!hand) return;
-
-  const cardWidth = 86;
-  const containerWidth = handEl.clientWidth || 400;
-
-  // ======================
-  // PLAYER HAND
-  // ======================
-  if (side === 'player') {
-    if (hand.length === 0) return;
-
-    if (hand.length <= 3) {
-      hand.forEach((card, i) => {
-        const c = createHandCardEl(card, i, 'player');
-        c.style.position = 'relative';
-        c.style.margin = '0 5px';
-        handEl.appendChild(c);
-      });
-      return;
-    }
-
-    let overlap = (containerWidth - cardWidth) / (hand.length - 1);
-    overlap = Math.min(overlap, cardWidth * 0.4);
-
-    hand.forEach((card, i) => {
-      const c = createHandCardEl(card, i, 'player');
-      c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
-      c.style.top = '0';
-      c.style.zIndex = i;
-      handEl.appendChild(c);
-    });
-
-    handEl.style.height = '120px';
-    handEl.style.position = 'relative';
-    return;
-  }
-
-  // ======================
-  // COMPUTER HAND
-  // ======================
-  if (side === 'computer') {
-    const activeComputerCards = computerSlots.filter(s => s).length;
-    const discardedComputerCards = (discardPile || []).filter(item => item.owner === 'Computer').length;
-    const totalReserve = computerReserve ? computerReserve.length : 0;
-    const remainingCards = Math.max(0, totalReserve - activeComputerCards - discardedComputerCards);
-
-    if (remainingCards === 0) return;
-
-    if (remainingCards <= 3) {
-      for (let i = 0; i < remainingCards; i++) {
-        const c = createCardBackEl();
-        c.style.position = 'relative';
-        c.style.margin = '0 3px';
-        handEl.appendChild(c);
+      if (!hand) return;
+    
+      const cardWidth = 104;
+      const containerWidth = handEl.clientWidth || 400;
+    
+      // ======================
+      // PLAYER HAND
+      // ======================
+      if (side === 'player') {
+        if (hand.length === 0) return;
+    
+        if (hand.length <= 3) {
+          hand.forEach((card, i) => {
+            const c = createHandCardEl(card, i, 'player');
+            c.style.position = 'relative';
+            c.style.margin = '0 5px';
+            handEl.appendChild(c);
+          });
+          return;
+        }
+    
+        let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+        overlap = Math.min(overlap, cardWidth * 0.4);
+    
+        hand.forEach((card, i) => {
+          const c = createHandCardEl(card, i, 'player');
+          c.style.position = 'absolute';
+          c.style.left = `${i * overlap}px`;
+          c.style.top = '0';
+          c.style.zIndex = i;
+          handEl.appendChild(c);
+        });
+    
+        handEl.style.height = '120px';
+        handEl.style.position = 'relative';
+        return;
       }
-      return;
+    
+      // ======================
+      // COMPUTER HAND
+      // ======================
+      if (side === 'computer') {
+        const activeComputerCards = computerSlots.filter(s => s).length;
+        const discardedComputerCards = (discardPile || []).filter(item => item.owner === 'Computer').length;
+        const totalReserve = computerReserve ? computerReserve.length : 0;
+        const remainingCards = Math.max(0, totalReserve - activeComputerCards - discardedComputerCards);
+    
+        if (remainingCards === 0) return;
+    
+        if (remainingCards <= 3) {
+          for (let i = 0; i < remainingCards; i++) {
+            const c = createCardBackEl();
+            c.style.position = 'relative';
+            c.style.margin = '0 3px';
+            handEl.appendChild(c);
+          }
+          return;
+        }
+    
+        let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
+        overlap = Math.min(overlap, cardWidth * 0.4);
+    
+        for (let i = 0; i < remainingCards; i++) {
+          const c = createCardBackEl();
+          c.style.position = 'absolute';
+          c.style.left = `${i * overlap}px`;
+          c.style.top = '0';
+          c.style.zIndex = i;
+          handEl.appendChild(c);
+        }
+    
+        handEl.style.height = '120px';
+        handEl.style.position = 'relative';
+        handEl.style.overflow = 'visible';
+      }
     }
-
-    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
-    overlap = Math.min(overlap, cardWidth * 0.4);
-
-    for (let i = 0; i < remainingCards; i++) {
-      const c = createCardBackEl();
-      c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
-      c.style.top = '0';
-      c.style.zIndex = i;
-      handEl.appendChild(c);
-    }
-
-    handEl.style.height = '120px';
-    handEl.style.position = 'relative';
-    handEl.style.overflow = 'visible';
-  }
-}
   function createCardBackEl(){
     const el = document.createElement('div'); 
     el.className='card'; 
-    el.style.width='86px'; 
-    el.style.height='120px';
+    el.style.width='104px'; 
+    el.style.height='140px';
     el.style.cursor='default';
     
     const img = document.createElement('img'); 
@@ -1332,8 +1332,8 @@ function renderHand(side) {
     el.appendChild(img);
     
     const wrap = document.createElement('div'); 
-    wrap.style.width='86px'; 
-    wrap.style.height='120px';
+    wrap.style.width='104px'; 
+    wrap.style.height='140px';
     wrap.appendChild(el);
     return wrap;
   }
@@ -1341,8 +1341,8 @@ function renderHand(side) {
   function createHandCardEl(card, idx, side) {
   const el = document.createElement('div');
   el.className = 'card';
-  el.style.width = '86px';
-  el.style.height = '120px';
+  el.style.width = '104px';
+  el.style.height = '140px';
 
   // Only allow clicks on player hand
   if (side === 'player') {
@@ -1442,7 +1442,7 @@ function renderHand(side) {
     });
   }
 
-// Add this check at the beginning of showCardActions
+  // Add this check at the beginning of showCardActions
 function showCardActions(side, idx){
   if(side !== 'player' || !playerTurn) return;
   
@@ -2037,7 +2037,7 @@ function showCardActions(side, idx){
   
   // Get card elements for animation
   const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[targetIdx];
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   const targetCardEl = targetSlotEl.querySelector('.card');
   
@@ -2434,8 +2434,8 @@ function renderAll(){
 function makeBattleCardEl(slotObj, owner, slotIndex){
   const wrap = document.createElement('div'); 
   wrap.className = `card ${slotObj.used ? 'used' : ''}`;
-  wrap.style.width='86px'; 
-  wrap.style.height='120px';
+  wrap.style.width='104px'; 
+  wrap.style.height='140px';
   wrap.style.position = 'relative';
   
   const img = document.createElement('img'); 
