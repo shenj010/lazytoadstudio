@@ -164,7 +164,8 @@ html,body{
   position: relative;
   height: 120px;      /* match your card height */
   width: 100%;        /* fit to gameboard width */
-  overflow: visible;   /* stop cards spilling outside */
+  overflow-x: hidden;   /* prevent sideways scroll/clipping */
+  overflow-y: visible !important; /* allow upward expansion */
   display: flex;
   justify-content: center;
   z-index: 10; /* keeps cards above nearby elements */
