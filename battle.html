@@ -18,7 +18,8 @@ html,body{
   font-family:'Press Start 2P','DotGothic16',monospace;
   background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
   color:#fff;
-  overflow:hidden;
+  overflow-x:hidden;
+  overflow-y:auto;
 }
 
 .wrap{
@@ -164,9 +165,10 @@ html,body{
   position: relative;
   height: 120px;      /* match your card height */
   width: 100%;        /* fit to gameboard width */
-  overflow: hidden;   /* stop cards spilling outside */
+  overflow: visible;   /* allow cards to pop out */
   display: flex;
   justify-content: center;
+  z-index: 10; /* Ensure hand context is above other elements */
 }
 .hand .card:hover {
   transform: translateY(-10px) scale(1.1);
@@ -307,7 +309,7 @@ html,body{
   --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
 }
 
-html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow:hidden}
+html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow-x:hidden;overflow-y:auto;}
 .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
 .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
