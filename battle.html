@@ -1275,7 +1275,9 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-    handEl.style.overflow = 'hidden';
+// allow cards to expand upward/out of the hand container
+    handEl.style.overflowX = 'hidden';
+    handEl.style.overflowY = 'visible';
     return;
   }
 
@@ -1314,7 +1316,9 @@ function renderHand(side) {
 
     handEl.style.height = '120px';
     handEl.style.position = 'relative';
-    handEl.style.overflow = 'hidden';
+// allow cards to expand upward/out of the hand container
+    handEl.style.overflowX = 'hidden';
+    handEl.style.overflowY = 'visible';
   }
 }
   function createCardBackEl(){
