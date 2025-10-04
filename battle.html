@@ -688,10 +688,14 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   /* Battle log and discard split 50/50 */
   .bottom-panel .log,
   .bottom-panel .discard-pile {
-    flex: 1;                
-    overflow-y: auto;       /* scroll inside if needed */
-    padding: 6px;
-    box-sizing: border-box;
+    position: relative !important; /* Not fixed! */
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    flex: 1;
+    width: 50% !important;
+    height: 100% !important;
   }
 
   /* Battle log styling */
