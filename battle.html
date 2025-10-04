@@ -1134,6 +1134,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   let selected = null; // {side:'player'|'computer', slotIndex:int} or hand card reference
   let playerTurn = true;
   let currentActionPanel = null; // reference to active action panel
+  let clickTimer = null; // Timer to differentiate single/double clicks
 
   // elements
   const playerHandEl = document.getElementById('playerHand');
@@ -1338,7 +1339,7 @@ function renderHand(side) {
     return wrap;
   }
 
-    function createHandCardEl(card, idx, side) {
+     function createHandCardEl(card, idx, side) {
   const el = document.createElement('div');
   el.className = 'card';
   el.style.width = '104px';
@@ -1347,7 +1348,13 @@ function renderHand(side) {
   // Only allow clicks on player hand
   if (side === 'player') {
     el.addEventListener('click', () => onHandClick(idx));
-    el.addEventListener('dblclick', () => showFullCardImage(card)); // Show full image on double-click
+    el.addEventListener('dblclick', () => {
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+      }
+      showFullCardImage(card); // Show full image on double-click
+    });
     el.style.cursor = 'pointer';
   } else {
     el.style.cursor = 'default';
@@ -1463,12 +1470,21 @@ function renderHand(side) {
   }
 
   function onHandClick(index){
-    hideActionPanel();
-    clearSelections();
-    selected = { type:'hand', index };
-    document.querySelectorAll('#playerHand .card').forEach((c,i) => {
-      if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
-    });
+    // Clear any existing timer
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+
+    // Set a timer to handle single-click action
+    clickTimer = setTimeout(() => {
+      hideActionPanel();
+      clearSelections();
+      selected = { type:'hand', index };
+      document.querySelectorAll('#playerHand .card').forEach((c,i) => {
+        if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
+      });
+    }, 250); // 250ms delay to wait for a potential double-click
   }
 
   // Add this check at the beginning of showCardActions
