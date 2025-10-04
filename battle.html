@@ -18,7 +18,8 @@ html,body{
   font-family:'Press Start 2P','DotGothic16',monospace;
   background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
   color:#fff;
-  overflow:hidden;
+  overflow-x:hidden;    /* prevent horizontal scrollbars */
+  overflow-y:visible;   /* ✅ allow upward expansion from top hand */
 }
 
 .wrap{
