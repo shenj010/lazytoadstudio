@@ -194,6 +194,22 @@ html,body{
   z-index: 999 !important;
 }
 
+/* Desktop full card viewer */
+.desktop-card-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
 /* Integrated log panel */
 .log{
@@ -1721,7 +1737,7 @@ function showCardActions(side, idx){
             targetCardEl.classList.add('die');
             setTimeout(() => { 
               addToDiscardPile(target.card, 'Computer');
-              computerSlots[targetIdx] = null; 
+              computerSlots[targetIdx] = null;
               renderAll(); 
               checkBattleOver(); 
             }, 600);
