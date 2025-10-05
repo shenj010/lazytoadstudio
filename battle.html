@@ -2548,6 +2548,11 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         const attackerCardEl = attackerSlotEl.querySelector('.card');
         const targetCardEl = targetSlotEl.querySelector('.card');
 
+        // IMMEDIATELY update visual "used" state without affecting animation
+        if(attackerCardEl) {
+          attackerCardEl.classList.add('used');
+        }
+
         const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
         attackerCardEl.classList.add(animationClass);
 
