@@ -2170,6 +2170,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
           }, 600);
         }, 200);
       } else {
+        updateSlotUI('computer', targetIdx); // ADD THIS LINE to update the UI 
         addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
         checkBattleOver();
       }
