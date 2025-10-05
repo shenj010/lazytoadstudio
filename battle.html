@@ -826,25 +826,20 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   .hp-segments { width: 90% !important; gap: 1px !important; }
   .seg { height: 12px !important; }
 
-  .slots {
-    flex-wrap: nowrap !important; /* Prevent wrapping */
-    justify-content: space-between !important; /* Distribute space evenly */
-    width: 100% !important;
-    overflow-x: auto !important; /* Allow horizontal scrolling if needed */
-    padding: 0 2px !important;
-    gap: 4px !important; /* Smaller gap between slots */
+  .slots { 
+    flex-wrap: wrap !important; 
+    gap: 6px !important; 
+    justify-content: center !important;
   }
-  
-  .slot {
-    width: 60px !important; /* Make slots smaller */
-    min-width: 60px !important; /* Ensure consistent sizing */
-    height: 95px !important;
-    margin: 0 !important;
+
+  .slot { 
+    width: 60px !important; 
+    height: 85px !important;
   }
-  
-  .slot .card {
-    width: 56px !important;
-    height: 80px !important;
+
+  .slot .card { 
+    width: 56px !important; 
+    height: 78px !important;
   }
 
   .card .stats { 
@@ -873,26 +868,20 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   }
   
   /* Mobile action panel - bottom center */
-  .card-action-panel {
-    background: rgba(0,0,0,0.95) !important;
-    border: 2px solid var(--accent) !important;
-    border-radius: 8px !important;
-    padding: 10px !important;
+  .card-action-panel { 
+    position: fixed !important;
+    bottom: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: auto !important;
+    right: auto !important;
     max-width: 280px !important;
-    width: 90% !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    z-index: 1000 !important;
+    min-width: 200px !important;
   }
   
-  .card-action-panel .btn {
-    background: #fff !important;
-    color: #000 !important;
-    border: 2px solid #000 !important;
-    padding: 8px 12px !important;
-    text-align: center !important;
-    font-size: 10px !important;
-    border-radius: 4px !important;
-    width: 100% !important;
+  .card-action-panel .btn { 
+    font-size: 8px !important; 
+    padding: 4px 8px !important;
   }
   
   /* Mobile status icons */
