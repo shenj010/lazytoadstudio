@@ -1,4 +1,5 @@
 
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -2434,59 +2435,9 @@ slot.card.attacks.forEach((attack, attackIndex) => {
       // Evaluate defending as a baseline option with a low score
       possibleMoves.push({ type: 'defend', score: 5, attackerIdx });
 
-      // NEW: Evaluate switching positions for mobile cards
-      if (slot.card.mobile) {
-        // Find empty slots to potentially move to
-        const emptySlots = [];
-        for (let i = 0; i < MAX_SLOTS; i++) {
-          if (i !== attackerIdx && computerSlots[i] === null) {
-            emptySlots.push(i);
-          }
-        }
-
-        // For each empty slot, evaluate if moving there would be beneficial
-        emptySlots.forEach(destIdx => {
-          let switchScore = 0;
-          
-          // Check if any attacks would become possible after switching
-          slot.card.attacks.forEach(attack => {
-            // Skip if attack is on cooldown
-            if (slot.attackCooldowns && slot.attackCooldowns[attack.id] > 0) return;
-            
-            // Count valid targets from current position
-            const currentTargets = getValidTargets(attackerIdx, attack.pattern, 'computer').length;
-            
-            // Count valid targets from new position (simulating the move)
-            const newTargets = getValidTargets(destIdx, attack.pattern, 'computer').length;
-            
-            // Add score if this move enables more attacks
-            if (newTargets > currentTargets) {
-              switchScore += 10 + (newTargets - currentTargets) * 5;
-            }
-          });
-          
-          // Check if switching would position opposite a player card
-          const playerOppositeCurrent = playerSlots[attackerIdx] ? 1 : 0;
-          const playerOppositeNew = playerSlots[destIdx] ? 1 : 0;
-          
-          if (playerOppositeNew > playerOppositeCurrent) {
-            switchScore += 8; // Bonus for moving to engage player cards
-          }
-          
-          // Add the move if it has any value
-          if (switchScore > 0) {
-            possibleMoves.push({
-              type: 'switch',
-              score: switchScore,
-              attackerIdx,
-              destIdx
-            });
-          }
-        });
-      }
-
       // Evaluate all available attacks for the current card
       slot.card.attacks.forEach((attack, attackIdx) => {
+        // STRICT COOLDOWN CHECK - skip if on cooldown
         if (isAttackOnCooldown(slot, attackIdx)) return;
 
         const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
@@ -2529,12 +2480,12 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     // 3. Decide on the single best move from all possibilities
     let bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
 
-    // 4. Strategic card placement logic
+    // 4. ENHANCED CARD PLACEMENT STRATEGY
     const computerCardCount = computerSlots.filter(s => s).length;
     const playerCardCount = playerSlots.filter(s => s).length;
     const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
 
-    // Determine if computer should place a card
+    // Determine if computer should place a card based on strategic considerations
     let shouldPlaceCard = false;
 
     // Place card if player has more cards (defensive)
@@ -2560,45 +2511,69 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     
     // 5. Execute the best move
     if (bestMove && bestMove.type === 'attack') {
-        // Attack logic remains unchanged
         const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
         
         // Mark the card as used
         const attacker = computerSlots[attackerIdx];
         attacker.used = true;
 
-        // Set cooldown
-        if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+        // Set cooldown - PROPER COOLDOWN MANAGEMENT
+        if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
             attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
         }
 
-        // Attack animation and damage logic
-        // ... (existing attack execution code)
+        // Log and perform the attack animation and logic
+        addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
         
-    } else if (bestMove && bestMove.type === 'switch') {
-        // NEW: Execute switch position move
-        const { attackerIdx, destIdx } = bestMove;
-        const attacker = computerSlots[attackerIdx];
-        
-        // Log the action
-        addLog('computer', `${attacker.card.name} changes position for tactical advantage.`);
-        
-        // Perform the switch
-        computerSlots[destIdx] = attacker;
-        computerSlots[attackerIdx] = null;
-        
-        // Mark as used
-        attacker.used = true;
-        
-        // Update UI
-        renderAll();
-        
-        // Continue with next action after a delay
-        setTimeout(performComputerActions, 1200);
-        return;
+        const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+        const targetSlotEl = playerSlotsEl.children[targetIdx];
+        const attackerCardEl = attackerSlotEl.querySelector('.card');
+        const targetCardEl = targetSlotEl.querySelector('.card');
+
+        const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+        attackerCardEl.classList.add(animationClass);
+
+        const animTiming = getAnimationTiming(animationClass);
+
+        setTimeout(() => {
+            let finalDmg = applyDamage(attacker, playerSlots[targetIdx], attack.damage);
+            
+            if (attack.effect) {
+                applyStatusEffect(playerSlots[targetIdx], attack.effect, attack.duration, attacker.card.name);
+            }
+
+            if (finalDmg > 0) {
+                createImpactEffect(targetSlotEl, attack.pattern);
+                showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+                targetCardEl.classList.add('hit', 'flash');
+                setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+
+                playerSlots[targetIdx].hp = Math.max(0, playerSlots[targetIdx].hp - finalDmg);
+
+                if (playerSlots[targetIdx].hp <= 0) {
+                    setTimeout(() => {
+                        targetCardEl.classList.add('die');
+                        setTimeout(() => {
+                            addToDiscardPile(playerSlots[targetIdx].card, 'Player', playerSlots[targetIdx]);
+                            playerSlots[targetIdx] = null;
+                            renderAll();
+                            checkBattleOver();
+                        }, 600);
+                    }, 200);
+                } else {
+                    updateSlotUI('player', targetIdx);
+                }
+            }
+            checkBattleOver();
+        }, animTiming * 0.6);
+
+        setTimeout(() => {
+            attackerCardEl.classList.remove(animationClass);
+        }, animTiming);
+
     } else if (bestMove) {
-        // If no attack or switch is worthwhile, default to defending
+        // If no attack is worthwhile, default to defending
         performComputerDefend(bestMove.attackerIdx);
     }
 
