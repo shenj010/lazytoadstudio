@@ -971,6 +971,45 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     font-size: 11px !important;
     top: -14px !important;
   }
+  .slot, .area {
+    overflow: visible !important;
+    z-index: 1 !important;
+  }
+  
+  /* Make sure animations appear above all other content */
+  .attacking-forward,
+  .attacking-backward, 
+  .attacking-diagonal-left,
+  .attacking-diagonal-right,
+  .attacking-knight,
+  .attacking-sweep,
+  .attacking-pierce,
+  .attacking-adjacent-left,
+  .attacking-adjacent-right,
+  .flying-attack {
+    z-index: 2000 !important;
+    position: absolute !important;
+  }
+  
+  /* Ensure status icons are visible above containers */
+  .status-icon {
+    z-index: 1000 !important;
+  }
+  
+  /* Prevent status effect popup from being cut off */
+  .status-effect-popup {
+    z-index: 2500 !important;
+  }
+  
+  /* Fix damage popups being cut off */
+  .dmg-pop {
+    z-index: 2000 !important;
+  }
+
+  /* Ensure arena container doesn't clip */
+  .arena {
+    overflow: visible !important;
+  }
 }
 
 /* Very small mobile screens - even more compact hand cards */
