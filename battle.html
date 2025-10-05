@@ -2365,20 +2365,30 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     });
     
     setTimeout(()=>{
-      // Process status effects on computer cards FIRST
-      processStatusEffects('computer');
+  // Process status effects on computer cards FIRST
+  processStatusEffects('computer');
+  
+  // Reset ALL computer card used status and process cooldowns
+  computerSlots.forEach(slot => {
+    if(slot) {
+      slot.used = false;
+      slot.defending = false;
       
-      // Reset ALL computer card used status and process cooldowns
-      computerSlots.forEach(slot => {
-        if(slot) {
-          slot.used = false;
-          slot.defending = false;
-          
-          // Reduce cooldowns for computer cards
-          if(slot.attackCooldowns) {
-            Object.keys(slot.attackCooldowns).forEach(attackIdx => {
-              if(slot.attackCooldowns[attackIdx] > 0) {
-                slot.attackCooldowns[attackIdx]--;
+      // ENSURE attackCooldowns object exists
+      if(!slot.attackCooldowns) {
+        slot.attackCooldowns = {};
+        slot.card.attacks.forEach((attack, idx) => {
+          if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            slot.attackCooldowns[idx] = 0;
+          }
+        });
+      }
+      
+      // Reduce cooldowns for computer cards
+      if(slot.attackCooldowns) {
+        Object.keys(slot.attackCooldowns).forEach(attackIdx => {
+          if(slot.attackCooldowns[attackIdx] > 0) {
+            slot.attackCooldowns[attackIdx]--;
                 if(slot.attackCooldowns[attackIdx] === 0) {
                   try {
                     const attackName = slot.card.attacks[parseInt(attackIdx)].name;
@@ -2509,13 +2519,20 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         }
     }
     
-    // 5. Execute the best move
+   // 5. Execute the best move
     if (bestMove && bestMove.type === 'attack') {
         const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
         
         // Mark the card as used
         const attacker = computerSlots[attackerIdx];
         attacker.used = true;
+
+        // IMMEDIATELY update visual "used" state without affecting animation
+        const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+        const attackerCardEl = attackerSlotEl.querySelector('.card');
+        if(attackerCardEl) {
+          attackerCardEl.classList.add('used');
+        }
 
         // Set cooldown - PROPER COOLDOWN MANAGEMENT
         if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
@@ -2568,9 +2585,9 @@ slot.card.attacks.forEach((attack, attackIndex) => {
             checkBattleOver();
         }, animTiming * 0.6);
 
-        setTimeout(() => {
-            updateSlotUI('computer', attackerIdx);
+       setTimeout(() => {
             attackerCardEl.classList.remove(animationClass);
+            updateSlotUI('computer', attackerIdx);
         }, animTiming);
 
     } else if (bestMove) {
