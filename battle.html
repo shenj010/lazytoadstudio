@@ -1465,7 +1465,7 @@ function loadPlayerInventory(){
   // render player or computer hand
 function renderHand(side) {
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
-  const hand = side === 'player' ? playerHand : computerHand;
+  const hand = side === 'player' ? playerHand : computerReserve;
 
   // Clear
   handEl.innerHTML = '';
