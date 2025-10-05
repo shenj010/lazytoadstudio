@@ -1715,7 +1715,21 @@ function renderHand(side) {
         renderAll();
       }
     } else {
-      if(playerSlots[idx] && playerTurn){
+      const slot = playerSlots[idx];
+      if(slot && playerTurn) {
+        // Check if the card is used before showing actions
+        if(slot.used) {
+          // Give feedback when trying to use a card that's already acted
+          addLog('system', `${slot.card.name} has already acted this turn.`);
+          return;
+        }
+
+        // Also check for status effects that prevent actions
+        if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+          addLog('system', `${slot.card.name} cannot act due to status effects!`);
+          return;
+        }
+        
         hideActionPanel();
         showCardActions('player', idx);
       }
