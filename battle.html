@@ -1049,6 +1049,36 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     transform: translate(-50%, -50%) scale(1.8) !important;
   }
 }
+  /* Fix for attack buttons overflowing on mobile */
+@media (max-width: 768px) {
+  /* Card action panel styling improvements */
+  .card-action-panel {
+    width: 85% !important;
+    max-width: 250px !important;
+    padding: 8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Simplified button text on mobile */
+  .card-action-panel .btn {
+    white-space: normal !important;
+    word-break: break-word !important;
+    padding: 8px 10px !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* Ensure cooldown indicator stays positioned correctly */
+  .card-action-panel .btn.cooldown::after {
+    right: -3px !important;
+    top: -10px !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -1800,39 +1830,60 @@ function showCardActions(side, idx){
   const rect = slotEl.getBoundingClientRect();
   
   if(window.innerWidth <= 768) {
-    panel.style.position = 'fixed';
-    panel.style.bottom = '160px';
-    panel.style.left = '50%';
-    panel.style.transform = 'translateX(-50%)';
-    panel.style.top = 'auto';
-    panel.style.right = 'auto';
-  } else {
-    panel.style.left = (rect.right + 10) + 'px';
-    panel.style.top = rect.top + 'px';
-  }
+  panel.style.position = 'fixed';
+  panel.style.bottom = '160px';
+  panel.style.left = '50%';
+  panel.style.transform = 'translateX(-50%)';
+  panel.style.top = 'auto';
+  panel.style.right = 'auto';
+} else {
+  panel.style.left = (rect.right + 10) + 'px';
+  panel.style.top = rect.top + 'px';
+}
 
-  // Create attack buttons with pattern support
-  slot.card.attacks.forEach((attack, attackIndex) => {
-    const isOnCooldown = isAttackOnCooldown(slot, attackIndex);
-    const cooldownTurns = getAttackCooldown(slot, attackIndex);
+// Create attack buttons with pattern support
+slot.card.attacks.forEach((attack, attackIndex) => {
+  const isOnCooldown = isAttackOnCooldown(slot, attackIndex);
+  const cooldownTurns = getAttackCooldown(slot, attackIndex);
+  
+  const pattern = attack.pattern || 'straight';
+  const validTargets = getValidTargets(idx, pattern, 'player');
+  const hasTargets = validTargets.length > 0;
+  
+  const isDisabled = !hasTargets || isOnCooldown;
+  
+  const attackBtn = document.createElement('div');
+  attackBtn.className = `btn ${isDisabled ? 'disabled' : ''} ${isOnCooldown ? 'cooldown' : ''}`;
+  
+  let buttonText = "";
+  
+  if(window.innerWidth <= 768) {
+    // Mobile format
+    buttonText = attack.name;
+    if(attack.damage > 0) buttonText += ` (${attack.damage})`;
     
-    const pattern = attack.pattern || 'straight';
-    const validTargets = getValidTargets(idx, pattern, 'player');
-    const hasTargets = validTargets.length > 0;
+    // Use symbol for status effect
+    if(attack.effect) {
+      const symbols = {
+        'stun': '⚡',
+        'sleep': '💤',
+        'poison': '☠',
+        'weaken': '⬇️'
+      };
+       buttonText += ` ${symbols[attack.effect] || ''}`;
+      }
+      attackBtn.innerHTML = buttonText;
+    } else {
+      // Desktop format - more detailed
+      let buttonText = attack.name;
+      if(attack.damage > 0) buttonText += ` (${attack.damage} dmg)`;
+      if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+      if(isOnCooldown) buttonText += ` CD:${cooldownTurns}`;
+      if(!hasTargets && !isOnCooldown) buttonText += ` [NO TARGET]`;
+      attackBtn.innerHTML = buttonText;
+    }
     
-    const isDisabled = !hasTargets || isOnCooldown;
-    
-    const attackBtn = document.createElement('div');
-    attackBtn.className = `btn ${isDisabled ? 'disabled' : ''} ${isOnCooldown ? 'cooldown' : ''}`;
-    
-    let buttonText = attack.name;
-    if(attack.damage > 0) buttonText += ` (${attack.damage} dmg)`;
-    if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
-    if(isOnCooldown) buttonText += ` CD:${cooldownTurns}`;
-    if(!hasTargets && !isOnCooldown) buttonText += ` [NO TARGET]`;
-    
-    attackBtn.innerHTML = buttonText;
-    
+    // Add tooltip/description
     if(window.innerWidth <= 768 && attack.description) {
       const desc = document.createElement('span');
       desc.className = 'attack-desc';
@@ -2116,7 +2167,7 @@ function showCardActions(side, idx){
           }, 600);
         }, 200);
       } else {
-        updateSlotUI('computer', targetIdx);
+        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
         checkBattleOver();
       }
     } else {
@@ -2164,12 +2215,12 @@ function showCardActions(side, idx){
       
       let finalDmg = applyDamage(attacker, target, attack.damage);
       
-      if(attack.effect) {
+      if (attack.effect) {
         applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
       }
       
       if(finalDmg > 0) {
-        createImpactEffect(targetSlotEl, pattern);
+        createImpactEffect(targetSlotEl, attack.pattern);
         showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
         targetCardEl.classList.add('hit', 'flash');
         
@@ -2400,7 +2451,7 @@ function showCardActions(side, idx){
     if (bestMove && bestMove.type === 'attack') {
         // The old code was calling performComputerAttack with the wrong arguments.
         // This needs to be corrected to match the new AI logic.
-        const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
+        const { attackerIdx, attack, attackIndex, targetIdx } = bestMove;
         
         // Mark the card as used
         const attacker = computerSlots[attackerIdx];
@@ -2409,7 +2460,7 @@ function showCardActions(side, idx){
         // Set cooldown
         if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
             if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
-            attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+            attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
         }
 
         // Log and perform the attack animation and logic
@@ -2738,7 +2789,7 @@ function showCardActions(side, idx){
   targetSlotEl.style.position = 'relative';
   targetSlotEl.appendChild(impact);
   setTimeout(() => impact.remove(), 500);
-      }
+}
 
 
   // apply status effects to a target
@@ -4145,30 +4196,25 @@ addTouchHoldListeners();
   }
   
   /* Fixed card action panel with proper styling */
-  .card-action-panel { 
-    position: fixed !important;
-    bottom: 160px !important;
+  .card-action-panel {
+    width: 85% !important;
+    max-width: 250px !important;
+    padding: 8px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    max-width: 250px !important;
-    min-width: 180px !important;
-    width: 85% !important;
-    padding: 10px !important;
-    gap: 6px !important;
-    z-index: 1000 !important;
+    box-sizing: border-box !important;
   }
   
-  /* Compact, centered buttons with simplified text */
+  /* Simplified button text on mobile */
   .card-action-panel .btn {
-    font-size: 11px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
     padding: 8px 10px !important;
-    line-height: 1.2 !important;
-    text-align: center !important;
-    white-space: nowrap !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+    width: 100% !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    border-radius: 4px !important;
-    margin-bottom: 4px !important;
   }
   
   /* Hide attack descriptions on mobile */
