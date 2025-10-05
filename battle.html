@@ -2262,7 +2262,7 @@ function showCardActions(side, idx){
     }, 800);
   }
 
-  function performComputerActions(){
+ function performComputerActions(){
     // Computer's strategic decision making each turn
     
     // Option 1: Place a new card (if beneficial)
@@ -2274,14 +2274,13 @@ function showCardActions(side, idx){
     }
     
     // Option 2: Use existing cards to attack or defend
+    // DON'T mark cards as used during the filtering - just filter them out
     const activeSlots = computerSlots.map((slot, idx) => {
       if(!slot || slot.hp <= 0 || slot.used) return -1;
       
       // Check if computer card is stunned or asleep
       if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
         addLog('system', `${slot.card.name} cannot act due to status effects!`);
-        // Mark as used so it doesn't get considered again
-        slot.used = true;
         return -1;
       }
       
@@ -2293,8 +2292,6 @@ function showCardActions(side, idx){
         
         if(allAttacksOnCooldown) {
           addLog('system', `${slot.card.name}'s attacks are all on cooldown!`);
-          // Mark as used so it doesn't get considered again
-          slot.used = true;
           return -1;
         }
       }
@@ -2304,6 +2301,10 @@ function showCardActions(side, idx){
 
     // If no cards can act, end turn immediately
     if(activeSlots.length === 0){
+      // NOW mark all remaining cards as used before ending turn
+      computerSlots.forEach(slot => {
+        if(slot) slot.used = true;
+      });
       addLog('system', 'Computer has no available actions - ending turn');
       setTimeout(()=>endComputerTurn(), 800);
       return;
@@ -2314,7 +2315,7 @@ function showCardActions(side, idx){
     
     // Check if there's an opposite target
     const targetSlot = playerSlots[slotIdx];
-    const canAttack = targetSlot && targetSlot.hp >  0;
+    const canAttack = targetSlot && targetSlot.hp > 0;
     
     // Strategic decision: attack if possible, defend if threatened or randomly
     let action;
@@ -2350,7 +2351,7 @@ function showCardActions(side, idx){
       }
     }, 1500);
   }
-
+  
  function performComputerAttack(attackerIdx, damage){
   const attacker = computerSlots[attackerIdx];
   const target = playerSlots[attackerIdx];
