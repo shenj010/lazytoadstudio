@@ -2862,8 +2862,8 @@ slot.card.attacks.forEach((attack, attackIndex) => {
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
-                // Add to discard pile with the correct owner
-                addToDiscardPile(slot.card, side, slot);
+                const owner = side === 'player' ? 'Player' : 'Computer'; // Properly capitalize
+                addToDiscardPile(slot.card, owner, slot);
                 slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
             return false; // remove effect (card dead)
