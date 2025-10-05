@@ -2366,13 +2366,21 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     
     setTimeout(()=>{
   // Process status effects on computer cards FIRST
+  setTimeout(()=>{
+  // Process status effects on computer cards FIRST
   processStatusEffects('computer');
-  
   // Reset ALL computer card used status and process cooldowns
-  computerSlots.forEach(slot => {
+  computerSlots.forEach((slot, idx) => {
     if(slot) {
       slot.used = false;
       slot.defending = false;
+      
+      // REMOVE the visual "used" class from the card element
+      const slotEl = computerSlotsEl.children[idx];
+      const cardEl = slotEl?.querySelector('.card');
+      if(cardEl) {
+        cardEl.classList.remove('used');
+      }
       
       // ENSURE attackCooldowns object exists
       if(!slot.attackCooldowns) {
@@ -2389,21 +2397,21 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         Object.keys(slot.attackCooldowns).forEach(attackIdx => {
           if(slot.attackCooldowns[attackIdx] > 0) {
             slot.attackCooldowns[attackIdx]--;
-                if(slot.attackCooldowns[attackIdx] === 0) {
-                  try {
-                    const attackName = slot.card.attacks[parseInt(attackIdx)].name;
-                    addLog('system', `Computer's ${slot.card.name}'s ${attackName} is ready again!`);
-                  } catch (e) {
-                    console.error("Error accessing attack name:", e);
-                  }
-                }
+            if(slot.attackCooldowns[attackIdx] === 0) {
+              try {
+                const attackName = slot.card.attacks[parseInt(attackIdx)].name;
+                addLog('system', `Computer's ${slot.card.name}'s ${attackName} is ready again!`);
+              } catch (e) {
+                console.error("Error accessing attack name:", e);
               }
-            });
+            }
           }
-        }
-      });
+        });
+      }
+    }
+  });
 
-      renderAll(); // This call ensures the 'used' status is visually cleared.
+  renderAll(); // This will also help ensure clean state
 
       // Small delay to let poison animations play out before continuing
       setTimeout(() => {
