@@ -3421,6 +3421,8 @@ function addToDiscardPile(card, owner, slot) {
   setTimeout(() => {
     discardPileEl.style.animation = 'statusPulse 0.5s ease-in-out';
   }, 10);
+  // Add this line to update the discard pile UI
+  renderDiscardPile();
 }
 
 function renderDiscardPile() {
