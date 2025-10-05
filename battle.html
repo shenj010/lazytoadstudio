@@ -2668,9 +2668,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     // No damage attack (like pure stun/sleep)
     addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
     checkBattleOver();
-  }
-
-  renderAll();
+    renderAll();
 }
 
   function performComputerDefend(slotIdx){
