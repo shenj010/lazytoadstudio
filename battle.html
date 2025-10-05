@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -2565,9 +2566,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   const attacker = computerSlots[attackerIdx];
   const target = playerSlots[attackerIdx];
   
-  // Define targetIdx correctly - matches attackerIdx for direct attacks
-  const targetIdx = attackerIdx;
-  
   if(!attacker || !target) {
     // Mark as used anyway so we don't get stuck
     if(attacker) attacker.used = true;
@@ -2587,24 +2585,24 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   // With this code that properly respects cooldowns:
   let chosen = null;
   let attack = null;
-  let chosenIndex = -1;
+   let chosenIndex = -1;
       
-  if (offCooldown.length > 0) {
-    // We have attacks available - choose one randomly from those not on cooldown
-    chosen = offCooldown[Math.floor(Math.random() * offCooldown.length)];
-    attack = chosen.attack;
-    chosenIndex = chosen.index;
-  } else {
-    // All special attacks are on cooldown, so use defend instead
-    addLog('system', `${attacker.card.name}'s attacks are all on cooldown - defending instead.`);
-    // Switch to defense since we can't attack
-    attacker.used = true; // Mark as used before defending
-    performComputerDefend(attackerIdx);
-    return; // Exit the function early - this card will defend instead
-  }
+      if (offCooldown.length > 0) {
+        // We have attacks available - choose one randomly from those not on cooldown
+        chosen = offCooldown[Math.floor(Math.random() * offCooldown.length)];
+        attack = chosen.attack;
+        chosenIndex = chosen.index;
+      } else {
+        // All special attacks are on cooldown, so use defend instead
+        addLog('system', `${attacker.card.name}'s attacks are all on cooldown - defending instead.`);
+        // Switch to defense since we can't attack
+        attacker.used = true; // Mark as used before defending
+        performComputerDefend(attackerIdx);
+        return; // Exit the function early - this card will defend instead
+      }
       
-  // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
-  if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
+      // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
+      if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
     if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
     attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
   }
@@ -2621,7 +2619,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     target.hp = Math.max(0, target.hp - finalDmg);
     addLog('computer', `${attacker.card.name} attacks ${target.card.name} for ${finalDmg} damage`);
     updateSlotUI('player', attackerIdx);
-    renderAll(); // Added to ensure UI is updated
     return;
   }
   
@@ -2671,10 +2668,11 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   } else {
     // No damage attack (like pure stun/sleep)
     addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
-    renderAll(); // Added this line to update UI for status effects
     checkBattleOver();
   }
 
+  renderAll();
+}
 
   function performComputerDefend(slotIdx){
     const slot = computerSlots[slotIdx];
