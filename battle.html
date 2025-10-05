@@ -3545,17 +3545,56 @@ function grantRandomCard() {
   if (availableCards.length === 0) return null;
   
   const newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-  playerHand.push(newCard);
-  savePlayerInventory();
+  
+  // Create a new array with all current cards plus the new one
+  const updatedHand = [...playerHand, newCard];
+  
+  // Save immediately to localStorage
+  try {
+    const simplifiedHand = updatedHand.map(card => ({ name: card.name, src: card.src }));
+    localStorage.setItem('collectedCards', JSON.stringify(simplifiedHand));
+    console.log('Updated inventory saved with new card:', newCard.name);
+  } catch (e) {
+    console.error('Error saving updated cards to localStorage:', e);
+  }
+  
   return newCard;
 }
-
 function resetGame() {
   // Hide game over overlay
-  document.getElementById('gameOverOverlay').classList.remove('show');
+  const overlay = document.getElementById('gameOverOverlay');
+  overlay.classList.remove('show');
   
-  // Reload the page to start fresh
-  location.reload();
+  // Reset game state
+  playerSlots = new Array(MAX_SLOTS).fill(null);
+  computerSlots = new Array(MAX_SLOTS).fill(null);
+  discardPile.length = 0; // Clear discard pile
+  selected = null;
+  
+  // Clear UI elements
+  clearSelections();
+  hideActionPanel();
+  
+  // Reload player's hand from localStorage (now includes the new card!)
+  loadPlayerInventory();
+  
+  // Build fresh computer reserve
+  buildComputerReserve();
+  
+  // Reset turn state
+  playerTurn = true;
+  turnIndicator.textContent = 'Player Setup Phase';
+  endTurnBtn.classList.add('disabled');
+  
+  // Clear and reset battle log
+  logEl.innerHTML = '';
+  addLog('system', 'Battle ready – place cards to begin.');
+  addLog('system', 'Place cards by clicking a hand card, then click an empty player slot.');
+  addLog('system', 'The battle will begin once you place your first card.');
+  
+  // Reset UI
+  renderAll();
+  renderDiscardPile();
 }
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
@@ -4121,7 +4160,7 @@ addTouchHoldListeners();
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
-  z-index: 6000;
+  z-index: 9999; /* Increased z-index */
   display: flex;
   flex-direction: column;
   align-items: center;
