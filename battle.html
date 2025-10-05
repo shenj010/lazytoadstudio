@@ -872,8 +872,6 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     font-size: 9px !important;
   }
   
-  /* Mobile action panel - bottom center */
-  @media (max-width: 768px) {
   .card-action-panel {
     width: auto !important;
     max-width: 220px !important;
@@ -898,11 +896,18 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     line-height: 1 !important;
   }
   
-  /* Use text characters instead of emoji */
-  .status-icon.poison::before { content: "P"; }
-  .status-icon.stun::before { content: "S"; }
-  .status-icon.sleep::before { content: "Z"; }
-  .status-icon.weaken::before { content: "W"; }
+  .status-icon.poison::before,
+  .status-icon.stun::before,
+  .status-icon.sleep::before,
+  .status-icon.weaken::before {
+    content: none; /* Remove the letter content */
+  }
+  
+  /* Keep letter-based indicators only for attack buttons */
+  .card-action-panel .btn .effect-indicator.poison::before { content: "P"; }
+  .card-action-panel .btn .effect-indicator.stun::before { content: "S"; }
+  .card-action-panel .btn .effect-indicator.sleep::before { content: "Z"; }
+  .card-action-panel .btn .effect-indicator.weaken::before { content: "W"; }
 }
   
   .log .entry { 
@@ -4475,13 +4480,6 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   .status-icon:nth-child(2) { right: 32px !important; }
   .status-icon:nth-child(3) { right: 56px !important; }
   .status-icon:nth-child(4) { right: 80px !important; }
-}
-
-/* Even smaller text on very small screens */
-@media (max-width: 350px) {
-  .game-over-text {
-    font-size: 32px !important;
-  }
 }
 
 /* Even smaller text on very small screens */
