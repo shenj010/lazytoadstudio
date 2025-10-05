@@ -1325,16 +1325,17 @@ function clearSwitchHighlights() {
       });
     }
 
-function getAttackAnimation(attackerIdx, targetIdx, pattern) {
+function getAttackAnimation(attackerIdx, targetIdx, pattern, attackerSide) {
   const offset = targetIdx - attackerIdx;
-  
+  const direction = attackerSide === 'player' ? 'forward' : 'backward';
+
   switch(pattern) {
     case 'diagonal':
-      return offset < 0 ? 'attacking-diagonal-left' : 'attacking-diagonal-right';
+      return `attacking-diagonal-${offset < 0 ? 'left' : 'right'}`;
     case 'knight':
       return 'attacking-knight';
     case 'adjacent':
-      return offset < 0 ? 'attacking-adjacent-left' : 'attacking-adjacent-right';
+      return `attacking-adjacent-${offset < 0 ? 'left' : 'right'}`;
     case 'cross':
     case 'wide':
       return 'attacking-sweep';
@@ -1342,7 +1343,7 @@ function getAttackAnimation(attackerIdx, targetIdx, pattern) {
       return 'attacking-pierce';
     case 'straight':
     default:
-      return 'attacking-forward';
+      return `attacking-${direction}`;
   }
 }
 
@@ -2023,7 +2024,7 @@ function showCardActions(side, idx){
     renderAll();
   }
 
-  function performPatternAttack(attackerIdx, attackIndex, targetIdx, pattern) {
+    function performPatternAttack(attackerIdx, attackIndex, targetIdx, pattern) {
     const attacker = playerSlots[attackerIdx];
     const target = computerSlots[targetIdx];
     const attack = attacker.card.attacks[attackIndex];
@@ -2053,7 +2054,7 @@ function showCardActions(side, idx){
   }
   
   // Get animation
-    const animationClass = getAttackAnimation(attackerIdx, targetIdx, pattern || 'straight');
+    const animationClass = getAttackAnimation(attackerIdx, targetIdx, pattern || 'straight', 'player');
     attackerCardEl.classList.add(animationClass);
   
     const animTiming = getAnimationTiming(animationClass);
@@ -2076,7 +2077,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Computer');
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -2100,7 +2101,7 @@ function showCardActions(side, idx){
     hideActionPanel();
     renderAll();
   }
-      function performMultiTargetAttack(attackerIdx, attackIndex, pattern) {
+       function performMultiTargetAttack(attackerIdx, attackIndex, pattern) {
   const attacker = playerSlots[attackerIdx];
   const attack = attacker.card.attacks[attackIndex];
   const validTargets = getValidTargets(attackerIdx, pattern, 'player');
@@ -2117,7 +2118,7 @@ function showCardActions(side, idx){
   const attackerCardEl = attackerSlotEl.querySelector('.card');
   
   // Play attacker animation
-  const animationClass = getAttackAnimation(attackerIdx, validTargets[0], pattern);
+  const animationClass = getAttackAnimation(attackerIdx, validTargets[0], pattern, 'player');
   attackerCardEl.classList.add(animationClass);
   
   // Hit each target with stagger
@@ -2150,7 +2151,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Computer');
+              addToDiscardPile(target.card, 'Player');
               computerSlots[targetIdx] = null;
               renderAll();
             }, 600);
@@ -2363,7 +2364,7 @@ function showCardActions(side, idx){
         }
     }
     
-    // 5. Execute the best move
+        // 5. Execute the best move
     if (bestMove && bestMove.type === 'attack') {
         // The old code was calling performComputerAttack with the wrong arguments.
         // This needs to be corrected to match the new AI logic.
@@ -2387,8 +2388,8 @@ function showCardActions(side, idx){
         const attackerCardEl = attackerSlotEl.querySelector('.card');
         const targetCardEl = targetSlotEl.querySelector('.card');
 
-        const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight');
-        attackerCardEl.classList.add(animationClass.replace('forward', 'backward')); // Use backward animation
+        const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+        attackerCardEl.classList.add(animationClass);
 
         const animTiming = getAnimationTiming(animationClass);
 
@@ -2425,7 +2426,7 @@ function showCardActions(side, idx){
         }, animTiming * 0.6);
 
         setTimeout(() => {
-            attackerCardEl.classList.remove(animationClass.replace('forward', 'backward'));
+            attackerCardEl.classList.remove(animationClass);
         }, animTiming);
 
     } else if (bestMove) {
