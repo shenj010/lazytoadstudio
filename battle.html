@@ -3343,7 +3343,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       .filter(item => item.owner === 'Computer')
       .map(item => item.card);
     
-    // Calculate which cards from reserve have been used already (active + discarded)
+    // Calculate which cards from reserve have been used already
     const usedCardIndices = new Set();
     
     // Track used reserve indices from active cards
@@ -3353,16 +3353,19 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       }
     });
     
-    // Count all cards used (active on board + discarded)
-    const totalCardsUsed = activeCards.length + discardedCards.length;
+    // Also track discarded computer cards
+    discardPile.forEach(entry => {
+      if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
+        usedCardIndices.add(entry.reserveIndex);
+      }
+    });
+    
+    // Count all cards used
+    const totalCardsUsed = usedCardIndices.size;
     
     // If all cards have been used, can't place any more
     if(totalCardsUsed >= computerReserve.length) {
-      console.log("Computer has used all available cards", {
-        activeCards: activeCards.length,
-        discardedCards: discardedCards.length,
-        reserveLength: computerReserve.length
-      });
+      console.log("Computer has used all available cards");
       return false;
     }
     
@@ -3404,20 +3407,25 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
 
     // Place the card in the chosen slot
     computerSlots[targetSlot] = { 
-     card: cardToPlace, 
-     hp: MAX_HP, 
-    defending: false,
-    defendPersists: false, // ✅ add this
-    used: false,
-     statusEffects: [],
-    attackCooldowns: attackCooldowns,
-    reserveIndex: nextCardIndex
-};
+      card: cardToPlace, 
+      hp: MAX_HP, 
+      defending: false,
+      defendPersists: false, 
+      used: false,
+      statusEffects: [],
+      attackCooldowns: attackCooldowns,
+      reserveIndex: nextCardIndex
+    };
 
+    // Force a complete re-render including hand
     renderAll();
+    
+    // Additional explicit call to update computer hand
+    renderHand('computer');
+    
     addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
     return true;
-  }
+}
 
   // helper log
   function addLog(type, text){
