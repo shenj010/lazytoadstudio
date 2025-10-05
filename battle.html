@@ -1405,7 +1405,8 @@ function clearSwitchHighlights() {
 
 function getAttackAnimation(attackerIdx, targetIdx, pattern, attackerSide) {
   const offset = targetIdx - attackerIdx;
-  const direction = attackerSide === 'player' ? 'forward' : 'backward';
+  // Swap "forward" and "backward" here to fix the direction
+  const direction = attackerSide === 'player' ? 'backward' : 'forward';
 
   switch(pattern) {
     case 'diagonal':
