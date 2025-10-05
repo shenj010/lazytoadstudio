@@ -3537,7 +3537,26 @@ closeBtn.addEventListener('click', () => {
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
   }
+function grantRandomCard() {
+  // Get cards player doesn't have yet
+  const ownedCardNames = playerHand.map(c => c.name);
+  const availableCards = cardPool.filter(c => !ownedCardNames.includes(c.name));
+  
+  if (availableCards.length === 0) return null;
+  
+  const newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+  playerHand.push(newCard);
+  savePlayerInventory();
+  return newCard;
+}
 
+function resetGame() {
+  // Hide game over overlay
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  
+  // Reload the page to start fresh
+  location.reload();
+}
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
 
