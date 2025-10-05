@@ -2022,6 +2022,7 @@ function showCardActions(side, idx){
     hideActionPanel();
     renderAll();
   }
+
   function performPatternAttack(attackerIdx, attackIndex, targetIdx, pattern) {
     const attacker = playerSlots[attackerIdx];
     const target = computerSlots[targetIdx];
@@ -2031,10 +2032,10 @@ function showCardActions(side, idx){
   
     attacker.used = true;
   
-    // Set cooldown
+  // Set cooldown
     if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-      attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
-    }
+    attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
+  }
   
     const attackerSlotEl = playerSlotsEl.children[attackerIdx];
     const targetSlotEl = computerSlotsEl.children[targetIdx];
@@ -2043,33 +2044,35 @@ function showCardActions(side, idx){
   
     if(!attackerCardEl || !targetCardEl) return;
   
-    // Log the action immediately
-    addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}!`);
+  // Calculate damage
+    let finalDmg = applyDamage(attacker, target, attack.damage);
   
-    // Get animation details
+  // Apply status effects
+    if(attack.effect) {
+    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+  }
+  
+  // Get animation
     const animationClass = getAttackAnimation(attackerIdx, targetIdx, pattern || 'straight');
-    const animTiming = getAnimationTiming(animationClass);
-    
-    // Play the animation
     attackerCardEl.classList.add(animationClass);
   
-    // Apply effects and damage at the animation's peak
+    const animTiming = getAnimationTiming(animationClass);
+  
+  // Apply damage at animation peak
     setTimeout(() => {
-      let finalDmg = applyDamage(attacker, target, attack.damage);
-      
-      if (attack.effect) {
-        applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
-      }
-
-      if (finalDmg > 0) {
+      if(finalDmg > 0) {
         createImpactEffect(targetSlotEl, pattern || 'straight');
         showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
         targetCardEl.classList.add('hit', 'flash');
-        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-
+      
+        setTimeout(() => {
+          targetCardEl.classList.remove('hit', 'flash');
+      }, 400);
+       
         target.hp = Math.max(0, target.hp - finalDmg);
-
-        if (target.hp <= 0) {
+        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${finalDmg} damage`);
+      
+        if(target.hp <= 0) {
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
@@ -2077,26 +2080,26 @@ function showCardActions(side, idx){
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
-            }, 600);
-          }, 200);
-        } else {
-          updateSlotUI('computer', targetIdx);
-        }
-      } // This closing brace was missing
-      
-      // Always check for battle over, even if no damage was dealt
-      checkBattleOver();
-    }, animTiming * 0.6);
+          }, 600);
+        }, 200);
+      } else {
+        updateSlotUI('computer', targetIdx);
+        checkBattleOver();
+      }
+    } else {
+        addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+        checkBattleOver();
+    }
+  }, animTiming * 0.6);
   
-    // Remove animation class after it completes
-    setTimeout(() => {
-      attackerCardEl.classList.remove(animationClass);
-    }, animTiming);
+  // Remove animation
+  setTimeout(() => {
+    attackerCardEl.classList.remove(animationClass);
+  }, animTiming);
     
     hideActionPanel();
     renderAll();
   }
-
       function performMultiTargetAttack(attackerIdx, attackIndex, pattern) {
   const attacker = playerSlots[attackerIdx];
   const attack = attacker.card.attacks[attackIndex];
