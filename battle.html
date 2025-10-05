@@ -826,25 +826,20 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   .hp-segments { width: 90% !important; gap: 1px !important; }
   .seg { height: 12px !important; }
 
-  .slots {
-    flex-wrap: nowrap !important; /* Prevent wrapping */
-    justify-content: space-between !important; /* Distribute space evenly */
-    width: 100% !important;
-    overflow-x: auto !important; /* Allow horizontal scrolling if needed */
-    padding: 0 2px !important;
-    gap: 4px !important; /* Smaller gap between slots */
+  .slots { 
+    flex-wrap: wrap !important; 
+    gap: 6px !important; 
+    justify-content: center !important;
   }
-  
-  .slot {
-    width: 60px !important; /* Make slots smaller */
-    min-width: 60px !important; /* Ensure consistent sizing */
-    height: 95px !important;
-    margin: 0 !important;
+
+  .slot { 
+    width: 60px !important; 
+    height: 85px !important;
   }
-  
-  .slot .card {
-    width: 56px !important;
-    height: 80px !important;
+
+  .slot .card { 
+    width: 56px !important; 
+    height: 78px !important;
   }
 
   .card .stats { 
@@ -873,26 +868,20 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   }
   
   /* Mobile action panel - bottom center */
-  .card-action-panel {
-    background: rgba(0,0,0,0.95) !important;
-    border: 2px solid var(--accent) !important;
-    border-radius: 8px !important;
-    padding: 10px !important;
+  .card-action-panel { 
+    position: fixed !important;
+    bottom: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: auto !important;
+    right: auto !important;
     max-width: 280px !important;
-    width: 90% !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    z-index: 1000 !important;
+    min-width: 200px !important;
   }
   
-  .card-action-panel .btn {
-    background: #fff !important;
-    color: #000 !important;
-    border: 2px solid #000 !important;
-    padding: 8px 12px !important;
-    text-align: center !important;
-    font-size: 10px !important;
-    border-radius: 4px !important;
-    width: 100% !important;
+  .card-action-panel .btn { 
+    font-size: 8px !important; 
+    padding: 4px 8px !important;
   }
   
   /* Mobile status icons */
@@ -3223,12 +3212,11 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     
     const returnBtn = document.createElement('div');
     returnBtn.className = 'btn';
-    returnBtn.textContent = 'Return to LazyToadStudios';
+    returnBtn.textContent = 'Return to Home';
     returnBtn.onclick = () => { window.location.href = 'index.html'; };
 
     optionsEl.appendChild(nextBtn);
     optionsEl.appendChild(returnBtn);
-
   } else { // Defeat
     const retryBtn = document.createElement('div');
     retryBtn.className = 'btn';
@@ -3237,12 +3225,16 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     
     const returnBtn = document.createElement('div');
     returnBtn.className = 'btn';
-    returnBtn.textContent = 'Return to LazyToadStudios';
+    returnBtn.textContent = 'Return to Home';
     returnBtn.onclick = () => { window.location.href = 'index.html'; };
 
     optionsEl.appendChild(retryBtn);
     optionsEl.appendChild(returnBtn);
   }
+
+  // Show the overlay immediately without animation delay
+  overlay.classList.add('show');
+}
 
   overlay.style.display = 'flex';
   setTimeout(() => {
@@ -4196,96 +4188,87 @@ addTouchHoldListeners();
     height: 28px;
     font-size: 14px;
   }
+  .game-over-text {
+    font-size: 32px;
+  }
+  
+  .game-over-options {
+    max-width: 250px;
+  }
 }
-<style>
-/* ... existing styles ... */
 
 /* ========== GAME OVER SCREEN ========== */
 .game-over-overlay {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  background: rgba(0, 0, 0, 0.9) !important;
-  z-index: 10000 !important; /* Increased z-index further */
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.5s ease;
-  visibility: hidden; /* Start hidden */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 10000;
+  display: none; /* Start hidden */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
 .game-over-overlay.show {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  visibility: visible !important; /* Make visible */
+  display: flex; /* Show when needed */
 }
 
 .game-over-text {
   font-family: 'Press Start 2P', monospace;
-  font-size: 80px;
+  font-size: 60px; /* Slightly smaller for better mobile display */
   font-weight: bold;
+  margin-bottom: 40px;
   text-align: center;
-  position: relative;
-  animation: gameOver-animation 1.5s forwards;
-}
-
-.game-over-options {
-  animation: fadeInOptions 0.5s 1.5s forwards !important;
 }
 
 .game-over-text.victory {
   color: transparent;
   background: linear-gradient(135deg, #ffd700, var(--accent), #fff);
-  background-clip: text;
   -webkit-background-clip: text;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+  background-clip: text;
+  text-shadow: 0 0 15px rgba(56, 239, 125, 0.7);
 }
 
 .game-over-text.defeat {
   color: transparent;
   background: linear-gradient(135deg, #555, var(--danger), #8b0000);
-  background-clip: text;
   -webkit-background-clip: text;
-  text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
-}
-
-@keyframes gameOver-animation {
-  0% { transform: scale(3); opacity: 0; filter: blur(10px); }
-  60% { transform: scale(0.9); opacity: 1; filter: blur(0); }
-  80% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  background-clip: text;
+  text-shadow: 0 0 15px rgba(255, 68, 68, 0.7);
 }
 
 .game-over-options {
-  margin-top: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInOptions 0.5s 1.5s forwards;
+  gap: 20px;
+  width: 100%;
+  max-width: 300px;
 }
 
 .reward-panel {
-  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  padding: 15px;
   margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
 }
 
 .reward-panel .reward-text {
-  font-size: 14px;
   color: var(--accent);
   margin-bottom: 15px;
+  font-size: 14px;
 }
 
 .reward-panel .card {
-  margin: 0 auto; /* Center the card */
-  animation: newCardPulse 2s infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px var(--accent);
 }
 
 @keyframes newCardPulse {
