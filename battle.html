@@ -3147,9 +3147,7 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     }
   }
 
-  // ... after checkBattleOver function ...
-
-function showGameOver(result) {
+ function showGameOver(result) {
   const overlay = document.getElementById('gameOverOverlay');
   const textEl = document.getElementById('gameOverText');
   const optionsEl = document.getElementById('gameOverOptions');
@@ -3216,53 +3214,6 @@ function showGameOver(result) {
   // Show the overlay
   overlay.classList.add('show');
 }
-
-function grantRandomCard() {
-  const unownedCards = cardPool.filter(poolCard => 
-    !playerHand.some(playerCard => playerCard.name === poolCard.name)
-  );
-
-  if (unownedCards.length === 0) {
-    addLog('system', 'Congratulations! You have collected all the cards!');
-    return null;
-  }
-
-  const newCard = unownedCards[Math.floor(Math.random() * unownedCards.length)];
-  playerHand.push(newCard);
-  savePlayerInventory();
-  addLog('system', `You have been awarded a new card: ${newCard.name}!`);
-  return newCard;
-}
-
-function resetGame() {
-  // Hide game over screen
-  const overlay = document.getElementById('gameOverOverlay');
-  overlay.classList.remove('show');
-
-  // Reset state variables
-  playerSlots = new Array(MAX_SLOTS).fill(null);
-  computerSlots = new Array(MAX_SLOTS).fill(null);
-  selected = null;
-  playerTurn = true;
-  currentActionPanel = null;
-  discardPile.length = 0; // Clear the discard pile array
-
-  // Clear UI elements
-  logEl.innerHTML = '';
-  
-  // Re-initialize the game with updated data
-  loadPlayerInventory(); // Reloads hand, which may now include a new card
-  buildComputerReserve(); // Rebuilds computer deck to match player's new hand size
-  fillComputerSlots();
-  renderAll();
-  renderDiscardPile();
-  decideFirstPlayer();
-  addLog('system', 'A new challenge begins!');
-}
-
-// end turn button handler
-endTurnBtn.addEventListener('click', ()=>{
-// ... existing function ...
 
   // end turn button handler
   endTurnBtn.addEventListener('click', ()=>{
