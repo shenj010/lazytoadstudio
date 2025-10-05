@@ -2415,7 +2415,7 @@ function showCardActions(side, idx){
                     setTimeout(() => {
                         targetCardEl.classList.add('die');
                         setTimeout(() => {
-                            addToDiscardPile(target.card, 'Player', target);
+                            addToDiscardPile(playerSlots[targetIdx].card, 'Player', playerSlots[targetIdx]);
                             playerSlots[targetIdx] = null;
                             renderAll();
                             checkBattleOver();
