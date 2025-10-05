@@ -1314,10 +1314,10 @@ function clearTargetHighlights() {
 }
 
 function clearSwitchHighlights() {
-  document.querySelectorAll('.switch-target').forEach(el => {
-    el.classList.remove('switch-target');
-  });
-}
+      document.querySelectorAll('.switch-target').forEach(el => {
+        el.classList.remove('switch-target');
+      });
+    }
 
 function getAttackAnimation(attackerIdx, targetIdx, pattern) {
   const offset = targetIdx - attackerIdx;
@@ -3308,25 +3308,25 @@ function showDiscardedCardDetails(entry) {
     }
   }
   function showTutorialIfNeeded() {
-  const overlay = document.getElementById('tutorialOverlay');
-  if(!overlay) return;
-  
-  const hasSeenTutorial = localStorage.getItem('toadBattle_tutorialSeen');
-  
-  if(hasSeenTutorial) {
-    // Already seen - hide it
-    overlay.style.display = 'none';
-  } else {
-    // First time - show it
-    overlay.style.display = 'flex';
-  }
-  
-  // Always attach the click handler
-  const closeBtn = document.getElementById('tutorialClose');
-  if(closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      overlay.style.display = 'none';
-      localStorage.setItem('toadBattle_tutorialSeen', 'true');
+const overlay = document.getElementById('tutorialOverlay');
+if(!overlay) return;
+
+const hasSeenTutorial = localStorage.getItem('toadBattle_tutorialSeen');
+
+if(hasSeenTutorial) {
+// Already seen - hide it
+overlay.style.display = 'none';
+} else {
+// First time - show it
+overlay.style.display = 'flex';
+}
+
+// Always attach the click handler
+const closeBtn = document.getElementById('tutorialClose');
+if(closeBtn) {
+closeBtn.addEventListener('click', () => {
+  overlay.style.display = 'none';
+  localStorage.setItem('toadBattle_tutorialSeen', 'true');
     });
   }
 }
