@@ -2077,7 +2077,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player');
+              addToDiscardPile(target.card, 'Player', target);
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -2151,7 +2151,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player');
+              addToDiscardPile(target.card, 'Player', target);
               computerSlots[targetIdx] = null;
               renderAll();
             }, 600);
@@ -3404,9 +3404,12 @@ const discardPileEl = document.getElementById('discardPile');
 const discardedCardsEl = document.getElementById('discardedCards');
 const discardCountEl = document.getElementById('discardCount');
 
-function addToDiscardPile(card, owner) {
-  discardPile.push({ card, owner, timestamp: Date.now() });
-  renderDiscardPile();
+function addToDiscardPile(card, owner, slot) {
+  const entry = { card, owner, timestamp: Date.now() };
+  if (slot && typeof slot.reserveIndex === 'number') {
+    entry.reserveIndex = slot.reserveIndex;
+  }
+  discardPile.push(entry);
   
   // Add visual feedback
   discardPileEl.style.animation = 'none';
