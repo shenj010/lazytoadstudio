@@ -1511,12 +1511,15 @@ function renderHand(side) {
       // COMPUTER HAND
       // ======================
       if (side === 'computer') {
-        const activeComputerCards = computerSlots.filter(s => s).length;
-        const discardedComputerCards = (discardPile || []).filter(item => item.owner === 'Computer').length;
-        const totalReserve = computerReserve ? computerReserve.length : 0;
-        const remainingCards = Math.max(0, totalReserve - activeComputerCards - discardedComputerCards);
+        // Correctly count cards remaining in the reserve.
+        // Get the indices of all cards that have been taken from the reserve and placed on the board.
+        const placedReserveIndices = new Set(
+          computerSlots.filter(s => s && typeof s.reserveIndex === 'number').map(s => s.reserveIndex)
+        );
+        // The number of remaining cards is the total reserve size minus the number of unique cards placed.
+        const remainingCards = computerReserve.length - placedReserveIndices.size;
     
-        if (remainingCards === 0) return;
+        if (remainingCards <= 0) return;
     
         if (remainingCards <= 3) {
           for (let i = 0; i < remainingCards; i++) {
@@ -2195,7 +2198,7 @@ function showCardActions(side, idx){
   }
 
   // computer AI: attacks opposite slots, defends sometimes
-  function computerTurn(){
+    function computerTurn(){
     // Don't start computer turn if we're still in setup phase
     if(turnIndicator.textContent.includes('Setup')) return;
     
@@ -2247,6 +2250,8 @@ function showCardActions(side, idx){
           }
         }
       });
+
+      renderAll(); // This call ensures the 'used' status is visually cleared.
 
       // Small delay to let poison animations play out before continuing
       setTimeout(() => {
@@ -3083,10 +3088,44 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
 
   // check battle over
   function checkBattleOver(){
-    const playerHas = playerSlots.some(s=>s && s.hp>0);
-    const compHas = computerSlots.some(s=>s && s.hp>0);
-    if(!playerHas || !compHas){
-      const result = compHas ? 'defeat' : 'victory';
+    const activePlayerSlots = playerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
+    const activeComputerSlots = computerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
+
+    // Special Rule: Sumo Toad Final Showdown
+    if (activePlayerSlots.length === 1 && activeComputerSlots.length === 1 && 
+        activePlayerSlots[0].slot.card.name === "Sumo Toad" && 
+        activeComputerSlots[0].slot.card.name === "Sumo Toad") {
+      
+      const playerSumoIndex = activePlayerSlots[0].index;
+      const computerSumoIndex = activeComputerSlots[0].index;
+      const centerSlotIndex = 2; // Middle slot
+
+      // If they aren't already opposing in the center, move them.
+      if (playerSumoIndex !== centerSlotIndex || computerSumoIndex !== centerSlotIndex) {
+        addLog('system', 'Only two Sumo Toads remain! FINAL SHOWDOWN!');
+        
+        // Move player's Sumo Toad to the center
+        if (playerSumoIndex !== centerSlotIndex && playerSlots[centerSlotIndex] === null) {
+          playerSlots[centerSlotIndex] = playerSlots[playerSumoIndex];
+          playerSlots[playerSumoIndex] = null;
+        }
+        
+        // Move computer's Sumo Toad to the center
+        if (computerSumoIndex !== centerSlotIndex && computerSlots[centerSlotIndex] === null) {
+          computerSlots[centerSlotIndex] = computerSlots[computerSumoIndex];
+          computerSlots[computerSumoIndex] = null;
+        }
+        
+        setTimeout(renderAll, 500); // Re-render the board after a short delay
+        return; // Stop further checks this turn
+      }
+    }
+
+    const playerHasCards = activePlayerSlots.length > 0;
+    const computerHasCards = activeComputerSlots.length > 0;
+
+    if(!playerHasCards || !computerHasCards){
+      const result = computerHasCards ? 'defeat' : 'victory';
       addLog('system', `Battle over: ${result.toUpperCase()}`);
       setTimeout(() => showGameOver(result), 500);
     }
