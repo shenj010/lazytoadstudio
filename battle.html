@@ -873,42 +873,37 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   }
   
   /* Mobile action panel - bottom center */
+  @media (max-width: 768px) {
   .card-action-panel {
-  position: fixed !important; /* Make sure it's fixed */
-  bottom: 190px !important; /* Position from bottom */
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  background: rgba(0,0,0,0.95) !important;
-  border: 2px solid var(--accent) !important;
-  border-radius: 8px !important;
-  padding: 10px !important;
-  max-width: 220px !important; /* Narrower panel */
-  width: auto !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-  z-index: 1000 !important;
-}
-
-.card-action-panel .btn {
-  background: #fff !important;
-  color: #000 !important;
-  border: 2px solid #000 !important;
-  padding: 8px 12px !important;
-  text-align: center !important;
-  font-size: 10px !important;
-  border-radius: 4px !important;
-  width: auto !important; /* Don't force full width */
-  min-width: 0 !important;
-  white-space: normal !important;
-  margin: 2px 0 !important;
-}
-  
-  /* Mobile status icons */
-  .status-icon { 
-    width: 16px !important; 
-    height: 16px !important; 
-    font-size: 10px !important;
-    top: -12px !important;
+    width: auto !important;
+    max-width: 220px !important;
+    padding: 8px !important;
   }
+  
+  .card-action-panel .btn {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding: 8px 8px !important;
+    margin: 2px 0 !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* Fix for status icons */
+  .status-icon {
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+  }
+  
+  /* Use text characters instead of emoji */
+  .status-icon.poison::before { content: "P"; }
+  .status-icon.stun::before { content: "S"; }
+  .status-icon.sleep::before { content: "Z"; }
+  .status-icon.weaken::before { content: "W"; }
+}
   
   .log .entry { 
     margin-bottom: 3px !important; 
