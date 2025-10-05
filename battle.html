@@ -1066,7 +1066,35 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
           <div class="hand" id="computerHand">
             <!-- computer reserve cards (small) -->
           </div>
-        </div>
+        </div> 
+        
+        <!-- Tutorial Overlay -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-content">
+    <h2>Welcome to Toad Battle Arena!</h2>
+    <div class="tutorial-step" data-step="1">
+      <div class="step-number">1</div>
+      <p><strong>Place Your Cards</strong></p>
+      <p>Click a card in your hand, then click an empty slot to place it</p>
+    </div>
+    <div class="tutorial-step" data-step="2">
+      <div class="step-number">2</div>
+      <p><strong>Select Your Card</strong></p>
+      <p>During your turn, click a card on the battlefield to see its actions</p>
+    </div>
+    <div class="tutorial-step" data-step="3">
+      <div class="step-number">3</div>
+      <p><strong>Attack or Defend</strong></p>
+      <p>Choose an attack to damage enemies, or defend to reduce incoming damage</p>
+    </div>
+    <div class="tutorial-step" data-step="4">
+      <div class="step-number">4</div>
+      <p><strong>End Your Turn</strong></p>
+      <p>When all cards have acted, click "END TURN" to let the computer move</p>
+    </div>
+    <button class="btn tutorial-close" id="tutorialClose">Got It!</button>
+  </div>
+</div>
 
         <!-- PLAYER AREA -->
         <div class="area" id="playerArea">
@@ -1832,6 +1860,12 @@ function showCardActions(side, idx){
     document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
     selected = null;
   }
+  function hideActionPanel(){
+  if(currentActionPanel){
+    currentActionPanel.remove();
+    currentActionPanel = null;
+  }
+}
   // Apply damage with weaken and defend effects
   function applyDamage(attacker, target, baseDamage) {
     let finalDmg = baseDamage;
@@ -3276,7 +3310,21 @@ function showDiscardedCardDetails(entry) {
       }, 1500);
     }
   }
-
+  function showTutorialIfNeeded() {
+  const hasSeenTutorial = localStorage.getItem('toadBattle_tutorialSeen');
+  
+  if(!hasSeenTutorial) {
+    const overlay = document.getElementById('tutorialOverlay');
+    if(overlay) {
+      overlay.classList.remove('hidden');
+      
+      document.getElementById('tutorialClose').addEventListener('click', () => {
+        overlay.classList.add('hidden');
+        localStorage.setItem('toadBattle_tutorialSeen', 'true');
+      });
+    }
+  }
+}
   // initialization
   function init(){
     makeSlotsUI();
@@ -3285,6 +3333,7 @@ function showDiscardedCardDetails(entry) {
     fillComputerSlots(); // This now just initializes empty slots
     renderAll(); // This should show the player's hand
     decideFirstPlayer(); // This now starts in setup phase
+    showTutorialIfNeeded();
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
   }
@@ -3451,6 +3500,396 @@ addTouchHoldListeners();
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
+}
+  /* ========== PATTERN ATTACK ANIMATIONS ========== */
+
+/* Diagonal attacks */
+.attacking-diagonal-left {
+  animation: diagonalSlashLeft 900ms ease-in-out forwards;
+  z-index: 1000;
+}
+
+@keyframes diagonalSlashLeft {
+  0% { transform: translate(0, 0) scale(1) rotateZ(0deg); }
+  25% { transform: translate(-60px, 60px) scale(1.15) rotateZ(-25deg); }
+  50% { transform: translate(-120px, 120px) scale(1.25) rotateZ(-35deg); }
+  75% { transform: translate(-140px, 140px) scale(1.1) rotateZ(-30deg); }
+  100% { transform: translate(0, 0) scale(1) rotateZ(0deg); }
+}
+
+.attacking-diagonal-right {
+  animation: diagonalSlashRight 900ms ease-in-out forwards;
+  z-index: 1000;
+}
+
+@keyframes diagonalSlashRight {
+  0% { transform: translate(0, 0) scale(1) rotateZ(0deg); }
+  25% { transform: translate(60px, 60px) scale(1.15) rotateZ(25deg); }
+  50% { transform: translate(120px, 120px) scale(1.25) rotateZ(35deg); }
+  75% { transform: translate(140px, 140px) scale(1.1) rotateZ(30deg); }
+  100% { transform: translate(0, 0) scale(1) rotateZ(0deg); }
+}
+
+/* Knight leap attack */
+.attacking-knight {
+  animation: knightLeap 1100ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 1000;
+}
+
+@keyframes knightLeap {
+  0% { 
+    transform: translate(0, 0) scale(1) rotateZ(0deg);
+    filter: brightness(1);
+  }
+  15% { 
+    transform: translate(20px, -30px) scale(1.1) rotateZ(15deg);
+    filter: brightness(1.2);
+  }
+  40% { 
+    transform: translate(80px, -40px) scale(1.3) rotateZ(360deg);
+    filter: brightness(1.4);
+  }
+  60% { 
+    transform: translate(120px, 80px) scale(1.4) rotateZ(540deg);
+    filter: brightness(1.5);
+  }
+  80% { 
+    transform: translate(100px, 60px) scale(1.2) rotateZ(630deg);
+    filter: brightness(1.2);
+  }
+  100% { 
+    transform: translate(0, 0) scale(1) rotateZ(720deg);
+    filter: brightness(1);
+  }
+}
+
+/* Sweeping/Cross attacks */
+.attacking-sweep {
+  animation: sweepingArc 1000ms ease-in-out forwards;
+  z-index: 1000;
+}
+
+@keyframes sweepingArc {
+  0% { 
+    transform: translate(0, 0) scale(1) rotateZ(0deg);
+    opacity: 1;
+  }
+  20% { 
+    transform: translate(0, 40px) scale(1.2) rotateZ(-10deg);
+    opacity: 0.9;
+  }
+  40% { 
+    transform: translate(-80px, 80px) scale(1.3) rotateZ(-20deg);
+    opacity: 0.7;
+  }
+  60% { 
+    transform: translate(80px, 80px) scale(1.3) rotateZ(20deg);
+    opacity: 0.7;
+  }
+  80% { 
+    transform: translate(0, 40px) scale(1.2) rotateZ(10deg);
+    opacity: 0.9;
+  }
+  100% { 
+    transform: translate(0, 0) scale(1) rotateZ(0deg);
+    opacity: 1;
+  }
+}
+
+/* Pierce attack */
+.attacking-pierce {
+  animation: piercingThrust 700ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  z-index: 1000;
+}
+
+@keyframes piercingThrust {
+  0% { 
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  30% { 
+    transform: translateY(100px) scale(1.3);
+    filter: brightness(1.5) drop-shadow(0 0 10px var(--accent));
+  }
+  50% { 
+    transform: translateY(180px) scale(1.4);
+    filter: brightness(1.8) drop-shadow(0 0 20px var(--accent));
+  }
+  70% { 
+    transform: translateY(200px) scale(1.2);
+    filter: brightness(1.3) drop-shadow(0 0 15px var(--accent));
+  }
+  100% { 
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Adjacent attacks */
+.attacking-adjacent-left {
+  animation: adjacentSlideLeft 800ms ease-in-out forwards;
+  z-index: 1000;
+}
+
+@keyframes adjacentSlideLeft {
+  0% { transform: translateX(0) scale(1) rotateY(0deg); }
+  40% { transform: translateX(-120px) scale(1.2) rotateY(-15deg); }
+  60% { transform: translateX(-140px) scale(1.25) rotateY(-20deg); }
+  100% { transform: translateX(0) scale(1) rotateY(0deg); }
+}
+
+.attacking-adjacent-right {
+  animation: adjacentSlideRight 800ms ease-in-out forwards;
+  z-index: 1000;
+}
+
+@keyframes adjacentSlideRight {
+  0% { transform: translateX(0) scale(1) rotateY(0deg); }
+  40% { transform: translateX(120px) scale(1.2) rotateY(15deg); }
+  60% { transform: translateX(140px) scale(1.25) rotateY(20deg); }
+  100% { transform: translateX(0) scale(1) rotateY(0deg); }
+}
+
+/* ========== IMPACT EFFECT ANIMATIONS ========== */
+
+@keyframes slashFlash {
+  0% { opacity: 0; transform: rotate(-45deg) translateX(-100%); }
+  50% { opacity: 1; transform: rotate(-45deg) translateX(0); }
+  100% { opacity: 0; transform: rotate(-45deg) translateX(100%); }
+}
+
+@keyframes sweepFlash {
+  0% { opacity: 0; transform: translateX(-100%); }
+  50% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
+@keyframes pierceFlash {
+  0% { opacity: 0; height: 0%; }
+  30% { opacity: 1; height: 120%; }
+  100% { opacity: 0; height: 120%; }
+}
+
+@keyframes impactFlash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+@keyframes rippleExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+/* ========== TARGET HIGHLIGHTING ========== */
+
+.slot.valid-target {
+  border-color: var(--accent) !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  animation: targetPulse 1s ease-in-out infinite;
+  background: rgba(56, 239, 125, 0.2);
+}
+
+@keyframes targetPulse {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(56, 239, 125, 0.6);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(56, 239, 125, 0.9);
+    transform: scale(1.05);
+  }
+}
+
+.slot.switch-target {
+  border-color: #FFD700 !important;
+  border-style: dashed !important;
+  border-width: 3px !important;
+  animation: switchPulse 1s ease-in-out infinite;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+@keyframes switchPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ========== TUTORIAL STYLES ========== */
+
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.tutorial-overlay.hidden {
+  display: none;
+}
+
+.tutorial-content {
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  border: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
+}
+
+.tutorial-content h2 {
+  color: var(--accent);
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 25px;
+  text-shadow: 0 0 10px rgba(56, 239, 125, 0.8);
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.step-number {
+  background: var(--accent);
+  color: #000;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tutorial-step p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 12px;
+}
+
+.tutorial-step strong {
+  color: var(--accent);
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.tutorial-close {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ========== MOBILE UI IMPROVEMENTS ========== */
+
+@media (max-width: 768px) {
+  /* Better card sizes */
+  .slot { 
+    width: 80px !important; 
+    height: 115px !important;
+    padding-bottom: 22px !important;
+  }
+  
+  .slot .card { 
+    width: 75px !important; 
+    height: 105px !important;
+  }
+  
+  .slot .card .stats { 
+    font-size: 8px !important; 
+    padding: 3px !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* Fix overlapping UI */
+  .bottom-panel {
+    height: 140px !important;
+    z-index: 998 !important;
+  }
+  
+  .turn-panel { 
+    bottom: 150px !important;
+    gap: 10px !important;
+    z-index: 999 !important;
+  }
+  
+  .card-action-panel { 
+    position: fixed !important;
+    bottom: 160px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-width: 90% !important;
+    min-width: 250px !important;
+    z-index: 1000 !important;
+  }
+  
+  .card-action-panel .btn {
+    font-size: 9px !important;
+    padding: 8px 10px !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  
+  .card-action-panel .btn .attack-desc {
+    display: block;
+    font-size: 7px;
+    color: #aaa;
+    margin-top: 3px;
+    font-style: italic;
+  }
+  
+  .wrap {
+    padding-bottom: 360px !important;
+  }
+  
+  /* Tutorial mobile adjustments */
+  .tutorial-content {
+    padding: 20px;
+  }
+  
+  .tutorial-content h2 {
+    font-size: 14px;
+  }
+  
+  .tutorial-step p {
+    font-size: 10px;
+  }
+  
+  .tutorial-step strong {
+    font-size: 11px;
+  }
+  
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
 }
 </style>
 </body>
