@@ -1486,85 +1486,95 @@ function renderHand(side) {
 
   // Clear
   handEl.innerHTML = '';
-      if (!hand) return;
-    
-      const cardWidth = 104;
-      const containerWidth = handEl.clientWidth || 400;
-    
-      // ======================
-      // PLAYER HAND
-      // ======================
-      if (side === 'player') {
-        if (hand.length === 0) return;
-    
-        if (hand.length <= 3) {
-          hand.forEach((card, i) => {
-            const c = createHandCardEl(card, i, 'player');
-            c.style.position = 'relative';
-            c.style.margin = '0 5px';
-            handEl.appendChild(c);
-          });
-          return;
-        }
-    
-        let overlap = (containerWidth - cardWidth) / (hand.length - 1);
-        overlap = Math.min(overlap, cardWidth * 0.4);
-    
-        hand.forEach((card, i) => {
-          const c = createHandCardEl(card, i, 'player');
-          c.style.position = 'absolute';
-          c.style.left = `${i * overlap}px`;
-          c.style.top = '0';
-          c.style.zIndex = i;
-          handEl.appendChild(c);
-        });
-    
-        handEl.style.height = '120px';
-        handEl.style.position = 'relative';
-        return;
-      }
-    
-      // ======================
-      // COMPUTER HAND
-      // ======================
-      if (side === 'computer') {
-        // Correctly count cards remaining in the reserve.
-        // Get the indices of all cards that have been taken from the reserve and placed on the board.
-        const placedReserveIndices = new Set(
-          computerSlots.filter(s => s && typeof s.reserveIndex === 'number').map(s => s.reserveIndex)
-        );
-        // The number of remaining cards is the total reserve size minus the number of unique cards placed.
-        const remainingCards = computerReserve.length - placedReserveIndices.size;
-    
-        if (remainingCards <= 0) return;
-    
-        if (remainingCards <= 3) {
-          for (let i = 0; i < remainingCards; i++) {
-            const c = createCardBackEl();
-            c.style.position = 'relative';
-            c.style.margin = '0 3px';
-            handEl.appendChild(c);
-          }
-          return;
-        }
-    
-        let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
-        overlap = Math.min(overlap, cardWidth * 0.4);
-    
-        for (let i = 0; i < remainingCards; i++) {
-          const c = createCardBackEl();
-          c.style.position = 'absolute';
-          c.style.left = `${i * overlap}px`;
-          c.style.top = '0';
-          c.style.zIndex = i;
-          handEl.appendChild(c);
-        }
-    
-        handEl.style.height = '120px';
-        handEl.style.position = 'relative';
-        handEl.style.overflow = 'visible';
-      }
+  if (!hand) return;
+  
+  const cardWidth = 104;
+  const containerWidth = handEl.clientWidth || 400;
+  
+  // ======================
+  // PLAYER HAND
+  // ======================
+  if (side === 'player') {
+    if (hand.length === 0) return;
+  
+    if (hand.length <= 3) {
+      hand.forEach((card, i) => {
+        const c = createHandCardEl(card, i, 'player');
+        c.style.position = 'relative';
+        c.style.margin = '0 5px';
+        handEl.appendChild(c);
+      });
+      return;
     }
+  
+    let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+  
+    hand.forEach((card, i) => {
+      const c = createHandCardEl(card, i, 'player');
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
+      c.style.zIndex = i;
+      handEl.appendChild(c);
+    });
+  
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
+    return;
+  }
+  
+  // ======================
+  // COMPUTER HAND
+  // ======================
+  if (side === 'computer') {
+    const usedReserveIndices = new Set();
+    
+    // Add indices from active cards on the board
+    computerSlots.forEach(slot => {
+      if(slot && typeof slot.reserveIndex === 'number') {
+        usedReserveIndices.add(slot.reserveIndex);
+      }
+    });
+    
+    // Add indices from discarded computer cards
+    discardPile.forEach(entry => {
+      if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
+        usedReserveIndices.add(entry.reserveIndex);
+      }
+    });
+    
+    const remainingCards = computerReserve.length - usedReserveIndices.size;
+  
+    if (remainingCards <= 0) return;
+  
+    if (remainingCards <= 3) {
+      for (let i = 0; i < remainingCards; i++) {
+        const c = createCardBackEl();
+        c.style.position = 'relative';
+        c.style.margin = '0 3px';
+        handEl.appendChild(c);
+      }
+      return;
+    }
+  
+    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+  
+    for (let i = 0; i < remainingCards; i++) {
+      const c = createCardBackEl();
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
+      c.style.zIndex = i;
+      handEl.appendChild(c);
+    }
+  
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
+    handEl.style.overflow = 'visible';
+  }
+}
   function createCardBackEl(){
     const el = document.createElement('div'); 
     el.className='card'; 
