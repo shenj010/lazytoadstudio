@@ -2491,7 +2491,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     if (bestMove && bestMove.type === 'attack') {
         // The old code was calling performComputerAttack with the wrong arguments.
         // This needs to be corrected to match the new AI logic.
-        const { attackerIdx, attack, attackIndex, targetIdx } = bestMove;
+        const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
         
         // Mark the card as used
         const attacker = computerSlots[attackerIdx];
@@ -2500,7 +2500,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         // Set cooldown
         if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
             if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
-            attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
+            attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
         }
 
         // Log and perform the attack animation and logic
