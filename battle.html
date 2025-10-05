@@ -2446,6 +2446,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     // 2. Evaluate all possible moves for every active card
     const possibleMoves = [];
     activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
+      if (!slot.attackCooldowns) slot.attackCooldowns = {}; // ensure cooldown map exists
       // Evaluate defending as a baseline option with a low score
       possibleMoves.push({ type: 'defend', score: 5, attackerIdx });
 
@@ -2532,71 +2533,84 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     attacker.used = true;
 
     // Get elements ONCE
-    const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-    const targetSlotEl = playerSlotsEl.children[targetIdx];
-    const attackerCardEl = attackerSlotEl.querySelector('.card');
-    const targetCardEl = targetSlotEl.querySelector('.card');
+const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+const targetSlotEl = playerSlotsEl.children[targetIdx];
+const attackerCardEl = attackerSlotEl.querySelector('.card');
+const targetCardEl = targetSlotEl.querySelector('.card');
 
-    // Set cooldown
-    if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-        if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
-        attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+// === Handle cooldowns & status effects ===
+if (attack.effect) {
+  const target = playerSlots[targetIdx];
+  const alreadyHas = hasStatusEffect(target, attack.effect);
+
+  // Apply cooldowns for strong effects only
+  if (['stun', 'sleep', 'poison'].includes(attack.effect)) {
+    if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+    attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+  }
+
+  // Handle stacking and uniqueness rules
+  if (attack.effect === 'weaken') {
+    const weakenCount = target.statusEffects ? target.statusEffects.filter(e => e.type === 'weaken').length : 0;
+    if (weakenCount < 3) {
+      applyStatusEffect(target, 'weaken', attack.duration, attacker.card.name);
     }
+  } else if (!alreadyHas) {
+    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+  }
+}
 
-    // Log and perform the attack
-    addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
-    
-    // Continue with animation...
-    const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
-    attackerCardEl.classList.add(animationClass);
-      
-        const animTiming = getAnimationTiming(animationClass);
+// Log and perform the attack
+addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
 
+// Continue with animation...
+const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+attackerCardEl.classList.add(animationClass);
+
+const animTiming = getAnimationTiming(animationClass);
+
+setTimeout(() => {
+  let finalDmg = applyDamage(attacker, playerSlots[targetIdx], attack.damage);
+
+  if (finalDmg > 0) {
+    createImpactEffect(targetSlotEl, attack.pattern);
+    showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+    targetCardEl.classList.add('hit', 'flash');
+    setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+
+    playerSlots[targetIdx].hp = Math.max(0, playerSlots[targetIdx].hp - finalDmg);
+
+    if (playerSlots[targetIdx].hp <= 0) {
+      setTimeout(() => {
+        targetCardEl.classList.add('die');
         setTimeout(() => {
-            let finalDmg = applyDamage(attacker, playerSlots[targetIdx], attack.damage);
-            
-            if (attack.effect) {
-                applyStatusEffect(playerSlots[targetIdx], attack.effect, attack.duration, attacker.card.name);
-            }
-
-            if (finalDmg > 0) {
-                createImpactEffect(targetSlotEl, attack.pattern);
-                showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
-                targetCardEl.classList.add('hit', 'flash');
-                setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-
-                playerSlots[targetIdx].hp = Math.max(0, playerSlots[targetIdx].hp - finalDmg);
-
-                if (playerSlots[targetIdx].hp <= 0) {
-                    setTimeout(() => {
-                        targetCardEl.classList.add('die');
-                        setTimeout(() => {
-                            addToDiscardPile(playerSlots[targetIdx].card, 'Player', playerSlots[targetIdx]);
-                            playerSlots[targetIdx] = null;
-                            renderAll();
-                            checkBattleOver();
-                        }, 600);
-                    }, 200);
-                } else {
-                    updateSlotUI('player', targetIdx);
-                }
-            }
-            checkBattleOver();
-        }, animTiming * 0.6);
-
-       setTimeout(() => {
-    attackerCardEl.classList.remove(animationClass);
-      // NOW add the "used" class after animation completes
-          if(attackerCardEl) {
-            attackerCardEl.classList.add('used');
-        }
-            updateSlotUI('computer', attackerIdx);
-        }, animTiming);
-
-    } else if (bestMove) {
-        // If no attack is worthwhile, default to defending
-        performComputerDefend(bestMove.attackerIdx);
+          addToDiscardPile(playerSlots[targetIdx].card, 'Player', playerSlots[targetIdx]);
+          playerSlots[targetIdx] = null;
+          renderAll();
+          checkBattleOver();
+        }, 600);
+      }, 200);
+    } else {
+      updateSlotUI('player', targetIdx);
     }
+  }
+
+  checkBattleOver();
+}, animTiming * 0.6);
+
+setTimeout(() => {
+  attackerCardEl.classList.remove(animationClass);
+  // NOW add the "used" class after animation completes
+  if (attackerCardEl) {
+    attackerCardEl.classList.add('used');
+  }
+  updateSlotUI('computer', attackerIdx);
+}, animTiming);
+
+} else if (bestMove) {
+  // If no attack is worthwhile, default to defending
+  performComputerDefend(bestMove.attackerIdx);
+}
 
     // 6. After a delay, call this function again to process the next card's action
     setTimeout(performComputerActions, 1800);
