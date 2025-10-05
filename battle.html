@@ -1688,7 +1688,8 @@ function renderHand(side) {
       document.querySelectorAll('#playerHand .card').forEach((c,i) => {
         if(i===index) c.classList.add('selected'); else c.classList.remove('selected');
       });
-    }, 250); // 250ms delay to wait for a potential double-click
+    }, 250);
+} // 250ms delay to wait for a potential double-click
   
 function showCardActions(side, idx){
   if(side !== 'player' || !playerTurn) return;
