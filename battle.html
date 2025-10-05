@@ -2262,24 +2262,21 @@ function showCardActions(side, idx){
     }, 800);
   }
 
-  function performComputerActions(){
+    function performComputerActions(){
     // Computer's strategic decision making each turn
     
     // Option 1: Place a new card (if beneficial)
     const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
     if (shouldPlaceCard) {
-  const placed = computerPlaceCard();
-  if (placed) {
-    setTimeout(() => performComputerActions(), 1000);
-    return;
-  } else {
-    addLog('system', 'Computer tried to place a card but failed.');
-    computerSlots.forEach(slot => { if (slot) slot.used = true; });
-    setTimeout(() => endComputerTurn(), 1000);
-    return;
-  }
-}
-
+      const placed = computerPlaceCard();
+      if (placed) {
+        // Successfully placed a card, continue the turn after a delay
+        setTimeout(() => performComputerActions(), 1000);
+        return;
+      }
+      // If placement was attempted but failed (e.g., no more reserve cards),
+      // do NOT end the turn here. Just proceed to other actions.
+    }
     
     // Option 2: Use existing cards to attack or defend
     const activeSlots = [];
@@ -2487,7 +2484,7 @@ function showCardActions(side, idx){
     renderAll();
   }
 
-  function endComputerTurn(){
+    function endComputerTurn(){
   playerTurn = true;
   turnIndicator.textContent = 'Player Turn';
   endTurnBtn.classList.remove('disabled');
@@ -2499,12 +2496,9 @@ function showCardActions(side, idx){
   playerSlots.forEach(slot => {
     if(slot) {
       slot.used = false;
-      // Don't clear defending if it persists
-      if (!slot.defendPersists) {
-         slot.defending = false;
-        } else {
-         slot.defendPersists = false;
-    }
+      // Reset both defending states at the start of the player's turn
+      slot.defending = false;
+      slot.defendPersists = false;
     
       if(slot.attackCooldowns) {
         Object.keys(slot.attackCooldowns).forEach(attackIdx => {
