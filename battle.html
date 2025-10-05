@@ -2085,7 +2085,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player', target);
+              addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -2156,7 +2156,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player', target);
+              addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
               renderAll();
             }, 600);
@@ -2417,7 +2417,7 @@ function showCardActions(side, idx){
                     setTimeout(() => {
                         targetCardEl.classList.add('die');
                         setTimeout(() => {
-                            addToDiscardPile(playerSlots[targetIdx].card, 'Player');
+                            addToDiscardPile(target.card, 'Player', target);
                             playerSlots[targetIdx] = null;
                             renderAll();
                             checkBattleOver();
@@ -2535,7 +2535,7 @@ function showCardActions(side, idx){
         setTimeout(() => {
           targetCardEl.classList.add('die');
           setTimeout(() => { 
-            addToDiscardPile(target.card, 'Computer');
+            addToDiscardPile(target.card, 'Player', target);
             playerSlots[attackerIdx] = null; 
             renderAll(); 
             checkBattleOver(); 
@@ -2785,7 +2785,7 @@ function showCardActions(side, idx){
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
                 // Add to discard pile with the correct owner
-                addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player', slot);
+                addToDiscardPile(slot.card, side, slot);
                 slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
             return false; // remove effect (card dead)
