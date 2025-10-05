@@ -1,5 +1,3 @@
-
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -2770,36 +2768,63 @@ function getTotalHealth(side) {
 
 
   // apply status effects to a target
-  function applyStatusEffect(target, effect, duration, attackerName) {
-  if(!effect || !duration) return;
-  
-  if(!target.statusEffects) target.statusEffects = [];
-  
+  // apply status effects to a target
+function applyStatusEffect(target, effect, duration, attackerName) {
+  if (!effect || !duration) return;
+  if (!target.statusEffects) target.statusEffects = [];
+
+  const type = effect.toLowerCase();
+
+  // Stack limit rules
+  const stackLimits = {
+    poison: 1,
+    sleep: 1,
+    stun: 1,
+    weaken: 3
+  };
+  const maxStacks = stackLimits[type] ?? 1;
+
+  // Count current stacks
+  const existingEffects = target.statusEffects.filter(e => e.type === type && e.turnsRemaining > 0);
+  const currentStacks = existingEffects.length;
+
+  // === Non-stackable types: block new application ===
+  if (type !== 'weaken' && currentStacks >= 1) {
+    addLog('system', `${target.card.name} is already affected by ${type}! The effect does not stack or refresh.`);
+    return; // nullify status application
+  }
+
+  // === Weaken: allow stacking up to 3 times ===
+  if (type === 'weaken' && currentStacks >= maxStacks) {
+    addLog('system', `${target.card.name} is already at max weaken stacks!`);
+    return;
+  }
+
+  // Apply new effect
   const statusEffect = {
-    type: effect,
-    duration: duration,
+    type,
+    duration,
     attacker: attackerName,
     turnsRemaining: duration,
     justApplied: true
   };
-  
+
   target.statusEffects.push(statusEffect);
-  
+
   const effectMessages = {
     stun: `${target.card.name} is stunned and cannot act!`,
     sleep: `${target.card.name} falls asleep!`,
     poison: `${target.card.name} is poisoned for ${duration} turns!`,
     weaken: `${target.card.name} is weakened! (-30% attack damage)`
   };
-  
-  if(effectMessages[effect]) {
-    addLog('system', effectMessages[effect]);
-  }
-  
+
+  if (effectMessages[type]) addLog('system', effectMessages[type]);
+
+  // Show popup animation
   setTimeout(() => {
     let targetSlotEl = null;
     let targetIndex = -1;
-    
+
     targetIndex = computerSlots.indexOf(target);
     if (targetIndex !== -1) {
       targetSlotEl = computerSlotsEl.children[targetIndex];
@@ -2809,12 +2834,11 @@ function getTotalHealth(side) {
         targetSlotEl = playerSlotsEl.children[targetIndex];
       }
     }
-    
-    if (targetSlotEl) {
-      showStatusEffectPopup(targetSlotEl, effect);
-    }
+
+    if (targetSlotEl) showStatusEffectPopup(targetSlotEl, type);
   }, 600);
-  }
+}
+
 
   // process status effects at the start of each turn
   function processStatusEffects(side){
