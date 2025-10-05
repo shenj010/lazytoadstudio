@@ -4144,30 +4144,44 @@ addTouchHoldListeners();
     z-index: 999 !important;
   }
   
+  /* Fixed card action panel with proper styling */
   .card-action-panel { 
     position: fixed !important;
     bottom: 160px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    max-width: 90% !important;
-    min-width: 250px !important;
+    max-width: 250px !important;
+    min-width: 180px !important;
+    width: 85% !important;
+    padding: 10px !important;
+    gap: 6px !important;
     z-index: 1000 !important;
   }
   
+  /* Compact, centered buttons with simplified text */
   .card-action-panel .btn {
-    font-size: 9px !important;
+    font-size: 11px !important;
     padding: 8px 10px !important;
-    line-height: 1.4 !important;
-    white-space: normal !important;
-    text-align: left !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    border-radius: 4px !important;
+    margin-bottom: 4px !important;
   }
   
+  /* Hide attack descriptions on mobile */
   .card-action-panel .btn .attack-desc {
-    display: block;
-    font-size: 7px;
-    color: #aaa;
-    margin-top: 3px;
-    font-style: italic;
+    display: none !important;
+  }
+  
+  /* Smaller cooldown indicator */
+  .card-action-panel .btn.cooldown::after {
+    top: -10px !important;
+    right: -3px !important;
+    font-size: 7px !important;
+    padding: 1px 3px !important;
   }
   
   .wrap {
@@ -4197,7 +4211,7 @@ addTouchHoldListeners();
     font-size: 14px;
   }
 }
-<style>
+
 /* ... existing styles ... */
 
 /* ========== GAME OVER SCREEN ========== */
