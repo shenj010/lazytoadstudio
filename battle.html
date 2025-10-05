@@ -2267,11 +2267,19 @@ function showCardActions(side, idx){
     
     // Option 1: Place a new card (if beneficial)
     const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
-    if(shouldPlaceCard && computerPlaceCard()){
-      // Placed a card, continue with other actions
-      setTimeout(()=> performComputerActions(), 1000);
-      return;
-    }
+    if (shouldPlaceCard) {
+  const placed = computerPlaceCard();
+  if (placed) {
+    setTimeout(() => performComputerActions(), 1000);
+    return;
+  } else {
+    addLog('system', 'Computer tried to place a card but failed.');
+    computerSlots.forEach(slot => { if (slot) slot.used = true; });
+    setTimeout(() => endComputerTurn(), 1000);
+    return;
+  }
+}
+
     
     // Option 2: Use existing cards to attack or defend
     const activeSlots = [];
@@ -2492,10 +2500,12 @@ function showCardActions(side, idx){
     if(slot) {
       slot.used = false;
       // Don't clear defending if it persists
-      if(!slot.defendPersists) {
-        slot.defending = false;
-      }
-      
+      if (!slot.defendPersists) {
+         slot.defending = false;
+        } else {
+         slot.defendPersists = false;
+    }
+    
       if(slot.attackCooldowns) {
         Object.keys(slot.attackCooldowns).forEach(attackIdx => {
           if(slot.attackCooldowns[attackIdx] > 0) {
@@ -3181,14 +3191,15 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
 
     // Place the card in the chosen slot
     computerSlots[targetSlot] = { 
-      card: cardToPlace, 
-      hp: MAX_HP, 
-      defending: false, 
-      used: false, 
-      statusEffects: [],
-      attackCooldowns: attackCooldowns,
-      reserveIndex: nextCardIndex // Track which reserve index this came from
-    };
+     card: cardToPlace, 
+     hp: MAX_HP, 
+    defending: false,
+    defendPersists: false, // ✅ add this
+    used: false,
+     statusEffects: [],
+    attackCooldowns: attackCooldowns,
+    reserveIndex: nextCardIndex
+};
 
     renderAll();
     addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
