@@ -2437,8 +2437,15 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 
       // Evaluate all available attacks for the current card
       slot.card.attacks.forEach((attack, attackIdx) => {
-        // STRICT COOLDOWN CHECK - skip if on cooldown
-        if (isAttackOnCooldown(slot, attackIdx)) return;
+  // Initialize cooldowns if needed
+  if (!slot.attackCooldowns) {
+    slot.attackCooldowns = {};
+  }
+  
+  // Skip if on cooldown (explicitly check > 0)
+  if ((slot.attackCooldowns[attackIdx] || 0) > 0) {
+    return;
+  }
 
         const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
         validTargets.forEach(targetIdx => {
@@ -3302,8 +3309,12 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
         const attackCooldowns = {};
         card.attacks.forEach((attack, attackIdx) => {
           if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            attackCooldowns[attackIdx] = 0;
-          }
+  if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+  
+  // Explicitly set the cooldown using the correct index
+  attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+  console.log(`Set cooldown for ${attacker.card.name}'s ${attack.name} to ${BASE_COOLDOWN}`);
+}
         });
         
         computerSlots[slotIdx] = { 
