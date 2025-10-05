@@ -2436,6 +2436,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 
       // Evaluate all available attacks for the current card
       slot.card.attacks.forEach((attack, attackIdx) => {
+        // STRICT COOLDOWN CHECK - skip if on cooldown
         if (isAttackOnCooldown(slot, attackIdx)) return;
 
         const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
@@ -2478,29 +2479,46 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     // 3. Decide on the single best move from all possibilities
     let bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
 
-    // 4. Strategic Override: A chance to place a new card if the board isn't full
-    const canPlaceCard = computerSlots.filter(s => s).length < MAX_SLOTS && computerReserve.length > 0;
-    if (canPlaceCard && Math.random() < 0.25) {
+    // 4. ENHANCED CARD PLACEMENT STRATEGY
+    const computerCardCount = computerSlots.filter(s => s).length;
+    const playerCardCount = playerSlots.filter(s => s).length;
+    const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
+
+    // Determine if computer should place a card based on strategic considerations
+    let shouldPlaceCard = false;
+
+    // Place card if player has more cards (defensive)
+    if (playerCardCount > computerCardCount) {
+        shouldPlaceCard = true;
+    }
+    // Place card if computer is at a disadvantage (fewer cards or lower total HP)
+    else if (computerCardCount <= 2 || getTotalHealth('computer') < getTotalHealth('player') * 0.7) {
+        shouldPlaceCard = true; 
+    }
+    // Random chance to place card when equal or ahead (aggressive)
+    else if (Math.random() < 0.2) {
+        shouldPlaceCard = true;
+    }
+
+    if (canPlaceCard && shouldPlaceCard) {
         if (computerPlaceCard()) {
-            addLog('system', 'Computer places a reinforcement.');
+            addLog('system', 'Computer strategically deploys reinforcements.');
             setTimeout(performComputerActions, 1200); // Continue the turn after placing
             return;
         }
     }
     
-        // 5. Execute the best move
+    // 5. Execute the best move
     if (bestMove && bestMove.type === 'attack') {
-        // The old code was calling performComputerAttack with the wrong arguments.
-        // This needs to be corrected to match the new AI logic.
         const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
         
         // Mark the card as used
         const attacker = computerSlots[attackerIdx];
         attacker.used = true;
 
-        // Set cooldown
-        if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+        // Set cooldown - PROPER COOLDOWN MANAGEMENT
+        if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
             attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
         }
 
@@ -2560,118 +2578,12 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 
     // 6. After a delay, call this function again to process the next card's action
     setTimeout(performComputerActions, 1800);
-  }
-  
- function performComputerAttack(attackerIdx, damage){
-  const attacker = computerSlots[attackerIdx];
-  const target = playerSlots[attackerIdx];
-  
-  if(!attacker || !target) {
-    // Mark as used anyway so we don't get stuck
-    if(attacker) attacker.used = true;
-    return;
-  }
+}
 
-  attacker.used = true;
-
-  // Build list of attacks with their indices
-  const attackEntries = (attacker.card.attacks || []).map((a,i)=>({attack:a,index:i}));
-  // Filter out attacks that are on cooldown
-  const offCooldown = attackEntries.filter(entry => {
-    const cdMap = attacker.attackCooldowns || {};
-    return !(cdMap[entry.index] > 0); // keep if no cooldown or zero
-  });
-  
-  // With this code that properly respects cooldowns:
-  let chosen = null;
-  let attack = null;
-   let chosenIndex = -1;
-      
-      if (offCooldown.length > 0) {
-        // We have attacks available - choose one randomly from those not on cooldown
-        chosen = offCooldown[Math.floor(Math.random() * offCooldown.length)];
-        attack = chosen.attack;
-        chosenIndex = chosen.index;
-      } else {
-        // All special attacks are on cooldown, so use defend instead
-        addLog('system', `${attacker.card.name}'s attacks are all on cooldown - defending instead.`);
-        // Switch to defense since we can't attack
-        attacker.used = true; // Mark as used before defending
-        performComputerDefend(attackerIdx);
-        return; // Exit the function early - this card will defend instead
-      }
-      
-      // Set cooldown only if this attack applies a status effect and was actually chosen from the card list
-      if(chosenIndex !== -1 && attack.effect && ['stun','sleep','poison'].includes(attack.effect)){
-    if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
-    attacker.attackCooldowns[chosenIndex] = 3; // starts cooldown after use
-  }
-  
-  // Get card elements for animation
-  const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-  const targetSlotEl = playerSlotsEl.children[targetIdx];
-  const attackerCardEl = attackerSlotEl.querySelector('.card');
-  const targetCardEl = targetSlotEl.querySelector('.card');
-  
-  if (!attackerCardEl || !targetCardEl) {
-    // If we can't find the elements, just log the attack without animation
-    const finalDmg = attack.damage ?? damage;
-    target.hp = Math.max(0, target.hp - finalDmg);
-    addLog('computer', `${attacker.card.name} attacks ${target.card.name} for ${finalDmg} damage`);
-    updateSlotUI('player', attackerIdx);
-    return;
-  }
-  
-  let finalDmg = attack.damage ?? damage;
-  // Apply weaken effect (reduce damage by 10 if attacker is weakened)
-  if(hasStatusEffect(attacker, 'weaken')) {
-    finalDmg = Math.max(0, finalDmg - 10);
-    addLog('system', `${attacker.card.name}'s attack is weakened!`);
-  }
-  
-  if(target.defending && finalDmg > 0){
-    finalDmg = Math.ceil(finalDmg/2);
-    target.defending = false;
-    addLog('system', `${target.card.name} defended – reduced damage!`);
-  }
-
-  // Apply status effects immediately (only if not on cooldown since we filtered)
-  if(attack.effect) {
-    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
-  }
-
-  // Handle damage with animation if there is damage
-  if(finalDmg > 0) {
-    createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
-      showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
-      targetCardEl.classList.add('hit', 'flash');
-      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
-      
-      target.hp = Math.max(0, target.hp - damageToApply);
-      addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
-      
-      if(target.hp <= 0){
-        setTimeout(() => {
-          targetCardEl.classList.add('die');
-          setTimeout(() => { 
-            addToDiscardPile(target.card, 'Player', target);
-            playerSlots[attackerIdx] = null; 
-            renderAll(); 
-            checkBattleOver(); 
-          }, 600);
-        }, 200);
-      } else {
-        updateSlotUI('player', attackerIdx);
-        checkBattleOver();
-      }
-    }, finalDmg);
-  } else {
-    // No damage attack (like pure stun/sleep)
-    addLog('computer', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
-    checkBattleOver();
-  }
-
-  renderAll();
+// Helper function to calculate total health
+function getTotalHealth(side) {
+    const slots = side === 'player' ? playerSlots : computerSlots;
+    return slots.reduce((total, slot) => total + (slot ? slot.hp : 0), 0);
 }
 
   function performComputerDefend(slotIdx){
