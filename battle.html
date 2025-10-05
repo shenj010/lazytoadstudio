@@ -1133,6 +1133,12 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
   <div class="btn" id="endTurnBtn">END TURN</div>
 </div>
 </div> <!-- Close wrap div -->
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div id="gameOverText" class="game-over-text"></div>
+  <div id="gameOverOptions" class="game-over-options">
+    <!-- Content will be injected by JavaScript -->
+  </div>
+</div>
 <script>
 (function(){
   // config
@@ -1449,6 +1455,16 @@ function loadPlayerInventory(){
   
   playerHand = stored.slice(0,10); // cap hand size
   console.log('Final playerHand:', playerHand); // Debug log
+}
+function savePlayerInventory() {
+  try {
+    // We only need to store the name/src to avoid saving large objects
+    const simplifiedHand = playerHand.map(card => ({ name: card.name, src: card.src }));
+    localStorage.setItem('collectedCards', JSON.stringify(simplifiedHand));
+    console.log('Player inventory saved:', simplifiedHand);
+  } catch (e) {
+    console.error('Error saving cards to localStorage:', e);
+  }
 }
 
   // computer reserve: same amount as player has
@@ -3131,11 +3147,122 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     }
   }
 
-  function showGameOver(result){
-    alert(result==='victory' ? 'You won!' : 'You lost!');
-    // return to main index (developer can change)
-    // location.href = 'index.html';
+  // ... after checkBattleOver function ...
+
+function showGameOver(result) {
+  const overlay = document.getElementById('gameOverOverlay');
+  const textEl = document.getElementById('gameOverText');
+  const optionsEl = document.getElementById('gameOverOptions');
+
+  // Clear previous options
+  optionsEl.innerHTML = '';
+
+  // Set text and style
+  textEl.textContent = result === 'victory' ? 'VICTORY' : 'DEFEAT';
+  textEl.className = `game-over-text ${result}`;
+
+  if (result === 'victory') {
+    // Grant a new card
+    const newCard = grantRandomCard();
+    
+    const rewardPanel = document.createElement('div');
+    rewardPanel.className = 'reward-panel';
+    
+    if (newCard) {
+      const rewardText = document.createElement('div');
+      rewardText.className = 'reward-text';
+      rewardText.textContent = 'You won a new card!';
+      rewardPanel.appendChild(rewardText);
+      
+      const cardEl = createHandCardEl(newCard, -1, 'reward');
+      rewardPanel.appendChild(cardEl);
+    } else {
+      const rewardText = document.createElement('div');
+      rewardText.className = 'reward-text';
+      rewardText.textContent = 'You have collected all available cards!';
+      rewardPanel.appendChild(rewardText);
+    }
+    optionsEl.appendChild(rewardPanel);
+
+    // Create buttons
+    const nextBtn = document.createElement('div');
+    nextBtn.className = 'btn';
+    nextBtn.textContent = 'Next Challenge';
+    nextBtn.onclick = () => resetGame();
+    
+    const returnBtn = document.createElement('div');
+    returnBtn.className = 'btn';
+    returnBtn.textContent = 'Return to LazyToadStudios';
+    returnBtn.onclick = () => { window.location.href = 'index.html'; };
+
+    optionsEl.appendChild(nextBtn);
+    optionsEl.appendChild(returnBtn);
+
+  } else { // Defeat
+    const retryBtn = document.createElement('div');
+    retryBtn.className = 'btn';
+    retryBtn.textContent = 'Retry';
+    retryBtn.onclick = () => resetGame();
+    
+    const returnBtn = document.createElement('div');
+    returnBtn.className = 'btn';
+    returnBtn.textContent = 'Return to LazyToadStudios';
+    returnBtn.onclick = () => { window.location.href = 'index.html'; };
+
+    optionsEl.appendChild(retryBtn);
+    optionsEl.appendChild(returnBtn);
   }
+
+  // Show the overlay
+  overlay.classList.add('show');
+}
+
+function grantRandomCard() {
+  const unownedCards = cardPool.filter(poolCard => 
+    !playerHand.some(playerCard => playerCard.name === poolCard.name)
+  );
+
+  if (unownedCards.length === 0) {
+    addLog('system', 'Congratulations! You have collected all the cards!');
+    return null;
+  }
+
+  const newCard = unownedCards[Math.floor(Math.random() * unownedCards.length)];
+  playerHand.push(newCard);
+  savePlayerInventory();
+  addLog('system', `You have been awarded a new card: ${newCard.name}!`);
+  return newCard;
+}
+
+function resetGame() {
+  // Hide game over screen
+  const overlay = document.getElementById('gameOverOverlay');
+  overlay.classList.remove('show');
+
+  // Reset state variables
+  playerSlots = new Array(MAX_SLOTS).fill(null);
+  computerSlots = new Array(MAX_SLOTS).fill(null);
+  selected = null;
+  playerTurn = true;
+  currentActionPanel = null;
+  discardPile.length = 0; // Clear the discard pile array
+
+  // Clear UI elements
+  logEl.innerHTML = '';
+  
+  // Re-initialize the game with updated data
+  loadPlayerInventory(); // Reloads hand, which may now include a new card
+  buildComputerReserve(); // Rebuilds computer deck to match player's new hand size
+  fillComputerSlots();
+  renderAll();
+  renderDiscardPile();
+  decideFirstPlayer();
+  addLog('system', 'A new challenge begins!');
+}
+
+// end turn button handler
+endTurnBtn.addEventListener('click', ()=>{
+// ... existing function ...
 
   // end turn button handler
   endTurnBtn.addEventListener('click', ()=>{
@@ -4004,6 +4131,103 @@ addTouchHoldListeners();
     font-size: 14px;
   }
 }
+<style>
+/* ... existing styles ... */
+
+/* ========== GAME OVER SCREEN ========== */
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 6000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.game-over-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-over-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 80px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  animation: gameOver-animation 1.5s forwards;
+}
+
+.game-over-text.victory {
+  color: transparent;
+  background: linear-gradient(135deg, #ffd700, var(--accent), #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+}
+
+.game-over-text.defeat {
+  color: transparent;
+  background: linear-gradient(135deg, #555, var(--danger), #8b0000);
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
+}
+
+@keyframes gameOver-animation {
+  0% { transform: scale(3); opacity: 0; filter: blur(10px); }
+  60% { transform: scale(0.9); opacity: 1; filter: blur(0); }
+  80% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.game-over-options {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInOptions 0.5s 1.5s forwards;
+}
+
+.reward-panel {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.reward-panel .reward-text {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 15px;
+}
+
+.reward-panel .card {
+  margin: 0 auto; /* Center the card */
+  animation: newCardPulse 2s infinite;
+}
+
+@keyframes newCardPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 15px var(--accent); }
+  50% { transform: scale(1.05); box-shadow: 0 0 25px var(--accent); }
+}
+
+@keyframes fadeInOptions {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
 </style>
 </body>
 </html>
