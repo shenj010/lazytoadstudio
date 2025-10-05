@@ -377,7 +377,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn indicator */
-.turn-indicator{position:fixed;top=20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index=60}
+.turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
  /* attack animations */
 .attacking-forward{animation:attackForward 1000ms ease-in-out forwards; z-index: 1000;}
 @keyframes attackForward{
@@ -1413,7 +1413,7 @@ function getAttackAnimation(attackerIdx, targetIdx, pattern, attackerSide) {
   // Swap "forward" and "backward" here to fix the direction
   const direction = attackerSide === 'player' ? 'backward' : 'forward';
 
-    switch(pattern) {
+  switch(pattern) {
     case 'diagonal':
       return `attacking-diagonal-${offset < 0 ? 'left' : 'right'}`;
     case 'knight':
