@@ -2077,7 +2077,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player');
+              addToDiscardPile(target.card, 'player');
               computerSlots[targetIdx] = null;
               renderAll();
               checkBattleOver();
@@ -2151,7 +2151,7 @@ function showCardActions(side, idx){
           setTimeout(() => {
             targetCardEl.classList.add('die');
             setTimeout(() => {
-              addToDiscardPile(target.card, 'Player');
+              addToDiscardPile(target.card, 'player');
               computerSlots[targetIdx] = null;
               renderAll();
             }, 600);
