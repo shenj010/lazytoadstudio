@@ -2521,41 +2521,36 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     
    // 5. Execute the best move
     if (bestMove && bestMove.type === 'attack') {
-        const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
-        
-        // Mark the card as used
-        const attacker = computerSlots[attackerIdx];
-        attacker.used = true;
+    const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
+    
+    // Mark the card as used
+    const attacker = computerSlots[attackerIdx];
+    attacker.used = true;
 
-        // IMMEDIATELY update visual "used" state without affecting animation
-        const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-        const attackerCardEl = attackerSlotEl.querySelector('.card');
-        if(attackerCardEl) {
-          attackerCardEl.classList.add('used');
-        }
+    // Get elements ONCE
+    const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+    const targetSlotEl = playerSlotsEl.children[targetIdx];
+    const attackerCardEl = attackerSlotEl.querySelector('.card');
+    const targetCardEl = targetSlotEl.querySelector('.card');
 
-        // Set cooldown - PROPER COOLDOWN MANAGEMENT
-        if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
-            if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
-            attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
-        }
+    // IMMEDIATELY update visual "used" state
+    if(attackerCardEl) {
+      attackerCardEl.classList.add('used');
+    }
 
-        // Log and perform the attack animation and logic
-        addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
-        
-        const attackerSlotEl = computerSlotsEl.children[attackerIdx];
-        const targetSlotEl = playerSlotsEl.children[targetIdx];
-        const attackerCardEl = attackerSlotEl.querySelector('.card');
-        const targetCardEl = targetSlotEl.querySelector('.card');
+    // Set cooldown
+    if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+        if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+        attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+    }
 
-        // IMMEDIATELY update visual "used" state without affecting animation
-        if(attackerCardEl) {
-          attackerCardEl.classList.add('used');
-        }
-
-        const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
-        attackerCardEl.classList.add(animationClass);
-
+    // Log and perform the attack
+    addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
+    
+    // Continue with animation...
+    const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+    attackerCardEl.classList.add(animationClass);
+      
         const animTiming = getAnimationTiming(animationClass);
 
         setTimeout(() => {
