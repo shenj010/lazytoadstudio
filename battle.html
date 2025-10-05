@@ -4276,6 +4276,24 @@ addTouchHoldListeners();
     transform: translateY(0);
   }
 }
+
+/* Fix for game over animations */
+.game-over-text {
+  animation: gameOver-animation 1.5s forwards !important;
+}
+
+.game-over-options {
+  animation: fadeInOptions 0.5s 1.5s forwards !important;
+}
+
+.game-over-overlay {
+  display: flex !important;
+}
+
+.game-over-overlay.show {
+  visibility: visible !important;
+}
+</style>
 </style>
 </body>
 </html>
