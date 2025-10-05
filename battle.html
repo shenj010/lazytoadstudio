@@ -2051,6 +2051,8 @@ function showCardActions(side, idx){
     const attack = attacker.card.attacks[attackIndex];
   
     if(!attacker || !target) return;
+
+    attacker.used = true;
   
   // Set cooldown
     if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
@@ -2126,6 +2128,8 @@ function showCardActions(side, idx){
   const validTargets = getValidTargets(attackerIdx, pattern, 'player');
   
   if(validTargets.length === 0) return;
+
+  attacker.used = true;
   
   if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
     attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
@@ -3229,8 +3233,10 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     optionsEl.appendChild(returnBtn);
   }
 
-  // Show the overlay
-  overlay.classList.add('show');
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    overlay.classList.add('show');
+  }, 10);
 }
 
   // end turn button handler
@@ -4185,25 +4191,27 @@ addTouchHoldListeners();
 
 /* ========== GAME OVER SCREEN ========== */
 .game-over-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 9999; /* Increased z-index */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  z-index: 10000 !important; /* Increased z-index further */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.5s ease;
+  visibility: hidden; /* Start hidden */
 }
 
 .game-over-overlay.show {
-  opacity: 1;
-  pointer-events: auto;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important; /* Make visible */
 }
 
 .game-over-text {
@@ -4213,6 +4221,10 @@ addTouchHoldListeners();
   text-align: center;
   position: relative;
   animation: gameOver-animation 1.5s forwards;
+}
+
+.game-over-options {
+  animation: fadeInOptions 0.5s 1.5s forwards !important;
 }
 
 .game-over-text.victory {
