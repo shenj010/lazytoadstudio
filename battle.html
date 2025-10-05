@@ -3312,17 +3312,22 @@ function showDiscardedCardDetails(entry) {
   }
   function showTutorialIfNeeded() {
   const hasSeenTutorial = localStorage.getItem('toadBattle_tutorialSeen');
+  const overlay = document.getElementById('tutorialOverlay');
   
-  if(!hasSeenTutorial) {
-    const overlay = document.getElementById('tutorialOverlay');
-    if(overlay) {
-      overlay.classList.remove('hidden');
-      
-      document.getElementById('tutorialClose').addEventListener('click', () => {
-        overlay.classList.add('hidden');
+  if(!hasSeenTutorial && overlay) {
+    // Show the overlay (it's visible by default)
+    overlay.style.display = 'flex';
+    
+    const closeBtn = document.getElementById('tutorialClose');
+    if(closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
         localStorage.setItem('toadBattle_tutorialSeen', 'true');
       });
     }
+  } else if(overlay) {
+    // Hide if already seen
+    overlay.style.display = 'none';
   }
 }
   // initialization
