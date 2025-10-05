@@ -1925,9 +1925,6 @@ function showCardActions(side, idx){
     const attack = attacker.card.attacks[attackIndex];
     if(!attack) return;
 
-    // mark attacker as used
-    attacker.used = true;
-    
     // Get card elements for animation
     const attackerSlotEl = playerSlotsEl.children[attackerIdx];
     const targetSlotEl = computerSlotsEl.children[targetIdx];
@@ -2061,6 +2058,7 @@ function showCardActions(side, idx){
   
   // Apply damage at animation peak
     setTimeout(() => {
+        attacker.used = true; // ← MARK AS USED HERE INSTEAD
       if(finalDmg > 0) {
         createImpactEffect(targetSlotEl, pattern || 'straight');
         showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
@@ -2107,8 +2105,6 @@ function showCardActions(side, idx){
   const validTargets = getValidTargets(attackerIdx, pattern, 'player');
   
   if(validTargets.length === 0) return;
-  
-  attacker.used = true;
   
   if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
     attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
@@ -2164,6 +2160,7 @@ function showCardActions(side, idx){
   });
   
   setTimeout(() => {
+    attacker.used = true;
     attackerCardEl.classList.remove(animationClass);
     checkBattleOver();
   }, 1000 + (validTargets.length * 250));
