@@ -2539,11 +2539,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     const attackerCardEl = attackerSlotEl.querySelector('.card');
     const targetCardEl = targetSlotEl.querySelector('.card');
 
-    // IMMEDIATELY update visual "used" state
-    if(attackerCardEl) {
-      attackerCardEl.classList.add('used');
-    }
-
     // Set cooldown
     if (attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
         if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
@@ -2592,7 +2587,11 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         }, animTiming * 0.6);
 
        setTimeout(() => {
-            attackerCardEl.classList.remove(animationClass);
+    attackerCardEl.classList.remove(animationClass);
+      // NOW add the "used" class after animation completes
+          if(attackerCardEl) {
+            attackerCardEl.classList.add('used');
+        }
             updateSlotUI('computer', attackerIdx);
         }, animTiming);
 
