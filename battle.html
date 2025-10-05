@@ -3552,21 +3552,36 @@ closeBtn.addEventListener('click', () => {
     addLog('system','The battle will begin once you place your first card.');
   }
 function grantRandomCard() {
+  // Get current cards from localStorage directly to ensure we have the latest data
+  let currentCards = [];
+  try {
+    const storedData = localStorage.getItem('collectedCards');
+    if (storedData) {
+      currentCards = JSON.parse(storedData);
+    }
+  } catch (e) {
+    console.error('Error loading current cards:', e);
+  }
+  
+  // Fall back to playerHand if localStorage was empty
+  if (!currentCards || !Array.isArray(currentCards) || currentCards.length === 0) {
+    currentCards = playerHand.map(card => ({ name: card.name, src: card.src }));
+  }
+  
   // Get cards player doesn't have yet
-  const ownedCardNames = playerHand.map(c => c.name);
+  const ownedCardNames = currentCards.map(c => c.name);
   const availableCards = cardPool.filter(c => !ownedCardNames.includes(c.name));
   
   if (availableCards.length === 0) return null;
   
   const newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
   
-  // Create a new array with all current cards plus the new one
-  const updatedHand = [...playerHand, newCard];
+  // Add new card to current cards collection
+  currentCards.push({ name: newCard.name, src: newCard.src });
   
-  // Save immediately to localStorage
+  // Save to localStorage
   try {
-    const simplifiedHand = updatedHand.map(card => ({ name: card.name, src: card.src }));
-    localStorage.setItem('collectedCards', JSON.stringify(simplifiedHand));
+    localStorage.setItem('collectedCards', JSON.stringify(currentCards));
     console.log('Updated inventory saved with new card:', newCard.name);
   } catch (e) {
     console.error('Error saving updated cards to localStorage:', e);
@@ -3574,6 +3589,7 @@ function grantRandomCard() {
   
   return newCard;
 }
+
 function resetGame() {
   // Hide game over overlay
   const overlay = document.getElementById('gameOverOverlay');
@@ -3610,6 +3626,7 @@ function resetGame() {
   renderAll();
   renderDiscardPile();
 }
+
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
 
@@ -4259,7 +4276,6 @@ addTouchHoldListeners();
     transform: translateY(0);
   }
 }
-</style>
 </style>
 </body>
 </html>
