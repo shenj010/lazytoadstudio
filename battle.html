@@ -2274,38 +2274,34 @@ function showCardActions(side, idx){
     }
     
     // Option 2: Use existing cards to attack or defend
-    // DON'T mark cards as used during the filtering - just filter them out
-    const activeSlots = computerSlots.map((slot, idx) => {
-      if(!slot || slot.hp <= 0 || slot.used) return -1;
+    const activeSlots = [];
+    
+    computerSlots.forEach((slot, idx) => {
+      if(!slot || slot.hp <= 0 || slot.used) return;
       
-      // Check if computer card is stunned or asleep
+      // Check if card is disabled by status effects
       if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
-        addLog('system', `${slot.card.name} cannot act due to status effects!`);
-        return -1;
+        slot.used = true; // Can't act, mark as used
+        return;
       }
       
       // Check if all attacks are on cooldown
-      if(slot.card.attacks && slot.card.attacks.length > 0) {
-        const allAttacksOnCooldown = slot.card.attacks.every((attack, attackIdx) => 
-          isAttackOnCooldown(slot, attackIdx)
-        );
-        
-        if(allAttacksOnCooldown) {
-          addLog('system', `${slot.card.name}'s attacks are all on cooldown!`);
-          return -1;
-        }
+      const allOnCooldown = slot.card.attacks && slot.card.attacks.every((attack, attackIdx) => 
+        isAttackOnCooldown(slot, attackIdx)
+      );
+      
+      if(allOnCooldown) {
+        slot.used = true; // Can't act, mark as used
+        return;
       }
       
-      return idx;
-    }).filter(idx => idx !== -1);
+      // This card can act!
+      activeSlots.push(idx);
+    });
 
     // If no cards can act, end turn immediately
     if(activeSlots.length === 0){
-      // NOW mark all remaining cards as used before ending turn
-      computerSlots.forEach(slot => {
-        if(slot) slot.used = true;
-      });
-      addLog('system', 'Computer has no available actions - ending turn');
+      addLog('system', 'Computer has no moves available - ending turn');
       setTimeout(()=>endComputerTurn(), 800);
       return;
     }
