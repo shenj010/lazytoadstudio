@@ -2264,7 +2264,7 @@ function showCardActions(side, idx){
 
   // === START: New, Smarter AI Logic ===
 
-  function performComputerActions() {
+    function performComputerActions() {
     // 1. Find all cards that can act this turn
     const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
       .filter(item => 
@@ -2274,15 +2274,6 @@ function showCardActions(side, idx){
         !hasStatusEffect(item.slot, 'stun') &&
         !hasStatusEffect(item.slot, 'sleep')
       );
-      
-      if(allOnCooldown) {
-        slot.used = true; // Can't act, mark as used
-        return;
-      }
-      
-      // This card can act!
-      activeSlots.push(idx);
-    });
 
     // If no cards can act, the turn is over
     if (activeComputerSlots.length === 0) {
@@ -2291,46 +2282,138 @@ function showCardActions(side, idx){
       return;
     }
 
-    const slotIdx = activeSlots[Math.floor(Math.random() * activeSlots.length)];
-    const slot = computerSlots[slotIdx];
-    
-    // Check if there's an opposite target
-    const targetSlot = playerSlots[slotIdx];
-    const canAttack = targetSlot && targetSlot.hp > 0;
-    
-    // Strategic decision: attack if possible, defend if threatened or randomly
-    let action;
-    if(!canAttack){
-      action = 'defend'; // Can't attack, so defend
-    } else {
-      // Consider if this computer card might be threatened
-      const isThreated = targetSlot && targetSlot.hp > 0;
-      const shouldAttack = Math.random() > (isThreated ? 0.2 : 0.4);
-      action = shouldAttack ? 'attack' : 'defend';
+    // 2. Evaluate all possible moves for every active card
+    const possibleMoves = [];
+    activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
+      // Evaluate defending as a baseline option with a low score
+      possibleMoves.push({ type: 'defend', score: 5, attackerIdx });
+
+      // Evaluate all available attacks for the current card
+      slot.card.attacks.forEach((attack, attackIdx) => {
+        if (isAttackOnCooldown(slot, attackIdx)) return;
+
+        const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+        validTargets.forEach(targetIdx => {
+          const target = playerSlots[targetIdx];
+          if (!target) return;
+
+          let score = 0;
+          score += attack.damage; // Base score from damage
+
+          // Huge bonus for a finishing blow
+          if (target.hp <= attack.damage) {
+            score += 50;
+          }
+
+          // Add value for applying powerful status effects
+          if (attack.effect) {
+            if (attack.effect === 'stun' || attack.effect === 'sleep') score += 15;
+            if (attack.effect === 'poison') score += 10;
+            if (attack.effect === 'weaken') score += 8;
+          }
+          
+          // Add a small bonus for multi-target attacks
+          if (['cross', 'wide', 'adjacent'].includes(attack.pattern)) {
+            score += 3 * (validTargets.length - 1);
+          }
+
+          possibleMoves.push({
+            type: 'attack',
+            score,
+            attackerIdx,
+            attack,
+            attackIdx,
+            targetIdx
+          });
+        });
+      });
+    });
+
+    // 3. Decide on the single best move from all possibilities
+    let bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
+
+    // 4. Strategic Override: A chance to place a new card if the board isn't full
+    const canPlaceCard = computerSlots.filter(s => s).length < MAX_SLOTS && computerReserve.length > 0;
+    if (canPlaceCard && Math.random() < 0.25) {
+        if (computerPlaceCard()) {
+            addLog('system', 'Computer places a reinforcement.');
+            setTimeout(performComputerActions, 1200); // Continue the turn after placing
+            return;
+        }
     }
     
-    if(action === 'attack' && canAttack){
-      const damage = Math.random() > 0.6 ? 10 : 5;
-      performComputerAttack(slotIdx, damage);
-    } else {
-      performComputerDefend(slotIdx);
+    // 5. Execute the best move
+    if (bestMove && bestMove.type === 'attack') {
+        // The old code was calling performComputerAttack with the wrong arguments.
+        // This needs to be corrected to match the new AI logic.
+        const { attackerIdx, attack, attackIdx, targetIdx } = bestMove;
+        
+        // Mark the card as used
+        const attacker = computerSlots[attackerIdx];
+        attacker.used = true;
+
+        // Set cooldown
+        if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) {
+            if(!attacker.attackCooldowns) attacker.attackCooldowns = {};
+            attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+        }
+
+        // Log and perform the attack animation and logic
+        addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${playerSlots[targetIdx].card.name}!`);
+        
+        const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+        const targetSlotEl = playerSlotsEl.children[targetIdx];
+        const attackerCardEl = attackerSlotEl.querySelector('.card');
+        const targetCardEl = targetSlotEl.querySelector('.card');
+
+        const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight');
+        attackerCardEl.classList.add(animationClass.replace('forward', 'backward')); // Use backward animation
+
+        const animTiming = getAnimationTiming(animationClass);
+
+        setTimeout(() => {
+            let finalDmg = applyDamage(attacker, playerSlots[targetIdx], attack.damage);
+            
+            if (attack.effect) {
+                applyStatusEffect(playerSlots[targetIdx], attack.effect, attack.duration, attacker.card.name);
+            }
+
+            if (finalDmg > 0) {
+                createImpactEffect(targetSlotEl, attack.pattern);
+                showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+                targetCardEl.classList.add('hit', 'flash');
+                setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+
+                playerSlots[targetIdx].hp = Math.max(0, playerSlots[targetIdx].hp - finalDmg);
+
+                if (playerSlots[targetIdx].hp <= 0) {
+                    setTimeout(() => {
+                        targetCardEl.classList.add('die');
+                        setTimeout(() => {
+                            addToDiscardPile(playerSlots[targetIdx].card, 'Player');
+                            playerSlots[targetIdx] = null;
+                            renderAll();
+                            checkBattleOver();
+                        }, 600);
+                    }, 200);
+                } else {
+                    updateSlotUI('player', targetIdx);
+                }
+            }
+            checkBattleOver();
+        }, animTiming * 0.6);
+
+        setTimeout(() => {
+            attackerCardEl.classList.remove(animationClass.replace('forward', 'backward'));
+        }, animTiming);
+
+    } else if (bestMove) {
+        // If no attack is worthwhile, default to defending
+        performComputerDefend(bestMove.attackerIdx);
     }
 
-    // Continue with next action after delay
-    setTimeout(()=> {
-      // Check for any remaining active cards after current action
-      const remainingActive = computerSlots.filter(slot => 
-        slot && slot.hp > 0 && !slot.used && 
-        !(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep'))
-      );
-      
-      if(remainingActive.length > 0) {
-        performComputerActions();
-      } else {
-        // No more cards can act - end turn
-        endComputerTurn();
-      }
-    }, 1500);
+    // 6. After a delay, call this function again to process the next card's action
+    setTimeout(performComputerActions, 1800);
   }
   
  function performComputerAttack(attackerIdx, damage){
