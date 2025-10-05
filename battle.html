@@ -2262,37 +2262,17 @@ function showCardActions(side, idx){
     }, 800);
   }
 
-    function performComputerActions(){
-    // Computer's strategic decision making each turn
-    
-    // Option 1: Place a new card (if beneficial)
-    const shouldPlaceCard = Math.random() < 0.4 && computerSlots.filter(s => s).length < 4;
-    if (shouldPlaceCard) {
-      const placed = computerPlaceCard();
-      if (placed) {
-        // Successfully placed a card, continue the turn after a delay
-        setTimeout(() => performComputerActions(), 1000);
-        return;
-      }
-      // If placement was attempted but failed (e.g., no more reserve cards),
-      // do NOT end the turn here. Just proceed to other actions.
-    }
-    
-    // Option 2: Use existing cards to attack or defend
-    const activeSlots = [];
-    
-    computerSlots.forEach((slot, idx) => {
-      if(!slot || slot.hp <= 0 || slot.used) return;
-      
-      // Check if card is disabled by status effects
-      if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
-        slot.used = true; // Can't act, mark as used
-        return;
-      }
-      
-      // Check if all attacks are on cooldown
-      const allOnCooldown = slot.card.attacks && slot.card.attacks.every((attack, attackIdx) => 
-        isAttackOnCooldown(slot, attackIdx)
+  // === START: New, Smarter AI Logic ===
+
+  function performComputerActions() {
+    // 1. Find all cards that can act this turn
+    const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
+      .filter(item => 
+        item.slot && 
+        item.slot.hp > 0 && 
+        !item.slot.used &&
+        !hasStatusEffect(item.slot, 'stun') &&
+        !hasStatusEffect(item.slot, 'sleep')
       );
       
       if(allOnCooldown) {
@@ -2304,10 +2284,10 @@ function showCardActions(side, idx){
       activeSlots.push(idx);
     });
 
-    // If no cards can act, end turn immediately
-    if(activeSlots.length === 0){
-      addLog('system', 'Computer has no moves available - ending turn');
-      setTimeout(()=>endComputerTurn(), 800);
+    // If no cards can act, the turn is over
+    if (activeComputerSlots.length === 0) {
+      addLog('system', 'Computer has no more actions.');
+      setTimeout(endComputerTurn, 800);
       return;
     }
 
