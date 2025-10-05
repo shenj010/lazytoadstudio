@@ -3658,7 +3658,7 @@ closeBtn.addEventListener('click', () => {
     addLog('system','The battle will begin once you place your first card.');
   }
 function grantRandomCard() {
-  // Get current cards from localStorage directly to ensure we have the latest data
+  // Get current cards from localStorage
   let currentCards = [];
   try {
     const storedData = localStorage.getItem('collectedCards');
@@ -3674,13 +3674,8 @@ function grantRandomCard() {
     currentCards = playerHand.map(card => ({ name: card.name, src: card.src }));
   }
   
-  // Get cards player doesn't have yet
-  const ownedCardNames = currentCards.map(c => c.name);
-  const availableCards = cardPool.filter(c => !ownedCardNames.includes(c.name));
-  
-  if (availableCards.length === 0) return null;
-  
-  const newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+  // Get a random card from the entire pool (allowing duplicates)
+  const newCard = cardPool[Math.floor(Math.random() * cardPool.length)];
   
   // Add new card to current cards collection
   currentCards.push({ name: newCard.name, src: newCard.src });
@@ -4414,6 +4409,43 @@ addTouchHoldListeners();
 .game-over-overlay.show {
   visibility: visible !important;
 }
+/* Fix for animations being cut off and game over text size */
+@media (max-width: 768px) {
+  /* Fully position animations relative to viewport, not containers */
+  .attacking-forward, .attacking-backward, 
+  .attacking-diagonal-left, .attacking-diagonal-right,
+  .attacking-knight, .attacking-sweep, .attacking-pierce,
+  .attacking-adjacent-left, .attacking-adjacent-right,
+  .flying-attack {
+    position: fixed !important; /* Use fixed instead of absolute */
+    z-index: 5000 !important;   /* Much higher z-index */
+  }
+  
+  /* Set higher z-index for all animation-related elements */
+  .dmg-pop, .status-effect-popup, .status-icon {
+    position: fixed !important;
+    z-index: 5001 !important;
+  }
+  
+  /* Make sure no container can affect animations */
+  .slot, .area, .arena, .game-container, .wrap {
+    transform-style: preserve-3d !important;
+    perspective: 1000px !important;
+  }
+  
+  /* Fix 2: Make game over text smaller on mobile */
+  .game-over-text {
+    font-size: 40px !important; /* Smaller font on mobile */
+    padding: 0 20px !important;
+    word-break: break-word !important;
+  }
+}
+
+/* Even smaller text on very small screens */
+@media (max-width: 350px) {
+  .game-over-text {
+    font-size: 32px !important;
+  }
 </style>
 </body>
 </html>
