@@ -4411,33 +4411,41 @@ addTouchHoldListeners();
 }
 /* Fix for animations being cut off and game over text size */
 @media (max-width: 768px) {
-  /* Fully position animations relative to viewport, not containers */
+  /* Only apply fixed positioning to actual animations, not structure elements */
   .attacking-forward, .attacking-backward, 
   .attacking-diagonal-left, .attacking-diagonal-right,
   .attacking-knight, .attacking-sweep, .attacking-pierce,
   .attacking-adjacent-left, .attacking-adjacent-right,
   .flying-attack {
-    position: fixed !important; /* Use fixed instead of absolute */
-    z-index: 5000 !important;   /* Much higher z-index */
+    position: fixed !important;
+    z-index: 5000 !important;
   }
   
-  /* Set higher z-index for all animation-related elements */
-  .dmg-pop, .status-effect-popup, .status-icon {
+  /* Only target actual damage popups and effect popups, not structure */
+  .dmg-pop, .status-effect-popup {
     position: fixed !important;
     z-index: 5001 !important;
   }
   
-  /* Make sure no container can affect animations */
-  .slot, .area, .arena, .game-container, .wrap {
-    transform-style: preserve-3d !important;
-    perspective: 1000px !important;
+  /* Keep status icons where they belong */
+  .status-icon {
+    /* Don't change positioning - keep them attached to their cards */
+    z-index: 5001 !important; 
   }
   
   /* Fix 2: Make game over text smaller on mobile */
   .game-over-text {
-    font-size: 40px !important; /* Smaller font on mobile */
+    font-size: 40px !important;
     padding: 0 20px !important;
     word-break: break-word !important;
+  }
+  
+  /* Ensure bottom panel stays at bottom */
+  .bottom-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
   }
 }
 
@@ -4446,6 +4454,7 @@ addTouchHoldListeners();
   .game-over-text {
     font-size: 32px !important;
   }
+}
 </style>
 </body>
 </html>
