@@ -2466,64 +2466,66 @@ function performComputerActions() {
 
   // === Build Move Options ===
   activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
-    if (!slot.attackCooldowns) slot.attackCooldowns = {};
-    const validTargets = playerSlots.map((_, i) => i).filter(i => playerSlots[i]);
+  if (!slot.attackCooldowns) slot.attackCooldowns = {};
 
-    // Default defend
-    possibleMoves.push({ type: 'defend', score: playStyle === 'defensive' ? 10 : 5, attackerIdx });
+  const attackerHPPercent = slot.hp / slot.card.maxHp;
 
-    // === Attacks ===
-    slot.card.attacks.forEach((attack, attackIdx) => {
-      if (isAttackOnCooldown(slot, attackIdx)) return;
-      const targets = getValidTargets(attackerIdx, attack.pattern, 'computer');
-      targets.forEach(targetIdx => {
-        const target = playerSlots[targetIdx];
-        if (!target) return;
+  // Always has defend as fallback, but lower priority by default
+  possibleMoves.push({
+    type: 'defend',
+    score: attackerHPPercent < 0.3 ? 15 : 3, // only valuable when low HP
+    attackerIdx
+  });
 
-        let score = attack.damage;
+  // Evaluate all available attacks
+  slot.card.attacks.forEach((attack, attackIdx) => {
+    if (isAttackOnCooldown(slot, attackIdx)) return;
 
-        if (target.hp <= attack.damage) score += 60 * computerAggression; // Finisher
-        if (attack.effect) {
-          if (attack.effect === 'stun' || attack.effect === 'sleep') score += 20 * computerAggression;
-          if (attack.effect === 'poison') score += 10 * computerAggression;
-          if (attack.effect === 'weaken') score += 6;
-        }
+    const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+    validTargets.forEach(targetIdx => {
+      const target = playerSlots[targetIdx];
+      if (!target) return;
 
-        if (hasStatusEffect(target, attack.effect)) score -= 20;
-        if (threatZones.has(attackerIdx)) score -= 10;
+      let score = 0;
+      const targetHPPercent = target.hp / target.card.maxHp;
 
-        if (['cross', 'wide', 'adjacent'].includes(attack.pattern))
-          score += 3 * (targets.length - 1);
+      // Base score from damage
+      score += attack.damage * 1.5;
 
-        possibleMoves.push({ type: 'attack', score, attackerIdx, attack, attackIdx, targetIdx });
+      // Huge bonus for finishing blows
+      if (target.hp <= attack.damage) score += 50 * computerAggression;
+
+      // Strong effect bonuses
+      if (attack.effect) {
+        if (attack.effect === 'stun' || attack.effect === 'sleep') score += 20 * computerAggression;
+        if (attack.effect === 'poison') score += 10 * computerAggression;
+        if (attack.effect === 'weaken') score += 8;
+      }
+
+      // Penalty for redundant status
+      if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 25;
+
+      // Bonus for higher aggression playstyle
+      if (playStyle === 'aggressive') score *= 1.15;
+
+      // New: defensive logic still prefers *safe attacks*
+      if (playStyle === 'defensive') {
+        if (attackerHPPercent < 0.4 && targetHPPercent > 0.6) score *= 0.6; // avoid bad trades
+        else score *= 1.1; // otherwise, still attack
+      }
+
+      // Bonus for multi-target attacks
+      if (['cross', 'wide', 'adjacent'].includes(attack.pattern)) score += 3 * (validTargets.length - 1);
+
+      possibleMoves.push({
+        type: 'attack',
+        score,
+        attackerIdx,
+        attack,
+        attackIdx,
+        targetIdx
       });
     });
-
-    // === Tactical Movement ===
-    if (slot.card.mobile) {
-      for (let i = 0; i < MAX_SLOTS; i++) {
-        if (i === attackerIdx || computerSlots[i]) continue;
-        let score = 0;
-        const distance = Math.abs(attackerIdx - i);
-
-        // Retreat if low HP or under threat
-        if (slot.hp < slot.card.maxHp * 0.4 && threatZones.has(attackerIdx)) score += 35 - distance * 5;
-
-        // Advance if close to winning
-        const remainingEnemies = playerSlots.filter(s => s && s.hp > 0).length;
-        if (remainingEnemies === 1) {
-          const enemyIdx = playerSlots.findIndex(s => s);
-          const distToEnemy = Math.abs(i - enemyIdx);
-          score += (MAX_SLOTS - distToEnemy) * 10;
-        }
-
-        // Avoid moving into danger unless finishing move possible
-        if (threatZones.has(i)) score -= 25;
-
-        if (score > 10)
-          possibleMoves.push({ type: 'switch', score, attackerIdx, targetIdx: i });
-      }
-    }
   });
 
   // === Place new card logic ===
