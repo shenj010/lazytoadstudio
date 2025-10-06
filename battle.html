@@ -2427,7 +2427,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 let computerAggression = 1.0; // 1 = neutral, >1 = aggressive, <1 = defensive
 
 function performComputerActions() {
-  // 1. Find all cards that can act this turn
   const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
     .filter(item =>
       item.slot &&
@@ -2443,7 +2442,6 @@ function performComputerActions() {
     return;
   }
 
-  // === Update Aggression Dynamically ===
   const computerHP = getTotalHealth('computer');
   const playerHP = getTotalHealth('player');
   const hpRatio = computerHP / Math.max(playerHP, 1);
@@ -2454,114 +2452,90 @@ function performComputerActions() {
     computerAggression > 1.2 ? 'aggressive' :
     computerAggression < 0.8 ? 'defensive' : 'balanced';
 
-  addLog('system', `Computer plays ${playStyle} (Aggression: ${computerAggression.toFixed(2)})`);
-
-  // === Evaluate all possible moves ===
   const possibleMoves = [];
 
+  // === Detect Threat Zones ===
+  const threatZones = new Set();
+  playerSlots.forEach((slot, idx) => {
+    if (!slot) return;
+    slot.card.attacks.forEach(a => {
+      const targets = getValidTargets(idx, a.pattern, 'player');
+      targets.forEach(t => threatZones.add(t));
+    });
+  });
+
+  // === Build Move Options ===
   activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
     if (!slot.attackCooldowns) slot.attackCooldowns = {};
+    const validTargets = playerSlots.map((_, i) => i).filter(i => playerSlots[i]);
 
-    // Always has defend as fallback
+    // Default defend
     possibleMoves.push({ type: 'defend', score: playStyle === 'defensive' ? 10 : 5, attackerIdx });
 
-    // Evaluate all available attacks
+    // === Attacks ===
     slot.card.attacks.forEach((attack, attackIdx) => {
       if (isAttackOnCooldown(slot, attackIdx)) return;
-      const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
-      validTargets.forEach(targetIdx => {
+      const targets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+      targets.forEach(targetIdx => {
         const target = playerSlots[targetIdx];
         if (!target) return;
 
         let score = attack.damage;
 
-        if (target.hp <= attack.damage) score += 50 * computerAggression; // Finisher
+        if (target.hp <= attack.damage) score += 60 * computerAggression; // Finisher
         if (attack.effect) {
-          if (attack.effect === 'stun' || attack.effect === 'sleep') score += 15 * computerAggression;
+          if (attack.effect === 'stun' || attack.effect === 'sleep') score += 20 * computerAggression;
           if (attack.effect === 'poison') score += 10 * computerAggression;
-          if (attack.effect === 'weaken') score += 8;
+          if (attack.effect === 'weaken') score += 6;
         }
 
-        // Avoid reapplying same effect
-        if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 25;
+        if (hasStatusEffect(target, attack.effect)) score -= 20;
+        if (threatZones.has(attackerIdx)) score -= 10;
 
-        // Multi-target attacks bonus
         if (['cross', 'wide', 'adjacent'].includes(attack.pattern))
-          score += 3 * (validTargets.length - 1);
+          score += 3 * (targets.length - 1);
 
-        // Risk tuning
-        if (playStyle === 'aggressive') score *= 1.15;
-        if (playStyle === 'defensive' && attack.damage < 15) score *= 1.25;
-
-        possibleMoves.push({
-          type: 'attack',
-          score,
-          attackerIdx,
-          attack,
-          attackIdx,
-          targetIdx
-        });
+        possibleMoves.push({ type: 'attack', score, attackerIdx, attack, attackIdx, targetIdx });
       });
     });
-  });
 
-  // === SWITCH POSITION LOGIC ===
-  activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
-    if (!slot.card.mobile || slot.used) return;
-    let bestTargetIdx = null;
-    let bestScore = -1;
+    // === Tactical Movement ===
+    if (slot.card.mobile) {
+      for (let i = 0; i < MAX_SLOTS; i++) {
+        if (i === attackerIdx || computerSlots[i]) continue;
+        let score = 0;
+        const distance = Math.abs(attackerIdx - i);
 
-    for (let i = 0; i < MAX_SLOTS; i++) {
-      if (i === attackerIdx || computerSlots[i]) continue;
-      let score = 0;
-      const distance = Math.abs(attackerIdx - i);
+        // Retreat if low HP or under threat
+        if (slot.hp < slot.card.maxHp * 0.4 && threatZones.has(attackerIdx)) score += 35 - distance * 5;
 
-      // Retreat logic
-      if (i > attackerIdx) {
-        if (slot.hp < slot.card.maxHp * 0.4) score += 40;
-        if (slot.hp < slot.card.maxHp * 0.25) score += 70;
-        if (hasStatusEffect(slot, 'poison')) score += 10;
-        score -= distance * 5;
+        // Advance if close to winning
+        const remainingEnemies = playerSlots.filter(s => s && s.hp > 0).length;
+        if (remainingEnemies === 1) {
+          const enemyIdx = playerSlots.findIndex(s => s);
+          const distToEnemy = Math.abs(i - enemyIdx);
+          score += (MAX_SLOTS - distToEnemy) * 10;
+        }
+
+        // Avoid moving into danger unless finishing move possible
+        if (threatZones.has(i)) score -= 25;
+
+        if (score > 10)
+          possibleMoves.push({ type: 'switch', score, attackerIdx, targetIdx: i });
       }
-
-      // Advance logic
-      if (i < attackerIdx) {
-        const enemyInFront = playerSlots[i] || playerSlots[i - 1];
-        if (enemyInFront) score += 25 * computerAggression;
-        if (slot.card.attacks.some(a => a.pattern === 'straight')) score += 10;
-        if (slot.hp > slot.card.maxHp * 0.7) score += 10;
-        score -= distance * 2;
-      }
-
-      if (playStyle === 'defensive' && slot.hp < slot.card.maxHp * 0.5) score *= 1.3;
-      if (playStyle === 'aggressive') score *= 0.8;
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestTargetIdx = i;
-      }
-    }
-
-    if (bestTargetIdx !== null && bestScore > 15) {
-      possibleMoves.push({
-        type: 'switch',
-        score: bestScore,
-        attackerIdx,
-        targetIdx: bestTargetIdx
-      });
     }
   });
 
-  // === Placement logic ===
+  // === Place new card logic ===
   const computerCardCount = computerSlots.filter(s => s).length;
   const playerCardCount = playerSlots.filter(s => s).length;
   const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
-
   let shouldPlaceCard = false;
+
   if (playerCardCount > computerCardCount) shouldPlaceCard = true;
   else if (computerCardCount <= 2 || getTotalHealth('computer') < getTotalHealth('player') * 0.7)
     shouldPlaceCard = true;
-  else if (playStyle === 'aggressive' && Math.random() < 0.35)
+  else if (playStyle === 'aggressive' && Math.random() < 0.3)
     shouldPlaceCard = true;
 
   if (canPlaceCard && shouldPlaceCard) {
@@ -2572,13 +2546,19 @@ function performComputerActions() {
     }
   }
 
-  // === Choose the best move ===
-  let bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
+  // === Pick the Best Move ===
+  const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
 
   // === Execute ===
-  if (bestMove && bestMove.type === 'attack') {
+  if (!bestMove) {
+    addLog('system', 'Computer hesitates.');
+    setTimeout(endComputerTurn, 800);
+    return;
+  }
+
+  if (bestMove.type === 'attack') {
     executeComputerAttack(bestMove);
-  } else if (bestMove && bestMove.type === 'switch') {
+  } else if (bestMove.type === 'switch') {
     executeComputerSwitch(bestMove);
   } else {
     performComputerDefend(bestMove.attackerIdx);
@@ -2586,7 +2566,6 @@ function performComputerActions() {
 
   setTimeout(performComputerActions, 1800);
 }
-
 
 // === ATTACK EXECUTION HANDLER ===
 function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
