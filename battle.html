@@ -1914,7 +1914,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   attackBtn.innerHTML = buttonText;
     } else {
       // Desktop format - more detailed
-      buttonText = attack.name;
+      let buttonText = attack.name;
       if(attack.damage > 0) buttonText += ` (${attack.damage} dmg)`;
       if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
       if(isOnCooldown) buttonText += ` CD:${cooldownTurns}`;
