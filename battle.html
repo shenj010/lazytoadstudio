@@ -2834,8 +2834,9 @@ function performComputerActions() {
     }
   }
 
-  // === Pick the Best Move ===
-  const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
+   // 💡 The most reliable code:
+  const initialMove = { score: -1 };
+  const bestMove = possibleMoves.reduce((best, move) => (move.score > best.score ? move : best), initialMove);
 
   // === Execute ===
   if (!bestMove) {
@@ -2852,7 +2853,7 @@ function performComputerActions() {
     performComputerDefend(bestMove.attackerIdx);
   }
   setTimeout(performComputerActions, 1800);
-};
+}
 
 // === ATTACK EXECUTION HANDLER ===
 function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
