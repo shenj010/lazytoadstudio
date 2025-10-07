@@ -2423,11 +2423,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
     }, 800);
   }
 
-  // === GLOBAL AI PERSONALITY VARIABLE ===
-let computerAggression = 1.0; // 1 = neutral, >1 = aggressive, <1 = defensive
-
-// === AI HELPER FUNCTIONS ===
-
 // Evaluate how dangerous a player card is
 function evaluateThreat(slot, slotIndex) {
   if (!slot) return 0;
@@ -2496,9 +2491,8 @@ function evaluateAttackValue(attack) {
     };
     value += effectValues[attack.effect] || 0;
   }
-  
   return value;
-}
+  }
 
 function performComputerActions() {
   if (!window.currentTurn) window.currentTurn = 0;
