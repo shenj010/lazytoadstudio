@@ -2939,7 +2939,7 @@ function executeComputerSwitch({ attackerIdx, targetIdx }) {
 function getTotalHealth(side) {
     const slots = side === 'player' ? playerSlots : computerSlots;
     return slots.reduce((total, slot) => total + (slot ? slot.hp : 0), 0);
-}
+};
 
  function performComputerDefend(slotIdx){
   const slot = computerSlots[slotIdx];
@@ -2962,7 +2962,7 @@ function getTotalHealth(side) {
   
   addLog('computer', `${slot.card.name} takes a defensive stance`);
   renderAll();
-}
+};
     function endComputerTurn(){
   playerTurn = true;
   turnIndicator.textContent = 'Player Turn';
