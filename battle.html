@@ -2545,7 +2545,7 @@ function performComputerActions() {
   activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
   if (!slot.attackCooldowns) slot.attackCooldowns = {};
 
-  const attackerHPPercent = slot.hp / slot.card.maxHp;
+  const attackerHPPercent = slot.hp / MAX_HP;
 
   // === CONTEXT-AWARE DEFEND ===
   const incomingDamage = predictIncomingDamage(attackerIdx, playerSlots);
