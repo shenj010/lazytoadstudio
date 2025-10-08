@@ -2362,21 +2362,31 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   }
 
   function startSwitching(fromSlotIdx) {
-    const slot = playerSlots[fromSlotIdx];
-    if(!slot || slot.used) return;
-  
-    slot.used = true;
-  
-  // Highlight available empty slots
+  const slot = playerSlots[fromSlotIdx];
+  if(!slot || slot.used) return;
+
+  slot.used = true;
+
+  if (slot.card.name === "Sumo Toad" || slot.card.name === "Horny Toad") {
+    // Only highlight adjacent empty slots
+    [fromSlotIdx - 1, fromSlotIdx + 1].forEach(i => {
+      if(i >= 0 && i < playerSlots.length && playerSlots[i] === null) {
+        playerSlotsEl.children[i].classList.add('switch-target');
+      }
+    });
+    addLog('system', `Select an adjacent empty slot to move ${slot.card.name}`);
+  } else {
+    // All other cards: any empty slot
     playerSlots.forEach((s, i) => {
       if(i !== fromSlotIdx && s === null) {
         playerSlotsEl.children[i].classList.add('switch-target');
-    }
-  });
-  
-    addLog('system', `Select an empty slot to move ${slot.card.name}`);
-    selected = { type: 'switching', fromSlot: fromSlotIdx };
+      }
+    });
+    addLog('system', `Select any empty slot to move ${slot.card.name}`);
   }
+
+  selected = { type: 'switching', fromSlot: fromSlotIdx };
+}
 
   // computer AI: attacks opposite slots, defends sometimes
     function computerTurn(){
