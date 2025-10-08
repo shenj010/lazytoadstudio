@@ -3302,35 +3302,31 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     const activePlayerSlots = playerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
     const activeComputerSlots = computerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
 
-    // Special Rule: Sumo Toad Final Showdown
-    if (activePlayerSlots.length === 1 && activeComputerSlots.length === 1 && 
-        activePlayerSlots[0].slot.card.name === "Sumo Toad" && 
-        activeComputerSlots[0].slot.card.name === "Sumo Toad") {
-      
-      const playerSumoIndex = activePlayerSlots[0].index;
-      const computerSumoIndex = activeComputerSlots[0].index;
-      const centerSlotIndex = 2; // Middle slot
+// FINAL SHOWDOWN PATCH: Works for any card type, not just Sumo Toads
+if (activePlayerSlots.length === 1 && activeComputerSlots.length === 1) {
+  const playerIdx = activePlayerSlots[0].index;
+  const compIdx = activeComputerSlots[0].index;
+  const centerIdx = Math.floor(playerSlots.length / 2); // e.g. 2 for 5 slots
 
-      // If they aren't already opposing in the center, move them.
-      if (playerSumoIndex !== centerSlotIndex || computerSumoIndex !== centerSlotIndex) {
-        addLog('system', 'Only two Sumo Toads remain! FINAL SHOWDOWN!');
-        
-        // Move player's Sumo Toad to the center
-        if (playerSumoIndex !== centerSlotIndex && playerSlots[centerSlotIndex] === null) {
-          playerSlots[centerSlotIndex] = playerSlots[playerSumoIndex];
-          playerSlots[playerSumoIndex] = null;
-        }
-        
-        // Move computer's Sumo Toad to the center
-        if (computerSumoIndex !== centerSlotIndex && computerSlots[centerSlotIndex] === null) {
-          computerSlots[centerSlotIndex] = computerSlots[computerSumoIndex];
-          computerSlots[computerSumoIndex] = null;
-        }
-        
-        setTimeout(renderAll, 500); // Re-render the board after a short delay
-        return; // Stop further checks this turn
-      }
-    }
+  let moved = false;
+  if (playerIdx !== centerIdx && playerSlots[centerIdx] === null) {
+    playerSlots[centerIdx] = playerSlots[playerIdx];
+    playerSlots[playerIdx] = null;
+    moved = true;
+  }
+  if (compIdx !== centerIdx && computerSlots[centerIdx] === null) {
+    computerSlots[centerIdx] = computerSlots[compIdx];
+    computerSlots[compIdx] = null;
+    moved = true;
+  }
+
+  // Re-render slots and show log if moved
+  if (moved) {
+    addLog('system', 'Only two cards remain! FINAL SHOWDOWN!');
+    setTimeout(renderAll, 500);
+    return; // Stop further checks this turn
+  }
+}
 
     const playerHasCards = activePlayerSlots.length > 0;
     const computerHasCards = activeComputerSlots.length > 0;
