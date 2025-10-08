@@ -1959,71 +1959,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
         }
       }
     });
-  // === SWITCHING LOGIC ===
-  if (slot.card.mobile && !slot.used) {
-    computerSlots.forEach((targetSlot, targetIdx) => {
-      if (targetSlot === null && targetIdx !== attackerIdx) {
-        let switchScore = 0;
-        
-        // 1. Move away from danger
-        const incomingDamage = predictIncomingDamage(attackerIdx, playerSlots);
-        const wouldBeSaferInNewSpot = predictIncomingDamage(targetIdx, playerSlots);
-        
-        if (incomingDamage > wouldBeSaferInNewSpot) {
-          switchScore += (incomingDamage - wouldBeSaferInNewSpot) * 0.5;
-        }
-        
-        // 2. Move to better attacking position
-        const currentAttackOptions = slot.card.attacks.reduce((count, attack) => {
-          return count + getValidTargets(attackerIdx, attack.pattern, 'computer').length;
-        }, 0);
-        
-        const newAttackOptions = slot.card.attacks.reduce((count, attack) => {
-          return count + getValidTargets(targetIdx, attack.pattern, 'computer').length;
-        }, 0);
-        
-        if (newAttackOptions > currentAttackOptions) {
-          switchScore += (newAttackOptions - currentAttackOptions) * 15;
-        }
-        
-        // 3. Move to oppose high-threat player cards
-        const playerOpposite = playerSlots[targetIdx];
-        if (playerOpposite) {
-          const threat = evaluateThreat(playerOpposite, targetIdx);
-          switchScore += threat * 0.3;
-        }
-        
-        // 4. Defensive positioning when low HP
-        if (attackerHPPercent < 0.4 && wouldBeSaferInNewSpot < incomingDamage * 0.5) {
-          switchScore += 25;
-        }
-        
-        // Only consider switching if it's actually beneficial
-        // AND we're not just running away endlessly
-        if (switchScore > 20) {
-          // Prevent switch spam
-          if (!slot.switchHistory) slot.switchHistory = [];
-          
-          const recentSwitches = slot.switchHistory.filter(turn => 
-            (window.currentTurn - turn) <= 4
-          ).length;
-          
-          // Heavy penalty if we've switched too much
-          if (recentSwitches >= 2) {
-            switchScore *= 0.3;
-          }
-          
-          possibleMoves.push({
-            type: 'switch',
-            score: switchScore,
-            attackerIdx: attackerIdx,
-            targetIdx: targetIdx
-          });
-        }
-      }
-    });
-  }
-    
+ 
     panel.appendChild(attackBtn);
   });
 
@@ -2602,6 +2538,71 @@ function performComputerActions() {
       targets.forEach(t => threatZones.add(t));
     });
   });
+
+  // === SWITCHING LOGIC ===
+  if (slot.card.mobile && !slot.used) {
+    computerSlots.forEach((targetSlot, targetIdx) => {
+      if (targetSlot === null && targetIdx !== attackerIdx) {
+        let switchScore = 0;
+        
+        // 1. Move away from danger
+        const incomingDamage = predictIncomingDamage(attackerIdx, playerSlots);
+        const wouldBeSaferInNewSpot = predictIncomingDamage(targetIdx, playerSlots);
+        
+        if (incomingDamage > wouldBeSaferInNewSpot) {
+          switchScore += (incomingDamage - wouldBeSaferInNewSpot) * 0.5;
+        }
+        
+        // 2. Move to better attacking position
+        const currentAttackOptions = slot.card.attacks.reduce((count, attack) => {
+          return count + getValidTargets(attackerIdx, attack.pattern, 'computer').length;
+        }, 0);
+        
+        const newAttackOptions = slot.card.attacks.reduce((count, attack) => {
+          return count + getValidTargets(targetIdx, attack.pattern, 'computer').length;
+        }, 0);
+        
+        if (newAttackOptions > currentAttackOptions) {
+          switchScore += (newAttackOptions - currentAttackOptions) * 15;
+        }
+        
+        // 3. Move to oppose high-threat player cards
+        const playerOpposite = playerSlots[targetIdx];
+        if (playerOpposite) {
+          const threat = evaluateThreat(playerOpposite, targetIdx);
+          switchScore += threat * 0.3;
+        }
+        
+        // 4. Defensive positioning when low HP
+        if (attackerHPPercent < 0.4 && wouldBeSaferInNewSpot < incomingDamage * 0.5) {
+          switchScore += 25;
+        }
+        
+        // Only consider switching if it's actually beneficial
+        // AND we're not just running away endlessly
+        if (switchScore > 20) {
+          // Prevent switch spam
+          if (!slot.switchHistory) slot.switchHistory = [];
+          
+          const recentSwitches = slot.switchHistory.filter(turn => 
+            (window.currentTurn - turn) <= 4
+          ).length;
+          
+          // Heavy penalty if we've switched too much
+          if (recentSwitches >= 2) {
+            switchScore *= 0.3;
+          }
+          
+          possibleMoves.push({
+            type: 'switch',
+            score: switchScore,
+            attackerIdx: attackerIdx,
+            targetIdx: targetIdx
+          });
+        }
+      }
+    });
+  }
 
   // === Build Move Options ===
   activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
