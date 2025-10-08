@@ -1220,6 +1220,8 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 <script>
 (function(){
   // config
+  let computerTurnHistory = []; // Track last N computer moves (defend/switch/attack)
+  const MAX_HISTORY = 3;
   const MAX_SLOTS = 5;
   const MAX_HP = 100;
   const SEGMENTS = 10;
@@ -1390,6 +1392,45 @@ function showValidTargets(attackerIdx, pattern, attackerSide) {
   
   return validTargets;
 }
+
+function getPlayerCardThreat(slotObj) {
+  if (!slotObj || !slotObj.card) return 0;
+  let score = 0;
+  slotObj.card.attacks.forEach(a => {
+    score += a.damage * 2;
+    if (a.effect) score += 8;
+    if (['stun', 'sleep', 'poison', 'weaken'].includes(a.effect)) score += 10;
+  });
+  score += slotObj.hp / 10;
+  return score;
+}
+
+// Helper: Find highest threat player slot index
+function getHighestThreatPlayerSlot() {
+  let bestIdx = -1, bestScore = -Infinity;
+  playerSlots.forEach((slot, idx) => {
+    const score = getPlayerCardThreat(slot);
+    if (score > bestScore) { bestScore = score; bestIdx = idx; }
+  });
+  return bestIdx;
+}
+
+// Helper: Track defend/switch streaks per card
+function updateDefendSwitchStreak(slot, moveType) {
+  if (!slot) return;
+  if (!slot._streak) slot._streak = { defend: 0, switch: 0 };
+  if (moveType === 'defend') {
+    slot._streak.defend++;
+    slot._streak.switch = 0;
+  } else if (moveType === 'switch') {
+    slot._streak.switch++;
+    slot._streak.defend = 0;
+  } else {
+    slot._streak.defend = 0;
+    slot._streak.switch = 0;
+  }
+}
+
 
 function clearTargetHighlights() {
   document.querySelectorAll('.valid-target').forEach(el => {
@@ -2427,6 +2468,9 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 let computerAggression = 1.0; // 1 = neutral, >1 = aggressive, <1 = defensive
 
 function performComputerActions() {
+  // Track last moves for dynamic playstyle
+  if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
+
   const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
     .filter(item =>
       item.slot &&
@@ -2442,121 +2486,137 @@ function performComputerActions() {
     return;
   }
 
+  // Dynamic Playstyle Adjustment
   const computerHP = getTotalHealth('computer');
   const playerHP = getTotalHealth('player');
   const hpRatio = computerHP / Math.max(playerHP, 1);
   const cardDiff = computerSlots.filter(s => s).length - playerSlots.filter(s => s).length;
-  computerAggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
+  let aggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
 
-  const playStyle =
-    computerAggression > 1.2 ? 'aggressive' :
-    computerAggression < 0.8 ? 'defensive' : 'balanced';
+  // If AI is losing, increase aggression
+  if (computerHP < playerHP || cardDiff < 0) aggression += 0.3;
 
+  // If last 2 moves were defend/switch, force attack/placement
+  const lastMoves = computerTurnHistory.slice(-2);
+  const forceAttack = lastMoves.every(m => m === 'defend' || m === 'switch');
+
+  // Build possible moves
   const possibleMoves = [];
 
-  // === Detect Threat Zones ===
-  const threatZones = new Set();
-  playerSlots.forEach((slot, idx) => {
-    if (!slot) return;
-    slot.card.attacks.forEach(a => {
-      const targets = getValidTargets(idx, a.pattern, 'player');
-      targets.forEach(t => threatZones.add(t));
-    });
-  });
-
-  // === Build Move Options ===
   activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
-  if (!slot.attackCooldowns) slot.attackCooldowns = {};
+    if (!slot.attackCooldowns) slot.attackCooldowns = {};
 
-  const attackerHPPercent = slot.hp / slot.card.maxHp;
+    // Defend logic: only if HP is low and no KO possible
+    const canKO = playerSlots.some((ps, pi) => {
+      if (!ps) return false;
+      return slot.card.attacks.some((a, ai) => {
+        if (isAttackOnCooldown(slot, ai)) return false;
+        const targets = getValidTargets(attackerIdx, a.pattern, 'computer');
+        return targets.includes(pi) && a.damage >= ps.hp;
+      });
+    });
 
-  // Always has defend as fallback, but lower priority by default
-  possibleMoves.push({
-    type: 'defend',
-    score: attackerHPPercent < 0.3 ? 15 : 3, // only valuable when low HP
-    attackerIdx
-  });
-
-  // Evaluate all available attacks
-  slot.card.attacks.forEach((attack, attackIdx) => {
-    if (isAttackOnCooldown(slot, attackIdx)) return;
-
-    const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
-    validTargets.forEach(targetIdx => {
-      const target = playerSlots[targetIdx];
-      if (!target) return;
-
-      let score = 0;
-      const targetHPPercent = target.hp / target.card.maxHp;
-
-      // Base score from damage
-      score += attack.damage * 1.5;
-
-      // Huge bonus for finishing blows
-      if (target.hp <= attack.damage) score += 50 * computerAggression;
-
-      // Strong effect bonuses
-      if (attack.effect) {
-        if (attack.effect === 'stun' || attack.effect === 'sleep') score += 20 * computerAggression;
-        if (attack.effect === 'poison') score += 10 * computerAggression;
-        if (attack.effect === 'weaken') score += 8;
-      }
-
-      // Penalty for redundant status
-      if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 25;
-
-      // Bonus for higher aggression playstyle
-      if (playStyle === 'aggressive') score *= 1.15;
-
-      // New: defensive logic still prefers *safe attacks*
-      if (playStyle === 'defensive') {
-        if (attackerHPPercent < 0.4 && targetHPPercent > 0.6) score *= 0.6; // avoid bad trades
-        else score *= 1.1; // otherwise, still attack
-      }
-
-      // Bonus for multi-target attacks
-      if (['cross', 'wide', 'adjacent'].includes(attack.pattern)) score += 3 * (validTargets.length - 1);
-
+    if (slot.hp < MAX_HP * 0.35 && !canKO && (!slot._streak || slot._streak.defend < 2)) {
       possibleMoves.push({
-        type: 'attack',
-        score,
-        attackerIdx,
-        attack,
-        attackIdx,
-        targetIdx
+        type: 'defend',
+        score: 10 - slot.hp / 10,
+        attackerIdx
+      });
+    }
+
+    // Switch logic: only if threatened and tactical
+    const threatIdx = getHighestThreatPlayerSlot();
+    if (slot.card.mobile && threatIdx !== -1 && threatIdx === attackerIdx && (!slot._streak || slot._streak.switch < 2)) {
+      // Find a safer slot
+      const safeSlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+      if (safeSlots.length > 0) {
+        possibleMoves.push({
+          type: 'switch',
+          score: 12,
+          attackerIdx,
+          targetIdx: safeSlots[0]
+        });
+      }
+    }
+
+    // Attack logic
+    slot.card.attacks.forEach((attack, attackIdx) => {
+      if (isAttackOnCooldown(slot, attackIdx)) return;
+      const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+      validTargets.forEach(targetIdx => {
+        const target = playerSlots[targetIdx];
+        if (!target) return;
+        let score = 0;
+
+        // Victory-oriented: KO last player card
+        const playerAlive = playerSlots.filter(s => s && s.hp > 0).length;
+        if (playerAlive === 1 && attack.damage >= target.hp) score += 100;
+
+        // Full feature: prioritize status effects on high-threat cards
+        const threatScore = getPlayerCardThreat(target);
+        if (attack.effect && !hasStatusEffect(target, attack.effect)) score += threatScore * 1.5;
+        if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 20;
+
+        // Multi-target bonus
+        if (['cross', 'wide', 'adjacent'].includes(attack.pattern) && validTargets.length > 1) score += 10 * validTargets.length;
+
+        // Aggression bonus
+        score += attack.damage * aggression;
+        if (aggression > 1.2 && attack.effect) score += 15;
+
+        // Prefer attacks over defend/switch if forced
+        if (forceAttack) score += 30;
+
+        possibleMoves.push({
+          type: 'attack',
+          score,
+          attackerIdx,
+          attack,
+          attackIdx,
+          targetIdx
+        });
       });
     });
   });
-});
 
-  // === Place new card logic ===
+  // Reinforcement placement: when behind, place opposite highest threat
   const computerCardCount = computerSlots.filter(s => s).length;
   const playerCardCount = playerSlots.filter(s => s).length;
   const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
   let shouldPlaceCard = false;
-
-  if (playerCardCount > computerCardCount) shouldPlaceCard = true;
-  else if (computerCardCount <= 2 || getTotalHealth('computer') < getTotalHealth('player') * 0.7)
-    shouldPlaceCard = true;
-  else if (playStyle === 'aggressive' && Math.random() < 0.3)
-    shouldPlaceCard = true;
+  if (playerCardCount > computerCardCount || computerHP < playerHP * 0.7) shouldPlaceCard = true;
 
   if (canPlaceCard && shouldPlaceCard) {
-    if (computerPlaceCard()) {
-      addLog('system', 'Computer deploys reinforcements.');
+    // Place opposite highest threat
+    const threatIdx = getHighestThreatPlayerSlot();
+    const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+    let targetSlot = emptySlots.includes(threatIdx) ? threatIdx : emptySlots[0];
+    if (computerPlaceCard(targetSlot)) {
+      computerTurnHistory.push('place');
       setTimeout(performComputerActions, 1200);
       return;
     }
   }
 
-  // === Pick the Best Move ===
+  // Pick best move
   const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
 
-  // === Execute ===
+  // Execute
   if (!bestMove) {
     addLog('system', 'Computer hesitates.');
     setTimeout(endComputerTurn, 800);
     return;
+  }
+
+  // Track move type for streak logic
+  computerTurnHistory.push(bestMove.type);
+  if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
+
+  // Update per-card streaks
+  if (bestMove.type === 'defend' || bestMove.type === 'switch') {
+    updateDefendSwitchStreak(computerSlots[bestMove.attackerIdx], bestMove.type);
+  } else if (bestMove.type === 'attack') {
+    updateDefendSwitchStreak(computerSlots[bestMove.attackerIdx], 'attack');
   }
 
   if (bestMove.type === 'attack') {
