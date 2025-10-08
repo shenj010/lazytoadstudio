@@ -2494,7 +2494,7 @@ function performComputerActions() {
   const playerHP = getTotalHealth('player');
   const hpRatio = computerHP / Math.max(playerHP, 1);
   const cardDiff = computerSlots.filter(s => s).length - playerSlots.filter(s => s).length;
-  computerAggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
+  let computerAggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
 
   const playStyle =
     computerAggression > 1.2 ? 'aggressive' :
