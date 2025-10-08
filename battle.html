@@ -2374,9 +2374,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
       // REMOVE the visual "used" class from the card element
       const slotEl = computerSlotsEl.children[idx];
       const cardEl = slotEl?.querySelector('.card');
-      if(cardEl) {
-        cardEl.classList.remove('used');
-      }
+      if(cardEl) cardEl.classList.remove('used');
       
       // ENSURE attackCooldowns object exists
       if(!slot.attackCooldowns) {
@@ -2548,6 +2546,54 @@ function performComputerActions() {
       return;
     }
   }
+
+  // --- SMART SWITCHING LOGIC FOR AI ---
+activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
+  if (!slot.card.mobile || slot.used) return;
+
+  // Find all empty slots except current
+  const emptySlots = [];
+  computerSlots.forEach((s, i) => {
+    if (i !== attackerIdx && s === null) emptySlots.push(i);
+  });
+
+  emptySlots.forEach(targetIdx => {
+    let switchScore = 0;
+
+    // 1. Survival: threatened by finishing blow
+    const threatened = threatZones.has(attackerIdx) &&
+      playerSlots.some(ps => ps && ps.card.attacks.some(a => {
+        const targets = getValidTargets(playerSlots.indexOf(ps), a.pattern, 'player');
+        return targets.includes(attackerIdx) && a.damage >= slot.hp;
+      }));
+
+    if (threatened) switchScore += 30;
+
+    // 2. Multi-target setup: switching enables more attack targets next turn
+       slot.card.attacks.forEach(a => {
+         const targetsAfterSwitch = getValidTargets(targetIdx, a.pattern, 'computer');
+         if (targetsAfterSwitch.length > 1) switchScore += 10 * (targetsAfterSwitch.length - 1);
+       });
+
+       // 3. Block player combo/status
+       if (threatZones.has(attackerIdx)) switchScore += 8;
+
+       // 4. Aggression: if AI is losing, prefer switches that set up attacks
+       if (computerAggression < 1) switchScore += 10;
+
+       // 5. Penalize unnecessary switching
+       if (!threatened && switchScore < 10) switchScore -= 5;
+
+       possibleMoves.push({
+         type: 'switch',
+         score: switchScore,
+         attackerIdx,
+         targetIdx
+       });
+     });
+   });
+
+   // --- AGGRESSIVE MOVE SELECTION, NO DEFEND/SWITCH LOOPS ---
 
   // === Pick the Best Move ===
   const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
