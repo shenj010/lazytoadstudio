@@ -2628,7 +2628,7 @@ if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
   const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
 
   // Execute
-  if (!bestMove) {
+  if (!bestMove || bestMove.score === -1 || !bestMove.type) {
     addLog('system', 'Computer hesitates.');
     setTimeout(endComputerTurn, 800);
     return;
