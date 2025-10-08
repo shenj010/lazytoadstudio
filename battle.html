@@ -2652,8 +2652,23 @@ if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
   } else {
     performComputerDefend(bestMove.attackerIdx);
   }
-
-  setTimeout(performComputerActions, 1800);
+// PATCH: Only continue if any computer cards can act
+  setTimeout(() => {
+    const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
+      .filter(item =>
+        item.slot &&
+        item.slot.hp > 0 &&
+        !item.slot.used &&
+        !hasStatusEffect(item.slot, 'stun') &&
+        !hasStatusEffect(item.slot, 'sleep')
+      );
+    if (activeComputerSlots.length === 0) {
+      addLog('system', 'Computer has no more actions.');
+      endComputerTurn();
+    } else {
+      performComputerActions();
+    }
+  }, 1800);
 }
 
 // === ATTACK EXECUTION HANDLER ===
