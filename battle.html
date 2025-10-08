@@ -2635,6 +2635,7 @@ if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
   }
 
   // Track move type for streak logic
+if (bestMove && bestMove.type) {
   computerTurnHistory.push(bestMove.type);
   if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
 
@@ -2645,13 +2646,15 @@ if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
     updateDefendSwitchStreak(computerSlots[bestMove.attackerIdx], 'attack');
   }
 
+  // Execute the move
   if (bestMove.type === 'attack') {
     executeComputerAttack(bestMove);
   } else if (bestMove.type === 'switch') {
     executeComputerSwitch(bestMove);
-  } else {
+  } else if (bestMove.type === 'defend') {
     performComputerDefend(bestMove.attackerIdx);
   }
+}
 // PATCH: Only continue if any computer cards can act
   setTimeout(() => {
     const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
