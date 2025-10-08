@@ -2524,20 +2524,46 @@ function performComputerActions() {
       });
     }
 
-    // Switch logic: only if threatened and tactical
-    const threatIdx = getHighestThreatPlayerSlot();
-    if (slot.card.mobile && threatIdx !== -1 && threatIdx === attackerIdx && (!slot._streak || slot._streak.switch < 2)) {
-      // Find a safer slot
-      const safeSlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
-      if (safeSlots.length > 0) {
-        possibleMoves.push({
-          type: 'switch',
-          score: 12,
-          attackerIdx,
-          targetIdx: safeSlots[0]
-        });
-      }
+// Switch logic: proactively seek safer or more useful positions
+if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
+  // Find all empty slots
+  const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+
+  // Score each slot for safety and offensive opportunity
+  let bestSwitchScore = -Infinity;
+  let bestSwitchSlot = null;
+
+  emptySlots.forEach(safeIdx => {
+    // Is opposite slot empty? (can attack player directly)
+    const canAttackPlayer = playerSlots[safeIdx] === null;
+    // Is opposite slot a threat? (strong player card)
+    const isThreat = playerSlots[safeIdx] && playerSlots[safeIdx].hp > 0;
+
+    // Scoring: prefer attacking player directly, penalize danger
+    let score = 0;
+    if (canAttackPlayer) score += 20;
+    if (isThreat) score -= 15;
+
+    // Bonus: further from strongest player card
+    const strongestPlayerIdx = getHighestThreatPlayerSlot();
+    score -= Math.abs(strongestPlayerIdx - safeIdx);
+
+    if (score > bestSwitchScore) {
+      bestSwitchScore = score;
+      bestSwitchSlot = safeIdx;
     }
+  });
+
+  // Switch only if a beneficial slot is found and it's not the current slot
+  if (bestSwitchSlot !== null && bestSwitchSlot !== attackerIdx) {
+    possibleMoves.push({
+      type: 'switch',
+      score: 15 + bestSwitchScore,
+      attackerIdx,
+      targetIdx: bestSwitchSlot
+    });
+  }
+}
 
     // Attack logic
     slot.card.attacks.forEach((attack, attackIdx) => {
