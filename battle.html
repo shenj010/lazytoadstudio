@@ -1082,7 +1082,7 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 
 @media (min-width: 400px) and (max-width: 1200px) {
   .slots {
-    gap: 3px !important; /* Reduce gap between card containers */
+    gap: 6px !important; /* Reduce gap between card containers */
   }
   .hand .card {
     width: 45px !important;
@@ -1101,6 +1101,16 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
 @media (max-width: 480px) {
   .hand .card.touch-expanded {
     transform: translate(-50%, -50%) scale(1.8) !important;
+  }
+}
+@media (min-width: 600px) and (max-width: 1200px) {
+  .slots {
+    gap: 14px !important; /* Fixed gap for tablet */
+    justify-content: center !important; /* Prevents spreading out */
+  }
+  .area {
+    gap: 14px !important;
+    justify-content: center !important;
   }
 }
   /* Fix for attack buttons overflowing on mobile */
