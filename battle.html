@@ -1909,7 +1909,7 @@ function showCardActions(side, idx){
   
   const rect = slotEl.getBoundingClientRect();
   
-  if(window.innerWidth <= 1200) {
+  if(window.innerWidth <= 1201) {
   panel.style.position = 'fixed';
   panel.style.bottom = '160px';
   panel.style.left = '50%';
@@ -4650,8 +4650,8 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   .arena {
     background: none !important;
     border: none !important;
-    padding: 8px !important;
-    gap: 8px !important;
+    padding: 6px !important;
+    gap: 4px !important;
     flex: none !important;
   }
   .area {
@@ -4666,12 +4666,35 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     height: 18px !important;
     font-size: 12px !important;
   }
+  .hp-bar {
+  background: #111 !important;
+  border: 2px solid #fff !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.hp-segments {
+  display: flex !important;
+  width: 92% !important;
+  gap: 2px !important;
+}
+.seg {
+  flex: 1 !important;
+  height: 12px !important;
+  background: #fff !important;
+  border-radius: 2px !important;
+  opacity: 1 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
   .slots {
     flex-wrap: nowrap !important;
     justify-content: space-between !important;
     width: 100% !important;
     overflow-x: auto !important;
-    gap: 6px !important;
+    gap: 4px !important;
     padding: 0 2px !important;
   }
   .slot {
@@ -4730,6 +4753,10 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     left: 50% !important;
     transform: translateX(-50%) !important;
     box-sizing: border-box !important;
+    position: fixed !important;
+    bottom: 160px !important;
+    top: auto !important;
+    right: auto !important;
   }
   .card-action-panel .btn {
     white-space: normal !important;
