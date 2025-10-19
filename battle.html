@@ -1758,27 +1758,22 @@ function renderHand(side) {
   }
 }
   function createCardBackEl(){
-    const el = document.createElement('div'); 
-    el.className='card'; 
-    el.style.width='104px'; 
-    el.style.height='140px';
-    el.style.cursor='default';
-    
-    const img = document.createElement('img'); 
-    img.src = 'images/cards/card back.jpeg';
-    img.alt = 'Hidden Card';
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    
-    el.appendChild(img);
-    
-    const wrap = document.createElement('div'); 
-    wrap.style.width='104px'; 
-    wrap.style.height='140px';
-    wrap.appendChild(el);
-    return wrap;
-  }
+  const el = document.createElement('div'); 
+  el.className = 'card'; 
+  el.style.width = '104px'; 
+  el.style.height = '140px';
+  el.style.cursor = 'default';
+
+  const img = document.createElement('img'); 
+  img.src = 'images/cards/card back.jpeg';
+  img.alt = 'Hidden Card';
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'cover';
+
+  el.appendChild(img);
+  return el;
+}
 
      function createHandCardEl(card, idx, side) {
   const el = document.createElement('div');
