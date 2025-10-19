@@ -1120,13 +1120,14 @@ html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monosp
     align-items: center !important;
     position: relative !important;
     width: 100% !important;
-    min-height: 120px !important;
+    height: 120px !important;
+    gap: 10px !important;
   }
   .hand .card {
-    position: absolute !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    /* If you want to offset each card slightly, use JS or nth-child for left */
+    position: relative !important;
+    margin: 0 6px !important;
+    left: unset !important;
+    top: unset !important;
   }
 }
   /* Fix for attack buttons overflowing on mobile */
@@ -1651,6 +1652,23 @@ function renderHand(side) {
   // Clear
   handEl.innerHTML = '';
   if (!hand) return;
+
+  if (window.innerWidth >= 600 && window.innerWidth <= 1200) {
+    hand.forEach((card, i) => {
+      const c = side === 'player'
+        ? createHandCardEl(card, i, 'player')
+        : createCardBackEl();
+      c.style.position = 'relative';
+      c.style.margin = '0 6px';
+      handEl.appendChild(c);
+    });
+    handEl.style.display = 'flex';
+    handEl.style.justifyContent = 'center';
+    handEl.style.alignItems = 'center';
+    handEl.style.position = 'relative';
+    handEl.style.height = '120px';
+    return;
+  }
   
   const cardWidth = 104;
   const containerWidth = handEl.clientWidth || 400;
