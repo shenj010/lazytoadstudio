@@ -4588,7 +4588,7 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   }
 }
 @media (min-width: 769px) and (max-width: 1200px) {
-  /* Bottom panel: fixed at bottom, log + graveyard side by side */
+  /* Bottom panel sits fixed at the bottom, log + graveyard side by side */
   .bottom-panel {
     display: flex !important;
     flex-direction: row !important;
@@ -4596,19 +4596,23 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     bottom: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    height: 150px !important;
+    height: 160px !important;
     z-index: 999 !important;
     background: rgba(0,0,0,0.92);
   }
   .bottom-panel .log,
   .bottom-panel .discard-pile {
     position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
     flex: 1 1 0;
     width: 50% !important;
     height: 100% !important;
     margin: 0 !important;
     max-width: none !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
     overflow-y: auto !important;
   }
   .bottom-panel .log {
@@ -4633,39 +4637,41 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     height: 40px !important;
     flex: 0 0 auto;
   }
-
-  /* Make room for bottom panel */
   .wrap {
-    padding-bottom: 170px !important;
-    padding-top: 10px !important;
+    padding-bottom: 180px !important;
+    min-height: 100vh !important;
+  }
+  .game-container {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: none !important;
   }
   .arena {
-    gap: 4px !important;
-    padding: 4px !important;
-    background: rgba(0,0,0,0.15) !important;
-    border-radius: 10px !important;
-    border: 2px solid rgba(255,255,255,0.08) !important;
-    width: 100% !important;
-    max-width: 900px !important;
-    margin: 0 auto !important;
+    background: none !important;
+    border: none !important;
+    padding: 12px !important;
+    gap: 12px !important;
+    flex: none !important;
   }
   .area {
     flex-direction: column !important;
-    gap: 4px !important;
-    padding: 4px !important;
-    min-height: 90px !important;
-    background: rgba(0,0,0,0.18) !important;
-    border-radius: 8px !important;
-    border: 2px solid #fff !important;
-    width: 100% !important;
-    margin-bottom: 0 !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    min-height: 160px !important;
+  }
+  .player-info, .hp-bar {
+    min-width: 120px !important;
+    width: 120px !important;
+    height: 18px !important;
+    font-size: 12px !important;
   }
   .slots {
-    gap: 6px !important;
     flex-wrap: nowrap !important;
     justify-content: space-between !important;
     width: 100% !important;
     overflow-x: auto !important;
+    gap: 8px !important;
     padding: 0 2px !important;
   }
   .slot {
@@ -4673,44 +4679,48 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     min-width: 70px !important;
     height: 105px !important;
     margin: 0 !important;
-    padding-bottom: 8px !important;
+    padding-bottom: 16px !important;
   }
   .slot .card {
     width: 65px !important;
     height: 92px !important;
   }
-
-  /* Hand: always inside .area, no overflow, wrap if needed */
   .hand {
-    display: flex !important;
-    flex-wrap: wrap !important;
+    min-height: 80px !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
     justify-content: center !important;
-    align-items: flex-end !important;
-    min-height: 60px !important;
-    max-width: 100% !important;
+    overflow-x: auto !important;
     width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: static !important;
-    overflow: visible !important;
-    z-index: 1 !important;
-    background: none !important;
+    position: relative !important;
+    z-index: 10 !important;
   }
   .hand .card {
-    width: 56px !important;
-    height: 80px !important;
+    width: 60px !important;
+    height: 85px !important;
     margin: 0 2px !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-    transition: all 0.2s;
+    transition: all 0.3s ease !important;
   }
   .hand .card.selected {
-    width: 70px !important;
-    height: 100px !important;
+    width: 75px !important;
+    height: 105px !important;
     z-index: 200 !important;
   }
-
-  /* Action panel: mobile style, always contained */
+  .btn {
+    padding: 10px 16px !important;
+    font-size: 12px !important;
+  }
+  .turn-panel {
+    bottom: 170px !important;
+    gap: 10px !important;
+    z-index: 999 !important;
+  }
+  .turn-indicator {
+    top: 14px !important;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+  }
   .card-action-panel {
     width: 85% !important;
     max-width: 250px !important;
@@ -4718,10 +4728,6 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     left: 50% !important;
     transform: translateX(-50%) !important;
     box-sizing: border-box !important;
-    position: fixed !important;
-    bottom: 160px !important;
-    top: auto !important;
-    right: auto !important;
   }
   .card-action-panel .btn {
     white-space: normal !important;
@@ -4732,30 +4738,31 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     width: 100% !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    margin: 2px 0 !important;
-    box-sizing: border-box !important;
   }
-
-  /* Make containers closer together */
-  .player-info, .hp-bar {
-    min-width: 110px !important;
-    width: 110px !important;
-    height: 16px !important;
+  .card-action-panel .btn.cooldown::after {
+    right: -3px !important;
+    top: -10px !important;
+    font-size: 7px !important;
+    padding: 1px 3px !important;
+  }
+  .status-icon {
+    width: 18px !important;
+    height: 18px !important;
     font-size: 11px !important;
+    top: -14px !important;
+    z-index: 1000 !important;
   }
-  .turn-panel {
-    bottom: 160px !important;
-    gap: 6px !important;
-    z-index: 999 !important;
+  .slot, .area {
+    overflow: visible !important;
+    z-index: 1 !important;
   }
-  .btn {
-    padding: 8px 12px !important;
-    font-size: 11px !important;
+  .arena {
+    overflow: visible !important;
   }
-  .turn-indicator {
-    top: 10px !important;
-    font-size: 12px !important;
-    padding: 7px 12px !important;
+  .game-over-text {
+    font-size: 40px !important;
+    padding: 0 20px !important;
+    word-break: break-word !important;
   }
 }
 </style>
