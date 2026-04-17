@@ -381,12 +381,30 @@ body::after {
 }
 
 /* Common styles */
-:root{
-  --bg1:#2D1B69; --bg2:#11998E; --bg3:#38EF7D;
-  --panel:#0f0f0f; --accent:#38EF7D; --danger:#ff4444;
+:root {
+  --bg-dark: #1a1c12;
+  --bg-swamp: #3d3d1a;
+  --mustard: #ffcc00;
+  --olive: #708238;
+  --accent: #ffcc00;
+  --panel: rgba(0,0,0,0.85);
+  --danger: #ff4444;
+  /* Sync legacy variables */
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
 }
 
-html,body{height:100%;margin:0;font-family:'Press Start 2P','DotGothic16',monospace;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:#fff;overflow-x:hidden;overflow-y:auto;}
+/* Replace the second html,body block (around line 221) */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Press Start 2P', 'DotGothic16', monospace;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
+  color: #fff;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
 .wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding=14px;box-sizing:border-box}
 .header{width:100%;text-align:center;margin-bottom:8px;z-index:5}
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
