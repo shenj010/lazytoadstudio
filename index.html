@@ -4,38 +4,43 @@
 <head>
     <title>Lazy Toad Studios</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
     <style>
+    /* 1. DEFINE MUSTARD PALETTE */
+    :root {
+        --mustard: #F2C010; 
+        --black: #181818;   
+        --white: #FFFFFF;   
+    }
+
     html, body {
         margin: 0;
         padding: 0;
-        background: #FDEDF4;
-        color: #222;
+        background: var(--mustard); /* Updated from #FDEDF4 */
+        color: var(--black);
         font-family: 'Press Start 2P', 'DotGothic16', monospace;
         width: 100vw;
         overflow-x: hidden;
-        /* INITIAL PADDING: Space for the banner when visible */
-        padding-top: 30px;
+        padding-top: 35px;
+        scroll-behavior: smooth;
     }
-    body { min-height: 100vh; }
 
-    /* News Banner Styles */
+    /* 2. UPDATE NEWS BANNER TO MATCH */
     .news-banner {
-        background-color: #FFFFFF;
-        color: #181818;
+        background-color: var(--black); /* Updated from #FFFFFF */
+        color: var(--mustard);         /* Updated from #181818 */
         padding: 8px 20px;
         width: 100vw;
         box-sizing: border-box;
-        z-index: 1000;
-        position: fixed; /* Makes it stick to the top */
+        z-index: 3000;
+        position: fixed;
         top: 0;
         left: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 15px;
-        transition: opacity 0.3s ease-in-out;
+        border-bottom: 2px solid var(--white);
     }
 
     .news-banner.hidden {
