@@ -21,21 +21,19 @@
 
     /* News Banner Styles */
     .news-banner {
-        background-color: #E9A91B;
-        color: #181818;
-        padding: 8px 20px;
-        width: 100vw;
-        box-sizing: border-box;
-        z-index: 1000;
-        position: fixed; /* Makes it stick to the top */
-        top: 0;
-        left: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        transition: opacity 0.3s ease-in-out;
-    }
+            background-color: var(--black);
+            color: var(--mustard);
+            padding: 10px 20px;
+            width: 100%;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid var(--white);
+        }
 
     .news-banner.hidden {
         opacity: 0;
