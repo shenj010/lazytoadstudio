@@ -230,62 +230,48 @@
     }
     .main-links {
         display: flex;
-        gap: 18px;
+        gap: 15px;
         justify-content: flex-end;
-        margin-top: 0;
-        margin-bottom: 0;
-        padding: 0;
     }
+
     .main-links a {
-        font-size: 0.8rem;
-        color: #181818; /* Black text */
+        font-size: 0.75rem;
+        color: #181818;
         text-decoration: none;
-        opacity: 0.90; /* Keep for subtle initial fade, or remove for full opacity */
-        font-weight: normal;
         display: flex;
-        align-items: center; /* Aligns toad icon and text vertically */
-        justify-content: flex-start; /* Aligns content to the left */
-        gap: 0.5em; /* Spacing between icon and text */
+        align-items: center; 
+        justify-content: center; /* Centered "Button" feel */
+        gap: 12px;
         box-sizing: border-box;
-        padding: 7px 8px; /* Adjust padding to your preference for rectangular shape */
-        border-radius: 0; /* Ensures a perfectly rectangular shape */
-        border: 3px solid #181818; /* Optional: Adds a thin black border to the white rectangle */
-        margin: 0 0.1em; /* Keep current margins */
-        background-color: #FFFFFF; /* White infill for the button */
-        position: relative; /* Needed for z-index if other elements overlap */
-        overflow: hidden; /* Ensures content stays within boundaries */
-        z-index: 0;
-        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-        width: 180px; /* Adjust this value as needed to fit your widest link comfortably, e.g., 'Contact' */
-            text-align: center; /* Ensures text is centered if it wraps */
-        }
+        padding: 0 15px; 
+        border: 3px solid #181818; 
+        background-color: #FFFFFF;
+        width: 170px; 
+        height: 50px;
+        transition: all 0.2s ease;
+        box-shadow: 4px 4px 0px #181818;
+    }
+
     .main-links .icon {
-        display: inline-block; /* Or flex/grid depending on layout */
-        width: 1.7em; /* Or whatever size your default icons should be */
-        height: 1.7em;
-        min-width: 1.7em;
-        min-height: 1.7em;
-        vertical-align: middle;
-        margin-right: 0.1em;
-        background-image: url("./images/toad icon static.png"); /* THE DEFAULT ICON */
+        width: 24px;
+        height: 24px;
+        background-image: url("https://i.ibb.co/LzqXfGq/lazy-toad-logo.jpg"); /* Default Toad */
         background-size: contain;
         background-repeat: no-repeat;
-        background-position: center;
-        image-rendering: auto;
-        transition: background-image 0.15s, filter 0.2s ease;
+        image-rendering: pixelated;
     }
-    /* Hover styles for the button (link) itself */
-    .main-links a:hover,
-    .main-links a:focus {
-        background-color: #181818 !important; /* Background becomes black */
-        color: #FDEDF4 !important; /* Text color becomes white */
-        opacity: 1 !important;
-        text-decoration: none !important;
-        border-color: #FDEDF4 !important; /* Optional: Inverts the border color on hover */
+
+    /* Hover State: Invert Colors */
+    .main-links a:hover {
+        background-color: #181818;
+        color: #F2C010; /* Text turns yellow */
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px #181818;
     }
-    /* Hover styles for the toad icon within the button */
+
+    /* This turns the black icon into white/yellow on hover */
     .main-links a:hover .icon {
-        filter: brightness(0) invert(1) !important; /* Inverts the black toad PNG to white */
+        filter: brightness(0) invert(1);
     }
     .main-links a.shop:hover .icon { background-image: url("./images/toad shop.png"); }
     .main-links a.contact:hover .icon { background-image: url("./images/toad mail.png"); }
