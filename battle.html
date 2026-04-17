@@ -8,23 +8,63 @@
 <style>
 /* Desktop Layout Improvements */
 :root {
-  --bg-dark: #1a1c12;
-  --bg-swamp: #3d3d1a;
-  --mustard: #e1ad01;
-  --olive: #708238;
-  --accent: #c0ca33;
-  --panel: rgba(26, 28, 18, 0.95);
-  --danger: #ff4444;
-  --border: 2px solid var(--mustard);
+  /* GameBoy / CRT Mustard & Olive Theme */
+  --bg-dark: #0f100d;
+  --bg-swamp: #1e2108;
+  --mustard: #ffcc00;
+  --olive: #306230;
+  --danger: #ff0033;
+  --panel: rgba(15, 16, 13, 0.9);
+  
+  /* Mapping old variables to new colors so existing layout adapts automatically */
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
+  --accent: var(--mustard);
 }
-html,body{
-  height:100%;
-  margin:0;
-  font-family:'Press Start 2P','DotGothic16',monospace;
-  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
-  color:#fff;
-  overflow-x:hidden;
-  overflow-y:auto;
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Press Start 2P', 'DotGothic16', monospace;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
+  color: #fff;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* --- CRT SCANLINE & FLICKER EFFECTS --- */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 10000;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+}
+
+body::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 10001;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.1; }
+  5% { opacity: 0.2; }
+  10% { opacity: 0.1; }
+  15% { opacity: 0.3; }
+  20% { opacity: 0.1; }
+  100% { opacity: 0.15; }
 }
 
 .wrap{
