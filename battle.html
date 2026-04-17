@@ -118,16 +118,29 @@ body::after {
 }
 
 /* Larger battlefield areas */
-.area{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background: #ffcc00;
-  border:3px solid #fff;
-  padding:20px; /* More padding */
-  border-radius:12px;
-  min-height: 200px; /* Ensure minimum height */
+.area {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  /* Bold Mustard Base */
+  background-color: #ffcc00 !important; 
+  
+  /* Thick Black Industrial Border */
+  border: 6px solid #000 !important;
+  
+  /* Retro 3D 'Inset' Frame Effect */
+  box-shadow: 
+    inset 6px 6px 0px rgba(255, 255, 255, 0.4), 
+    inset -6px -6px 0px rgba(0, 0, 0, 0.2),
+    0 12px 0px rgba(0, 0, 0, 0.3);
+              
+  padding: 20px;
+  border-radius: 0px !important; /* Square off for the hardware look */
+  min-height: 220px;
+  overflow: visible !important;
+  position: relative;
 }
 
 .player-info{
