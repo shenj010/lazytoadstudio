@@ -547,59 +547,68 @@
         text-align: center;
     }
     .footer-social {
-        width: 100vw;
-        padding: 32px 0 22px 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: none;
-        margin-top: 60px;
-        justify-content: center;
-    }
-    .footer-social-links {
-        display: flex;
-        gap: 24px;
-        margin-bottom: 6px;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-    .footer-social-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: #444;
-        font-size: 1rem;
-        font-family: 'Press Start 2P', cursive, monospace;
-        transition: color 0.18s, filter 0.18s;
-        gap: 0.5em;
-    }
-    .footer-social-link svg {
-        width: 1.5em;
-        height: 1.5em;
-        margin-right: 8px;
-        vertical-align: middle;
-        fill: currentColor;
-        transition: transform 0.2s;
-    }
-    .footer-social-link:hover svg {
-        transform: scale(1.18);
-    }
-    .footer-social-link:hover,
-    .footer-social-link:focus {
-        color: #111;
-        filter: brightness(0.7);
-        text-decoration: none;
-    }
-    .footer-social-label {
-        font-size: 0.85rem;
-        color: #aaa;
-        font-family: 'Press Start 2P', cursive, monospace;
-        margin-top: 2px;
-        letter-spacing: 0.07em;
-        text-align: center;
-    }
+            width: 100%;
+            padding: 40px 0 30px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #181818;
+            border-top: 4px solid #FFFFFF;
+            margin-top: 60px;
+            justify-content: center;
+        }
+
+        .footer-social-links {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .footer-social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #FFC107;
+            font-size: 0.75rem;
+            font-family: 'Press Start 2P', cursive, monospace;
+            transition: color 0.18s, filter 0.18s;
+            gap: 0.5em;
+            padding: 8px 12px;
+        }
+
+        .footer-social-link svg {
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+            transition: transform 0.2s;
+        }
+
+        .footer-social-link:hover svg {
+            transform: scale(1.18);
+        }
+
+        .footer-social-link:hover,
+        .footer-social-link:focus {
+            color: #FFFFFF;
+            filter: brightness(1.2);
+            text-decoration: none;
+        }
+
+        .footer-social-label {
+            font-size: 0.55rem;
+            color: #FFFFFF;
+            opacity: 0.6;
+            font-family: 'Press Start 2P', cursive, monospace;
+            margin-top: 10px;
+            letter-spacing: 0.1em;
+            text-align: center;
+            text-transform: uppercase;
+        }
 
     .hopping-toad {
         position: fixed; /* Important for absolute positioning relative to viewport */
