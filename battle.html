@@ -118,34 +118,16 @@ body::after {
 }
 
 /* Larger battlefield areas */
-.area {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  
-  /* BOLD PLAYMAT EFFECT */
-  /* Using a repeating linear gradient to create a "Tactile Grid" look */
-  background-color: #ffcc00;
-  background-image: 
-    linear-gradient(rgba(0,0,0,0.1) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(0,0,0,0.1) 2px, transparent 2px);
-  background-size: 20px 20px; /* Size of the playmat grid */
-  
-  /* Heavy Industrial Bezel */
-  border: 8px solid #000;
-  outline: 4px solid #4a5426; /* Outer "moss" ring to blend into background */
-  
-  /* High-end depth shadows */
-  box-shadow: 
-    inset 0 0 40px rgba(0,0,0,0.2), /* Inner vignette */
-    0 15px 30px rgba(0,0,0,0.5);   /* External drop shadow */
-              
-  padding: 30px 20px;
-  border-radius: 0px; 
-  min-height: 240px;
-  position: relative;
-  overflow: visible !important;
+.area{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background: #ffcc00;
+  border:3px solid #fff;
+  padding:20px; /* More padding */
+  border-radius:12px;
+  min-height: 200px; /* Ensure minimum height */
 }
 
 .player-info{
