@@ -8,24 +8,29 @@
 <style>
 /* Desktop Layout Improvements */
 :root {
-  --bg-dark: #ccaa00;   /* Deep Mustard for gradients */
-  --bg-swamp: #ffcc00;  /* Bold Mustard Base */
+  /* GameBoy / CRT Mustard & Olive Theme */
+  --bg-dark: #1a1c0c;
+  --bg-swamp: #a2c41d;  /* The bright Moss Green */
   --mustard: #ffcc00;
-  --olive: #4a5426;     /* Keeping olive as an accent for buttons/borders */
-  --accent: #ffffff;    /* White as primary accent */
+  --olive: #4e5d16;
+  --danger: #ff0033;
+  --panel: rgba(15, 16, 13, 0.9);
+  
+  /* Mapping old variables to new colors so existing layout adapts automatically */
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
+  --accent: var(--mustard);
 }
-
 html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  
-  /* BOLD MUSTARD BACKGROUND */
-  background: radial-gradient(circle at center, #ffcc00 0%, #e6b800 70%, #ccaa00 100%);
-  background-attachment: fixed;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
   color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
+  position: relative;
 }
 
 /* --- CRT SCANLINE & FLICKER EFFECTS --- */
@@ -377,21 +382,25 @@ body::after {
 
 /* Common styles */
 :root {
-  --bg-dark: #ccaa00;   /* Deep Mustard for gradients */
-  --bg-swamp: #ffcc00;  /* Bold Mustard Base */
+  --bg-dark: #1a1c0c;
+  --bg-swamp: #a2c41d;  /* The bright Moss Green */
   --mustard: #ffcc00;
-  --olive: #4a5426;     /* Keeping olive as an accent for buttons/borders */
-  --accent: #ffffff;    /* White as primary accent */
+  --olive: #4e5d16;
+  --accent: #ffcc00;
+  --panel: rgba(0,0,0,0.85);
+  --danger: #ff4444;
+  /* Sync legacy variables */
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
 }
 
+/* Replace the second html,body block (around line 221) */
 html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  
-  /* BOLD MUSTARD BACKGROUND */
-  background: radial-gradient(circle at center, #ffcc00 0%, #e6b800 70%, #ccaa00 100%);
-  background-attachment: fixed;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
   color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
