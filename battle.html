@@ -106,10 +106,10 @@ body::after {
   flex:1;
   display:flex;
   flex-direction:column;
-  gap:16px;
+  gap:20px;
   align-items:center;
   justify-content:space-between;
-  padding:16px;
+  padding:20px 24px;
   box-sizing:border-box;
   background: rgba(255,255,255,0.15);
   border-radius: 12px;
@@ -121,10 +121,11 @@ body::after {
   width:100%;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-start;
+  gap: 20px;
   background: rgba(255,255,255,0.15);
   border:3px solid #FFFFFF;
-  padding:20px;
+  padding:20px 30px;
   border-radius:12px;
   min-height: 200px;
 }
@@ -133,7 +134,8 @@ body::after {
   display:flex;
   flex-direction:column;
   align-items:center;
-  min-width:180px; /* Wider player info */
+  min-width:160px;
+  flex-shrink: 0;
 }
 
 .name{
@@ -143,8 +145,8 @@ body::after {
 }
 
 .hp-bar{
-  width:180px; /* Wider HP bar */
-  height:24px; /* Taller HP bar */
+  width:160px;
+  height:24px;
   background:#111;
   border:2px solid #fff;
   border-radius:8px;
@@ -162,7 +164,7 @@ body::after {
 
 .seg{
   flex:1;
-  height:18px; /* Taller segments */
+  height:18px;
   background:#fff;
   border-radius:2px;
   opacity:1;
@@ -170,17 +172,18 @@ body::after {
   position:relative;
 }
 
-/* Larger battlefield slots */
+/* Battlefield slots */
 .slots{
   display:flex;
-  gap:14px; /* More spacing */
+  gap:10px;
   align-items:center;
   justify-content:center;
+  flex:1;
 }
 
 .slot {
-  width: 110px;
-  height: 170px;
+  width: 100px;
+  height: 160px;
   border: 2px dashed #FFFFFF;
   border-radius: 10px;
   background: #1a2535;
@@ -190,14 +193,19 @@ body::after {
   position: relative;
   padding-bottom: 20px;
 }
-  width:104px; /* Larger cards */
-  height:140px; /* Taller cards */
+
+.slot .card{
+  width:94px;
+  height:130px;
   border:3px solid #fff;
   border-radius:8px;
   background:#222;
   overflow:hidden;
   cursor:pointer;
   display:flex;
+  flex-direction:column;
+  transition:opacity 0.3s ease;
+}
   flex-direction:column;
   transition:opacity 0.3s ease;
 }
