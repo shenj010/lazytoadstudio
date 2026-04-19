@@ -1644,6 +1644,9 @@
     let collectedToadCount = 0;
     const maxToads = 2;
     const totalSlots = 12;
+    const tiers = [2, 4, 8, 12]; // thresholds for each reward
+    let currentTierIndex = 0;     // tracks which tier we're on
+    let collectedToadCount = 0;   // never resets until 12
 
     const subtitle = document.querySelector('.hero-nav-subtitle');
     const frogImgSrc = 'images/toad icons static.png';
@@ -1895,7 +1898,7 @@
             event.stopPropagation();
 
             // Only collect toads if under max
-            if (collectedToadCount < maxToads) {
+            if (collectedToadCount < tiers[tiers.length - 1]) {
                 // Stop any scheduled sequences
                 if (mainSequenceSchedulerId) clearTimeout(mainSequenceSchedulerId);
                 if (individualPeepSchedulerId) clearTimeout(individualPeepSchedulerId);
@@ -1963,18 +1966,21 @@
                         updateToadBoxVisibility();
 
                         // ---- RESET & REWARD LOGIC ----
-                        if (collectedToadCount >= maxToads) {
-                            // Trigger reward if not already given
-                            if (!rewardGiven) {
-                                rewardGiven = true;
-                                triggerReward();
+                        if (collectedToadCount >= tiers[currentTierIndex]) {
+                        if (!rewardGiven) {
+                            rewardGiven = true;
+                            triggerReward();
+                            currentTierIndex++;  // ← move this inside the if block
+                            rewardGiven = false; // ← reset after incrementing tier
+                    
+                            // Only reset when all tiers complete
+                            if (currentTierIndex >= tiers.length) {
+                                collectedToadCount = 0;
+                                currentTierIndex = 0;
+                                updateToadBoxVisibility();
                             }
-
-                            // Reset counter and container immediately
-                            collectedToadCount = 0;
-                            currentCollectedToadsGrid.innerHTML = '';
-                            updateToadBoxVisibility();
                         }
+                    }
 
                         resetFrogVisuals(frog);
                         startNextPeepSequence();
