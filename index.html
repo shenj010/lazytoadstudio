@@ -1020,6 +1020,24 @@
             border: 6px solid #FFFFFF;
         }
 
+        /* Punch card toad slots */
+        .collected-toads-grid .toad-slot {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-image: url('./images/toad icons outline.png');
+            background-size: 85%;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: brightness(10);
+            opacity: 0.35;
+        }
+
+        .collected-toads-grid .toad-slot.filled {
+            background-image: none;
+            filter: none;
+            opacity: 1;
+        }
+
         .hero-nav-col {
             grid-area: nav; /* Assign this to the 'nav' area in the grid */
             display: flex;
@@ -1664,12 +1682,20 @@
         }
 
         // Re-populate the currently active grid with collected toads
-        for (let i = 0; i < collectedToadCount; i++) {
-            const finalToad = document.createElement('img');
-            finalToad.src = frogImgSrc;
-            finalToad.classList.add('hopped-toad');
-            currentCollectedToadsGrid.appendChild(finalToad);
-        }
+        for (let i = 0; i < maxToads; i++) {
+    const slot = document.createElement('div');
+    slot.classList.add('toad-slot');
+    if (i < collectedToadCount) {
+        // Slot is filled — show real toad
+        slot.classList.add('filled');
+        const img = document.createElement('img');
+        img.src = frogImgSrc;
+        img.classList.add('hopped-toad');
+        slot.appendChild(img);
+    }
+    // Empty slots just show the ghost outline via CSS
+    currentCollectedToadsGrid.appendChild(slot);
+    }
 
         updateToadCounter(); // Ensure counter is updated after switching
         setTimeout(adjustDesktopToadsBoxHeight, 0);
@@ -1918,10 +1944,19 @@
                     });
 
                     hoppingToad.addEventListener('transitionend', () => {
-                        hoppingToad.remove();
-
-                        // Increment toad counter and update visuals
-                        collectedToadCount++;
+                            hoppingToad.remove();
+                            // Increment toad counter and fill next slot
+                            collectedToadCount++;
+                        
+                            // Fill the next empty slot with a real toad
+                            const emptySlot = currentCollectedToadsGrid.querySelector('.toad-slot:not(.filled)');
+                            if (emptySlot) {
+                                emptySlot.classList.add('filled');
+                                const img = document.createElement('img');
+                                img.src = frogImgSrc;
+                                img.classList.add('hopped-toad');
+                                emptySlot.appendChild(img);
+                            }
                         updateToadBoxVisibility();
 
                         // ---- RESET & REWARD LOGIC ----
