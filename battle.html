@@ -1764,7 +1764,7 @@ function renderHand(side) {
   }
   
   const cardWidth = 104;
-  const containerWidth = handEl.clientWidth || 400;
+  const containerWidth = handEl.clientWidth || handEl.parentElement?.clientWidth || 400;
   
   // ======================
   // PLAYER HAND
@@ -1784,11 +1784,15 @@ function renderHand(side) {
   
     let overlap = (containerWidth - cardWidth) / (hand.length - 1);
     overlap = Math.min(overlap, cardWidth * 0.4);
+
+    // Calculate total fan width and offset to centre it
+    const totalFanWidth = (hand.length - 1) * overlap + cardWidth;
+    const startX = (containerWidth - totalFanWidth) / 2;
   
     hand.forEach((card, i) => {
       const c = createHandCardEl(card, i, 'player');
       c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
+      c.style.left = `${startX + i * overlap}px`;
       c.style.top = '0';
       c.style.zIndex = i;
       handEl.appendChild(c);
@@ -1833,11 +1837,14 @@ function renderHand(side) {
   
     let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
     overlap = Math.min(overlap, cardWidth * 0.4);
+
+    const totalFanWidth = (remainingCards - 1) * overlap + cardWidth;
+    const startX = (containerWidth - totalFanWidth) / 2;
   
     for (let i = 0; i < remainingCards; i++) {
       const c = createCardBackEl();
       c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
+      c.style.left = `${startX + i * overlap}px`;
       c.style.top = '0';
       c.style.zIndex = i;
       handEl.appendChild(c);
