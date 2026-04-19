@@ -357,6 +357,170 @@ body::after {
         display: none; /* Hidden by default for desktop */
     }
 
+    /* ===================== SPLIT BANNER ===================== */
+    .split-banner {
+        display: flex;
+        width: 100vw;
+        height: 280px;
+        border-top: 4px solid #181818;
+        border-bottom: 4px solid #181818;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* --- DEPARTURE BOARD --- */
+    .departure-board {
+        flex: 1;
+        background: #181818;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 20px;
+        box-sizing: border-box;
+        border-right: 4px solid #FFC107;
+        overflow: hidden;
+    }
+
+    .board-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #FFC107;
+    }
+
+    .board-title {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.55rem;
+        color: #FFC107;
+        letter-spacing: 0.1em;
+    }
+
+    .board-clock {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.55rem;
+        color: #FFC107;
+        letter-spacing: 0.1em;
+    }
+
+    .board-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .board-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 4px;
+        border-bottom: 1px solid rgba(255,193,7,0.15);
+    }
+
+    .board-row-status {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.4rem;
+        padding: 2px 6px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+        flex-shrink: 0;
+        width: 52px;
+        text-align: center;
+    }
+    .board-row-status.new    { color: #FFC107; }
+    .board-row-status.live   { color: #4cff91; }
+    .board-row-status.soon   { color: #ff9900; }
+    .board-row-status.closed { color: #888; }
+
+    .board-row-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.4rem;
+        color: #fff;
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .board-row-date {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.35rem;
+        color: #888;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    /* Tile flip animation for departure board */
+    .tile {
+        display: inline-block;
+        transition: transform 0.05s;
+    }
+    .tile.flipping {
+        animation: tileFlip 0.12s ease-in-out;
+    }
+    @keyframes tileFlip {
+        0%   { transform: rotateX(0deg);    opacity: 1; }
+        50%  { transform: rotateX(90deg);   opacity: 0; }
+        100% { transform: rotateX(0deg);    opacity: 1; }
+    }
+
+    /* --- BILLBOARD --- */
+    .billboard {
+        flex: 1;
+        position: relative;
+        background: #111;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .billboard-inner {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .billboard-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+    }
+
+    .billboard-img.active {
+        opacity: 1;
+    }
+
+    .billboard-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 0;
+        background: #181818;
+        border-top: 2px solid #FFC107;
+    }
+
+    .billboard-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 0;
+        background: #444;
+        border: 1px solid #FFC107;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .billboard-dot.active {
+        background: #FFC107;
+    }
+    /* ===================== END SPLIT BANNER ===================== */
+
     .banner-image-mobile {
     display: block;
     width: 100%;
@@ -1513,19 +1677,26 @@ body::after {
 
       <div class="desktop-banner-container">
           <div class="hero-images-spacing"></div>
-          <div class="hero-image-row">
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/walking temple website.jpg" alt="After the War" class="hero-image">
+          <div class="split-banner">
+
+            <!-- LEFT: DEPARTURE BOARD -->
+            <div class="departure-board" id="departureBoard">
+              <div class="board-header">
+                <span class="board-title">LAZY TOAD STUDIOS</span>
+                <span class="board-clock" id="boardClock">00:00</span>
+              </div>
+              <div class="board-rows" id="boardRows"></div>
             </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/the botanist a4 website.jpg" alt="Ramen Battleship" class="hero-image">
+
+            <!-- RIGHT: BILLBOARD -->
+            <div class="billboard" id="billboard">
+              <div class="billboard-inner">
+                <img class="billboard-img active" id="billboardImg" src="" alt="">
+                <img class="billboard-img" id="billboardImgNext" src="" alt="">
+              </div>
+              <div class="billboard-dots" id="billboardDots"></div>
             </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/3 Joe Shenton - Reunion.jpg" alt="PTSD Machine" class="hero-image">
-            </div>
-            <div class="hero-image-box" tabindex="0">
-              <img src="images/5 Joe Shenton - Remnants.jpg" alt="Transporter" class="hero-image">
-            </div>
+
           </div>
           <div class="banner-images-spacing"></div>
       </div>
@@ -1674,6 +1845,142 @@ body::after {
         </div>
     </footer>
     <script>
+    // ===================== SPLIT BANNER JS =====================
+
+    // --- BILLBOARD ---
+    const billboardImages = [
+        'images/walking temple website.jpg',
+        'images/the botanist a4 website.jpg',
+        'images/3 Joe Shenton - Reunion.jpg',
+        'images/5 Joe Shenton - Remnants.jpg',
+        'images/1 Joe Shenton - Respite.jpg',
+        'images/4 Joe Shenton - Reflection.jpg',
+    ];
+
+    let billboardIndex = 0;
+    const billboardImg = document.getElementById('billboardImg');
+    const billboardImgNext = document.getElementById('billboardImgNext');
+    const billboardDots = document.getElementById('billboardDots');
+
+    function initBillboard() {
+        if (!billboardImg) return;
+        billboardImages.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'billboard-dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goToBillboard(i));
+            billboardDots.appendChild(dot);
+        });
+        billboardImg.src = billboardImages[0];
+        billboardImg.classList.add('active');
+    }
+
+    function goToBillboard(idx) {
+        billboardIndex = idx;
+        billboardImg.src = billboardImages[idx];
+        document.querySelectorAll('.billboard-dot').forEach((d, i) => {
+            d.classList.toggle('active', i === idx);
+        });
+    }
+
+    function advanceBillboard() {
+        const next = (billboardIndex + 1) % billboardImages.length;
+        const nextImg = billboardImgNext;
+        nextImg.src = billboardImages[next];
+        nextImg.classList.add('active');
+        setTimeout(() => {
+            billboardImg.src = billboardImages[next];
+            billboardImg.classList.add('active');
+            nextImg.classList.remove('active');
+            billboardIndex = next;
+            document.querySelectorAll('.billboard-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === next);
+            });
+        }, 800);
+    }
+
+    initBillboard();
+    setInterval(advanceBillboard, 4000);
+
+    // --- DEPARTURE BOARD ---
+    const boardEntries = [
+        { status: 'NEW',    text: 'MK1 SMARTWATCH — PRE-ORDER',         date: 'APR 2025' },
+        { status: 'LIVE',   text: 'STICKER PACK VOL.2 — IN STOCK',      date: 'NOW'      },
+        { status: 'SOON',   text: 'BACKPACK MK2 — COMING SOON',         date: 'JUN 2025' },
+        { status: 'LIVE',   text: 'WALKING TEMPLE — GOUACHE ON PAPER',  date: '2022'     },
+        { status: 'LIVE',   text: 'THE BOTANIST — ACRYLIC ON CANVAS',   date: '2023'     },
+        { status: 'NEW',    text: 'FROG CARD BATTLE — PLAY NOW',        date: 'BETA'     },
+        { status: 'CLOSED', text: 'OSAKA SERIES — SOLD OUT',            date: '2022'     },
+        { status: 'SOON',   text: 'HEADPHONES MK1 — IN DEVELOPMENT',    date: 'TBA'      },
+    ];
+
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .-:/';
+
+    function scrambleText(el, finalText, duration) {
+        const len = finalText.length;
+        const start = performance.now();
+        function frame(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const revealedCount = Math.floor(progress * len);
+            let display = '';
+            for (let i = 0; i < len; i++) {
+                if (i < revealedCount) {
+                    display += finalText[i];
+                } else {
+                    display += CHARS[Math.floor(Math.random() * CHARS.length)];
+                }
+            }
+            el.textContent = display;
+            if (progress < 1) requestAnimationFrame(frame);
+            else el.textContent = finalText;
+        }
+        requestAnimationFrame(frame);
+    }
+
+    function updateBoardClock() {
+        const clock = document.getElementById('boardClock');
+        if (!clock) return;
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        clock.textContent = h + ':' + m;
+    }
+
+    function renderBoard() {
+        const container = document.getElementById('boardRows');
+        if (!container) return;
+        container.innerHTML = '';
+        boardEntries.forEach((entry, i) => {
+            const row = document.createElement('div');
+            row.className = 'board-row';
+
+            const status = document.createElement('span');
+            status.className = 'board-row-status ' + entry.status.toLowerCase();
+            status.textContent = entry.status;
+
+            const text = document.createElement('span');
+            text.className = 'board-row-text';
+
+            const date = document.createElement('span');
+            date.className = 'board-row-date';
+            date.textContent = entry.date;
+
+            row.appendChild(status);
+            row.appendChild(text);
+            row.appendChild(date);
+            container.appendChild(row);
+
+            // Stagger scramble animation
+            setTimeout(() => scrambleText(text, entry.text, 600 + i * 80), i * 120);
+        });
+    }
+
+    updateBoardClock();
+    setInterval(updateBoardClock, 30000);
+    renderBoard();
+    setInterval(renderBoard, 15000); // re-scramble every 15s
+
+    // ===================== END SPLIT BANNER JS =====================
+
     // Modal & scroll logic
     function openModal(img) {
         var modal = document.getElementById('imgModal');
