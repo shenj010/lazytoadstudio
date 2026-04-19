@@ -647,8 +647,8 @@
     /* Existing styles for the mobile collected toads box - remains hidden by default */
     .collected-toads-box {
         display: block; /* This box is hidden globally by your current CSS */
-        width: 190px; /* Fixed width for the box */
-        height: 190px; /* Fixed height for the box */
+        width: 180px; /* Fixed width for the box */
+        height: 180px; /* Fixed height for the box */
         border: 5px solid #FFC107; /* Amber gold border */
         position: relative;
         margin-top: 100px; /* Minimal spacing under the logo */
@@ -1100,45 +1100,18 @@
             hyphens: auto;
             line-height: 1.2;
         }
-        .solid-separator-top {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding-left: 2vw;
-            background: none;
-            border: none;
-            height: auto;
-            margin: 0;
-        }
-
-        .menu-arrow {
-            font-size: 0.7rem;
-            color: #FFFFFF;
-            opacity: 0.6;
-            font-family: monospace;
-            animation: bob 1.5s ease-in-out infinite;
-            display: block; /* visible on mobile */
-        }
-
-        @keyframes bob {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(3px); }
-        }
 
         #hoppedToadContainer {
-            display: none;
+            display: none; /* Hide the old hopped toad container on mobile */
         }
         .hopped-toad {
+            /* These styles are now applied to toads within the grid */
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
-    }
-        .menu-arrow {
-    display: none;
-    }
 
-/* Your existing .main-links and .news-banner styles (unchanged) */
+        /* Your existing .main-links and .news-banner styles (unchanged) */
         .main-links {
             position: absolute;
             top: 200px;
@@ -1491,9 +1464,7 @@
     </nav>
   </div>
 </div>
-<div class="solid-separator-top">
-    <span class="menu-arrow">▼</span>
-</div>
+<div class="solid-separator-top"></div>
 
       <div class="desktop-banner-container">
           <div class="hero-images-spacing"></div>
