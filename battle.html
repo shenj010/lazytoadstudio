@@ -312,7 +312,7 @@ body::after {
   border-left: 2px solid #FFFFFF;
 }
 .log::-webkit-scrollbar-thumb {
-  background: #FFC107;
+  background: #1a2535;
   border: 2px solid #181818;
 }
 .log::-webkit-scrollbar-thumb:hover {
@@ -368,7 +368,7 @@ body::after {
 }
 
 .btn:hover {
-  background: #FFC107;
+  background: #1a2535;
   color: #181818;
 }
 
@@ -634,7 +634,7 @@ html, body {
 .card-hp-bar .hp-seg {
   flex: 1;
   height: 100%;
-  background: #FFC107;
+  background: #1a2535;
   border-radius: 1px;
   transition: all 0.3s ease;
 }
@@ -1762,9 +1762,16 @@ function renderHand(side) {
     handEl.style.height = '120px';
     return;
   }
-  
+
+  // Use rAF to ensure container has correct dimensions before positioning
+  requestAnimationFrame(() => {
+    _renderHandCards(side, handEl, hand);
+  });
+}
+
+function _renderHandCards(side, handEl, hand) {
   const cardWidth = 104;
-  const containerWidth = handEl.clientWidth || handEl.parentElement?.clientWidth || 400;
+  const containerWidth = handEl.offsetWidth || 400;
   
   // ======================
   // PLAYER HAND
