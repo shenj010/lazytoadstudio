@@ -650,6 +650,26 @@
         overflow: hidden; /* Hide any overflow */
     }
 
+     /* Punch card toad slots — global so works on all breakpoints */
+    .collected-toads-grid .toad-slot,
+    #desktopToadsGrid .toad-slot {
+        width: 100%;
+        aspect-ratio: 1/1;
+        background-image: url('./images/toad icons outline.png');
+        background-size: 85%;
+        background-repeat: no-repeat;
+        background-position: center;
+        filter: brightness(10);
+        opacity: 0.35;
+    }
+ 
+    .collected-toads-grid .toad-slot.filled,
+    #desktopToadsGrid .toad-slot.filled {
+        background-image: none;
+        filter: none;
+        opacity: 1;
+    }
+
     .toad-counter {
         position: absolute;
         bottom: 5px;
@@ -1018,24 +1038,6 @@
             margin-left: 0; /* Align to the left of the logo column */
             margin-right: auto; /* Keep it aligned left */
             border: 6px solid #FFFFFF;
-        }
-
-        /* Punch card toad slots */
-        .collected-toads-grid .toad-slot {
-            width: 100%;
-            aspect-ratio: 1/1;
-            background-image: url('./images/toad icons outline.png');
-            background-size: 85%;
-            background-repeat: no-repeat;
-            background-position: center;
-            filter: brightness(10);
-            opacity: 0.35;
-        }
-
-        .collected-toads-grid .toad-slot.filled {
-            background-image: none;
-            filter: none;
-            opacity: 1;
         }
 
         .hero-nav-col {
@@ -1641,6 +1643,7 @@
     document.addEventListener("DOMContentLoaded", function() {
     let collectedToadCount = 0;
     const maxToads = 2;
+    const totalSlots = 16;
 
     const subtitle = document.querySelector('.hero-nav-subtitle');
     const frogImgSrc = 'images/toad icons static.png';
@@ -1682,7 +1685,7 @@
         }
 
         // Re-populate the currently active grid with collected toads
-        for (let i = 0; i < maxToads; i++) {
+        for (let i = 0; i < totalSlots; i++) {
     const slot = document.createElement('div');
     slot.classList.add('toad-slot');
     if (i < collectedToadCount) {
