@@ -1709,10 +1709,10 @@
     window.addEventListener('resize', updateToadBoxVisibility); // Update on resize
 
     function updateToadCounter() {
-        if (currentToadCounter) {
-            currentToadCounter.textContent = `${collectedToadCount} / ${maxToads}`;
-        }
+    if (currentToadCounter) {
+        currentToadCounter.textContent = `${collectedToadCount} / ${tiers[currentTierIndex]}`;
     }
+}
 
     subtitle.innerHTML = '';
 
