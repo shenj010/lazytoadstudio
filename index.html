@@ -1923,7 +1923,7 @@
                 if (currentCollectedToadsGrid) {
                     const gridRect = currentCollectedToadsGrid.getBoundingClientRect();
                     const cols = 4;
-                    const rows = Math.ceil(maxToads / cols);
+                    const rows = Math.ceil(totalSlots / cols);
                     const toadWidthInGrid = gridRect.width / cols;
                     const toadHeightInGrid = gridRect.height / rows;
 
