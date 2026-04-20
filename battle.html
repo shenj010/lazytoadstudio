@@ -1741,118 +1741,70 @@ function renderHand(side) {
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
   const hand = side === 'player' ? playerHand : computerReserve;
 
-  // Clear
   handEl.innerHTML = '';
   if (!hand) return;
 
-  if (window.innerWidth >= 600 && window.innerWidth <= 1200) {
-    hand.forEach((card, i) => {
-      const c = side === 'player'
-        ? createHandCardEl(card, i, 'player')
-        : createCardBackEl();
-      c.style.position = 'relative';
-      c.style.margin = '0 6px';
-      handEl.appendChild(c);
-    });
-    handEl.style.display = 'flex';
-    handEl.style.justifyContent = 'center';
-    handEl.style.alignItems = 'center';
-    handEl.style.position = 'relative';
-    handEl.style.height = '120px';
-    return;
-  }
-  
-  const cardWidth = 80; // slightly smaller cards when many in hand
-  const containerWidth = handEl.parentElement?.clientWidth || handEl.clientWidth || 500;
-  
+  // Reset any inline styles from previous renders
+  handEl.style.cssText = '';
+  handEl.style.display = 'flex';
+  handEl.style.justifyContent = 'center';
+  handEl.style.alignItems = 'center';
+  handEl.style.position = 'relative';
+  handEl.style.height = '120px';
+  handEl.style.overflow = 'visible';
+  handEl.style.flexWrap = 'nowrap';
+
   // ======================
   // PLAYER HAND
   // ======================
   if (side === 'player') {
     if (hand.length === 0) return;
-  
-    if (hand.length <= 3) {
-      hand.forEach((card, i) => {
-        const c = createHandCardEl(card, i, 'player');
-        c.style.position = 'relative';
-        c.style.margin = '0 5px';
-        handEl.appendChild(c);
-      });
-      return;
-    }
-  
-    // Calculate overlap so all cards fit within container
-    const totalCardWidth = cardWidth * hand.length;
-    const availableWidth = containerWidth - cardWidth;
-    let overlap = totalCardWidth > containerWidth 
-      ? availableWidth / (hand.length - 1)
-      : cardWidth + 10;
-    overlap = Math.max(30, Math.min(overlap, cardWidth * 0.9));
-  
+
+    // How much to overlap each card — more cards = more overlap
+    const overlap = hand.length > 4 ? Math.max(20, 60 - hand.length * 5) : 0;
+
     hand.forEach((card, i) => {
       const c = createHandCardEl(card, i, 'player');
-      c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
-      c.style.top = '0';
+      c.style.position = 'relative';
+      c.style.flexShrink = '0';
+      if (i > 0 && overlap > 0) c.style.marginLeft = `-${overlap}px`;
       c.style.zIndex = i;
-      c.style.width = `${cardWidth}px`;
       handEl.appendChild(c);
     });
-  
-    handEl.style.height = '120px';
-    handEl.style.position = 'relative';
     return;
   }
-  
+
   // ======================
   // COMPUTER HAND
   // ======================
   if (side === 'computer') {
     const usedReserveIndices = new Set();
-    
-    // Add indices from active cards on the board
+
     computerSlots.forEach(slot => {
-      if(slot && typeof slot.reserveIndex === 'number') {
+      if (slot && typeof slot.reserveIndex === 'number') {
         usedReserveIndices.add(slot.reserveIndex);
       }
     });
-    
-    // Add indices from discarded computer cards
+
     discardPile.forEach(entry => {
-      if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
+      if (entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
         usedReserveIndices.add(entry.reserveIndex);
       }
     });
-    
+
     const remainingCards = computerReserve.length - usedReserveIndices.size;
-  
     if (remainingCards <= 0) return;
-  
-    if (remainingCards <= 3) {
-      for (let i = 0; i < remainingCards; i++) {
-        const c = createCardBackEl();
-        c.style.position = 'relative';
-        c.style.margin = '0 3px';
-        handEl.appendChild(c);
-      }
-      return;
-    }
-  
-    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
-    overlap = Math.min(overlap, cardWidth * 0.4);
-  
+
+    const overlap = remainingCards > 4 ? Math.max(20, 60 - remainingCards * 5) : 0;
+
     for (let i = 0; i < remainingCards; i++) {
       const c = createCardBackEl();
-      c.style.position = 'absolute';
-      c.style.left = `${i * overlap}px`;
-      c.style.top = '0';
+      c.style.position = 'relative';
+      c.style.flexShrink = '0';
+      if (i > 0 && overlap > 0) c.style.marginLeft = `-${overlap}px`;
       c.style.zIndex = i;
       handEl.appendChild(c);
     }
-  
-    handEl.style.height = '120px';
-    handEl.style.position = 'relative';
-    handEl.style.overflow = 'visible';
   }
 }
   function createCardBackEl(){
