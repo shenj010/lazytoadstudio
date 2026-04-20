@@ -122,12 +122,13 @@ body::after {
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  gap: 20px;
+  gap: 10px;
   background: rgba(255,255,255,0.15);
   border:3px solid #FFFFFF;
-  padding:20px 30px;
+  padding: 12px 14px;
   border-radius:12px;
   min-height: 200px;
+  box-sizing: border-box;
 }
 
 .player-info{
@@ -1259,7 +1260,6 @@ html, body {
     
     <div class="turn-indicator" id="turnIndicator">Player Turn</div>
 
-    <!-- New integrated layout container -->
     <div class="game-container">
       <div class="arena" id="arena">
         <!-- COMPUTER AREA -->
@@ -1309,7 +1309,7 @@ html, body {
   </div>
 </div>
 
-        <!-- PLAYER AREA -->
+       <!-- PLAYER AREA -->
         <div class="area" id="playerArea">
           <div class="player-info">
             <div class="name">Player</div>
