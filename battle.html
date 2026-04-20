@@ -1780,12 +1780,12 @@ function renderHand(side) {
   if (side === 'player') {
     if (hand.length === 0) return;
 
-    // Overlap starts at 3+ cards, scales with count
-    // Target: keep total hand width under 370px
+    // Overlap starts at 3+ cards on desktop only — mobile shows cards spread out
     const cardWidth = 104;
+    const isDesktop = window.innerWidth > 1200;
     const maxWidth = 340;
     const totalUnlapped = hand.length * cardWidth;
-    const overlap = hand.length > 2
+    const overlap = isDesktop && hand.length > 2
       ? Math.max(10, Math.ceil((totalUnlapped - maxWidth) / (hand.length - 1)))
       : 0;
 
@@ -1822,9 +1822,10 @@ function renderHand(side) {
     if (remainingCards <= 0) return;
 
     const cardWidth = 104;
+    const isDesktop = window.innerWidth > 1200;
     const maxWidth = 340;
     const totalUnlapped = remainingCards * cardWidth;
-    const overlap = remainingCards > 2
+    const overlap = isDesktop && remainingCards > 2
       ? Math.max(10, Math.ceil((totalUnlapped - maxWidth) / (remainingCards - 1)))
       : 0;
 
