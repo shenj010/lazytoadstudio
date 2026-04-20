@@ -3184,12 +3184,11 @@ function createStatusIcon(effectType, turnsRemaining, iconIndex = 0) {
   icon.className = `status-icon ${effectType}`;
   icon.style.setProperty('--icon-index', iconIndex);
   
-  // Define symbols for each effect type
   const symbols = {
-    poison: '☠',
-    stun: '⚡',
-    sleep: '💤',
-    weaken: '⬇'
+    poison: 'PSN',
+    stun: 'STN',
+    sleep: 'ZZZ',
+    weaken: 'WKN'
   };
   
   icon.textContent = symbols[effectType] || '?';
