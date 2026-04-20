@@ -542,20 +542,22 @@ html, body {
 /* Status effect icons - positioned above slot containers */
 .status-icon {
   position: absolute;
-  top: -15px; /* Above the slot container */
+  top: -15px;
   right: 8px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 32px !important;
+  height: 18px !important;
+  border-radius: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 9px !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-weight: normal;
   border: 2px solid #fff;
   z-index: 150;
   animation: statusPulse 2s ease-in-out infinite;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow: 2px 2px 0px #181818;
+  image-rendering: pixelated;
 }
 
 .status-icon.poison {
@@ -605,7 +607,7 @@ html, body {
 .card-hp-bar .hp-seg {
   flex: 1;
   height: 100%;
-  background: #38EF7D;
+  background: #FFC107;
   border-radius: 1px;
   transition: all 0.3s ease;
 }
