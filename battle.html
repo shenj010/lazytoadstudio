@@ -214,36 +214,33 @@ body::after {
 .hand {
   position: relative;
   height: 120px;
-  max-width: 300px; /* constrain so it doesn't overflow area */
+  width: 100%;
   overflow: visible;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
   z-index: 10;
-  flex-shrink: 0;
 }
 
+/* Cards in hand overlap when there are many */
 .hand .card {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, margin 0.2s ease;
+  margin-left: -20px; /* overlap by default */
   flex-shrink: 0;
-  /* no margin-left here — JS handles overlap */
 }
 
-/* Hide stats text in hand cards on desktop — image only */
-.hand .card .stats {
-  display: none;
+.hand .card:first-child {
+  margin-left: 0; /* no overlap on first card */
 }
 
-/* Show stats only on mobile where cards are larger */
-@media (max-width: 1200px) {
-  .hand .card .stats {
-    display: block;
-    font-size: 6px;
-    padding: 2px;
-  }
+.hand .card:hover {
+  transform: translateY(-10px) scale(1.1);
+  z-index: 999 !important;
+  margin-left: 0; /* un-overlap on hover */
+  margin-right: 4px;
 }
 
 .hand .card img {
@@ -251,7 +248,6 @@ body::after {
   height: 100%;
   border-radius: 8px;
   object-fit: cover;
-  display: block;
 }
 
 .hand .card.selected {
@@ -1813,10 +1809,9 @@ function renderHand(side) {
 }
   function createCardBackEl(){
   const el = document.createElement('div'); 
-  el.className = 'card';
-  const isDesktop = window.innerWidth > 1200;
-  el.style.width = isDesktop ? '76px' : '104px'; 
-  el.style.height = isDesktop ? '105px' : '140px';
+  el.className = 'card'; 
+  el.style.width = '104px'; 
+  el.style.height = '140px';
   el.style.cursor = 'default';
 
   const img = document.createElement('img'); 
@@ -1833,10 +1828,8 @@ function renderHand(side) {
      function createHandCardEl(card, idx, side) {
   const el = document.createElement('div');
   el.className = 'card';
-  // Smaller on desktop, normal on mobile
-  const isDesktop = window.innerWidth > 1200;
-  el.style.width = isDesktop ? '76px' : '104px';
-  el.style.height = isDesktop ? '105px' : '140px';
+  el.style.width = '104px';
+  el.style.height = '140px';
 
   // Only allow clicks on player hand
   if (side === 'player') {
