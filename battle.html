@@ -8,25 +8,26 @@
 <style>
 /* Desktop Layout Improvements */
 :root {
-  /* Lazy Toad Battle Theme — Amber dominant, dark navy accents */
-  --bg-dark: #FFC107;
-  --bg-swamp: #1a2535;
+  /* GameBoy / CRT Mustard & Olive Theme */
+  --bg-dark: #1a1c0c;
+  --bg-swamp: #a2c41d;  /* The bright Moss Green */
   --mustard: #FFC107;
-  --olive: #2B3A52;
-  --danger: #ff4444;
-  --panel: rgba(26, 37, 53, 0.95);
+  --olive: #4e5d16;
+  --danger: #ff0033;
+  --panel: rgba(15, 16, 13, 0.9);
   
+  /* Mapping old variables to new colors so existing layout adapts automatically */
   --bg1: var(--bg-dark); 
   --bg2: var(--bg-swamp); 
   --bg3: var(--olive);
-  --accent: #FFFFFF;
+  --accent: var(--mustard);
 }
 html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  background: radial-gradient(circle at center, #FFD03A, #FFC107);
-  color: #FFFFFF;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
+  color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
@@ -87,9 +88,9 @@ body::after {
 }
 
 .title{
-  color: #FFFFFF;
-  font-size:22px;
-  text-shadow: none;
+  color:var(--accent);
+  font-size:22px; /* Larger title */
+  text-shadow:0 0 8px rgba(0,0,0,.6);
 }
 
 /* Main game container with integrated log */
@@ -106,14 +107,14 @@ body::after {
   flex:1;
   display:flex;
   flex-direction:column;
-  gap:20px;
+  gap:16px; /* Larger gaps */
   align-items:center;
   justify-content:space-between;
-  padding:20px 24px;
+  padding:16px;
   box-sizing:border-box;
-  background: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.2); /* Subtle background */
   border-radius: 12px;
-  border: 3px solid #FFFFFF;
+  border: 2px solid rgba(255,255,255,0.1);
 }
 
 /* Larger battlefield areas */
@@ -121,33 +122,30 @@ body::after {
   width:100%;
   display:flex;
   align-items:center;
-  justify-content:flex-start;
-  gap: 10px;
-  background: rgba(255,255,255,0.15);
-  border:3px solid #FFFFFF;
-  padding: 12px 14px;
+  justify-content:space-between;
+  background: #ffcc00;
+  border:3px solid #fff;
+  padding:20px; /* More padding */
   border-radius:12px;
-  min-height: 200px;
-  box-sizing: border-box;
+  min-height: 200px; /* Ensure minimum height */
 }
 
 .player-info{
   display:flex;
   flex-direction:column;
   align-items:center;
-  min-width:160px;
-  flex-shrink: 0;
+  min-width:180px; /* Wider player info */
 }
 
 .name{
-  color: #FFFFFF;
-  font-size:14px;
+  color:var(--accent);
+  font-size:14px; /* Larger text */
   margin-bottom:8px;
 }
 
 .hp-bar{
-  width:160px;
-  height:24px;
+  width:180px; /* Wider HP bar */
+  height:24px; /* Taller HP bar */
   background:#111;
   border:2px solid #fff;
   border-radius:8px;
@@ -165,7 +163,7 @@ body::after {
 
 .seg{
   flex:1;
-  height:18px;
+  height:18px; /* Taller segments */
   background:#fff;
   border-radius:2px;
   opacity:1;
@@ -173,31 +171,30 @@ body::after {
   position:relative;
 }
 
-/* Battlefield slots */
+/* Larger battlefield slots */
 .slots{
   display:flex;
-  gap:10px;
+  gap:14px; /* More spacing */
   align-items:center;
   justify-content:center;
-  flex:1;
 }
 
 .slot {
-  width: 100px;
-  height: 160px;
-  border: 2px dashed #FFFFFF;
+  width: 110px;
+  height: 170px; /* Increase height to accommodate HP bar */
+  border: 2px dashed rgba(255,255,255,0.25);
   border-radius: 10px;
-  background: #1a2535;
+  background: rgba(0,0,0,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  padding-bottom: 20px;
+  padding-bottom: 20px; /* Add padding for HP bar */
 }
 
 .slot .card{
-  width:94px;
-  height:130px;
+  width:104px; /* Larger cards */
+  height:140px; /* Taller cards */
   border:3px solid #fff;
   border-radius:8px;
   background:#222;
@@ -207,36 +204,26 @@ body::after {
   flex-direction:column;
   transition:opacity 0.3s ease;
 }
-  flex-direction:column;
-  transition:opacity 0.3s ease;
-}
 
 /* Larger hand area */
 .hand {
   position: relative;
-  height: 140px;
-  flex: 0 0 auto;
-  max-width: 800px;
-  margin: 0 auto;
-  overflow: visible;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
+  height: 120px;      /* match your card height */
+  width: 100%;        /* fit to gameboard width */
+      overflow: visible;   /* allow cards to pop out */
+      display: flex;
+      justify-content: center;
+      z-index: 10; /* Ensure hand context is above other elements */
 }
-
-.hand .card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-  /* JS handles overlap via marginLeft */
-}
-
 .hand .card:hover {
   transform: translateY(-10px) scale(1.1);
   z-index: 999 !important;
+}
+  .hand .card {
+  border-radius: 8px;
+  overflow: hidden; /* ensures image stays inside the rounded shape */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease;
 }
 
 .hand .card img {
@@ -244,11 +231,6 @@ body::after {
   height: 100%;
   border-radius: 8px;
   object-fit: cover;
-  display: block;
-}
-
-.hand .card .stats {
-  display: none; /* hide stats text in hand — image only */
 }
 
 .hand .card.selected {
@@ -285,38 +267,29 @@ body::after {
   max-height: 80vh;
   border: 4px solid var(--accent);
   border-radius: 12px;
-  box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+  box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
   object-fit: contain;
 }
 
 
 /* Integrated log panel */
 .log{
-  width: 300px;
+  width: 300px; /* Wider log */
   height: 100%;
-  background: #1a2535;
-  border: 3px solid #FFFFFF;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #fff;
   border-radius: 12px;
   padding: 12px;
   overflow-y: auto;
   font-size: 11px;
-  z-index: 5100;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom scrollbar for action log */
-.log::-webkit-scrollbar {
-  width: 8px;
-}
-.log::-webkit-scrollbar-track {
-  background: #181818;
-  border-left: 2px solid #FFFFFF;
-}
-.log::-webkit-scrollbar-thumb {
-  background: #FFC107;
-  border: 2px solid #181818;
-}
-.log::-webkit-scrollbar-thumb:hover {
-  background: #FFD03A;
+.log .entry{
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .log .player{
@@ -331,17 +304,15 @@ body::after {
 .turn-indicator{
   position:fixed;
   top:24px;
-  right:24px;
-  left:auto;
-  transform:none;
-  background: #1a2535;
-  border:3px solid #FFFFFF;
-  padding:12px 20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.9);
+  border:2px solid var(--accent);
+  padding:12px 20px; /* Larger padding */
   border-radius:8px;
-  font-size:14px;
+  font-size:14px; /* Larger text */
   z-index:60;
-  color: #FFC107;
-  box-shadow: 4px 4px 0px #181818;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 /* Turn control panel - larger */
@@ -368,8 +339,8 @@ body::after {
 }
 
 .btn:hover {
-  background: #FFC107;
-  color: #181818;
+  background: var(--accent);
+  color: #000;
 }
 
 .btn:active{
@@ -411,13 +382,14 @@ body::after {
 
 /* Common styles */
 :root {
-  --bg-dark: #FFC107;
-  --bg-swamp: #1a2535;
+  --bg-dark: #1a1c0c;
+  --bg-swamp: #a2c41d;  /* The bright Moss Green */
   --mustard: #FFC107;
-  --olive: #2B3A52;
-  --accent: #FFFFFF;
-  --panel: rgba(26, 37, 53, 0.95);
+  --olive: #4e5d16;
+  --accent: #ffcc00;
+  --panel: rgba(0,0,0,0.85);
   --danger: #ff4444;
+  /* Sync legacy variables */
   --bg1: var(--bg-dark); 
   --bg2: var(--bg-swamp); 
   --bg3: var(--olive);
@@ -428,8 +400,8 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  background: radial-gradient(circle at center, #FFD03A, #FFC107);
-  color: #FFFFFF;
+  background: radial-gradient(circle at center, var(--bg-swamp), var(--bg-dark));
+  color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -438,17 +410,17 @@ html, body {
 .title{color:var(--accent);font-size:18px;text-shadow:0 0 6px rgba(0,0,0,.6)}
 .arena{position:relative;flex:1;width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:space-between;padding:12px;box-sizing:border-box}
  /* top area (computer) */
-.area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.15);border:3px solid #fff;padding:12px;border-radius:8px}
+.area{width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.45);border:3px solid #fff;padding:12px;border-radius:8px}
 .player-info{display:flex;flex-direction:column;align-items:center;min-width:160px}
 .name{color:var(--accent);font-size:12px;margin-bottom:6px}
 .hp-bar{width:160px;height:20px;background:#111;border:2px solid #fff;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hp-segments{display:flex;width:92%;gap:2px}
 .seg{flex:1;height:14px;background:#fff;border-radius:2px;opacity:1;box-sizing;border-box;position:relative}
 .seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
-.hand{display:flex;justify-content:center;align-items:flex-end;flex-wrap:nowrap;flex:1;min-height:140px;overflow:visible;position:relative}
+.hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;flex:1;min-height:140px}
 /* battlefield slots */
 .slots{display:flex;gap:10px;align-items:center;justify-content:center}
-.slot{width:90px;height:130px;border:2px dashed #FFFFFF;border-radius:8px;background:#1a2535;display:flex;align-items:center;justify-content:center;position:relative}
+.slot{width:90px;height:130px;border:2px dashed rgba(255,255,255,0.25);border-radius:8px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;position:relative}
 .slot.occupied{border-style:solid}
 .slot .card{width:86px;height:120px;border:3px solid #fff;border-radius:6px;background:#222;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:opacity 0.3s ease}
 .card img{width:100%;height:72%;object-fit:cover;display:block}
@@ -468,7 +440,7 @@ html, body {
 .btn:active{transform:scale(.98)}
 .btn.disabled{background:#666;color:#333;cursor:not-allowed}
  /* turn indicator */
-.turn-indicator{position:fixed;top:20px;right:24px;left:auto;transform:none;background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
+.turn-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:2px solid var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;z-index:60}
  /* attack animations */
 .attacking-forward{animation:attackForward 1000ms ease-in-out forwards; z-index: 1000;}
 @keyframes attackForward{
@@ -538,7 +510,7 @@ html, body {
 .die{animation:dieFade 600ms ease forwards}
 @keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
 /* log */
-.log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:5100}
+.log{position:fixed;right:14px;top:70px;width:250px;height:340px;background:rgba(0,0,0,.6);border:2px solid #fff;padding:8px;overflow:auto;font-size:11px;z-index:60}
 .log .entry{margin-bottom:6px}
 .log .player{color:var(--accent)}
 .log .computer{color:var(--danger)}
@@ -569,22 +541,20 @@ html, body {
 /* Status effect icons - positioned above slot containers */
 .status-icon {
   position: absolute;
-  top: -15px;
+  top: -15px; /* Above the slot container */
   right: 8px;
-  width: 32px !important;
-  height: 18px !important;
-  border-radius: 0 !important;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px !important;
-  font-family: 'Press Start 2P', monospace !important;
-  font-weight: normal;
+  font-size: 12px;
+  font-weight: bold;
   border: 2px solid #fff;
   z-index: 150;
   animation: statusPulse 2s ease-in-out infinite;
-  box-shadow: 2px 2px 0px #181818;
-  image-rendering: pixelated;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .status-icon.poison {
@@ -634,7 +604,7 @@ html, body {
 .card-hp-bar .hp-seg {
   flex: 1;
   height: 100%;
-  background: #FFC107;
+  background: #38EF7D;
   border-radius: 1px;
   transition: all 0.3s ease;
 }
@@ -679,7 +649,7 @@ html, body {
   border: 3px solid #ff4444;
   border-radius: 8px;
   padding: 10px;
-  z-index: 5100;
+  z-index: 55;
   max-height: 220px;
   overflow-y: auto;
   /* Desktop: connect to bottom of log */
@@ -1261,6 +1231,7 @@ html, body {
     
     <div class="turn-indicator" id="turnIndicator">Player Turn</div>
 
+    <!-- New integrated layout container -->
     <div class="game-container">
       <div class="arena" id="arena">
         <!-- COMPUTER AREA -->
@@ -1310,7 +1281,7 @@ html, body {
   </div>
 </div>
 
-       <!-- PLAYER AREA -->
+        <!-- PLAYER AREA -->
         <div class="area" id="playerArea">
           <div class="player-info">
             <div class="name">Player</div>
@@ -1741,70 +1712,112 @@ function renderHand(side) {
   const handEl = side === 'player' ? playerHandEl : computerHandEl;
   const hand = side === 'player' ? playerHand : computerReserve;
 
+  // Clear
   handEl.innerHTML = '';
   if (!hand) return;
 
-  // Reset any inline styles from previous renders
-  handEl.style.cssText = '';
-  handEl.style.display = 'flex';
-  handEl.style.justifyContent = 'center';
-  handEl.style.alignItems = 'center';
-  handEl.style.position = 'relative';
-  handEl.style.height = '120px';
-  handEl.style.overflow = 'visible';
-  handEl.style.flexWrap = 'nowrap';
-
+  if (window.innerWidth >= 600 && window.innerWidth <= 1200) {
+    hand.forEach((card, i) => {
+      const c = side === 'player'
+        ? createHandCardEl(card, i, 'player')
+        : createCardBackEl();
+      c.style.position = 'relative';
+      c.style.margin = '0 6px';
+      handEl.appendChild(c);
+    });
+    handEl.style.display = 'flex';
+    handEl.style.justifyContent = 'center';
+    handEl.style.alignItems = 'center';
+    handEl.style.position = 'relative';
+    handEl.style.height = '120px';
+    return;
+  }
+  
+  const cardWidth = 104;
+  const containerWidth = handEl.clientWidth || 400;
+  
   // ======================
   // PLAYER HAND
   // ======================
   if (side === 'player') {
     if (hand.length === 0) return;
-
-    // How much to overlap each card — more cards = more overlap
-    const overlap = hand.length > 4 ? Math.max(20, 60 - hand.length * 5) : 0;
-
+  
+    if (hand.length <= 3) {
+      hand.forEach((card, i) => {
+        const c = createHandCardEl(card, i, 'player');
+        c.style.position = 'relative';
+        c.style.margin = '0 5px';
+        handEl.appendChild(c);
+      });
+      return;
+    }
+  
+    let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+  
     hand.forEach((card, i) => {
       const c = createHandCardEl(card, i, 'player');
-      c.style.position = 'relative';
-      c.style.flexShrink = '0';
-      if (i > 0 && overlap > 0) c.style.marginLeft = `-${overlap}px`;
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
       c.style.zIndex = i;
       handEl.appendChild(c);
     });
+  
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
     return;
   }
-
+  
   // ======================
   // COMPUTER HAND
   // ======================
   if (side === 'computer') {
     const usedReserveIndices = new Set();
-
+    
+    // Add indices from active cards on the board
     computerSlots.forEach(slot => {
-      if (slot && typeof slot.reserveIndex === 'number') {
+      if(slot && typeof slot.reserveIndex === 'number') {
         usedReserveIndices.add(slot.reserveIndex);
       }
     });
-
+    
+    // Add indices from discarded computer cards
     discardPile.forEach(entry => {
-      if (entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
+      if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') {
         usedReserveIndices.add(entry.reserveIndex);
       }
     });
-
+    
     const remainingCards = computerReserve.length - usedReserveIndices.size;
+  
     if (remainingCards <= 0) return;
-
-    const overlap = remainingCards > 4 ? Math.max(20, 60 - remainingCards * 5) : 0;
-
+  
+    if (remainingCards <= 3) {
+      for (let i = 0; i < remainingCards; i++) {
+        const c = createCardBackEl();
+        c.style.position = 'relative';
+        c.style.margin = '0 3px';
+        handEl.appendChild(c);
+      }
+      return;
+    }
+  
+    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+  
     for (let i = 0; i < remainingCards; i++) {
       const c = createCardBackEl();
-      c.style.position = 'relative';
-      c.style.flexShrink = '0';
-      if (i > 0 && overlap > 0) c.style.marginLeft = `-${overlap}px`;
+      c.style.position = 'absolute';
+      c.style.left = `${i * overlap}px`;
+      c.style.top = '0';
       c.style.zIndex = i;
       handEl.appendChild(c);
     }
+  
+    handEl.style.height = '120px';
+    handEl.style.position = 'relative';
+    handEl.style.overflow = 'visible';
   }
 }
   function createCardBackEl(){
@@ -2597,20 +2610,7 @@ function performComputerActions() {
     );
 
   if (activeComputerSlots.length === 0) {
-    // Before giving up, try to place a card from reserve
-    const computerCardCount = computerSlots.filter(s => s).length;
-    const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
-    if (canPlaceCard) {
-      addLog('system', 'Computer places a new card while others are indisposed...');
-      const threatIdx = getHighestThreatPlayerSlot();
-      const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
-      let targetSlot = emptySlots.includes(threatIdx) ? threatIdx : emptySlots[0];
-      if (computerPlaceCard(targetSlot)) {
-        computerTurnHistory.push('place');
-      }
-    } else {
-      addLog('system', 'Computer has no available actions this turn.');
-    }
+    addLog('system', 'Computer has no more actions.');
     setTimeout(endComputerTurn, 800);
     return;
   }
@@ -2622,24 +2622,12 @@ function performComputerActions() {
   const cardDiff = computerSlots.filter(s => s).length - playerSlots.filter(s => s).length;
   let aggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
 
-  // CORNERED MENTALITY: when losing badly, fight back harder instead of retreating
-  const isCornered = computerHP < playerHP * 0.5 || 
-                     (computerReserve.length === 0 && computerSlots.filter(s => s).length <= 1);
-  
-  if (isCornered) {
-    aggression = Math.min(2.5, aggression + 0.8); // spike aggression
-    addLog('system', '...'); // subtle tell that AI is going all-in
-  } else if (computerHP < playerHP) {
-    aggression += 0.3; // behind but not cornered — press harder
-  }
+  // If AI is losing, increase aggression
+  if (computerHP < playerHP || cardDiff < 0) aggression += 0.3;
 
-  // Tactical retreat threshold — only retreat if it's genuinely worth it
-  // When cornered, no retreat allowed — fight from wherever you are
-  const retreatAllowed = !isCornered && hpRatio > 0.4;
-
-  // If last 2 moves were defend/switch, force attack regardless
+  // If last 2 moves were defend/switch, force attack/placement
   const lastMoves = computerTurnHistory.slice(-2);
-  const forceAttack = lastMoves.every(m => m === 'defend' || m === 'switch') || isCornered;
+  const forceAttack = lastMoves.every(m => m === 'defend' || m === 'switch');
 
   // Build possible moves
   const possibleMoves = [];
@@ -2657,8 +2645,7 @@ function performComputerActions() {
       });
     });
 
-    // Defend: only when low HP, no KO available, not cornered, and not over-defending
-    if (slot.hp < MAX_HP * 0.35 && !canKO && !isCornered && retreatAllowed && (!slot._streak || slot._streak.defend < 2)) {
+    if (slot.hp < MAX_HP * 0.35 && !canKO && (!slot._streak || slot._streak.defend < 2)) {
       possibleMoves.push({
         type: 'defend',
         score: 10 - slot.hp / 10,
@@ -2666,85 +2653,45 @@ function performComputerActions() {
       });
     }
 
-// Switch logic: analyse positions for genuine tactical advantage
+// Switch logic: proactively seek safer or more useful positions
 if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
+  // Find all empty slots
   const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
 
-  // Score each possible destination
-  emptySlots.forEach(destIdx => {
-    if (destIdx === attackerIdx) return;
+  // Score each slot for safety and offensive opportunity
+  let bestSwitchScore = -Infinity;
+  let bestSwitchSlot = null;
 
-    let moveScore = 0;
+  emptySlots.forEach(safeIdx => {
+    // Is opposite slot empty? (can attack player directly)
+    const canAttackPlayer = playerSlots[safeIdx] === null;
+    // Is opposite slot a threat? (strong player card)
+    const isThreat = playerSlots[safeIdx] && playerSlots[safeIdx].hp > 0;
 
-    // --- OFFENSIVE: does moving unlock new attack targets? ---
-    const targetsFromDest = slot.card.attacks.flatMap(a => 
-      getValidTargets(destIdx, a.pattern, 'computer')
-    );
-    const targetsFromCurrent = slot.card.attacks.flatMap(a =>
-      getValidTargets(attackerIdx, a.pattern, 'computer')
-    );
-    const newTargets = targetsFromDest.filter(t => !targetsFromCurrent.includes(t));
-    const lostTargets = targetsFromCurrent.filter(t => !targetsFromDest.includes(t));
+    // Scoring: prefer attacking player directly, penalize danger
+    let score = 0;
+    if (canAttackPlayer) score += 20;
+    if (isThreat) score -= 15;
 
-    // Bonus for each new player card we can now hit
-    newTargets.forEach(t => {
-      if (playerSlots[t]) {
-        const threat = getPlayerCardThreat(playerSlots[t]);
-        moveScore += 15 + threat * 0.5;
-      }
-    });
-    // Penalty for losing attack targets
-    moveScore -= lostTargets.length * 10;
+    // Bonus: further from strongest player card
+    const strongestPlayerIdx = getHighestThreatPlayerSlot();
+    score -= Math.abs(strongestPlayerIdx - safeIdx);
 
-    // --- CAN WE HIT A HIGH THREAT CARD FROM DEST? ---
-    const highThreatIdx = getHighestThreatPlayerSlot();
-    if (targetsFromDest.includes(highThreatIdx)) moveScore += 20;
-
-    // --- SAFETY: is current position dangerous? ---
-    const dangerAtCurrent = playerSlots.filter((ps, pi) => {
-      if (!ps) return false;
-      return ps.card.attacks.some(a => {
-        const targets = getValidTargets(pi, a.pattern, 'player');
-        return targets.includes(attackerIdx);
-      });
-    }).length;
-
-    const dangerAtDest = playerSlots.filter((ps, pi) => {
-      if (!ps) return false;
-      return ps.card.attacks.some(a => {
-        const targets = getValidTargets(pi, a.pattern, 'player');
-        return targets.includes(destIdx);
-      });
-    }).length;
-
-    // Moving OUT of danger is good — but only if retreat is allowed
-    if (dangerAtCurrent > 0 && dangerAtDest === 0 && retreatAllowed) moveScore += 25;
-    // Moving INTO more danger is bad — but when cornered, penalise less
-    if (dangerAtDest > dangerAtCurrent) {
-      moveScore -= isCornered ? 5 * (dangerAtDest - dangerAtCurrent) : 20 * (dangerAtDest - dangerAtCurrent);
-    }
-
-    // --- LOW HP: prioritise escaping danger only if retreat is allowed ---
-    if (slot.hp < MAX_HP * 0.4 && dangerAtDest === 0 && retreatAllowed) moveScore += 15;
-    // When cornered and low HP — charge anyway, penalise staying still
-    if (slot.hp < MAX_HP * 0.4 && isCornered && newTargets.length > 0) moveScore += 20;
-
-    // --- PATTERN PREFERENCE: wide/cross cards prefer central slots ---
-    if (['cross', 'wide', 'adjacent'].includes(slot.card.attacks[0]?.pattern)) {
-      const centralBonus = MAX_SLOTS / 2 - Math.abs(destIdx - (MAX_SLOTS - 1) / 2);
-      moveScore += centralBonus * 3;
-    }
-
-    // Only consider moving if it's actually worth it
-    if (moveScore > 10) {
-      possibleMoves.push({
-        type: 'switch',
-        score: moveScore,
-        attackerIdx,
-        targetIdx: destIdx
-      });
+    if (score > bestSwitchScore) {
+      bestSwitchScore = score;
+      bestSwitchSlot = safeIdx;
     }
   });
+
+  // Switch only if a beneficial slot is found and it's not the current slot
+  if (bestSwitchSlot !== null && bestSwitchSlot !== attackerIdx) {
+    possibleMoves.push({
+      type: 'switch',
+      score: 15 + bestSwitchScore,
+      attackerIdx,
+      targetIdx: bestSwitchSlot
+    });
+  }
 }
 
     // Attack logic
@@ -2787,34 +2734,15 @@ if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
     });
   });
 
-  // Smart placement: analyse battlefield and place proactively
+  // Reinforcement placement: when behind, place opposite highest threat
   const computerCardCount = computerSlots.filter(s => s).length;
   const playerCardCount = playerSlots.filter(s => s).length;
   const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
-  
-  // Score whether placing a card is a good idea right now
-  let placementScore = 0;
-  if (canPlaceCard) {
-    // Always want to match or exceed player card count
-    if (playerCardCount >= computerCardCount) placementScore += 30;
-    // Numerical advantage is worth pressing
-    if (computerCardCount < MAX_SLOTS - 1 && computerReserve.length > 1) placementScore += 15;
-    // If computer is winning on HP, place to press advantage
-    if (computerHP > playerHP * 1.2) placementScore += 20;
-    // If losing badly, need more cards urgently
-    if (computerHP < playerHP * 0.6) placementScore += 25;
-    // Empty slots are wasted opportunities
-    const emptyComputerSlots = computerSlots.filter(s => s === null).length;
-    placementScore += emptyComputerSlots * 8;
-    // Don't place if already have card advantage and winning
-    if (computerCardCount > playerCardCount && computerHP > playerHP) placementScore -= 20;
-    // Avoid placing same turn as a switch (wasteful)
-    if (computerTurnHistory.slice(-1)[0] === 'switch') placementScore -= 10;
-  }
+  let shouldPlaceCard = false;
+  if (playerCardCount > computerCardCount || computerHP < playerHP * 0.7) shouldPlaceCard = true;
 
-  const shouldPlaceCard = canPlaceCard && placementScore > 20;
-
-  if (shouldPlaceCard) {
+  if (canPlaceCard && shouldPlaceCard) {
+    // Place opposite highest threat
     const threatIdx = getHighestThreatPlayerSlot();
     const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
     let targetSlot = emptySlots.includes(threatIdx) ? threatIdx : emptySlots[0];
@@ -3255,11 +3183,12 @@ function createStatusIcon(effectType, turnsRemaining, iconIndex = 0) {
   icon.className = `status-icon ${effectType}`;
   icon.style.setProperty('--icon-index', iconIndex);
   
+  // Define symbols for each effect type
   const symbols = {
-    poison: 'PSN',
-    stun: 'STN',
-    sleep: 'ZZZ',
-    weaken: 'WKN'
+    poison: '☠',
+    stun: '⚡',
+    sleep: '💤',
+    weaken: '⬇'
   };
   
   icon.textContent = symbols[effectType] || '?';
@@ -4433,7 +4362,7 @@ addTouchHoldListeners();
   padding: 30px;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+  box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
 }
 
 .tutorial-content h2 {
@@ -4720,13 +4649,13 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   /* Only target actual damage popups and effect popups, not structure */
   .dmg-pop, .status-effect-popup {
     position: fixed !important;
-    z-index: 200 !important;
+    z-index: 5001 !important;
   }
   
   /* Keep status icons where they belong */
   .status-icon {
     /* Don't change positioning - keep them attached to their cards */
-    z-index: 200 !important; 
+    z-index: 5001 !important; 
   }
   
   /* Fix 2: Make game over text smaller on mobile */
@@ -4750,7 +4679,7 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     position: absolute !important;
     top: -18px !important; /* Move further up to avoid clipping */
     right: 8px !important;
-    z-index: 200 !important; /* Very high z-index to ensure visibility */
+    z-index: 5001 !important; /* Very high z-index to ensure visibility */
   }
   
   /* Make sure containers don't clip the icons */
