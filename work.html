@@ -609,25 +609,6 @@ body::after {
     display: none;
 }
 
-.pause-btn {
-        position: absolute;
-        right: -60px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #FFFFFF;
-        border: 4px solid #181818;
-        padding: 10px;
-        cursor: pointer;
-        font-family: 'Press Start 2P';
-        font-size: 10px;
-        display: block; 
-    }
-
-    .pause-btn:hover {
-        background: #181818;
-        color: #FFFFFF;
-    }
-
   /* --- INVENTORY / GALLERY STYLES --- */
     .gallery-section-header {
         font-family: 'Press Start 2P', monospace;
@@ -678,6 +659,28 @@ body::after {
     .gallery-item:hover {
         transform: translateY(-5px);
         box-shadow: 8px 8px 0px #181818;
+    }
+
+    /* Individual Pause/Play Button inside Grid Item */
+    .grid-pause-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #181818;
+        color: #FFFFFF;
+        border: 2px solid #FFFFFF;
+        font-family: 'Press Start 2P';
+        font-size: 8px;
+        padding: 6px;
+        cursor: pointer;
+        z-index: 10;
+        transition: 0.1s;
+    }
+
+    .grid-pause-btn:hover {
+        background: #FFFFFF;
+        color: #181818;
+        border-color: #181818;
     }
 
     .spin-stack {
@@ -2557,14 +2560,16 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const artifacts = [
+ const artifacts = [
             {
                 id: 'backpack-1',
                 name: 'The Toad Pack',
                 category: 'EQUIPMENT / STORAGE',
                 desc: 'Custom isolated PNG frames provide a crystal-clear 360-degree inspection of our flagship carrier.',
                 stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             },
             {
                 id: 'emblem-1',
@@ -2572,7 +2577,9 @@ const artifacts = [
                 category: 'ARTIFACT / KEY',
                 desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.',
                 stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             },
             {
                 id: 'item-3',
@@ -2580,7 +2587,9 @@ const artifacts = [
                 category: 'EQUIPMENT / WEARABLE',
                 desc: 'Waterproof treaded boots designed for deep mire navigation.',
                 stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             },
             {
                 id: 'item-4',
@@ -2588,7 +2597,9 @@ const artifacts = [
                 category: 'TOOL / LIGHT',
                 desc: 'Fueled by captured fireflies. Essential for night-time harvesting.',
                 stats: ['RADIUS: 10m', 'DURATION: 6HR', 'TYPE: ECO-LIGHT'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             },
             {
                 id: 'item-5',
@@ -2596,7 +2607,9 @@ const artifacts = [
                 category: 'NAVIGATION / ITEM',
                 desc: 'Hand-drawn on waterproof vellum. Shows the hidden paths of the elders.',
                 stats: ['ACCURACY: 88%', 'AGE: 200 YRS', 'MATERIAL: VELLUM'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             },
             {
                 id: 'item-6',
@@ -2604,31 +2617,25 @@ const artifacts = [
                 category: 'ARTIFACT / MUSIC',
                 desc: 'Carved from root-wood. Can calm the local wildlife if played correctly.',
                 stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
+                isPaused: false,
+                currentFrame: 0
             }
         ];
 
         let activeArtifact = null;
-        let currentFrame = 0;
         let isDragging = false;
         let startX = 0;
-        let autoSpin = true; 
 
-        function toggleAutoSpin() {
-            autoSpin = !autoSpin;
-            const btn = document.getElementById('pauseSpinBtn');
-            btn.innerText = autoSpin ? "PAUSE" : "PLAY";
-        }
-
-        function showSection(sectionId) {
+        function showSection(id) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(`section-${sectionId}`);
+            const target = document.getElementById(`section-${id}`);
             if(target) target.classList.add('active');
-
+            
             const title = document.getElementById('pageTitle');
             const banner = document.getElementById('bannerText');
 
-            if (sectionId === 'work') {
+            if (id === 'work') {
                 title.innerText = "ARTIFACT INSPECTOR";
                 banner.innerText = "ARCHIVE EXPANDED // INTERACTIVE 360 SYSTEM ONLINE";
             } else {
@@ -2638,103 +2645,81 @@ const artifacts = [
             }
         }
 
-        function handleStart(x, art) {
-            isDragging = true;
-            startX = x;
-            activeArtifact = art;
-        }
-
-        function handleMove(x) {
-            if (!isDragging || !activeArtifact) return;
-            const diff = x - startX;
-            if (Math.abs(diff) > 15) {
-                const frameCount = activeArtifact.images.length;
-                if (diff > 0) currentFrame = (currentFrame + 1) % frameCount;
-                else currentFrame = (currentFrame - 1 + frameCount) % frameCount;
-                startX = x;
-                updateVisuals();
+        function toggleItemSpin(id, event) {
+            event.stopPropagation();
+            const art = artifacts.find(a => a.id === id);
+            if(art) {
+                art.isPaused = !art.isPaused;
+                event.target.innerText = art.isPaused ? "PLAY" : "PAUSE";
             }
         }
 
-        function handleEnd() {
-            isDragging = false;
-        }
-
         function initGrid() {
-            const mainGrid = document.getElementById('mainGrid');
-            mainGrid.innerHTML = '';
-            artifacts.forEach((art) => {
-                const item = document.createElement('div');
-                item.className = 'gallery-item';
-                
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = '';
+            artifacts.forEach(art => {
+                const container = document.createElement('div');
+                container.className = 'gallery-item';
+
+                const btn = document.createElement('button');
+                btn.className = 'grid-pause-btn';
+                btn.innerText = art.isPaused ? "PLAY" : "PAUSE";
+                btn.onclick = (e) => toggleItemSpin(art.id, e);
+
+                const overlay = document.createElement('div');
+                overlay.className = 'drag-overlay';
+                overlay.onmousedown = (e) => { startX = e.pageX; isDragging = true; activeArtifact = art; };
+                overlay.onclick = () => { if(!isDragging) openInspect(art); };
+                overlay.ontouchstart = (e) => { startX = e.touches[0].pageX; isDragging = true; activeArtifact = art; };
+
                 const stack = document.createElement('div');
                 stack.className = 'spin-stack';
                 stack.id = `stack-${art.id}`;
-
-                art.images.forEach((src, imgIdx) => {
+                art.images.forEach((src, i) => {
                     const img = new Image();
                     img.src = src;
-                    img.className = `spin-frame ${imgIdx === 0 ? 'active' : ''}`;
+                    img.className = `spin-frame ${i === art.currentFrame ? 'active' : ''}`;
                     stack.appendChild(img);
                 });
 
                 const label = document.createElement('div');
                 label.className = 'item-label';
                 label.innerText = art.name;
+                label.onclick = () => openInspect(art);
 
-                item.appendChild(stack);
-                item.appendChild(label);
-                
-                // Mouse Events
-                item.onmousedown = (e) => handleStart(e.pageX, art);
-                item.onclick = (e) => { if(!isDragging) openInspect(art); };
-
-                // Touch Events
-                item.ontouchstart = (e) => {
-                    handleStart(e.touches[0].pageX, art);
-                };
-                
-                mainGrid.appendChild(item);
+                container.appendChild(btn);
+                container.appendChild(overlay);
+                container.appendChild(stack);
+                container.appendChild(label);
+                grid.appendChild(container);
             });
         }
 
-        // Global Listeners for dragging (Mouse & Touch)
-        window.addEventListener('mousemove', (e) => handleMove(e.pageX));
-        window.addEventListener('mouseup', handleEnd);
-
-        window.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                handleMove(e.touches[0].pageX);
-                if (e.cancelable) e.preventDefault(); // Prevent scroll while dragging
+        window.onmousemove = (e) => {
+            if(!isDragging || !activeArtifact) return;
+            const diff = e.pageX - startX;
+            if(Math.abs(diff) > 20) {
+                const count = activeArtifact.images.length;
+                if(diff > 0) activeArtifact.currentFrame = (activeArtifact.currentFrame + 1) % count;
+                else activeArtifact.currentFrame = (activeArtifact.currentFrame - 1 + count) % count;
+                startX = e.pageX;
+                updateFrames(activeArtifact);
             }
-        }, { passive: false });
-        
-        window.addEventListener('touchend', handleEnd);
-
-        const modalDisplay = document.getElementById('modalDisplay');
-        modalDisplay.onmousedown = (e) => {
-            if(!activeArtifact) return;
-            handleStart(e.pageX, activeArtifact);
-            e.preventDefault();
         };
 
-        modalDisplay.ontouchstart = (e) => {
-            if(!activeArtifact) return;
-            handleStart(e.touches[0].pageX, activeArtifact);
-        };
+        window.onmouseup = () => { isDragging = false; };
 
-        function updateVisuals() {
-            if (activeArtifact) {
-                const gridStack = document.getElementById(`stack-${activeArtifact.id}`);
-                if(gridStack) {
-                    const frames = gridStack.querySelectorAll('.spin-frame');
-                    frames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
-                }
-                
-                const modalStack = document.getElementById('modalStack');
-                const modalFrames = modalStack.querySelectorAll('.spin-frame');
-                if (modalFrames.length > 0) {
-                    modalFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
+        function updateFrames(art) {
+            const stack = document.getElementById(`stack-${art.id}`);
+            if(stack) {
+                const frames = stack.querySelectorAll('.spin-frame');
+                frames.forEach((f, i) => f.classList.toggle('active', i === art.currentFrame));
+            }
+            if(activeArtifact && activeArtifact.id === art.id) {
+                const mStack = document.getElementById('modalStack');
+                if(mStack) {
+                    const mFrames = mStack.querySelectorAll('.spin-frame');
+                    mFrames.forEach((f, i) => f.classList.toggle('active', i === art.currentFrame));
                 }
             }
         }
@@ -2746,43 +2731,27 @@ const artifacts = [
             document.getElementById('mDesc').innerText = art.desc;
             document.getElementById('mStats').innerHTML = art.stats.map(s => `<div style="margin-bottom:8px">${s}</div>`).join('');
             
-            const modalStack = document.getElementById('modalStack');
-            modalStack.innerHTML = '';
-            art.images.forEach((src, idx) => {
+            const mStack = document.getElementById('modalStack');
+            mStack.innerHTML = '';
+            art.images.forEach((src, i) => {
                 const img = new Image();
                 img.src = src;
-                img.className = `spin-frame ${idx === currentFrame ? 'active' : ''}`;
-                modalStack.appendChild(img);
+                img.className = `spin-frame ${i === art.currentFrame ? 'active' : ''}`;
+                mStack.appendChild(img);
             });
             document.getElementById('inspectModal').style.display = 'flex';
         }
 
-        function closeInspect() {
-            document.getElementById('inspectModal').style.display = 'none';
-        }
+        function closeInspect() { document.getElementById('inspectModal').style.display = 'none'; }
 
         setInterval(() => {
-            if (autoSpin) {
-                const time = Date.now();
-                artifacts.forEach(art => {
-                    if (isDragging && activeArtifact && activeArtifact.id === art.id) return;
-                    const count = art.images.length;
-                    const frame = Math.floor(time / 200) % count;
-                    const gridStack = document.getElementById(`stack-${art.id}`);
-                    if (gridStack) {
-                        const gridFrames = gridStack.querySelectorAll('.spin-frame');
-                        gridFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
-                    }
-                    if (activeArtifact && activeArtifact.id === art.id) {
-                        currentFrame = frame;
-                        const modalStack = document.getElementById('modalStack');
-                        if (modalStack) {
-                            const modalFrames = modalStack.querySelectorAll('.spin-frame');
-                            modalFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
-                        }
-                    }
-                });
-            }
+            artifacts.forEach(art => {
+                if(art.isPaused) return;
+                if(isDragging && activeArtifact && activeArtifact.id === art.id) return;
+                
+                art.currentFrame = Math.floor(Date.now() / 200) % art.images.length;
+                updateFrames(art);
+            });
         }, 100);
 
         initGrid();
