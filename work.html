@@ -2573,7 +2573,7 @@ const artifacts = [
         let currentFrame = 0;
         let isDragging = false;
         let startX = 0;
-        let autoSpin = true; // Enabled by default on load
+        let autoSpin = true; 
 
         function showSection(sectionId) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -2591,7 +2591,28 @@ const artifacts = [
                 banner.innerText = "WELCOME TO THE LAZY TOAD ARCHIVE";
                 activeArtifact = null;
             }
-            // autoSpin remains true globally so background items always rotate
+        }
+
+        function handleStart(x, art) {
+            isDragging = true;
+            startX = x;
+            activeArtifact = art;
+        }
+
+        function handleMove(x) {
+            if (!isDragging || !activeArtifact) return;
+            const diff = x - startX;
+            if (Math.abs(diff) > 15) {
+                const frameCount = activeArtifact.images.length;
+                if (diff > 0) currentFrame = (currentFrame + 1) % frameCount;
+                else currentFrame = (currentFrame - 1 + frameCount) % frameCount;
+                startX = x;
+                updateVisuals();
+            }
+        }
+
+        function handleEnd() {
+            isDragging = false;
         }
 
         function initGrid() {
@@ -2619,43 +2640,42 @@ const artifacts = [
                 item.appendChild(stack);
                 item.appendChild(label);
                 
-                item.onmousedown = (e) => { 
-                    isDragging = true; 
-                    startX = e.pageX; 
-                    activeArtifact = art; 
-                    // No need to set autoSpin to false globally, 
-                    // the loop will handle the "if (!isDragging)" check for individual updates
+                // Mouse Events
+                item.onmousedown = (e) => handleStart(e.pageX, art);
+                item.onclick = (e) => { if(!isDragging) openInspect(art); };
+
+                // Touch Events
+                item.ontouchstart = (e) => {
+                    handleStart(e.touches[0].pageX, art);
                 };
                 
-                item.onclick = (e) => { if(!isDragging) openInspect(art); };
                 mainGrid.appendChild(item);
             });
         }
 
-        window.onmousemove = (e) => {
-            if (!isDragging || !activeArtifact) return;
-            const diff = e.pageX - startX;
-            if (Math.abs(diff) > 15) {
-                const frameCount = activeArtifact.images.length;
-                if (diff > 0) currentFrame = (currentFrame + 1) % frameCount;
-                else currentFrame = (currentFrame - 1 + frameCount) % frameCount;
-                startX = e.pageX;
-                updateVisuals();
-            }
-        };
+        // Global Listeners for dragging (Mouse & Touch)
+        window.addEventListener('mousemove', (e) => handleMove(e.pageX));
+        window.addEventListener('mouseup', handleEnd);
 
-        window.onmouseup = () => { 
+        window.addEventListener('touchmove', (e) => {
             if (isDragging) {
-                isDragging = false; 
+                handleMove(e.touches[0].pageX);
+                if (e.cancelable) e.preventDefault(); // Prevent scroll while dragging
             }
-        };
+        }, { passive: false });
+        
+        window.addEventListener('touchend', handleEnd);
 
         const modalDisplay = document.getElementById('modalDisplay');
         modalDisplay.onmousedown = (e) => {
             if(!activeArtifact) return;
-            isDragging = true;
-            startX = e.pageX;
+            handleStart(e.pageX, activeArtifact);
             e.preventDefault();
+        };
+
+        modalDisplay.ontouchstart = (e) => {
+            if(!activeArtifact) return;
+            handleStart(e.touches[0].pageX, activeArtifact);
         };
 
         function updateVisuals() {
@@ -2696,25 +2716,18 @@ const artifacts = [
             document.getElementById('inspectModal').style.display = 'none';
         }
 
-        // Shared loop for auto-spinning
         setInterval(() => {
             if (autoSpin) {
                 const time = Date.now();
-                
                 artifacts.forEach(art => {
-                    // Skip auto-updating the specific artifact currently being dragged
                     if (isDragging && activeArtifact && activeArtifact.id === art.id) return;
-
                     const count = art.images.length;
                     const frame = Math.floor(time / 200) % count;
-                    
                     const gridStack = document.getElementById(`stack-${art.id}`);
                     if (gridStack) {
                         const gridFrames = gridStack.querySelectorAll('.spin-frame');
                         gridFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
                     }
-                    
-                    // Sync internal state for manual takeover
                     if (activeArtifact && activeArtifact.id === art.id) {
                         currentFrame = frame;
                         const modalStack = document.getElementById('modalStack');
@@ -2727,7 +2740,6 @@ const artifacts = [
             }
         }, 100);
 
-        // Run initialization immediately
         initGrid();
     </script>
     <!-- 🐸 Toad Wallet (bottom right) -->
