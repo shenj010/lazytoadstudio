@@ -61,7 +61,7 @@
     }
 
     .main-links a {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         color: var(--dark);
         text-decoration: none;
         display: flex;
@@ -69,14 +69,29 @@
         justify-content: center;
         border: 3px solid var(--dark); 
         background-color: var(--white);
-        width: 175px; 
+        width: 180px; 
         height: 48px;
         transition: 0.2s;
+        gap: 10px;
     }
 
     .main-links a:hover {
         background-color: var(--dark);
-        color: var(--mustard);
+        color: var(--white);
+    }
+
+    .main-links .icon {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-image: url("./images/toad icon static.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        image-rendering: pixelated;
+    }
+
+    .main-links a:hover .icon {
+        filter: brightness(0) invert(1);
     }
 
     .billboard-title {
@@ -89,16 +104,15 @@
         margin-bottom: 40px;
     }
 
-    /* --- GALLERY GRID --- */
     .gallery-container {
-        max-width: 1200px;
+        max-width: 1300px;
         margin: 0 auto 100px auto;
         padding: 0 40px;
     }
 
     .gallery-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 30px;
     }
 
@@ -118,15 +132,19 @@
 
     .gallery-item:active { cursor: grabbing; }
 
-    /* Container for the PNG stack */
+    .gallery-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 8px 8px 0px var(--dark);
+    }
+
     .spin-stack {
-        width: 85%;
-        height: 85%;
+        width: 80%;
+        height: 80%;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        pointer-events: none; /* Let the container handle dragging */
+        pointer-events: none;
     }
 
     .spin-frame {
@@ -135,7 +153,6 @@
         height: 100%;
         object-fit: contain;
         display: none;
-        image-rendering: auto;
     }
 
     .spin-frame.active {
@@ -144,9 +161,7 @@
 
     .item-label {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
+        bottom: 0; left: 0; width: 100%;
         background: var(--dark);
         color: var(--white);
         font-size: 10px;
@@ -178,14 +193,14 @@
 
     .close-btn {
         position: absolute;
-        top: -20px;
-        right: -20px;
+        top: -20px; right: -20px;
         background: var(--dark);
         border: 4px solid var(--white);
         color: var(--white);
         padding: 10px 14px;
         cursor: pointer;
         font-family: 'Press Start 2P';
+        z-index: 10;
     }
 
     .modal-display {
@@ -204,24 +219,44 @@
         color: var(--dark);
     }
 
+    .stats-container {
+        margin-top: 20px;
+        font-size: 10px;
+        border: 3px solid var(--dark);
+        padding: 15px;
+        background: #f9f9f9;
+    }
+
+    /* Wallet Persistence Placeholder */
+    .toad-wallet {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
+        cursor: pointer;
+        z-index: 1000;
+    }
+    .toad-wallet img { width: 100%; height: auto; }
+
     @media (max-width: 850px) {
         .modal-content { flex-direction: column; }
-        .modal-display { border-right: none; border-bottom: 8px solid var(--dark); }
+        .modal-display { border-right: none; border-bottom: 8px solid var(--dark); min-height: 350px; }
     }
     </style>
 </head>
 <body>
 
     <div class="news-banner">
-        <span>DRAG TO ROTATE // ISOLATED PNG 360 VIEWER</span>
+        <span>ARCHIVE EXPANDED // INTERACTIVE 360 SYSTEM ONLINE</span>
     </div>
 
     <header>
         <div class="nav-container">
             <nav class="main-links">
-                <a href="index.html">HOME</a>
-                <a href="work_inventory.html">WORK</a>
-                <a href="#">SHOP</a>
+                <a href="index.html"><span class="icon"></span>HOME</a>
+                <a href="work_inventory.html"><span class="icon"></span>WORK</a>
+                <a href="#"><span class="icon"></span>SHOP</a>
             </nav>
         </div>
         <div class="billboard-title">
@@ -230,136 +265,175 @@
     </header>
 
     <main class="gallery-container">
-        <div class="gallery-grid">
-            <!-- Backpack 360 Viewer -->
-            <div class="gallery-item" id="viewer360">
-                <div class="spin-stack" id="gridStack"></div>
-                <div class="item-label">DRAG TO SPIN BACKPACK</div>
-            </div>
+        <div class="gallery-grid" id="mainGrid">
+            <!-- Items generated via JS -->
         </div>
     </main>
 
-    <!-- Detailed Modal -->
     <div id="inspectModal" class="modal">
         <div class="modal-content">
             <div class="close-btn" onclick="closeInspect()">X</div>
-            <div class="modal-display">
+            <div class="modal-display" id="modalDisplay">
                 <div class="spin-stack" id="modalStack"></div>
             </div>
             <div class="modal-data">
-                <div style="font-size: 9px; color: #666; margin-bottom: 8px;">EQUIPMENT / STORAGE</div>
-                <h2 style="text-transform: uppercase;">The Toad Pack</h2>
-                <p class="item-desc" style="font-family: 'DotGothic16'; font-size: 22px; margin-top: 20px;">
-                    Optimized storage for the modern nomad. Custom isolated PNG frames provide a crystal-clear 360-degree inspection.
-                </p>
-                <div style="margin-top: 20px; font-size: 10px; border: 3px solid var(--dark); padding: 15px; background: #f9f9f9;">
-                    <div>CAPACITY: 24L</div>
-                    <div style="margin-top: 10px;">WEIGHT: 1.2KG</div>
-                    <div style="margin-top: 10px;">MATERIAL: NYLON / SWAMP-PROOF</div>
-                </div>
+                <div id="mCat" style="font-size: 9px; color: #666; margin-bottom: 8px;">CATEGORY</div>
+                <h2 id="mName" style="text-transform: uppercase; margin: 0;">ITEM NAME</h2>
+                <p class="item-desc" id="mDesc" style="font-family: 'DotGothic16'; font-size: 22px; margin-top: 20px;"></p>
+                <div class="stats-container" id="mStats"></div>
             </div>
         </div>
     </div>
 
+    <!-- UI Consistency: Wallet stays visible -->
+    <div class="toad-wallet">
+        <img src="images/toad-wallet.png" alt="Wallet">
+    </div>
+
     <script>
-        // Updated to your 6 isolated PNG files
-        const backpackImages = [
-            "images/backpack 1.png",
-            "images/backpack 2.png",
-            "images/backpack 3.png",
-            "images/backpack 4.png",
-            "images/backpack 5.png",
-            "images/backpack 6.png"
+        // Data for all artifacts
+        const artifacts = [
+            {
+                id: 'backpack',
+                name: 'The Toad Pack',
+                category: 'EQUIPMENT / STORAGE',
+                desc: 'Custom isolated PNG frames provide a crystal-clear 360-degree inspection of our flagship carrier.',
+                stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'],
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
+            },
+            {
+                id: 'emblem',
+                name: 'Toad Emblem',
+                category: 'ARTIFACT / KEY',
+                desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.',
+                stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'],
+                images: ["backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png"]
+            },
+            {
+                id: 'core',
+                name: 'Mystery Core',
+                category: 'ENERGY / POWER',
+                desc: 'The internal mechanics of this device are unknown. It appears to be self-sustaining.',
+                stats: ['HEAT: STABLE', 'VOLTAGE: 400V', 'ORIGIN: UNKNOWN'],
+                images: ["backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png"]
+            },
+            {
+                id: 'void',
+                name: 'Void Key',
+                category: 'ACCESS / VOID',
+                desc: 'Used to unlock the backrooms of Lazy Toad Studios. Handle with caution.',
+                stats: ['SECURITY: S-TIER', 'USE: SINGLE', 'VOID LEVEL: 9'],
+                images: ["backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png"]
+            }
         ];
 
+        let activeArtifact = null;
         let currentFrame = 0;
         let isDragging = false;
         let startX = 0;
         let autoSpin = true;
 
-        const gridStack = document.getElementById('gridStack');
+        const mainGrid = document.getElementById('mainGrid');
         const modalStack = document.getElementById('modalStack');
 
-        // Create the frame stack
-        backpackImages.forEach((src, idx) => {
-            const gImg = new Image();
-            gImg.src = src;
-            gImg.className = `spin-frame frame-${idx} ${idx === 0 ? 'active' : ''}`;
-            gridStack.appendChild(gImg);
+        function initGrid() {
+            artifacts.forEach((art) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.id = `art-${art.id}`;
+                
+                const stack = document.createElement('div');
+                stack.className = 'spin-stack';
+                stack.id = `stack-${art.id}`;
 
-            const mImg = new Image();
-            mImg.src = src;
-            mImg.className = `spin-frame frame-${idx} ${idx === 0 ? 'active' : ''}`;
-            modalStack.appendChild(mImg);
-        });
+                art.images.forEach((src, imgIdx) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.className = `spin-frame frame-${art.id}-${imgIdx} ${imgIdx === 0 ? 'active' : ''}`;
+                    stack.appendChild(img);
+                });
 
-        function updateFrames() {
-            // Update all stacks (grid and modal)
-            document.querySelectorAll('.spin-frame').forEach(img => img.classList.remove('active'));
-            document.querySelectorAll(`.frame-${currentFrame}`).forEach(img => img.classList.add('active'));
+                const label = document.createElement('div');
+                label.className = 'item-label';
+                label.innerText = art.name;
+
+                item.appendChild(stack);
+                item.appendChild(label);
+                
+                item.onmousedown = (e) => handleStart(e.pageX, art);
+                item.ontouchstart = (e) => handleStart(e.touches[0].pageX, art);
+                item.onclick = (e) => { if(!isDragging) openInspect(art); };
+
+                mainGrid.appendChild(item);
+            });
         }
 
-        // --- Interaction Logic ---
-        const viewer = document.getElementById('viewer360');
-
-        function handleStart(x) {
+        function handleStart(x, art) {
             isDragging = true;
             startX = x;
             autoSpin = false;
+            activeArtifact = art;
         }
+
+        window.onmousemove = (e) => handleMove(e.pageX);
+        window.ontouchmove = (e) => handleMove(e.touches[0].pageX);
+        window.onmouseup = window.ontouchend = () => { isDragging = false; };
 
         function handleMove(x) {
-            if (!isDragging) return;
+            if (!isDragging || !activeArtifact) return;
             const diff = x - startX;
-            // Sensitivity: change frame every 30px of drag
             if (Math.abs(diff) > 30) {
-                if (diff > 0) {
-                    currentFrame = (currentFrame + 1) % backpackImages.length;
-                } else {
-                    currentFrame = (currentFrame - 1 + backpackImages.length) % backpackImages.length;
-                }
+                if (diff > 0) currentFrame = (currentFrame + 1) % activeArtifact.images.length;
+                else currentFrame = (currentFrame - 1 + activeArtifact.images.length) % activeArtifact.images.length;
                 startX = x;
-                updateFrames();
+                updateAllStacks();
             }
         }
 
-        // Mouse Events
-        viewer.onmousedown = (e) => handleStart(e.pageX);
-        window.onmousemove = (e) => handleMove(e.pageX);
-        window.onmouseup = () => isDragging = false;
-
-        // Touch Events
-        viewer.ontouchstart = (e) => handleStart(e.touches[0].pageX);
-        window.ontouchmove = (e) => {
-            e.preventDefault(); // Stop scrolling while spinning
-            handleMove(e.touches[0].pageX);
-        };
-        window.ontouchend = () => isDragging = false;
-
-        // Auto Spin
-        setInterval(() => {
-            if (autoSpin && !isDragging) {
-                currentFrame = (currentFrame + 1) % backpackImages.length;
-                updateFrames();
+        function updateAllStacks() {
+            if (activeArtifact) {
+                const gridFrames = document.querySelectorAll(`#stack-${activeArtifact.id} .spin-frame`);
+                gridFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
             }
-        }, 300);
+            const modalFrames = document.querySelectorAll(`#modalStack .spin-frame`);
+            modalFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
+        }
 
-        // Modal Controls
-        viewer.onclick = () => {
-            if (!isDragging) {
-                document.getElementById('inspectModal').style.display = 'flex';
-                autoSpin = false;
-            }
-        };
+        function openInspect(art) {
+            activeArtifact = art;
+            autoSpin = false;
+            document.getElementById('mName').innerText = art.name;
+            document.getElementById('mCat').innerText = art.category;
+            document.getElementById('mDesc').innerText = art.desc;
+            document.getElementById('mStats').innerHTML = art.stats.map(s => `<div style="margin-bottom:8px">${s}</div>`).join('');
+            modalStack.innerHTML = '';
+            art.images.forEach((src, idx) => {
+                const img = new Image();
+                img.src = src;
+                img.className = `spin-frame frame-modal-${idx} ${idx === currentFrame ? 'active' : ''}`;
+                modalStack.appendChild(img);
+            });
+            document.getElementById('inspectModal').style.display = 'flex';
+        }
 
         function closeInspect() {
             document.getElementById('inspectModal').style.display = 'none';
             autoSpin = true;
         }
 
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal')) closeInspect();
-        };
+        setInterval(() => {
+            if (autoSpin && !isDragging) {
+                artifacts.forEach(art => {
+                    const count = art.images.length;
+                    const frame = (Math.floor(Date.now() / 300)) % count;
+                    const frames = document.querySelectorAll(`#stack-${art.id} .spin-frame`);
+                    frames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                });
+            }
+        }, 100);
+
+        initGrid();
+        window.onclick = (e) => { if (e.target.classList.contains('modal')) closeInspect(); };
     </script>
 </body>
 </html>
