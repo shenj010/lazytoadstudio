@@ -2518,8 +2518,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Data for all artifacts
-        const artifacts = [
+const artifacts = [
             {
                 id: 'backpack',
                 name: 'The Toad Pack',
@@ -2534,23 +2533,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 category: 'ARTIFACT / KEY',
                 desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.',
                 stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'],
-                images: ["backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png", "backpack 1.png"]
-            },
-            {
-                id: 'core',
-                name: 'Mystery Core',
-                category: 'ENERGY / POWER',
-                desc: 'The internal mechanics of this device are unknown. It appears to be self-sustaining.',
-                stats: ['HEAT: STABLE', 'VOLTAGE: 400V', 'ORIGIN: UNKNOWN'],
-                images: ["backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png", "backpack 2.png"]
-            },
-            {
-                id: 'void',
-                name: 'Void Key',
-                category: 'ACCESS / VOID',
-                desc: 'Used to unlock the backrooms of Lazy Toad Studios. Handle with caution.',
-                stats: ['SECURITY: S-TIER', 'USE: SINGLE', 'VOID LEVEL: 9'],
-                images: ["backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png", "backpack 3.png"]
+                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
             }
         ];
 
@@ -2558,16 +2541,13 @@ window.addEventListener('DOMContentLoaded', () => {
         let currentFrame = 0;
         let isDragging = false;
         let startX = 0;
-        let autoSpin = true;
-
-        const mainGrid = document.getElementById('mainGrid');
-        const modalStack = document.getElementById('modalStack');
+        let autoSpin = false;
 
         function initGrid() {
+            const mainGrid = document.getElementById('mainGrid');
             artifacts.forEach((art) => {
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
-                item.id = `art-${art.id}`;
                 
                 const stack = document.createElement('div');
                 stack.className = 'spin-stack';
@@ -2576,7 +2556,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 art.images.forEach((src, imgIdx) => {
                     const img = new Image();
                     img.src = src;
-                    img.className = `spin-frame frame-${art.id}-${imgIdx} ${imgIdx === 0 ? 'active' : ''}`;
+                    img.className = `spin-frame ${imgIdx === 0 ? 'active' : ''}`;
                     stack.appendChild(img);
                 });
 
@@ -2587,42 +2567,55 @@ window.addEventListener('DOMContentLoaded', () => {
                 item.appendChild(stack);
                 item.appendChild(label);
                 
-                item.onmousedown = (e) => handleStart(e.pageX, art);
-                item.ontouchstart = (e) => handleStart(e.touches[0].pageX, art);
-                item.onclick = (e) => { if(!isDragging) openInspect(art); };
-
+                item.onmousedown = (e) => { 
+                    isDragging = true; 
+                    startX = e.pageX; 
+                    activeArtifact = art; 
+                    autoSpin = false; 
+                };
+                
+                item.onclick = () => { if(!isDragging) openInspect(art); };
                 mainGrid.appendChild(item);
             });
         }
 
-        function handleStart(x, art) {
-            isDragging = true;
-            startX = x;
-            autoSpin = false;
-            activeArtifact = art;
-        }
-
-        window.onmousemove = (e) => handleMove(e.pageX);
-        window.ontouchmove = (e) => handleMove(e.touches[0].pageX);
-        window.onmouseup = window.ontouchend = () => { isDragging = false; };
-
-        function handleMove(x) {
+        // Handle the spin based on mouse distance
+        window.onmousemove = (e) => {
             if (!isDragging || !activeArtifact) return;
-            const diff = x - startX;
-            if (Math.abs(diff) > 30) {
-                if (diff > 0) currentFrame = (currentFrame + 1) % activeArtifact.images.length;
-                else currentFrame = (currentFrame - 1 + activeArtifact.images.length) % activeArtifact.images.length;
-                startX = x;
-                updateAllStacks();
+            const diff = e.pageX - startX;
+            if (Math.abs(diff) > 20) {
+                const frameCount = activeArtifact.images.length;
+                if (diff > 0) currentFrame = (currentFrame + 1) % frameCount;
+                else currentFrame = (currentFrame - 1 + frameCount) % frameCount;
+                startX = e.pageX;
+                updateVisuals();
             }
-        }
+        };
 
-        function updateAllStacks() {
-            if (activeArtifact) {
-                const gridFrames = document.querySelectorAll(`#stack-${activeArtifact.id} .spin-frame`);
-                gridFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
+        window.onmouseup = () => { 
+            isDragging = false; 
+            if (document.getElementById('section-work').classList.contains('active')) autoSpin = true;
+        };
+
+        // Modal drag listener
+        const modalDisplay = document.getElementById('modalDisplay');
+        modalDisplay.onmousedown = (e) => {
+            if(!activeArtifact) return;
+            isDragging = true;
+            startX = e.pageX;
+            autoSpin = false;
+            e.preventDefault();
+        };
+
+        function updateVisuals() {
+            // Update Grid
+            const gridStack = document.querySelector(`#stack-${activeArtifact.id}`);
+            if(gridStack) {
+                const frames = gridStack.querySelectorAll('.spin-frame');
+                frames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
             }
-            const modalFrames = document.querySelectorAll(`#modalStack .spin-frame`);
+            // Update Modal
+            const modalFrames = document.querySelectorAll('#modalStack .spin-frame');
             modalFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
         }
 
@@ -2633,11 +2626,13 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('mCat').innerText = art.category;
             document.getElementById('mDesc').innerText = art.desc;
             document.getElementById('mStats').innerHTML = art.stats.map(s => `<div style="margin-bottom:8px">${s}</div>`).join('');
+            
+            const modalStack = document.getElementById('modalStack');
             modalStack.innerHTML = '';
             art.images.forEach((src, idx) => {
                 const img = new Image();
                 img.src = src;
-                img.className = `spin-frame frame-modal-${idx} ${idx === currentFrame ? 'active' : ''}`;
+                img.className = `spin-frame ${idx === currentFrame ? 'active' : ''}`;
                 modalStack.appendChild(img);
             });
             document.getElementById('inspectModal').style.display = 'flex';
@@ -2645,22 +2640,29 @@ window.addEventListener('DOMContentLoaded', () => {
 
         function closeInspect() {
             document.getElementById('inspectModal').style.display = 'none';
-            autoSpin = true;
+            if (document.getElementById('section-work').classList.contains('active')) autoSpin = true;
         }
 
+        // Shared loop for auto-spinning everything
         setInterval(() => {
             if (autoSpin && !isDragging) {
                 artifacts.forEach(art => {
                     const count = art.images.length;
-                    const frame = (Math.floor(Date.now() / 300)) % count;
-                    const frames = document.querySelectorAll(`#stack-${art.id} .spin-frame`);
-                    frames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                    const frame = (Math.floor(Date.now() / 250)) % count;
+                    
+                    const gridFrames = document.querySelectorAll(`#stack-${art.id} .spin-frame`);
+                    gridFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                    
+                    if (activeArtifact && activeArtifact.id === art.id) {
+                        currentFrame = frame;
+                        const modalFrames = document.querySelectorAll('#modalStack .spin-frame');
+                        modalFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                    }
                 });
             }
         }, 100);
 
         initGrid();
-        window.onclick = (e) => { if (e.target.classList.contains('modal')) closeInspect(); };
     </script>
     <!-- 🐸 Toad Wallet (bottom right) -->
 <div id="toadWallet" class="toad-wallet">
