@@ -128,8 +128,11 @@ body::after {
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
 }
 @media (max-width: 1200px) {
-  .computer-portrait { display: none; }
-}
+.computer-portrait {
+    width: 60px;  /* smaller on mobile */
+    height: 60px;
+    margin-bottom: 4px;
+  }
 
 /* Larger battlefield areas */
 .area{
@@ -3848,12 +3851,17 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
   });
 // Random computer portrait
 const computerPortraits = [
-  'images/mage profile.png',
-  'images/samurai profile.png',
-  'images/stranger profile.png',
+  { src: 'images/mage profile.png',     name: 'Mage Toad'    },
+  { src: 'images/samurai profile.png',  name: 'Samurai Toad' },
+  { src: 'images/stranger profile.png', name: 'The Stranger' },
 ];
+const chosen = computerPortraits[Math.floor(Math.random() * computerPortraits.length)];
 const portraitEl = document.getElementById('computerPortrait');
-if (portraitEl) portraitEl.src = computerPortraits[Math.floor(Math.random() * computerPortraits.length)];
+if (portraitEl) portraitEl.src = chosen.src;
+
+// Update the Computer name label
+const computerNameEl = document.querySelector('#computerArea .name');
+if (computerNameEl) computerNameEl.textContent = chosen.name;
 
 // Discard pile management
 const discardPile = [];
