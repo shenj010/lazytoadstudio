@@ -2627,16 +2627,13 @@ const artifacts = [
 
             const title = document.getElementById('pageTitle');
             const banner = document.getElementById('bannerText');
-            const pauseBtn = document.getElementById('pauseSpinBtn');
 
             if (sectionId === 'work') {
                 title.innerText = "ARTIFACT INSPECTOR";
                 banner.innerText = "ARCHIVE EXPANDED // INTERACTIVE 360 SYSTEM ONLINE";
-                pauseBtn.style.display = 'block';
             } else {
                 title.innerText = "LAZY TOAD STUDIOS";
                 banner.innerText = "WELCOME TO THE LAZY TOAD ARCHIVE";
-                pauseBtn.style.display = 'none';
                 activeArtifact = null;
             }
         }
