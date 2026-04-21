@@ -308,6 +308,30 @@ body::after {
   flex-direction: column;
 }
 
+/* Custom scrollbar for action log */
+.log::-webkit-scrollbar {
+  width: 8px;
+}
+.log::-webkit-scrollbar-track {
+  background: #181818;
+  border-left: 2px solid #FFFFFF;
+}
+.log::-webkit-scrollbar-thumb {
+  background: #FFC107;
+  border: 2px solid #181818;
+}
+.log::-webkit-scrollbar-thumb:hover {
+  background: #FFD03A;
+}
+
+.log .player{
+  color: var(--accent);
+}
+
+.log .computer{
+  color: var(--danger);
+}
+
 .log .entry{
   margin-bottom: 8px;
   line-height: 1.4;
