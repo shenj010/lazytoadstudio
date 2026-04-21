@@ -609,6 +609,25 @@ body::after {
     display: none;
 }
 
+.pause-btn {
+        position: absolute;
+        right: -60px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #FFFFFF;
+        border: 4px solid #181818;
+        padding: 10px;
+        cursor: pointer;
+        font-family: 'Press Start 2P';
+        font-size: 10px;
+        display: none; 
+    }
+
+    .pause-btn:hover {
+        background: #181818;
+        color: #FFFFFF;
+    }
+
   /* --- INVENTORY / GALLERY STYLES --- */
     .gallery-section-header {
         font-family: 'Press Start 2P', monospace;
@@ -2595,6 +2614,12 @@ const artifacts = [
         let startX = 0;
         let autoSpin = true; 
 
+        function toggleAutoSpin() {
+            autoSpin = !autoSpin;
+            const btn = document.getElementById('pauseSpinBtn');
+            btn.innerText = autoSpin ? "PAUSE" : "PLAY";
+        }
+
         function showSection(sectionId) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(`section-${sectionId}`);
@@ -2602,13 +2627,16 @@ const artifacts = [
 
             const title = document.getElementById('pageTitle');
             const banner = document.getElementById('bannerText');
+            const pauseBtn = document.getElementById('pauseSpinBtn');
 
             if (sectionId === 'work') {
                 title.innerText = "ARTIFACT INSPECTOR";
                 banner.innerText = "ARCHIVE EXPANDED // INTERACTIVE 360 SYSTEM ONLINE";
+                pauseBtn.style.display = 'block';
             } else {
                 title.innerText = "LAZY TOAD STUDIOS";
                 banner.innerText = "WELCOME TO THE LAZY TOAD ARCHIVE";
+                pauseBtn.style.display = 'none';
                 activeArtifact = null;
             }
         }
