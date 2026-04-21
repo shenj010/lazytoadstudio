@@ -25,9 +25,7 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  background: 
-    radial-gradient(circle at center, rgba(255,208,58,0.82), rgba(255,193,7,0.88)),
-    url('images/game_mat.png') center top / cover fixed no-repeat;
+  background: radial-gradient(circle at center, #FFD03A, #FFC107);
   color: #FFFFFF;
   overflow-x: hidden;
   overflow-y: auto;
@@ -94,24 +92,8 @@ body::after {
   text-shadow: none;
 }
 
-/* ---- COMPUTER PORTRAIT ---- */
-.computer-portrait {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
-  object-position: bottom;
-  margin-bottom: 6px;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
-  image-rendering: auto;
-}
-
-/* Hide portrait on mobile — not enough room */
-@media (max-width: 1200px) {
-  .computer-portrait {
-    display: none;
-  }
-}
-/* ---- END ADDITIONS ---- */
+/* Main game container with integrated log */
+.game-container {
   display: flex;
   width: 100%;
   height: calc(100vh - 120px); /* Account for header and controls */
@@ -129,9 +111,24 @@ body::after {
   justify-content:space-between;
   padding:20px 24px;
   box-sizing:border-box;
-  background: rgba(255,255,255,0.15);
+  background: 
+    linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.12)),
+    url('images/game_mat.png') center center / cover no-repeat;
   border-radius: 12px;
   border: 3px solid #FFFFFF;
+}
+
+/* Computer portrait */
+.computer-portrait {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  object-position: bottom;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+@media (max-width: 1200px) {
+  .computer-portrait { display: none; }
 }
 
 /* Larger battlefield areas */
@@ -419,9 +416,7 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: 'Press Start 2P', 'DotGothic16', monospace;
-  background: 
-    radial-gradient(circle at center, rgba(255,208,58,0.82), rgba(255,193,7,0.88)),
-    url('images/game mat.png') center top / cover fixed no-repeat;
+  background: radial-gradient(circle at center, #FFD03A, #FFC107);
   color: #FFFFFF;
   overflow-x: hidden;
   overflow-y: auto;
@@ -3851,16 +3846,14 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       clearSelections();
     }
   });
-// ---- COMPUTER PORTRAIT ----
+// Random computer portrait
 const computerPortraits = [
-  'images/mage profile.png',
-  'images/samurai profile.png',
-  'images/stranger profile.png',
+  'images/mage_profile.png',
+  'images/samurai_profile.png',
+  'images/stranger_profile.png',
 ];
-const randomPortrait = computerPortraits[Math.floor(Math.random() * computerPortraits.length)];
 const portraitEl = document.getElementById('computerPortrait');
-if (portraitEl) portraitEl.src = randomPortrait;
-// ---- END PORTRAIT ----
+if (portraitEl) portraitEl.src = computerPortraits[Math.floor(Math.random() * computerPortraits.length)];
 
 // Discard pile management
 const discardPile = [];
