@@ -2518,7 +2518,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const artifacts = [
+ const artifacts = [
             {
                 id: 'backpack-1',
                 name: 'The Toad Pack',
@@ -2533,7 +2533,7 @@ const artifacts = [
                 category: 'ARTIFACT / KEY',
                 desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.',
                 stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'],
-                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
             },
             {
                 id: 'item-3',
@@ -2541,7 +2541,7 @@ const artifacts = [
                 category: 'EQUIPMENT / WEARABLE',
                 desc: 'Waterproof treaded boots designed for deep mire navigation.',
                 stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'],
-                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
             },
             {
                 id: 'item-4',
@@ -2549,7 +2549,7 @@ const artifacts = [
                 category: 'TOOL / LIGHT',
                 desc: 'Fueled by captured fireflies. Essential for night-time harvesting.',
                 stats: ['RADIUS: 10m', 'DURATION: 6HR', 'TYPE: ECO-LIGHT'],
-                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
             },
             {
                 id: 'item-5',
@@ -2557,7 +2557,7 @@ const artifacts = [
                 category: 'NAVIGATION / ITEM',
                 desc: 'Hand-drawn on waterproof vellum. Shows the hidden paths of the elders.',
                 stats: ['ACCURACY: 88%', 'AGE: 200 YRS', 'MATERIAL: VELLUM'],
-                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
             },
             {
                 id: 'item-6',
@@ -2565,7 +2565,7 @@ const artifacts = [
                 category: 'ARTIFACT / MUSIC',
                 desc: 'Carved from root-wood. Can calm the local wildlife if played correctly.',
                 stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'],
-                images: ["images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png", "images/backpack 1.png"]
+                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"]
             }
         ];
 
@@ -2591,13 +2591,13 @@ const artifacts = [
                 title.innerText = "LAZY TOAD STUDIOS";
                 banner.innerText = "WELCOME TO THE LAZY TOAD ARCHIVE";
                 autoSpin = false;
-                activeArtifact = null; // Reset when leaving
+                activeArtifact = null;
             }
         }
 
         function initGrid() {
             const mainGrid = document.getElementById('mainGrid');
-            mainGrid.innerHTML = ''; // Clear first
+            mainGrid.innerHTML = '';
             artifacts.forEach((art) => {
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
@@ -2627,16 +2627,15 @@ const artifacts = [
                     autoSpin = false; 
                 };
                 
-                item.onclick = () => { if(!isDragging) openInspect(art); };
+                item.onclick = (e) => { if(!isDragging) openInspect(art); };
                 mainGrid.appendChild(item);
             });
         }
 
-        // Global mouse move for 360 spin
         window.onmousemove = (e) => {
             if (!isDragging || !activeArtifact) return;
             const diff = e.pageX - startX;
-            if (Math.abs(diff) > 15) { // Sensitivity
+            if (Math.abs(diff) > 15) {
                 const frameCount = activeArtifact.images.length;
                 if (diff > 0) currentFrame = (currentFrame + 1) % frameCount;
                 else currentFrame = (currentFrame - 1 + frameCount) % frameCount;
@@ -2646,13 +2645,14 @@ const artifacts = [
         };
 
         window.onmouseup = () => { 
-            isDragging = false; 
-            if (document.getElementById('section-work').classList.contains('active')) {
-                autoSpin = true;
+            if (isDragging) {
+                isDragging = false; 
+                if (document.getElementById('section-work').classList.contains('active')) {
+                    autoSpin = true;
+                }
             }
         };
 
-        // Modal specific drag
         const modalDisplay = document.getElementById('modalDisplay');
         modalDisplay.onmousedown = (e) => {
             if(!activeArtifact) return;
@@ -2663,16 +2663,15 @@ const artifacts = [
         };
 
         function updateVisuals() {
-            // Update the grid item currently being interacted with or the active artifact
             if (activeArtifact) {
-                const gridStack = document.querySelector(`#stack-${activeArtifact.id}`);
+                const gridStack = document.getElementById(`stack-${activeArtifact.id}`);
                 if(gridStack) {
                     const frames = gridStack.querySelectorAll('.spin-frame');
                     frames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
                 }
                 
-                // Always update modal if visible
-                const modalFrames = document.querySelectorAll('#modalStack .spin-frame');
+                const modalStack = document.getElementById('modalStack');
+                const modalFrames = modalStack.querySelectorAll('.spin-frame');
                 if (modalFrames.length > 0) {
                     modalFrames.forEach((f, i) => f.classList.toggle('active', i === currentFrame));
                 }
@@ -2703,32 +2702,36 @@ const artifacts = [
             if (document.getElementById('section-work').classList.contains('active')) autoSpin = true;
         }
 
-        // Shared loop for auto-spinning 
+        // Shared loop for auto-spinning
         setInterval(() => {
             if (autoSpin && !isDragging) {
                 const time = Date.now();
                 
                 artifacts.forEach(art => {
                     const count = art.images.length;
-                    // Calculate frame based on time
                     const frame = Math.floor(time / 200) % count;
                     
-                    // Update Grid frames
-                    const gridFrames = document.querySelectorAll(`#stack-${art.id} .spin-frame`);
-                    gridFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                    // TARGET EVERY STACK BY ID
+                    const gridStack = document.getElementById(`stack-${art.id}`);
+                    if (gridStack) {
+                        const gridFrames = gridStack.querySelectorAll('.spin-frame');
+                        gridFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                    }
                     
-                    // Sync active/modal frame
+                    // SYNC ACTIVE ITEM
                     if (activeArtifact && activeArtifact.id === art.id) {
                         currentFrame = frame;
-                        const modalFrames = document.querySelectorAll('#modalStack .spin-frame');
-                        modalFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                        const modalStack = document.getElementById('modalStack');
+                        if (modalStack) {
+                            const modalFrames = modalStack.querySelectorAll('.spin-frame');
+                            modalFrames.forEach((f, i) => f.classList.toggle('active', i === frame));
+                        }
                     }
                 });
             }
-        }, 50);
+        }, 100);
 
         initGrid();
-        // Check initial state
         if (document.getElementById('section-work').classList.contains('active')) autoSpin = true;
     </script>
     <!-- 🐸 Toad Wallet (bottom right) -->
