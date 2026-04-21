@@ -609,7 +609,8 @@ body::after {
     display: none;
 }
 
-   .gallery-container {
+  /* --- INVENTORY / GALLERY STYLES --- */
+    .gallery-container {
         max-width: 1300px;
         margin: 0 auto 100px auto;
         padding: 0 40px;
@@ -622,8 +623,8 @@ body::after {
     }
 
     .gallery-item {
-        background: var(--white);
-        border: 4px solid var(--dark);
+        background: #FFFFFF; /* Hardcoded white */
+        border: 4px solid #181818; /* Hardcoded dark */
         aspect-ratio: 1/1;
         display: flex;
         flex-direction: column;
@@ -639,7 +640,7 @@ body::after {
 
     .gallery-item:hover {
         transform: translateY(-5px);
-        box-shadow: 8px 8px 0px var(--dark);
+        box-shadow: 8px 8px 0px #181818;
     }
 
     .spin-stack {
@@ -667,14 +668,14 @@ body::after {
     .item-label {
         position: absolute;
         bottom: 0; left: 0; width: 100%;
-        background: var(--dark);
-        color: var(--white);
+        background: #181818;
+        color: #FFFFFF;
         font-size: 10px;
         padding: 10px 0;
         text-align: center;
     }
 
-   /* --- MODAL --- */
+    /* --- MODAL --- */
     .modal {
         display: none;
         position: fixed;
@@ -687,8 +688,8 @@ body::after {
     }
 
     .modal-content {
-        background: var(--white);
-        border: 8px solid var(--dark);
+        background: #FFFFFF;
+        border: 8px solid #181818;
         width: 95%;
         max-width: 1000px;
         display: flex;
@@ -699,13 +700,37 @@ body::after {
     .close-btn {
         position: absolute;
         top: -20px; right: -20px;
-        background: var(--dark);
-        border: 4px solid var(--white);
-        color: var(--white);
+        background: #181818;
+        border: 4px solid #FFFFFF;
+        color: #FFFFFF;
         padding: 10px 14px;
         cursor: pointer;
         font-family: 'Press Start 2P';
         z-index: 10;
+    }
+
+    .modal-display {
+        flex: 1.2;
+        background: #F2C010; /* Mustard background for item preview */
+        border-right: 8px solid #181818;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+    }
+
+    .modal-data {
+        flex: 1;
+        padding: 40px;
+        color: #181818;
+    }
+
+    .stats-container {
+        margin-top: 20px;
+        font-size: 10px;
+        border: 3px solid #181818;
+        padding: 15px;
+        background: #f9f9f9;
     }
 
     .footer-social {
