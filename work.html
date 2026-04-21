@@ -2561,71 +2561,19 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
  const artifacts = [
-            {
-                id: 'backpack-1',
-                name: 'The Toad Pack',
-                category: 'EQUIPMENT / STORAGE',
-                desc: 'Custom isolated PNG frames provide a crystal-clear 360-degree inspection of our flagship carrier.',
-                stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            },
-            {
-                id: 'emblem-1',
-                name: 'Toad Emblem',
-                category: 'ARTIFACT / KEY',
-                desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.',
-                stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            },
-            {
-                id: 'item-3',
-                name: 'Marsh Boots',
-                category: 'EQUIPMENT / WEARABLE',
-                desc: 'Waterproof treaded boots designed for deep mire navigation.',
-                stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            },
-            {
-                id: 'item-4',
-                name: 'Bog Lantern',
-                category: 'TOOL / LIGHT',
-                desc: 'Fueled by captured fireflies. Essential for night-time harvesting.',
-                stats: ['RADIUS: 10m', 'DURATION: 6HR', 'TYPE: ECO-LIGHT'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            },
-            {
-                id: 'item-5',
-                name: 'Swamp Map',
-                category: 'NAVIGATION / ITEM',
-                desc: 'Hand-drawn on waterproof vellum. Shows the hidden paths of the elders.',
-                stats: ['ACCURACY: 88%', 'AGE: 200 YRS', 'MATERIAL: VELLUM'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            },
-            {
-                id: 'item-6',
-                name: 'Elder Flute',
-                category: 'ARTIFACT / MUSIC',
-                desc: 'Carved from root-wood. Can calm the local wildlife if played correctly.',
-                stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'],
-                images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"],
-                isPaused: false,
-                currentFrame: 0
-            }
+            { id: 'backpack-1', name: 'The Toad Pack', category: 'EQUIPMENT / STORAGE', desc: 'Custom isolated PNG frames provide a crystal-clear 360-degree inspection of our flagship carrier.', stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 },
+            { id: 'emblem-1', name: 'Toad Emblem', category: 'ARTIFACT / KEY', desc: 'A heavy brass emblem found in the lower marshes. It hums with low-frequency energy.', stats: ['RARITY: UNCOMMON', 'POWER: LEVEL 2', 'ID: #0042'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 },
+            { id: 'item-3', name: 'Marsh Boots', category: 'EQUIPMENT / WEARABLE', desc: 'Waterproof treaded boots designed for deep mire navigation.', stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 },
+            { id: 'item-4', name: 'Bog Lantern', category: 'TOOL / LIGHT', desc: 'Fueled by captured fireflies. Essential for night-time harvesting.', stats: ['RADIUS: 10m', 'DURATION: 6HR', 'TYPE: ECO-LIGHT'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 },
+            { id: 'item-5', name: 'Swamp Map', category: 'NAVIGATION / ITEM', desc: 'Hand-drawn on waterproof vellum. Shows the hidden paths of the elders.', stats: ['ACCURACY: 88%', 'AGE: 200 YRS', 'MATERIAL: VELLUM'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 },
+            { id: 'item-6', name: 'Elder Flute', category: 'ARTIFACT / MUSIC', desc: 'Carved from root-wood. Can calm the local wildlife if played correctly.', stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'], images: ["images/backpack 1.png", "images/backpack 2.png", "images/backpack 3.png", "images/backpack 4.png", "images/backpack 5.png", "images/backpack 6.png"], isPaused: false, currentFrame: 0 }
         ];
 
         let activeArtifact = null;
         let isDragging = false;
         let startX = 0;
+        let startFrame = 0;
+        let dragThresholdMet = false;
 
         function showSection(id) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -2658,20 +2606,17 @@ window.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('mainGrid');
             grid.innerHTML = '';
             artifacts.forEach(art => {
-                const container = document.createElement('div');
-                container.className = 'gallery-item';
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
 
+                // Pause/Play Button
                 const btn = document.createElement('button');
                 btn.className = 'grid-pause-btn';
                 btn.innerText = art.isPaused ? "PLAY" : "PAUSE";
                 btn.onclick = (e) => toggleItemSpin(art.id, e);
+                item.appendChild(btn);
 
-                const overlay = document.createElement('div');
-                overlay.className = 'drag-overlay';
-                overlay.onmousedown = (e) => { startX = e.pageX; isDragging = true; activeArtifact = art; };
-                overlay.onclick = () => { if(!isDragging) openInspect(art); };
-                overlay.ontouchstart = (e) => { startX = e.touches[0].pageX; isDragging = true; activeArtifact = art; };
-
+                // Spin Stack Container
                 const stack = document.createElement('div');
                 stack.className = 'spin-stack';
                 stack.id = `stack-${art.id}`;
@@ -2681,43 +2626,88 @@ window.addEventListener('DOMContentLoaded', () => {
                     img.className = `spin-frame ${i === art.currentFrame ? 'active' : ''}`;
                     stack.appendChild(img);
                 });
+                item.appendChild(stack);
 
+                // Label
                 const label = document.createElement('div');
                 label.className = 'item-label';
                 label.innerText = art.name;
-                label.onclick = () => openInspect(art);
+                item.appendChild(label);
 
-                container.appendChild(btn);
-                container.appendChild(overlay);
-                container.appendChild(stack);
-                container.appendChild(label);
-                grid.appendChild(container);
+                // Combined Interaction Logic
+                const startInteraction = (x) => {
+                    isDragging = true;
+                    dragThresholdMet = false;
+                    startX = x;
+                    startFrame = art.currentFrame;
+                    activeArtifact = art;
+                };
+
+                item.onmousedown = (e) => startInteraction(e.pageX);
+                item.ontouchstart = (e) => startInteraction(e.touches[0].pageX);
+
+                item.onclick = (e) => {
+                    if (!dragThresholdMet) openInspect(art);
+                };
+
+                grid.appendChild(item);
             });
         }
 
-        window.onmousemove = (e) => {
-            if(!isDragging || !activeArtifact) return;
-            const diff = e.pageX - startX;
-            if(Math.abs(diff) > 20) {
+        const handleMove = (x) => {
+            if (!isDragging || !activeArtifact) return;
+            const diff = x - startX;
+            
+            if (Math.abs(diff) > 5) dragThresholdMet = true; // Flag that we moved enough to not be a simple click
+
+            if (Math.abs(diff) > 10) {
                 const count = activeArtifact.images.length;
-                if(diff > 0) activeArtifact.currentFrame = (activeArtifact.currentFrame + 1) % count;
-                else activeArtifact.currentFrame = (activeArtifact.currentFrame - 1 + count) % count;
-                startX = e.pageX;
+                const sensitivity = 15; // Pixels per frame change
+                const frameOffset = Math.floor(diff / sensitivity);
+                
+                // Update frame based on movement from start
+                activeArtifact.currentFrame = (startFrame + frameOffset) % count;
+                if (activeArtifact.currentFrame < 0) activeArtifact.currentFrame += count;
+                
                 updateFrames(activeArtifact);
             }
         };
 
-        window.onmouseup = () => { isDragging = false; };
+        window.addEventListener('mousemove', (e) => handleMove(e.pageX));
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                handleMove(e.touches[0].pageX);
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        // Modal Specific Interaction
+        const modalDisplay = document.getElementById('modalDisplay');
+        modalDisplay.onmousedown = (e) => {
+            if (!activeArtifact) return;
+            isDragging = true;
+            startX = e.pageX;
+            startFrame = activeArtifact.currentFrame;
+        };
+        modalDisplay.ontouchstart = (e) => {
+            if (!activeArtifact) return;
+            isDragging = true;
+            startX = e.touches[0].pageX;
+            startFrame = activeArtifact.currentFrame;
+        };
 
         function updateFrames(art) {
             const stack = document.getElementById(`stack-${art.id}`);
-            if(stack) {
+            if (stack) {
                 const frames = stack.querySelectorAll('.spin-frame');
                 frames.forEach((f, i) => f.classList.toggle('active', i === art.currentFrame));
             }
-            if(activeArtifact && activeArtifact.id === art.id) {
+            if (activeArtifact && activeArtifact.id === art.id) {
                 const mStack = document.getElementById('modalStack');
-                if(mStack) {
+                if (mStack) {
                     const mFrames = mStack.querySelectorAll('.spin-frame');
                     mFrames.forEach((f, i) => f.classList.toggle('active', i === art.currentFrame));
                 }
@@ -2742,17 +2732,21 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('inspectModal').style.display = 'flex';
         }
 
-        function closeInspect() { document.getElementById('inspectModal').style.display = 'none'; }
+        function closeInspect() {
+            document.getElementById('inspectModal').style.display = 'none';
+        }
 
+        // Auto-spin Loop
         setInterval(() => {
             artifacts.forEach(art => {
-                if(art.isPaused) return;
-                if(isDragging && activeArtifact && activeArtifact.id === art.id) return;
+                if (art.isPaused) return;
+                // Don't auto-spin if currently being manipulated
+                if (isDragging && activeArtifact && activeArtifact.id === art.id) return;
                 
-                art.currentFrame = Math.floor(Date.now() / 200) % art.images.length;
+                art.currentFrame = (art.currentFrame + 1) % art.images.length;
                 updateFrames(art);
             });
-        }, 100);
+        }, 200);
 
         initGrid();
     </script>
