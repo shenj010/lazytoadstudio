@@ -1924,7 +1924,7 @@ function getAnimationTiming(animationClass) {
     fillComputerSlots();
     renderAll();
     decideFirstPlayer();
-    showTutorialIfNeeded();
+    setTimeout(showTutorialIfNeeded, 300);
     
     addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
     addLog('system','The battle will begin once you place your first card.');
@@ -4377,11 +4377,19 @@ function resetGame() {
   renderAll();
   renderDiscardPile();
 }
+  function selectCharacter(char) {
+  playerCharacter = char;
+
+  computerCharacter =
+    CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+
+  document.getElementById('charSelectOverlay').style.display = 'none';
+
+  init(); // ✅ ONLY start game here
+}
 
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
-
-  showCharacterSelect()
 
 
   // Check if an attack is on cooldown
