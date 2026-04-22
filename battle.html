@@ -1370,6 +1370,77 @@ html, body {
   </div>
 </div>
 <script>
+
+// ===== CHARACTER + ULTIMATE SYSTEM =====
+
+const CHARACTERS = {
+  warrior: {
+    name: "Warrior",
+    ultimate: {
+      name: "Rage Strike",
+      cost: 5,
+      effect: (side) => {
+        if (side === 'player') playerDamageBoost += 10;
+        else computerDamageBoost += 10;
+
+        addLog('system', `${side} gains +10 damage this turn!`);
+      }
+    }
+  },
+
+  mage: {
+    name: "Mage",
+    ultimate: {
+      name: "Arcane Blast",
+      cost: 5,
+      effect: (side) => {
+        const enemySlots = side === 'player' ? computerSlots : playerSlots;
+        const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+
+        enemySlots.forEach((slot, idx) => {
+          if (slot && slot.hp > 0) {
+            slot.hp = Math.max(0, slot.hp - 15);
+            const el = enemySlotsEl.children[idx];
+            if (el) showDamagePopup(el, 15, '#aa66ff');
+          }
+        });
+
+        addLog('system', `${side} hits all enemies for 15 damage!`);
+      }
+    }
+  },
+
+  rogue: {
+    name: "Rogue",
+    ultimate: {
+      name: "Shadow Strike",
+      cost: 4,
+      effect: (side) => {
+        const enemySlots = side === 'player' ? computerSlots : playerSlots;
+        const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+
+        const valid = enemySlots.map((s,i)=>({s,i})).filter(x=>x.s && x.s.hp>0);
+        if(valid.length === 0) return;
+
+        const {s, i} = valid[Math.floor(Math.random()*valid.length)];
+        s.hp = Math.max(0, s.hp - 25);
+
+        const el = enemySlotsEl.children[i];
+        if (el) showDamagePopup(el, 25, '#ff44aa');
+
+        addLog('system', `${side} deals 25 damage to a random enemy!`);
+      }
+    }
+  }
+};
+
+let selectedCharacter = { player: null, computer: null };
+let ultCharge = { player: 0, computer: 0 };
+
+// helper
+function getCharacter(side){
+  return selectedCharacter[side];
+}
 (function(){
   // config
   let computerTurnHistory = []; // Track last N computer moves (defend/switch/attack)
