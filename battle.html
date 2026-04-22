@@ -4385,7 +4385,7 @@ function resetGame() {
 
   document.getElementById('charSelectOverlay').style.display = 'none';
 
-  showCharacterSelect();
+  init();
 }
 
   // expose for debugging
@@ -4531,6 +4531,7 @@ function collapseCard() {
 
 // Initialize touch listeners after DOM is ready
 addTouchHoldListeners();
+showCharacterSelect();
 })(document);
 </script>
 <style>
