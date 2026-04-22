@@ -1266,112 +1266,10 @@ html, body {
     right: -3px !important;
     top: -10px !important;
   }
-  /* ========== CHARACTER SELECT SCREEN & ULTIMATES ========== */
-.char-select-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 30000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.char-select-overlay h2 {
-  color: var(--mustard);
-  text-shadow: 2px 2px 0 #000;
-  margin-bottom: 30px;
-}
-.char-cards-container {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 1000px;
-}
-.char-card-select {
-  border: 4px solid #666;
-  border-radius: 12px;
-  padding: 20px;
-  background: #111;
-  cursor: pointer;
-  width: 220px;
-  transition: 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.char-card-select:hover {
-  border-color: var(--mustard);
-  transform: translateY(-10px);
-  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.3);
-}
-.char-card-select img {
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
-  margin-bottom: 15px;
-}
-.char-card-select h3 {
-  font-size: 14px;
-  color: #FFF;
-  margin: 0 0 10px 0;
-}
-.char-card-select .ability-name {
-  color: var(--mustard);
-  font-size: 11px;
-  margin-bottom: 8px;
-}
-.char-card-select .ability-desc {
-  font-size: 9px;
-  color: #AAA;
-  line-height: 1.4;
-}
-
-/* Ultimate Meter Buttons */
-.ult-btn {
-  width: 180px;
-  background: #111;
-  color: #666;
-  border: 2px solid #666;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  padding: 8px;
-  border-radius: 4px;
-  text-align: center;
-  transition: all 0.3s;
-  margin-top: 8px;
-}
-.ult-btn.ready {
-  background: #FFC107;
-  color: #111;
-  border-color: #FFF;
-  box-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
-  cursor: pointer;
-  animation: ultPulse 1s infinite;
-}
-@keyframes ultPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-@media (max-width: 1200px) {
-  .char-select-overlay { overflow-y: auto; padding: 20px; justify-content: flex-start; }
-  .char-card-select { width: 100%; padding: 15px; flex-direction: row; text-align: left; }
-  .char-card-select img { width: 60px; height: 60px; margin-bottom: 0; margin-right: 15px; }
-  .ult-btn { width: 120px; font-size: 8px; padding: 6px; }
 }
 </style>
 </head>
 <body>
-  <div class="char-select-overlay" id="charSelectOverlay">
-    <h2>CHOOSE YOUR CHAMPION</h2>
-    <div class="char-cards-container" id="charCardsContainer">
-      <!-- Injected by JS -->
-    </div>
-  </div>
   <div class="wrap">
     <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
     
@@ -1383,13 +1281,13 @@ html, body {
         <!-- COMPUTER AREA -->
         <div class="area" id="computerArea">
           <div class="player-info">
-              <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
-              <div class="name" id="computerNameDisplay">Computer</div>
-              <div class="hp-bar" title="Computer total HP">
-                <div class="hp-segments" id="computerGlobalHP"></div>
-              </div>
-              <button class="ult-btn" id="computerUltBtn" disabled>ULT (0/5)</button>
+            <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
+            <div class="name">Computer</div>
+            <div class="hp-bar" title="Computer total HP">
+              <div class="hp-segments" id="computerGlobalHP"></div>
             </div>
+            <div style="height:6px"></div>
+          </div>
 
           <div class="slots" id="computerSlots">
             <!-- 5 slots -->
@@ -1431,12 +1329,11 @@ html, body {
         <!-- PLAYER AREA -->
         <div class="area" id="playerArea">
           <div class="player-info">
-            <img id="playerPortrait" class="computer-portrait" src="" alt="Player">
-            <div class="name" id="playerNameDisplay">Player</div>
+            <div class="name">Player</div>
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
             </div>
-            <button class="ult-btn" id="playerUltBtn" onclick="activateUltimate('player')" disabled>ULT (0/5)</button>
+            <div style="height:6px"></div>
           </div>
 
           <div class="slots" id="playerSlots">
@@ -1481,38 +1378,6 @@ html, body {
   const MAX_HP = 100;
   const SEGMENTS = 10;
   const BASE_COOLDOWN = 2; // Reduced from 3 turns
-
-  // Ultimate / Character tracking
-  let playerCharacter = null;
-  let computerCharacter = null;
-  let playerKills = 0;
-  let computerKills = 0;
-  let playerDamageBoost = 0; // Tracks if damage boost is active
-  let computerDamageBoost = 0;
-
-  const CHARACTERS = [
-    { 
-      id: 'samurai', 
-      name: 'Samurai Toad', 
-      src: 'images/samurai profile.png', 
-      abilityName: 'Bushido', 
-      abilityDesc: 'Boosts all friendly attack damage by 50% for 1 turn after 5 enemy kills.' 
-    },
-    { 
-      id: 'mage', 
-      name: 'Mage Toad', 
-      src: 'images/mage profile.png', 
-      abilityName: 'Arcane Surge', 
-      abilityDesc: 'Heals all friendly cards for 40 HP after 5 enemy kills.' 
-    },
-    { 
-      id: 'stranger', 
-      name: 'The Stranger', 
-      src: 'images/stranger profile.png', 
-      abilityName: 'Shadow Strike', 
-      abilityDesc: 'Deals 20 direct damage to all enemy cards instantly after 5 enemy kills.' 
-    }
-  ];
 
 // Attack pattern definitions
   const ATTACK_PATTERNS = {
@@ -1791,144 +1656,6 @@ function getAnimationTiming(animationClass) {
   const playerGlobalHP = document.getElementById('playerGlobalHP');
   const computerGlobalHP = document.getElementById('computerGlobalHP');
   const turnIndicator = document.getElementById('turnIndicator');
-
-  // Ultimate Handlers
-  window.activateUltimate = function(side) {
-    const char = side === 'player' ? playerCharacter : computerCharacter;
-    const kills = side === 'player' ? playerKills : computerKills;
-    
-    if (kills < 5) return;
-
-    if (side === 'player') playerKills -= 5;
-    else computerKills -= 5;
-    updateUltimates();
-
-    addLog(side, `*** ${char.name} activates ${char.abilityName}! ***`);
-
-    if (char.id === 'samurai') {
-      if (side === 'player') playerDamageBoost = 1;
-      else computerDamageBoost = 1;
-      addLog('system', `All ${side} attacks deal +50% damage this turn!`);
-    } 
-    else if (char.id === 'mage') {
-      const slots = side === 'player' ? playerSlots : computerSlots;
-      slots.forEach((slot, idx) => {
-        if (slot && slot.hp > 0) {
-          slot.hp = Math.min(MAX_HP, slot.hp + 40);
-          updateSlotUI(side, idx);
-          const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
-          showDamagePopup(slotEl, "+40", "#4cff91");
-        }
-      });
-    } 
-    else if (char.id === 'stranger') {
-      const enemySlots = side === 'player' ? computerSlots : playerSlots;
-      const enemySide = side === 'player' ? 'computer' : 'player';
-      
-      enemySlots.forEach((slot, idx) => {
-        if (slot && slot.hp > 0) {
-          slot.hp = Math.max(0, slot.hp - 20);
-          const slotEl = (enemySide === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
-          showDamagePopup(slotEl, "20", "#ff4444");
-
-          if(slot.hp <= 0) {
-            const cardEl = slotEl.querySelector('.card');
-            if (cardEl) cardEl.classList.add('die');
-            setTimeout(() => {
-              addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player', slot);
-              enemySlots[idx] = null;
-              renderAll();
-              recordKill(side); // Chain kills count!
-              checkBattleOver();
-            }, 600);
-          } else {
-            updateSlotUI(enemySide, idx);
-          }
-        }
-      });
-      checkBattleOver();
-    }
-  }
-
-  function recordKill(killerSide) {
-    if (killerSide === 'player') playerKills++;
-    else computerKills++;
-    updateUltimates();
-  }
-
-  function updateUltimates() {
-    const pBtn = document.getElementById('playerUltBtn');
-    const cBtn = document.getElementById('computerUltBtn');
-    
-    if (pBtn) {
-      pBtn.textContent = `ULT (${Math.min(playerKills, 5)}/5)`;
-      if (playerKills >= 5) {
-        pBtn.classList.add('ready');
-        pBtn.disabled = false;
-      } else {
-        pBtn.classList.remove('ready');
-        pBtn.disabled = true;
-      }
-    }
-    if (cBtn) {
-      cBtn.textContent = `ULT (${Math.min(computerKills, 5)}/5)`;
-      if (computerKills >= 5) {
-        cBtn.classList.add('ready');
-      } else {
-        cBtn.classList.remove('ready');
-      }
-    }
-  }
-
-  function showCharacterSelect() {
-    const container = document.getElementById('charCardsContainer');
-    container.innerHTML = '';
-    
-    CHARACTERS.forEach(char => {
-      const card = document.createElement('div');
-      card.className = 'char-card-select';
-      card.innerHTML = `
-        <img src="${char.src}" alt="${char.name}">
-        <h3>${char.name}</h3>
-        <div class="ability-name">${char.abilityName}</div>
-        <div class="ability-desc">${char.abilityDesc}</div>
-      `;
-      card.onclick = () => selectCharacter(char.id);
-      container.appendChild(card);
-    });
-    
-    document.getElementById('charSelectOverlay').style.display = 'flex';
-  }
-
-  function selectCharacter(charId) {
-    playerCharacter = CHARACTERS.find(c => c.id === charId);
-    const others = CHARACTERS.filter(c => c.id !== charId);
-    computerCharacter = others[Math.floor(Math.random() * others.length)];
-    
-    document.getElementById('charSelectOverlay').style.display = 'none';
-    
-    // Set UI 
-    document.getElementById('playerPortrait').src = playerCharacter.src;
-    document.getElementById('playerNameDisplay').textContent = playerCharacter.name;
-    document.getElementById('computerPortrait').src = computerCharacter.src;
-    document.getElementById('computerNameDisplay').textContent = computerCharacter.name;
-    
-    playerKills = 0; computerKills = 0;
-    playerDamageBoost = 0; computerDamageBoost = 0;
-    updateUltimates();
-
-    // Start game sequence
-    makeSlotsUI();
-    loadPlayerInventory();
-    buildComputerReserve();
-    fillComputerSlots();
-    renderAll();
-    decideFirstPlayer();
-    showTutorialIfNeeded();
-    
-    addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
-    addLog('system','The battle will begin once you place your first card.');
-  }
 
   // init interface slots
   function makeSlotsUI(){
@@ -2490,29 +2217,30 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   }
 }
   // Apply damage with weaken and defend effects
-  // Apply damage with boost, weaken, and defend effects
   function applyDamage(attacker, target, baseDamage) {
     let finalDmg = baseDamage;
-    const isPlayerAttacker = playerSlots.includes(attacker);
-
-    // Apply Bushido perk (Samurai Boost)
-    if (isPlayerAttacker && playerDamageBoost > 0) finalDmg = Math.floor(finalDmg * 1.5);
-    if (!isPlayerAttacker && computerDamageBoost > 0) finalDmg = Math.floor(finalDmg * 1.5);
   
+  // Apply weaken effect - percentage-based
     if(hasStatusEffect(attacker, 'weaken')) {
-      finalDmg = Math.floor(finalDmg * 0.7);
-      addLog('system', `${attacker.card.name}'s attack is weakened!`);
+    finalDmg = Math.floor(finalDmg * 0.7); // 30% reduction
+    addLog('system', `${attacker.card.name}'s attack is weakened! (${baseDamage} → ${finalDmg})`);
+   }
+  
+  // Apply defend reduction
+    if(target.defending && finalDmg > 0) {
+    finalDmg = Math.ceil(finalDmg / 2);
+    target.defending = false;
+    target.defendPersists = false;
+    
+    // Remove visual glow
+    const targetSlots = target === playerSlots.find(s => s === target) ? playerSlotsEl : computerSlotsEl;
+    const targetIdx = (target === playerSlots.find(s => s === target) ? playerSlots : computerSlots).indexOf(target);
+    const cardEl = targetSlots.children[targetIdx]?.querySelector('.card');
+    if(cardEl) cardEl.style.boxShadow = '';
+    
+    addLog('system', `${target.card.name} defended – reduced damage! (${Math.ceil(baseDamage * (hasStatusEffect(target, 'weaken') ? 0.7 : 1))} → ${finalDmg})`);
     }
   
-    if(target.defending && finalDmg > 0) {
-      finalDmg = Math.ceil(finalDmg / 2);
-      target.defending = false; target.defendPersists = false;
-      const targetSlots = target === playerSlots.find(s => s === target) ? playerSlotsEl : computerSlotsEl;
-      const targetIdx = (target === playerSlots.find(s => s === target) ? playerSlots : computerSlots).indexOf(target);
-      const cardEl = targetSlots.children[targetIdx]?.querySelector('.card');
-      if(cardEl) cardEl.style.boxShadow = '';
-      addLog('system', `${target.card.name} defended – reduced damage!`);
-    }
     return finalDmg;
   }
 
@@ -2679,7 +2407,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
               addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
               renderAll();
-              recordKill('player'); // <-- ADD THIS LINE
               checkBattleOver();
           }, 600);
         }, 200);
@@ -2755,7 +2482,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
               addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
               renderAll();
-              recordKill('player');
             }, 600);
           }, 200);
         } else {
@@ -2916,12 +2642,6 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 let computerAggression = 1.0; // 1 = neutral, >1 = aggressive, <1 = defensive
 
 function performComputerActions() {
-  // Check if Computer Ultimate is ready!
-    if (computerKills >= 5) {
-      window.activateUltimate('computer');
-      setTimeout(performComputerActions, 1500); // Give it time to resolve, then continue
-      return;
-    }
   // Track last moves for dynamic playstyle
   if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
 
@@ -3268,7 +2988,6 @@ function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
             addToDiscardPile(target.card, 'Player', target);
             playerSlots[targetIdx] = null;
             renderAll();
-            recordKill('computer');
             checkBattleOver();
           }, 600);
         }, 200);
@@ -3323,7 +3042,6 @@ function getTotalHealth(side) {
 
     function endComputerTurn(){
   playerTurn = true;
-  computerDamageBoost = 0;   
   turnIndicator.textContent = 'Player Turn';
   endTurnBtn.classList.remove('disabled');
   
@@ -3969,11 +3687,10 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
   // end turn button handler
   endTurnBtn.addEventListener('click', ()=>{
     if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
-
+    
     hideActionPanel();
     clearSelections();
     playerTurn = false;
-    playerDamageBoost = 0;
     addLog('system','Player ended their turn.');
     
     // Only start computer turn if we're past setup phase
