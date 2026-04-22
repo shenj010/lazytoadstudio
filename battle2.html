@@ -1,0 +1,2571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Toad Battle Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+/* Desktop Layout Improvements */
+:root {
+  /* Lazy Toad Battle Theme — Amber dominant, dark navy accents */
+  --bg-dark: #FFC107;
+  --bg-swamp: #1a2535;
+  --mustard: #FFC107;
+  --olive: #2B3A52;
+  --danger: #ff4444;
+  --panel: rgba(26, 37, 53, 0.95);
+  
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
+  --accent: #FFFFFF;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Press Start 2P', 'DotGothic16', monospace;
+  background: radial-gradient(circle at center, #FFD03A, #FFC107);
+  color: #FFFFFF;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* --- CRT SCANLINE & FLICKER EFFECTS --- */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 10000;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+}
+
+body::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 10001;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.1; }
+  5% { opacity: 0.2; }
+  10% { opacity: 0.1; }
+  15% { opacity: 0.3; }
+  20% { opacity: 0.1; }
+  100% { opacity: 0.15; }
+}
+
+.wrap{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:14px;
+  box-sizing:border-box;
+  max-width: none; 
+}
+
+.header{
+  width:100%;
+  text-align:center;
+  margin-bottom:12px;
+  z-index:5;
+}
+
+.title{
+  color: #FFFFFF;
+  font-size:22px;
+  text-shadow: none;
+}
+
+/* Main game container with integrated log */
+.game-container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 120px); 
+  gap: 16px;
+  max-width: none;
+}
+
+.arena{
+  position:relative;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  align-items:center;
+  justify-content:space-between;
+  padding:20px 24px;
+  box-sizing:border-box;
+  background: 
+    linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.12)),
+    url('images/game mat colour.png') center center / cover no-repeat;
+  border-radius: 12px;
+  border: 3px solid #FFFFFF;
+}
+
+/* Computer portrait */
+.computer-portrait {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  object-position: bottom;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+@media (max-width: 1200px) {
+.computer-portrait {
+    width: 80px; 
+    height: 80px;
+    margin-bottom: 4px;
+  }
+}
+
+/* Larger battlefield areas */
+.area{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border:3px solid #FFFFFF;
+  padding: 12px 14px;
+  border-radius:12px;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+
+.player-info{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:160px;
+  flex-shrink: 0;
+}
+
+.name{
+  color:var(--accent);
+  font-size:14px; 
+  margin-bottom:8px;
+}
+
+.hp-bar{
+  width:180px; 
+  height:24px; 
+  background:#111;
+  border:2px solid #fff;
+  border-radius:8px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.hp-segments{
+  display:flex;
+  width:92%;
+  gap:2px;
+}
+
+.seg{
+  flex:1;
+  height:18px; 
+  background:#fff;
+  border-radius:2px;
+  opacity:1;
+  box-sizing:border-box;
+  position:relative;
+}
+
+/* Larger battlefield slots */
+.slots{
+  display:flex;
+  gap:14px; 
+  align-items:center;
+  justify-content:center;
+}
+
+.slot {
+  width: 110px;
+  height: 170px; 
+  border: 2px dashed rgba(255,255,255,0.25);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-bottom: 20px; 
+}
+
+.slot .card{
+  width:104px; 
+  height:140px; 
+  border:3px solid #fff;
+  border-radius:8px;
+  background:#222;
+  overflow:hidden;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  transition:opacity 0.3s ease;
+}
+
+/* Larger hand area */
+.hand {
+  position: relative;
+  height: 120px;      
+  width: 100%;        
+  overflow: visible;   
+  display: flex;
+  justify-content: center;
+  z-index: 10; 
+}
+.hand .card:hover {
+  transform: translateY(-10px) scale(1.1);
+  z-index: 999 !important;
+}
+.hand .card {
+  border-radius: 8px;
+  overflow: hidden; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease;
+}
+
+.hand .card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.hand .card.selected {
+  transform: translateY(-10px) scale(1.1);
+  border-radius: 8px;
+  z-index: 999 !important;
+}
+
+/* Desktop full card viewer */
+.desktop-card-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; 
+}
+
+.desktop-card-viewer.show {
+  opacity: 1;
+  pointer-events: auto; 
+}
+
+.desktop-card-viewer img {
+  max-width: 80vw;
+  max-height: 80vh;
+  border: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
+  object-fit: contain;
+}
+
+
+/* Integrated log panel */
+.log{
+  width: 300px; 
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 12px;
+  overflow-y: auto;
+  font-size: 11px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom scrollbar for action log */
+.log::-webkit-scrollbar {
+  width: 8px;
+}
+.log::-webkit-scrollbar-track {
+  background: #181818;
+  border-left: 2px solid #FFFFFF;
+}
+.log::-webkit-scrollbar-thumb {
+  background: #FFC107;
+  border: 2px solid #181818;
+}
+.log::-webkit-scrollbar-thumb:hover {
+  background: #FFD03A;
+}
+
+.log .player{
+  color: var(--accent);
+}
+
+.log .computer{
+  color: var(--danger);
+}
+
+.log .entry{
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Turn indicator - larger */
+.turn-indicator{
+  position:fixed;
+  top:24px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.9);
+  border:2px solid var(--accent);
+  padding:12px 20px; 
+  border-radius:8px;
+  font-size:14px; 
+  z-index:60;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Turn control panel - larger */
+.turn-panel{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:24px;
+  display:flex;
+  gap:16px;
+  z-index:50;
+}
+
+.btn{
+  background:#fff;
+  color:#000;
+  border:2px solid #000;
+  padding:12px 20px; 
+  font-family:'Press Start 2P',monospace;
+  font-size:12px; 
+  cursor:pointer;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn:hover {
+  background: #FFC107;
+  color: #181818;
+}
+
+.btn:active{
+  transform:scale(.98);
+}
+
+.btn.disabled{
+  background:#666;
+  color:#333;
+  cursor:not-allowed;
+}
+
+/* Action panel adjustments */
+.card-action-panel{
+  position:absolute;
+  z-index:100;
+  background:rgba(0,0,0,0.95);
+  border:2px solid var(--accent);
+  border-radius:8px;
+  padding:12px; 
+  display:flex;
+  gap:10px;
+  flex-direction:column;
+  min-width:140px; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.card-action-panel .btn{
+  background:#fff;
+  color:#000;
+  border:2px solid #000;
+  padding:8px 14px; 
+  font-family:'Press Start 2P',monospace;
+  font-size:10px;
+  cursor:pointer;
+  text-align:center;
+  border-radius: 4px;
+}
+
+/* Common styles */
+:root {
+  --bg-dark: #FFC107;
+  --bg-swamp: #1a2535;
+  --mustard: #FFC107;
+  --olive: #2B3A52;
+  --accent: #FFFFFF;
+  --panel: rgba(26, 37, 53, 0.95);
+  --danger: #ff4444;
+  --bg1: var(--bg-dark); 
+  --bg2: var(--bg-swamp); 
+  --bg3: var(--olive);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Press Start 2P', 'DotGothic16', monospace;
+  background: radial-gradient(circle at center, #FFD03A, #FFC107);
+  color: #FFFFFF;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.seg.half::after{content:'';position:absolute;left:0;top:0;bottom:0;width:50%;background:#111}
+.slot.occupied{border-style:solid}
+.card img{width:100%;height:72%;object-fit:cover;display:block}
+.card .stats{height:28%;background:rgba(0,0,0,0.9);padding:4px;box-sizing:border-box;font-size:10px;text-align:center}
+.card.selected{outline:3px solid var(--accent);transform:translateY(-6px)}
+.card.used{opacity:0.4;filter:grayscale(0.7)}
+.card.used::after{content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;font-size:8px;border-radius:3px;pointer-events:none}
+
+.card-action-panel .btn:hover{background:var(--accent);color:#000}
+.card-action-panel .btn:active{transform:scale(.98)}
+.card-action-panel .btn.disabled{background:#666;color:#333;cursor:not-allowed}
+
+ /* attack animations */
+.attacking-forward{animation:attackForward 1000ms ease-in-out forwards; z-index: 1000;}
+@keyframes attackForward{
+  0%{transform:translateY(0) scale(1) rotateZ(0deg)}
+  25%{transform:translateY(-80px) scale(1.2) rotateZ(5deg)}
+  50%{transform:translateY(-160px) scale(1.3) rotateZ(-3deg)}
+  75%{transform:translateY(-200px) scale(1.1) rotateZ(2deg)}
+  100%{transform:translateY(0) scale(1) rotateZ(0deg)}
+}
+
+.attacking-backward{animation:attackBackward 1000ms ease-in-out forwards; z-index: 1000;}
+@keyframes attackBackward{
+  0%{transform:translateY(0) scale(1) rotateZ(0deg)}
+  25%{transform:translateY(80px) scale(1.2) rotateZ(-5deg)}
+  50%{transform:translateY(160px) scale(1.3) rotateZ(3deg)}
+  75%{transform:translateY(200px) scale(1.1) rotateZ(-2deg)}
+  100%{transform:translateY(0) scale(1) rotateZ(0deg)}
+}
+
+/* flying projectile animation */
+.flying-attack{animation:flyToTarget 800ms ease-in-out forwards; z-index: 2000; position: absolute;}
+@keyframes flyToTarget{
+  0%{transform:translate(0, 0) scale(1) rotateZ(0deg); opacity: 1;}
+  50%{transform:translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg); opacity: 0.8;}
+  100%{transform:translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg); opacity: 0;}
+}
+
+/* defend animation */
+.defending-anim{animation:defendPulse 600ms ease-in-out forwards}
+@keyframes defendPulse{
+  0%{transform:scale(1);box-shadow:0 0 0 rgba(56,239,125,0.8)}
+  50%{transform:scale(1.08);box-shadow:0 0 20px rgba(56,239,125,0.8)}
+  100%{transform:scale(1);box-shadow:0 0 10px rgba(56,239,125,0.6)}
+}
+
+/* damage popup */
+.dmg-pop{position:absolute;font-size:16px;font-weight:700;color:#ff4444;pointer-events:none;animation:damageFloat 1000ms ease-out forwards;z-index:200;text-shadow:2px 2px 0 #000}
+@keyframes damageFloat{
+  0%{transform:translateY(0) translateX(-50%) scale(0.8);opacity:0}
+  20%{transform:translateY(-10px) translateX(-50%) scale(1.2);opacity:1}
+  60%{transform:translateY(-40px) translateX(-50%) scale(1);opacity:1}
+  100%{transform:translateY(-70px) translateX(-50%) scale(0.8);opacity:0}
+}
+
+/* hit effects */
+.hit{animation:hitShake 400ms ease-out forwards}
+@keyframes hitShake{
+  0%{transform:translateX(0)}
+  10%{transform:translateX(-8px) rotateZ(-2deg)}
+  20%{transform:translateX(6px) rotateZ(1deg)}
+  30%{transform:translateX(-4px) rotateZ(-1deg)}
+  40%{transform:translateX(3px) rotateZ(0.5deg)}
+  50%{transform:translateX(-2px) rotateZ(-0.5deg)}
+  60%{transform:translateX(1px) rotateZ(0.2deg)}
+  100%{transform:translateX(0) rotateZ(0deg)}
+}
+
+.flash{animation:flashHit 300ms ease-out forwards}
+@keyframes flashHit{
+  0%{filter:brightness(1) contrast(1)}
+  25%{filter:brightness(1.8) contrast(1.3) saturate(0)}
+  50%{filter:brightness(1.5) contrast(1.2) saturate(0.2)}
+  75%{filter:brightness(1.3) contrast(1.1) saturate(0.6)}
+  100%{filter:brightness(1) contrast(1) saturate(1)}
+}
+
+.die{animation:dieFade 600ms ease forwards}
+@keyframes dieFade{0%{opacity:1;transform:scale(1) rotateZ(0deg)}100%{opacity:0;transform:scale(0.3) rotateZ(15deg)}}
+
+/* small responsive */
+@media (max-width:900px){
+  .area{flex-direction:column;gap:8px}
+  .player-info{min-width:140px}
+  .slots{flex-wrap:wrap}
+}
+
+/* Hide game-container layout on mobile */
+@media (max-width: 1200px) {
+  .game-container {
+    display: block !important;
+    height: auto !important;
+  }
+  
+  .arena {
+    background: none !important;
+    border: none !important;
+  }
+}
+
+/* Status effect icons - positioned above slot containers */
+.status-icon {
+  position: absolute;
+  top: -15px;
+  right: 8px;
+  width: 32px !important;
+  height: 18px !important;
+  border-radius: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-weight: normal;
+  border: 2px solid #fff;
+  z-index: 150;
+  animation: statusPulse 2s ease-in-out infinite;
+  box-shadow: 2px 2px 0px #181818;
+  image-rendering: pixelated;
+}
+
+.status-icon.poison { background: #8B4513; color: #fff; }
+.status-icon.stun { background: #FFD700; color: #000; }
+.status-icon.sleep { background: #4169E1; color: #fff; }
+.status-icon.weaken { background: #800080; color: #fff; }
+.status-icon.cooldown { background: #666; color: #ccc; border: 2px solid #999; }
+
+/* Individual card HP bars below battlefield cards */
+.card-hp-bar {
+  position: absolute;
+  bottom: 10px; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  height: 14px;
+  background: #111;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.card-hp-bar .hp-seg {
+  flex: 1; height: 100%; background: #FFC107; border-radius: 1px; transition: all 0.3s ease;
+}
+
+.card-hp-bar .hp-seg.empty { background: #333; opacity: 0.3; }
+.card-hp-bar .hp-seg.damaged { background: #FFA500; }
+.card-hp-bar .hp-seg.critical { background: #ff4444; }
+
+.card-action-panel .btn.cooldown {
+  background: #444; color: #888; cursor: not-allowed; position: relative;
+}
+
+.card-action-panel .btn.cooldown::after {
+  content: 'CD: ' attr(data-cooldown);
+  position: absolute; top: -18px; right: -5px; background: #ff4444; color: #fff; font-size: 7px;
+  padding: 1px 4px; border-radius: 3px; pointer-events: none;
+}
+  
+.discard-pile {
+  position: fixed; right: 14px; width: 240px; background: rgba(0,0,0,0.9);
+  border: 3px solid #ff4444; border-radius: 8px; padding: 10px; z-index: 55;
+  max-height: 220px; overflow-y: auto; top: calc(70px + 300px + 100px); bottom: auto;
+}
+
+.discard-pile .title {
+  color: #ff4444; font-size: 11px; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #ff4444;
+  padding-bottom: 6px; font-weight: bold;
+}
+
+.discard-pile .discarded-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+
+.discard-pile .mini-card {
+  width: 32px; height: 44px; border: 2px solid #666; border-radius: 4px; overflow: hidden; opacity: 0.6;
+  transition: all 0.2s ease; cursor: pointer; position: relative;
+}
+
+.discard-pile .mini-card:hover { opacity: 1; transform: scale(1.15); z-index: 10; border-color: #ff4444; }
+.discard-pile .mini-card img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.8); }
+.discard-pile .mini-card:hover img { filter: grayscale(0); }
+.discard-pile .count { font-size: 9px; color: #aaa; text-align: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid #444; }
+
+@keyframes statusPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Animated status effect popup */
+.status-effect-popup {
+  position: absolute; font-size: 20px; font-weight: 700; pointer-events: none;
+  animation: statusEffectFloat 1500ms ease-out forwards; z-index: 250; text-shadow: 2px 2px 0 #000; left: 50%; top: 20%;
+}
+
+@keyframes statusEffectFloat {
+  0% { transform: translateY(0) translateX(-50%) scale(0.5); opacity: 0; }
+  15% { transform: translateY(-15px) translateX(-50%) scale(1.3); opacity: 1; }
+  30% { transform: translateY(-25px) translateX(-50%) scale(1.1); opacity: 1; }
+  70% { transform: translateY(-45px) translateX(-50%) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-60px) translateX(-50%) scale(0.8); opacity: 0; }
+}
+
+.status-icon:nth-child(n+2) { right: calc(8px + (var(--icon-index) * 26px)); }
+
+/* Poison damage overlay animation */
+.poison-damage-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%);
+  border-radius: 6px; pointer-events: none; z-index: 300; animation: poisonPulse 1500ms ease-in-out forwards;
+}
+
+@keyframes poisonPulse {
+  0% { opacity: 0; transform: scale(0.8); background: radial-gradient(circle, rgba(139, 69, 19, 0.9) 0%, rgba(139, 69, 19, 0.5) 50%, transparent 100%); }
+  25% { opacity: 1; transform: scale(1.05); background: radial-gradient(circle, rgba(139, 69, 19, 0.8) 0%, rgba(139, 69, 19, 0.4) 50%, transparent 100%); }
+  50% { opacity: 0.8; transform: scale(1); background: radial-gradient(circle, rgba(139, 69, 19, 0.7) 0%, rgba(139, 69, 19, 0.3) 50%, transparent 100%); }
+  75% { opacity: 0.6; transform: scale(0.95); background: radial-gradient(circle, rgba(139, 69, 19, 0.5) 0%, rgba(139, 69, 19, 0.2) 50%, transparent 100%); }
+  100% { opacity: 0; transform: scale(0.9); background: radial-gradient(circle, rgba(139, 69, 19, 0.3) 0%, rgba(139, 69, 19, 0.1) 50%, transparent 100%); }
+}
+
+@media (max-width: 1200px) {
+  .bottom-panel { display: flex; flex-direction: row; position: fixed; bottom: 0; left: 0; width: 100%; height: 150px; z-index: 999; }
+  .bottom-panel .log, .bottom-panel .discard-pile { position: relative !important; top: auto !important; bottom: auto !important; left: auto !important; right: auto !important; flex: 1; width: 50% !important; height: 100% !important; }
+  .bottom-panel .log { border-right: 2px solid #444; font-size: 13px; line-height: 1.3; color: #eee; white-space: normal; word-break: break-word; }
+  .bottom-panel .discard-pile { border-left: 2px solid #ff4444; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: flex-start; gap: 4px; }
+  .bottom-panel .discard-pile .mini-card { width: 24px; height: 34px; flex: 0 0 auto; }
+  .wrap { padding-bottom: 320px !important; }
+  html, body { overflow-y: auto !important; overflow-x: hidden !important; }
+  .wrap { padding: 8px !important; height: auto !important; min-height: 100vh !important; }
+  .title { font-size: 14px !important; }
+  .turn-indicator { top: 10px !important; font-size: 10px !important; padding: 6px 12px !important; }
+  .arena { gap: 8px !important; padding: 8px !important; flex: none !important; }
+  .area { flex-direction: column !important; gap: 8px !important; padding: 8px !important; }
+  .player-info { min-width: 120px !important; order: -1 !important; }
+  .name { font-size: 11px !important; }
+  .hp-bar { width: 120px !important; height: 16px !important; }
+  .hp-segments { width: 90% !important; gap: 1px !important; }
+  .seg { height: 12px !important; }
+  .slots { flex-wrap: nowrap !important; justify-content: space-between !important; width: 100% !important; overflow-x: auto !important; padding: 0 2px !important; gap: 4px !important; }
+  .slot { width: 60px !important; min-width: 60px !important; height: 95px !important; margin: 0 !important; }
+  .slot .card { width: 56px !important; height: 80px !important; }
+  .card .stats { font-size: 7px !important; padding: 2px !important; }
+  .hand { min-height: 90px !important; gap: 6px !important; order: 1 !important; overflow: visible !important; position: relative !important; z-index: 5 !important; }
+  .turn-panel { bottom: 160px !important; gap: 8px !important; }
+  .btn { padding: 8px 12px !important; font-size: 9px !important; }
+  .card-action-panel { width: auto !important; max-width: 220px !important; padding: 8px !important; }
+  .card-action-panel .btn { box-sizing: border-box !important; width: 100% !important; padding: 8px 8px !important; margin: 2px 0 !important; font-size: 9px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  .status-icon { font-family: 'Press Start 2P', monospace !important; font-size: 10px !important; line-height: 1 !important; }
+  .status-icon.poison::before, .status-icon.stun::before, .status-icon.sleep::before, .status-icon.weaken::before { content: none; }
+  .card-action-panel .btn .effect-indicator.poison::before { content: "P"; }
+  .card-action-panel .btn .effect-indicator.stun::before { content: "S"; }
+  .card-action-panel .btn .effect-indicator.sleep::before { content: "Z"; }
+  .card-action-panel .btn .effect-indicator.weaken::before { content: "W"; }
+  .log .entry { margin-bottom: 3px !important; line-height: 1.2 !important; }
+}
+
+/* Mobile card sizing fixes */
+@media (max-width: 1200px) {
+  .hand .card { width: 45px !important; height: 62px !important; transition: all 0.3s ease !important; }
+  .hand .card.selected { width: 60px !important; height: 85px !important; transform: translateY(-8px) scale(1.1) !important; z-index: 200 !important; }
+  .slot { width: 75px !important; height: 105px !important; }
+  .slot .card { width: 70px !important; height: 98px !important; }
+  .slot .card .stats { font-size: 8px !important; padding: 3px !important; }
+  .hand .card .stats { font-size: 6px !important; padding: 2px !important; }
+  .hand .card.selected .stats { font-size: 7px !important; padding: 2px !important; }
+  .status-icon { width: 18px !important; height: 18px !important; font-size: 11px !important; top: -14px !important; }
+  .slot, .area { overflow: visible !important; z-index: 1 !important; }
+  .attacking-forward, .attacking-backward, .attacking-diagonal-left, .attacking-diagonal-right, .attacking-knight, .attacking-sweep, .attacking-pierce, .attacking-adjacent-left, .attacking-adjacent-right, .flying-attack { z-index: 2000 !important; position: absolute !important; }
+  .status-icon { z-index: 1000 !important; }
+  .status-effect-popup { z-index: 2500 !important; }
+  .dmg-pop { z-index: 2000 !important; }
+  .arena { overflow: visible !important; }
+}
+
+@media (max-width: 480px) {
+  .hand .card { width: 38px !important; height: 54px !important; }
+  .hand .card.selected { width: 55px !important; height: 78px !important; }
+  .slot { width: 65px !important; height: 92px !important; }
+  .slot .card { width: 60px !important; height: 85px !important; }
+}
+
+@media (max-width: 1200px) {
+  .hand .card.touch-expanded { position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) scale(1.5) !important; width: 86px !important; height: 120px !important; z-index: 1000 !important; box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important; border: 3px solid var(--accent) !important; transition: all 0.3s ease !important; }
+  .hand .card.touch-expanded .stats { font-size: 10px !important; padding: 4px !important; }
+  .touch-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
+  .touch-backdrop.show { opacity: 1; }
+}
+
+@media (min-width: 400px) and (max-width: 1200px) {
+  .slots { gap: 6px !important; }
+  .hand .card { width: 45px !important; height: 62px !important; transition: all 0.3s ease !important; }
+  .hand .card.selected { width: 60px !important; height: 85px !important; transform: translateY(-8px) scale(1.1) !important; z-index: 200 !important; }
+}
+
+@media (max-width: 480px) {
+  .hand .card.touch-expanded { transform: translate(-50%, -50%) scale(1.8) !important; }
+}
+@media (min-width: 600px) and (max-width: 1200px) {
+  .slots { gap: 14px !important; justify-content: center !important; }
+  .area { gap: 14px !important; justify-content: center !important; }
+}
+@media (min-width: 600px) and (max-width: 1200px) {
+  .hand { display: flex !important; justify-content: center !important; align-items: center !important; position: relative !important; width: 100% !important; height: 120px !important; gap: 10px !important; }
+  .hand .card { position: relative !important; margin: 0 6px !important; left: unset !important; top: unset !important; }
+}
+
+@media (max-width: 1200px) {
+  .card-action-panel { width: 85% !important; max-width: 250px !important; padding: 8px !important; left: 50% !important; transform: translateX(-50%) !important; box-sizing: border-box !important; }
+  .card-action-panel .btn { white-space: normal !important; word-break: break-word !important; padding: 8px 10px !important; font-size: 10px !important; line-height: 1.3 !important; width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  .card-action-panel .btn.cooldown::after { right: -3px !important; top: -10px !important; }
+}
+
+/* ========== CHARACTER SELECT SCREEN & ULTIMATES ========== */
+.char-select-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 30000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.char-select-overlay h2 {
+  color: var(--mustard);
+  text-shadow: 2px 2px 0 #000;
+  margin-bottom: 30px;
+}
+.char-cards-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1000px;
+}
+.char-card-select {
+  border: 4px solid #666;
+  border-radius: 12px;
+  padding: 20px;
+  background: #111;
+  cursor: pointer;
+  width: 220px;
+  transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.char-card-select:hover {
+  border-color: var(--mustard);
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.3);
+}
+.char-card-select img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+.char-card-select h3 {
+  font-size: 14px;
+  color: #FFF;
+  margin: 0 0 10px 0;
+}
+.char-card-select .ability-name {
+  color: var(--mustard);
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.char-card-select .ability-desc {
+  font-size: 9px;
+  color: #AAA;
+  line-height: 1.4;
+}
+
+/* Ultimate Meter Buttons */
+.ult-btn {
+  width: 180px;
+  background: #111;
+  color: #666;
+  border: 2px solid #666;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  text-align: center;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+.ult-btn.ready {
+  background: #FFC107;
+  color: #111;
+  border-color: #FFF;
+  box-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
+  cursor: pointer;
+  animation: ultPulse 1s infinite;
+}
+@keyframes ultPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 1200px) {
+  .char-select-overlay { overflow-y: auto; padding: 20px; justify-content: flex-start; }
+  .char-card-select { width: 100%; padding: 15px; flex-direction: row; text-align: left; }
+  .char-card-select img { width: 60px; height: 60px; margin-bottom: 0; margin-right: 15px; }
+  .ult-btn { width: 120px; font-size: 8px; padding: 6px; }
+}
+
+/* === Additive visual override: full-image cards (non-destructive) === */
+.slot .card, .hand .card {display:block !important; position:relative;}
+.slot .card img, .hand .card img {width:100% !important; height:100% !important; object-fit:cover !important; display:block;}
+.card .stats {display:none !important; height:0 !important; padding:0 !important; overflow:hidden !important;}
+  .area {
+  overflow: visible !important;
+}
+
+.wrap {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Diagonal attacks */
+.attacking-diagonal-left { animation: diagonalSlashLeft 900ms ease-in-out forwards; z-index: 1000; }
+@keyframes diagonalSlashLeft { 0% { transform: translate(0, 0) scale(1) rotateZ(0deg); } 25% { transform: translate(-60px, 60px) scale(1.15) rotateZ(-25deg); } 50% { transform: translate(-120px, 120px) scale(1.25) rotateZ(-35deg); } 75% { transform: translate(-140px, 140px) scale(1.1) rotateZ(-30deg); } 100% { transform: translate(0, 0) scale(1) rotateZ(0deg); } }
+
+.attacking-diagonal-right { animation: diagonalSlashRight 900ms ease-in-out forwards; z-index: 1000; }
+@keyframes diagonalSlashRight { 0% { transform: translate(0, 0) scale(1) rotateZ(0deg); } 25% { transform: translate(60px, 60px) scale(1.15) rotateZ(25deg); } 50% { transform: translate(120px, 120px) scale(1.25) rotateZ(35deg); } 75% { transform: translate(140px, 140px) scale(1.1) rotateZ(30deg); } 100% { transform: translate(0, 0) scale(1) rotateZ(0deg); } }
+
+/* Knight leap attack */
+.attacking-knight { animation: knightLeap 1100ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards; z-index: 1000; }
+@keyframes knightLeap { 0% { transform: translate(0, 0) scale(1) rotateZ(0deg); filter: brightness(1); } 15% { transform: translate(20px, -30px) scale(1.1) rotateZ(15deg); filter: brightness(1.2); } 40% { transform: translate(80px, -40px) scale(1.3) rotateZ(360deg); filter: brightness(1.4); } 60% { transform: translate(120px, 80px) scale(1.4) rotateZ(540deg); filter: brightness(1.5); } 80% { transform: translate(100px, 60px) scale(1.2) rotateZ(630deg); filter: brightness(1.2); } 100% { transform: translate(0, 0) scale(1) rotateZ(720deg); filter: brightness(1); } }
+
+/* Sweeping/Cross attacks */
+.attacking-sweep { animation: sweepingArc 1000ms ease-in-out forwards; z-index: 1000; }
+@keyframes sweepingArc { 0% { transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 1; } 20% { transform: translate(0, 40px) scale(1.2) rotateZ(-10deg); opacity: 0.9; } 40% { transform: translate(-80px, 80px) scale(1.3) rotateZ(-20deg); opacity: 0.7; } 60% { transform: translate(80px, 80px) scale(1.3) rotateZ(20deg); opacity: 0.7; } 80% { transform: translate(0, 40px) scale(1.2) rotateZ(10deg); opacity: 0.9; } 100% { transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 1; } }
+
+/* Pierce attack */
+.attacking-pierce { animation: piercingThrust 700ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; z-index: 1000; }
+@keyframes piercingThrust { 0% { transform: translateY(0) scale(1); filter: brightness(1); } 30% { transform: translateY(100px) scale(1.3); filter: brightness(1.5) drop-shadow(0 0 10px var(--accent)); } 50% { transform: translateY(180px) scale(1.4); filter: brightness(1.8) drop-shadow(0 0 20px var(--accent)); } 70% { transform: translateY(200px) scale(1.2); filter: brightness(1.3) drop-shadow(0 0 15px var(--accent)); } 100% { transform: translateY(0) scale(1); filter: brightness(1); } }
+
+/* Adjacent attacks */
+.attacking-adjacent-left { animation: adjacentSlideLeft 800ms ease-in-out forwards; z-index: 1000; }
+@keyframes adjacentSlideLeft { 0% { transform: translateX(0) scale(1) rotateY(0deg); } 40% { transform: translateX(-120px) scale(1.2) rotateY(-15deg); } 60% { transform: translateX(-140px) scale(1.25) rotateY(-20deg); } 100% { transform: translateX(0) scale(1) rotateY(0deg); } }
+
+.attacking-adjacent-right { animation: adjacentSlideRight 800ms ease-in-out forwards; z-index: 1000; }
+@keyframes adjacentSlideRight { 0% { transform: translateX(0) scale(1) rotateY(0deg); } 40% { transform: translateX(120px) scale(1.2) rotateY(15deg); } 60% { transform: translateX(140px) scale(1.25) rotateY(20deg); } 100% { transform: translateX(0) scale(1) rotateY(0deg); } }
+
+/* ========== IMPACT EFFECT ANIMATIONS ========== */
+@keyframes slashFlash { 0% { opacity: 0; transform: rotate(-45deg) translateX(-100%); } 50% { opacity: 1; transform: rotate(-45deg) translateX(0); } 100% { opacity: 0; transform: rotate(-45deg) translateX(100%); } }
+@keyframes sweepFlash { 0% { opacity: 0; transform: translateX(-100%); } 50% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+@keyframes pierceFlash { 0% { opacity: 0; height: 0%; } 30% { opacity: 1; height: 120%; } 100% { opacity: 0; height: 120%; } }
+@keyframes impactFlash { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); } }
+@keyframes rippleExpand { 0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(3); opacity: 0; } }
+
+.slot.valid-target { border-color: var(--accent) !important; border-style: solid !important; border-width: 3px !important; animation: targetPulse 1s ease-in-out infinite; background: rgba(56, 239, 125, 0.2); }
+@keyframes targetPulse { 0%, 100% { box-shadow: 0 0 15px rgba(56, 239, 125, 0.6); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(56, 239, 125, 0.9); transform: scale(1.05); } }
+.slot.switch-target { border-color: #FFD700 !important; border-style: dashed !important; border-width: 3px !important; animation: switchPulse 1s ease-in-out infinite; background: rgba(255, 215, 0, 0.1); }
+@keyframes switchPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+/* ========== TUTORIAL STYLES ========== */
+.tutorial-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95); z-index: 5000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
+.tutorial-overlay.hidden { display: none; }
+.tutorial-content { background: linear-gradient(135deg, var(--bg1), var(--bg2)); border: 3px solid var(--accent); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 0 30px rgba(56, 239, 125, 0.5); }
+.tutorial-content h2 { color: var(--accent); text-align: center; font-size: 18px; margin-bottom: 25px; text-shadow: 0 0 10px rgba(56, 239, 125, 0.8); }
+.tutorial-step { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-start; }
+.step-number { background: var(--accent); color: #000; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; flex-shrink: 0; }
+.tutorial-step p { margin: 0; line-height: 1.5; font-size: 12px; }
+.tutorial-step strong { color: var(--accent); display: block; margin-bottom: 5px; font-size: 14px; }
+.tutorial-close { width: 100%; margin-top: 20px; padding: 12px; font-size: 14px; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ========== GAME OVER SCREEN ========== */
+.game-over-overlay { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0, 0, 0, 0.9) !important; z-index: 10000 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; visibility: hidden; }
+.game-over-overlay.show { opacity: 1 !important; pointer-events: auto !important; visibility: visible !important; }
+.game-over-text { font-family: 'Press Start 2P', monospace; font-size: 80px; font-weight: bold; text-align: center; position: relative; animation: gameOver-animation 1.5s forwards; }
+.game-over-options { animation: fadeInOptions 0.5s 1.5s forwards !important; }
+.game-over-text.victory { color: transparent; background: linear-gradient(135deg, #ffd700, var(--accent), #fff); background-clip: text; -webkit-background-clip: text; text-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+.game-over-text.defeat { color: transparent; background: linear-gradient(135deg, #555, var(--danger), #8b0000); background-clip: text; -webkit-background-clip: text; text-shadow: 0 0 20px rgba(255, 68, 68, 0.7); }
+@keyframes gameOver-animation { 0% { transform: scale(3); opacity: 0; filter: blur(10px); } 60% { transform: scale(0.9); opacity: 1; filter: blur(0); } 80% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.game-over-options { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; opacity: 0; transform: translateY(20px); animation: fadeInOptions 0.5s 1.5s forwards; }
+.reward-panel { text-align: center; margin-bottom: 20px; }
+.reward-panel .reward-text { font-size: 14px; color: var(--accent); margin-bottom: 15px; }
+.reward-panel .card { margin: 0 auto; animation: newCardPulse 2s infinite; }
+@keyframes newCardPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px var(--accent); } 50% { transform: scale(1.05); box-shadow: 0 0 25px var(--accent); } }
+@keyframes fadeInOptions { to { opacity: 1; transform: translateY(0); } }
+.game-over-text { animation: gameOver-animation 1.5s forwards !important; }
+.game-over-options { animation: fadeInOptions 0.5s 1.5s forwards !important; }
+.game-over-overlay { display: flex !important; }
+.game-over-overlay.show { visibility: visible !important; }
+
+@media (max-width: 1200px) {
+  .attacking-forward, .attacking-backward, .attacking-diagonal-left, .attacking-diagonal-right, .attacking-knight, .attacking-sweep, .attacking-pierce, .attacking-adjacent-left, .attacking-adjacent-right, .flying-attack { position: fixed !important; z-index: 5000 !important; }
+  .dmg-pop, .status-effect-popup { position: fixed !important; z-index: 5001 !important; }
+  .status-icon { z-index: 5001 !important; }
+  .game-over-text { font-size: 40px !important; padding: 0 20px !important; word-break: break-word !important; }
+  .bottom-panel { position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; }
+  .status-icon { position: absolute !important; top: -18px !important; right: 8px !important; z-index: 5001 !important; }
+  .slot { overflow: visible !important; padding-top: 16px !important; }
+  .slots, .area, .arena { overflow: visible !important; padding-top: 8px !important; }
+  .status-icon:nth-child(2) { right: 32px !important; }
+  .status-icon:nth-child(3) { right: 56px !important; }
+  .status-icon:nth-child(4) { right: 80px !important; }
+}
+
+@media (max-width: 350px) {
+  .game-over-text { font-size: 32px !important; }
+}
+</style>
+</head>
+<body>
+  <div class="char-select-overlay" id="charSelectOverlay">
+    <h2>CHOOSE YOUR CHAMPION</h2>
+    <div class="char-cards-container" id="charCardsContainer">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
+    
+    <div class="turn-indicator" id="turnIndicator">Player Turn</div>
+
+    <div class="game-container">
+      <div class="arena" id="arena">
+        <!-- COMPUTER AREA -->
+        <div class="area" id="computerArea">
+          <div class="player-info">
+              <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
+              <div class="name" id="computerNameDisplay">Computer</div>
+              <div class="hp-bar" title="Computer total HP">
+                <div class="hp-segments" id="computerGlobalHP"></div>
+              </div>
+              <button class="ult-btn" id="computerUltBtn" disabled>ULT (0/5)</button>
+            </div>
+
+          <div class="slots" id="computerSlots"></div>
+          <div class="hand" id="computerHand"></div>
+        </div> 
+        
+        <!-- Tutorial Overlay -->
+        <div class="tutorial-overlay" id="tutorialOverlay">
+          <div class="tutorial-content">
+            <h2>Welcome to Toad Battle Arena!</h2>
+            <div class="tutorial-step" data-step="1">
+              <div class="step-number">1</div>
+              <p><strong>Place Your Cards</strong></p>
+              <p>Click a card in your hand, then click an empty slot to place it</p>
+            </div>
+            <div class="tutorial-step" data-step="2">
+              <div class="step-number">2</div>
+              <p><strong>Select Your Card</strong></p>
+              <p>During your turn, click a card on the battlefield to see its actions</p>
+            </div>
+            <div class="tutorial-step" data-step="3">
+              <div class="step-number">3</div>
+              <p><strong>Attack or Defend</strong></p>
+              <p>Choose an attack to damage enemies, or defend to reduce incoming damage</p>
+            </div>
+            <div class="tutorial-step" data-step="4">
+              <div class="step-number">4</div>
+              <p><strong>End Your Turn</strong></p>
+              <p>When all cards have acted, click "END TURN" to let the computer move</p>
+            </div>
+            <button class="btn tutorial-close" id="tutorialClose">Got It!</button>
+          </div>
+        </div>
+
+        <!-- PLAYER AREA -->
+        <div class="area" id="playerArea">
+          <div class="player-info">
+            <img id="playerPortrait" class="computer-portrait" src="" alt="Player">
+            <div class="name" id="playerNameDisplay">Player</div>
+            <div class="hp-bar" title="Player total HP">
+              <div class="hp-segments" id="playerGlobalHP"></div>
+            </div>
+            <button class="ult-btn" id="playerUltBtn" onclick="activateUltimate('player')" disabled>ULT (0/5)</button>
+          </div>
+
+          <div class="slots" id="playerSlots"></div>
+          <div class="hand" id="playerHand" style="margin-left:12px"></div>
+        </div>
+      </div>
+      
+      <!-- Bottom panel -->
+      <div class="bottom-panel">
+        <div class="log" id="battleLog">
+          <div class="entry system">Battle ready – place cards to begin.</div>
+        </div>
+
+        <div class="discard-pile" id="discardPile">
+          <div class="title">💀 GRAVEYARD</div>
+          <div class="discarded-cards" id="discardedCards"></div>
+          <div class="count" id="discardCount">0 defeated</div>
+        </div>
+      </div>
+
+      <!-- turn control panel -->
+      <div class="turn-panel" id="turnPanel">
+        <div class="btn" id="endTurnBtn">END TURN</div>
+      </div>
+    </div> 
+</div> 
+
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div id="gameOverText" class="game-over-text"></div>
+  <div id="gameOverOptions" class="game-over-options"></div>
+</div>
+
+<script>
+(function(){
+  // config
+  let computerTurnHistory = []; 
+  const MAX_HISTORY = 3;
+  const MAX_SLOTS = 5;
+  const MAX_HP = 100;
+  const SEGMENTS = 10;
+  const BASE_COOLDOWN = 2;
+
+  // Ultimate / Character tracking
+  let playerCharacter = null;
+  let computerCharacter = null;
+  let playerKills = 0;
+  let computerKills = 0;
+  let playerDamageBoost = 0; 
+  let computerDamageBoost = 0;
+
+  const CHARACTERS = [
+    { 
+      id: 'samurai', 
+      name: 'Samurai Toad', 
+      src: 'images/samurai profile.png', 
+      abilityName: 'Bushido', 
+      abilityDesc: 'Boosts all friendly attack damage by 50% for 1 turn after 5 enemy kills.' 
+    },
+    { 
+      id: 'mage', 
+      name: 'Mage Toad', 
+      src: 'images/mage profile.png', 
+      abilityName: 'Arcane Surge', 
+      abilityDesc: 'Heals all friendly cards for 40 HP after 5 enemy kills.' 
+    },
+    { 
+      id: 'stranger', 
+      name: 'The Stranger', 
+      src: 'images/stranger profile.png', 
+      abilityName: 'Shadow Strike', 
+      abilityDesc: 'Deals 20 direct damage to all enemy cards instantly after 5 enemy kills.' 
+    }
+  ];
+
+  const ATTACK_PATTERNS = {
+     straight: [[0, -1]], 
+     diagonal: [[-1, -1], [1, -1]], 
+     knight: [[-1, -2], [1, -2], [-2, -1], [2, -1]], 
+     adjacent: [[-1, 0], [1, 0]], 
+     cross: [[0, -1], [-1, 0], [1, 0]], 
+     wide: [[-1, -1], [0, -1], [1, -1]], 
+     pierce: [[0, -1]], 
+  };
+
+  const cardPool = [
+    { src: "images/cards/the stranger card format.jpg", name: "The Stranger", hp: 70, mobile: true, attacks: [ { name: "Hidden Strike", damage: 10, type: "physical", pattern: 'diagonal', effect: "stun", duration: 1, description: "Fast diagonal slice for 10 damage. Stun opponent for one turn." }, { name: "Shadow Step", damage: 8, type: "physical", pattern: 'knight', description: "Leap in L-shape to strike distant targets for 8 damage" } ]},
+    { src: "images/cards/horny toad card format.jpg", name: "Horny Toad", hp: 80, mobile: true, attacks: [ { name: "Piercing Strike", damage: 20, type: "physical", pattern: 'pierce', description: "A devastating, surgical thrust deals 20 damage straight ahead." } ]},
+    { src: "images/cards/hypno toad card format.jpg", name: "Hypno Toad", hp: 80, mobile: true, attacks: [ { name: "Hypnotize", damage: 0, type: "mental", pattern: 'wide', effect: "sleep", duration: 2, description: "Send one of three forward enemies to sleep for 2 turns." }, { name: "Poison Dart", damage: 3, type: "poison", pattern: 'straight', effect: "poison", duration: 5, description: "Shoots a poison dart for 3 initial damage, then 5 damage per turn for 5 turns." } ]},
+    { src: "images/cards/sumo toad card format.jpg", name: "Sumo Toad", hp: 100, mobile: true, attacks: [ { name: "Oshidashi", damage: 10, type: "physical", pattern: 'straight', effect: "weaken", duration: 1, description: "Use sheer force to damage for 10 and weaken enemy (-30% attack)" }, { name: "Sweeping Push", damage: 8, type: "physical", pattern: 'cross', description: "Sweep forward and both sides for 8 damage each" } ]},
+    { src: "images/cards/mad toad card format.jpg", name: "Mad Toad", hp: 65, mobile: true, attacks: [ { name: "Flasher", damage: 0, type: "mental", pattern: 'adjacent', effect: "stun", duration: 1, description: "Stun adjacent enemies for one turn." }, { name: "Bubble Slam", damage: 10, type: "physical", pattern: 'knight', description: "A rear-end first leap slam for 10 damage." } ]}
+  ];
+
+  function getValidTargets(attackerSlotIdx, pattern, attackerSide) {
+    const validTargets = [];
+    const offsets = ATTACK_PATTERNS[pattern];
+    if (!offsets) {
+      const targetSlots = attackerSide === 'player' ? computerSlots : playerSlots;
+      return (targetSlots[attackerSlotIdx] && targetSlots[attackerSlotIdx].hp > 0) ? [attackerSlotIdx] : [];
+    }
+    const targetSlots = attackerSide === 'player' ? computerSlots : playerSlots;
+    offsets.forEach(([dx, dy]) => {
+      const targetIdx = attackerSlotIdx + dx;
+      if (targetIdx >= 0 && targetIdx < MAX_SLOTS) {
+        if (targetSlots[targetIdx] && targetSlots[targetIdx].hp > 0) validTargets.push(targetIdx);
+      }
+    });
+    return validTargets;
+  }
+
+  function showValidTargets(attackerIdx, pattern, attackerSide) {
+    clearTargetHighlights();
+    const validTargets = getValidTargets(attackerIdx, pattern, attackerSide);
+    const targetSlotsEl = attackerSide === 'player' ? computerSlotsEl : playerSlotsEl;
+    validTargets.forEach(idx => { targetSlotsEl.children[idx].classList.add('valid-target'); });
+    return validTargets;
+  }
+
+  function getPlayerCardThreat(slotObj) {
+    if (!slotObj || !slotObj.card) return 0;
+    let score = 0;
+    slotObj.card.attacks.forEach(a => {
+      score += a.damage * 2;
+      if (a.effect) score += 8;
+      if (['stun', 'sleep', 'poison', 'weaken'].includes(a.effect)) score += 10;
+    });
+    score += slotObj.hp / 10;
+    return score;
+  }
+
+  function getHighestThreatPlayerSlot() {
+    let bestIdx = -1, bestScore = -Infinity;
+    playerSlots.forEach((slot, idx) => {
+      const score = getPlayerCardThreat(slot);
+      if (score > bestScore) { bestScore = score; bestIdx = idx; }
+    });
+    return bestIdx;
+  }
+
+  function updateDefendSwitchStreak(slot, moveType) {
+    if (!slot) return;
+    if (!slot._streak) slot._streak = { defend: 0, switch: 0 };
+    if (moveType === 'defend') { slot._streak.defend++; slot._streak.switch = 0; } 
+    else if (moveType === 'switch') { slot._streak.switch++; slot._streak.defend = 0; } 
+    else { slot._streak.defend = 0; slot._streak.switch = 0; }
+  }
+
+  function clearTargetHighlights() { document.querySelectorAll('.valid-target').forEach(el => { el.classList.remove('valid-target'); }); }
+  function clearSwitchHighlights() { document.querySelectorAll('.switch-target').forEach(el => { el.classList.remove('switch-target'); }); }
+
+  function getAttackAnimation(attackerIdx, targetIdx, pattern, attackerSide) {
+    const offset = targetIdx - attackerIdx;
+    const direction = attackerSide === 'player' ? 'backward' : 'forward';
+    switch(pattern) {
+      case 'diagonal': return `attacking-diagonal-${offset < 0 ? 'left' : 'right'}`;
+      case 'knight': return 'attacking-knight';
+      case 'adjacent': return `attacking-adjacent-${offset < 0 ? 'left' : 'right'}`;
+      case 'cross': case 'wide': return 'attacking-sweep';
+      case 'pierce': return attackerSide === 'player' ? 'attacking-forward' : 'attacking-pierce';
+      case 'straight': default: return `attacking-${direction}`;
+    }
+  }
+
+  function getAnimationTiming(animationClass) {
+    const timings = {
+      'attacking-diagonal-left': 900, 'attacking-diagonal-right': 900, 'attacking-knight': 1100,
+      'attacking-sweep': 1000, 'attacking-wide-arc': 950, 'attacking-pierce': 700,
+      'attacking-adjacent-left': 800, 'attacking-adjacent-right': 800, 'attacking-forward': 1000, 'attacking-backward': 1000
+    };
+    return timings[animationClass] || 1000;
+  }
+
+  let playerHand = [];      
+  let computerReserve = [];
+  let playerSlots = new Array(MAX_SLOTS).fill(null); 
+  let computerSlots = new Array(MAX_SLOTS).fill(null);
+  let selected = null; 
+  let playerTurn = true;
+  let currentActionPanel = null; 
+  let clickTimer = null; 
+
+  const playerHandEl = document.getElementById('playerHand');
+  const computerHandEl = document.getElementById('computerHand');
+  const playerSlotsEl = document.getElementById('playerSlots');
+  const computerSlotsEl = document.getElementById('computerSlots');
+  const logEl = document.getElementById('battleLog');
+  const turnPanel = document.getElementById('turnPanel');
+  const endTurnBtn = document.getElementById('endTurnBtn');
+  const playerGlobalHP = document.getElementById('playerGlobalHP');
+  const computerGlobalHP = document.getElementById('computerGlobalHP');
+  const turnIndicator = document.getElementById('turnIndicator');
+
+  // Ultimate Handlers
+  window.activateUltimate = function(side) {
+    const char = side === 'player' ? playerCharacter : computerCharacter;
+    const kills = side === 'player' ? playerKills : computerKills;
+    
+    if (kills < 5) return;
+
+    if (side === 'player') playerKills -= 5;
+    else computerKills -= 5;
+    updateUltimates();
+
+    addLog(side, `*** ${char.name} activates ${char.abilityName}! ***`);
+
+    if (char.id === 'samurai') {
+      if (side === 'player') playerDamageBoost = 1;
+      else computerDamageBoost = 1;
+      addLog('system', `All ${side} attacks deal +50% damage this turn!`);
+    } 
+    else if (char.id === 'mage') {
+      const slots = side === 'player' ? playerSlots : computerSlots;
+      slots.forEach((slot, idx) => {
+        if (slot && slot.hp > 0) {
+          slot.hp = Math.min(MAX_HP, slot.hp + 40);
+          updateSlotUI(side, idx);
+          const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
+          showDamagePopup(slotEl, "+40", "#4cff91");
+        }
+      });
+    } 
+    else if (char.id === 'stranger') {
+      const enemySlots = side === 'player' ? computerSlots : playerSlots;
+      const enemySide = side === 'player' ? 'computer' : 'player';
+      
+      enemySlots.forEach((slot, idx) => {
+        if (slot && slot.hp > 0) {
+          slot.hp = Math.max(0, slot.hp - 20);
+          const slotEl = (enemySide === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
+          showDamagePopup(slotEl, "20", "#ff4444");
+
+          if(slot.hp <= 0) {
+            const cardEl = slotEl.querySelector('.card');
+            if (cardEl) cardEl.classList.add('die');
+            setTimeout(() => {
+              addToDiscardPile(slot.card, side === 'player' ? 'Computer' : 'Player', slot);
+              enemySlots[idx] = null;
+              renderAll();
+              recordKill(side); 
+              checkBattleOver();
+            }, 600);
+          } else {
+            updateSlotUI(enemySide, idx);
+          }
+        }
+      });
+      checkBattleOver();
+    }
+  }
+
+  function recordKill(killerSide) {
+    if (killerSide === 'player') playerKills++;
+    else computerKills++;
+    updateUltimates();
+  }
+
+  function updateUltimates() {
+    const pBtn = document.getElementById('playerUltBtn');
+    const cBtn = document.getElementById('computerUltBtn');
+    
+    if (pBtn) {
+      pBtn.textContent = `ULT (${Math.min(playerKills, 5)}/5)`;
+      if (playerKills >= 5) {
+        pBtn.classList.add('ready');
+        pBtn.disabled = false;
+      } else {
+        pBtn.classList.remove('ready');
+        pBtn.disabled = true;
+      }
+    }
+    if (cBtn) {
+      cBtn.textContent = `ULT (${Math.min(computerKills, 5)}/5)`;
+      if (computerKills >= 5) {
+        cBtn.classList.add('ready');
+      } else {
+        cBtn.classList.remove('ready');
+      }
+    }
+  }
+
+  function showCharacterSelect() {
+    const container = document.getElementById('charCardsContainer');
+    container.innerHTML = '';
+    
+    CHARACTERS.forEach(char => {
+      const card = document.createElement('div');
+      card.className = 'char-card-select';
+      card.innerHTML = `
+        <img src="${char.src}" alt="${char.name}">
+        <h3>${char.name}</h3>
+        <div class="ability-name">${char.abilityName}</div>
+        <div class="ability-desc">${char.abilityDesc}</div>
+      `;
+      card.onclick = () => selectCharacter(char.id);
+      container.appendChild(card);
+    });
+    
+    document.getElementById('charSelectOverlay').style.display = 'flex';
+  }
+
+  function selectCharacter(charId) {
+    playerCharacter = CHARACTERS.find(c => c.id === charId);
+    const others = CHARACTERS.filter(c => c.id !== charId);
+    computerCharacter = others[Math.floor(Math.random() * others.length)];
+    
+    document.getElementById('charSelectOverlay').style.display = 'none';
+    
+    document.getElementById('playerPortrait').src = playerCharacter.src;
+    document.getElementById('playerNameDisplay').textContent = playerCharacter.name;
+    document.getElementById('computerPortrait').src = computerCharacter.src;
+    document.getElementById('computerNameDisplay').textContent = computerCharacter.name;
+    
+    playerKills = 0; computerKills = 0;
+    playerDamageBoost = 0; computerDamageBoost = 0;
+    updateUltimates();
+
+    makeSlotsUI();
+    loadPlayerInventory();
+    buildComputerReserve();
+    fillComputerSlots();
+    renderAll();
+    decideFirstPlayer();
+    showTutorialIfNeeded();
+    
+    addLog('system','Place cards by clicking a hand card, then click an empty player slot.');
+    addLog('system','The battle will begin once you place your first card.');
+  }
+
+  function makeSlotsUI(){
+    playerSlotsEl.innerHTML = '';
+    computerSlotsEl.innerHTML = '';
+    for(let i=0;i<MAX_SLOTS;i++){
+      const ps = document.createElement('div'); ps.className='slot'; ps.dataset.i=i; ps.dataset.side='player';
+      ps.addEventListener('click', ()=>onSlotClick('player', i));
+      playerSlotsEl.appendChild(ps);
+      const cs = document.createElement('div'); cs.className='slot'; cs.dataset.i=i; cs.dataset.side='computer';
+      cs.addEventListener('click', ()=>onSlotClick('computer', i));
+      computerSlotsEl.appendChild(cs);
+    }
+  }
+
+function loadPlayerInventory(){
+  let stored = [];
+  try {
+    const storedData = localStorage.getItem('collectedCards');
+    if(storedData) stored = JSON.parse(storedData);
+    if(stored && Array.isArray(stored)) {
+      stored = stored.map(card => {
+        if(!card || !card.name) return null;
+        const matchingCard = cardPool.find(poolCard => 
+          poolCard.name === card.name || poolCard.src === card.src ||
+          poolCard.name.toLowerCase().includes(card.name.toLowerCase()) || card.name.toLowerCase().includes(poolCard.name.toLowerCase())
+        );
+        if(matchingCard) return { ...matchingCard };
+        return { src: card.src || "images/cards/default.jpg", name: card.name, hp: 80, attacks: [ { name: "Basic Attack", damage: 10, type: "physical", description: "A simple attack." } ] };
+      }).filter(card => card !== null);
+    } else { stored = []; }
+  } catch(e) { stored = []; }
+  if(!stored || stored.length === 0) stored = [...cardPool];
+  playerHand = stored.slice(0,10); 
+}
+
+function savePlayerInventory() {
+  try {
+    const simplifiedHand = playerHand.map(card => ({ name: card.name, src: card.src }));
+    localStorage.setItem('collectedCards', JSON.stringify(simplifiedHand));
+  } catch (e) {}
+}
+
+  function buildComputerReserve(){
+    const playerCardCount = playerHand.length;
+    const cp = [];
+    for(let i=0;i<playerCardCount;i++){
+      cp.push(cardPool[Math.floor(Math.random()*cardPool.length)]);
+    }
+    computerReserve = cp;
+  }
+
+function renderHand(side) {
+  const handEl = side === 'player' ? playerHandEl : computerHandEl;
+  const hand = side === 'player' ? playerHand : computerReserve;
+  handEl.innerHTML = '';
+  if (!hand) return;
+
+  if (window.innerWidth >= 600 && window.innerWidth <= 1200) {
+    hand.forEach((card, i) => {
+      const c = side === 'player' ? createHandCardEl(card, i, 'player') : createCardBackEl();
+      c.style.position = 'relative';
+      c.style.margin = '0 6px';
+      handEl.appendChild(c);
+    });
+    handEl.style.display = 'flex'; handEl.style.justifyContent = 'center'; handEl.style.alignItems = 'center';
+    handEl.style.position = 'relative'; handEl.style.height = '120px';
+    return;
+  }
+  
+  const cardWidth = 104;
+  const containerWidth = handEl.clientWidth || 400;
+  
+  if (side === 'player') {
+    if (hand.length === 0) return;
+    if (hand.length <= 3) {
+      hand.forEach((card, i) => {
+        const c = createHandCardEl(card, i, 'player');
+        c.style.position = 'relative'; c.style.margin = '0 5px';
+        handEl.appendChild(c);
+      });
+      return;
+    }
+    let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+    hand.forEach((card, i) => {
+      const c = createHandCardEl(card, i, 'player');
+      c.style.position = 'absolute'; c.style.left = `${i * overlap}px`; c.style.top = '0'; c.style.zIndex = i;
+      handEl.appendChild(c);
+    });
+    handEl.style.height = '120px'; handEl.style.position = 'relative';
+    return;
+  }
+  
+  if (side === 'computer') {
+    const usedReserveIndices = new Set();
+    computerSlots.forEach(slot => { if(slot && typeof slot.reserveIndex === 'number') usedReserveIndices.add(slot.reserveIndex); });
+    discardPile.forEach(entry => { if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') usedReserveIndices.add(entry.reserveIndex); });
+    const remainingCards = computerReserve.length - usedReserveIndices.size;
+    if (remainingCards <= 0) return;
+    if (remainingCards <= 3) {
+      for (let i = 0; i < remainingCards; i++) {
+        const c = createCardBackEl(); c.style.position = 'relative'; c.style.margin = '0 3px'; handEl.appendChild(c);
+      }
+      return;
+    }
+    let overlap = (containerWidth - cardWidth) / (remainingCards - 1);
+    overlap = Math.min(overlap, cardWidth * 0.4);
+    for (let i = 0; i < remainingCards; i++) {
+      const c = createCardBackEl(); c.style.position = 'absolute'; c.style.left = `${i * overlap}px`; c.style.top = '0'; c.style.zIndex = i; handEl.appendChild(c);
+    }
+    handEl.style.height = '120px'; handEl.style.position = 'relative'; handEl.style.overflow = 'visible';
+  }
+}
+
+function createCardBackEl(){
+  const el = document.createElement('div'); el.className = 'card'; el.style.width = '104px'; el.style.height = '140px'; el.style.cursor = 'default';
+  const img = document.createElement('img'); img.src = 'images/cards/card back.jpeg'; img.alt = 'Hidden Card'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+  el.appendChild(img);
+  return el;
+}
+
+function createHandCardEl(card, idx, side) {
+  const el = document.createElement('div');
+  el.className = 'card'; el.style.width = '104px'; el.style.height = '140px';
+  if (side === 'player') {
+    el.addEventListener('click', () => onHandClick(idx));
+    el.addEventListener('dblclick', () => { if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } showFullCardImage(card); });
+    el.style.cursor = 'pointer';
+  } else { el.style.cursor = 'default'; }
+  const img = document.createElement('img'); img.src = card.src; img.alt = card.name; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+  const stats = document.createElement('div'); stats.className = 'stats'; stats.innerHTML = `<div style="font-size:10px">${card.name}</div><div style="font-size:10px">HP:${card.hp}</div>`;
+  el.appendChild(img); el.appendChild(stats);
+  return el; 
+}
+    
+function showFullCardImage(card) {
+  if (window.innerWidth <= 768) return;
+  if (document.querySelector('.desktop-card-viewer')) return;
+  const backdrop = document.createElement('div'); backdrop.className = 'desktop-card-viewer';
+  const cardImage = document.createElement('img'); cardImage.src = card.src;
+  backdrop.appendChild(cardImage); document.body.appendChild(backdrop);
+  setTimeout(() => backdrop.classList.add('show'), 10);
+  backdrop.addEventListener('click', () => { backdrop.classList.remove('show'); setTimeout(() => backdrop.remove(), 300); });
+}
+
+function createReserveCardEl(card, idx){
+  const el = document.createElement('div'); el.className='card'; el.style.width='68px'; el.style.height='96px'; el.style.opacity='0.85'; el.style.transform='scale(.88)'; el.style.cursor='default';
+  const img = document.createElement('img'); img.src=card.src; img.alt=card.name;
+  const stats = document.createElement('div'); stats.className='stats'; stats.style.fontSize='9px'; stats.innerHTML = `<div>${card.name}</div>`;
+  el.appendChild(img); el.appendChild(stats);
+  const wrap = document.createElement('div'); wrap.style.width='68px'; wrap.style.height='96px'; wrap.appendChild(el);
+  return wrap;
+}
+
+function onSlotClick(side, idx){
+  if(side === 'player'){
+    if(selected && selected.type === 'hand'){
+      if(playerSlots[idx] === null){
+        const card = playerHand.splice(selected.index, 1)[0];
+        const attackCooldowns = {};
+        card.attacks.forEach((attack, attackIdx) => { if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { attackCooldowns[attackIdx] = 0; } });
+        playerSlots[idx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [], attackCooldowns: attackCooldowns };
+        selected = null; renderAll(); addLog('system', `Placed ${card.name} in player slot ${idx+1}`); checkBattleStart();
+      }
+    } else if(selected && selected.type === 'switching') {
+      if(idx !== selected.fromSlot && playerSlots[idx] === null) {
+        playerSlots[idx] = playerSlots[selected.fromSlot]; playerSlots[selected.fromSlot] = null;
+        addLog('player', `${playerSlots[idx].card.name} moved to slot ${idx+1}`);
+        clearSwitchHighlights(); selected = null; renderAll();
+      }
+    } else {
+      const slot = playerSlots[idx];
+      if(slot && playerTurn) {
+        if(slot.used) { addLog('system', `${slot.card.name} has already acted this turn.`); return; }
+        if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) { addLog('system', `${slot.card.name} cannot act due to status effects!`); return; }
+        hideActionPanel(); showCardActions('player', idx);
+      }
+    }
+  } else {
+    if(selected && selected.type === 'pattern-targeting') {
+      if(selected.validTargets.includes(idx)) {
+        performPatternAttack(selected.attackerIdx, selected.attackIndex, idx, selected.pattern);
+        clearTargetHighlights(); selected = null;
+      }
+    }
+  }
+}
+
+function onHandClick(index){
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+  clickTimer = setTimeout(() => {
+    hideActionPanel(); clearSelections(); selected = { type:'hand', index };
+    document.querySelectorAll('#playerHand .card').forEach((c,i) => { if(i===index) c.classList.add('selected'); else c.classList.remove('selected'); });
+  }, 250);
+} 
+  
+function showCardActions(side, idx){
+  if(side !== 'player' || !playerTurn) return;
+  if(turnIndicator.textContent.includes('Setup')) return;
+  
+  const slot = playerSlots[idx];
+  if(!slot || slot.used) return;
+  if(hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) { addLog('system', `${slot.card.name} cannot act due to status effects!`); return; }
+
+  hideActionPanel(); clearSelections();
+  const slotEl = playerSlotsEl.children[idx];
+  const cardEl = slotEl.querySelector('.card');
+  if(!cardEl) return;
+  cardEl.classList.add('selected');
+  
+  const panel = document.createElement('div'); panel.className = 'card-action-panel';
+  const rect = slotEl.getBoundingClientRect();
+  
+  if(window.innerWidth <= 1201) {
+    panel.style.position = 'fixed'; panel.style.bottom = '160px'; panel.style.left = '50%'; panel.style.transform = 'translateX(-50%)'; panel.style.top = 'auto'; panel.style.right = 'auto';
+  } else {
+    panel.style.left = (rect.right + 10) + 'px'; panel.style.top = rect.top + 'px';
+  }
+
+  slot.card.attacks.forEach((attack, attackIndex) => {
+    const isOnCooldown = isAttackOnCooldown(slot, attackIndex);
+    const cooldownTurns = getAttackCooldown(slot, attackIndex);
+    const pattern = attack.pattern || 'straight';
+    const validTargets = getValidTargets(idx, pattern, 'player');
+    const hasTargets = validTargets.length > 0;
+    const isDisabled = !hasTargets || isOnCooldown;
+    
+    const attackBtn = document.createElement('div');
+    attackBtn.className = `btn ${isDisabled ? 'disabled' : ''} ${isOnCooldown ? 'cooldown' : ''}`;
+    
+    let buttonText = "";
+    if(window.innerWidth <= 768) {
+      buttonText = attack.name;
+      if(attack.damage > 0) buttonText += ` (${attack.damage})`;
+      if(attack.effect) { const symbols = { 'stun': 'S', 'sleep': 'Z', 'poison': 'P', 'weaken': 'W' }; buttonText += ` [${symbols[attack.effect] || ''}]`; }
+      attackBtn.innerHTML = buttonText;
+    } else {
+      buttonText = attack.name;
+      if(attack.damage > 0) buttonText += ` (${attack.damage} dmg)`;
+      if(attack.effect) buttonText += ` [${attack.effect.toUpperCase()}]`;
+      if(isOnCooldown) buttonText += ` CD:${cooldownTurns}`;
+      if(!hasTargets && !isOnCooldown) buttonText += ` [NO TARGET]`;
+      attackBtn.innerHTML = buttonText;
+    }
+    
+    if(window.innerWidth <= 768 && attack.description) {
+      const desc = document.createElement('span'); desc.className = 'attack-desc'; desc.textContent = attack.description; attackBtn.appendChild(desc);
+    } else {
+      attackBtn.title = attack.description + (isOnCooldown ? ` - Cooldown: ${cooldownTurns} turns` : '');
+    }
+    if(isOnCooldown) attackBtn.setAttribute('data-cooldown', cooldownTurns);
+    
+    attackBtn.addEventListener('click', () => {
+      if(!isDisabled) {
+        hideActionPanel();
+        const isMultiTarget = ['cross', 'adjacent'].includes(pattern);
+        if(isMultiTarget && validTargets.length > 1) performMultiTargetAttack(idx, attackIndex, pattern);
+        else if(validTargets.length === 1) performPatternAttack(idx, attackIndex, validTargets[0], pattern);
+        else if(validTargets.length > 1) {
+          showValidTargets(idx, pattern, 'player');
+          addLog('system', `Select a target for ${attack.name}`);
+          selected = { type: 'pattern-targeting', attackerIdx: idx, attackIndex: attackIndex, validTargets: validTargets, pattern: pattern };
+        }
+      }
+    });
+    panel.appendChild(attackBtn);
+  });
+
+  const defendBtn = document.createElement('div'); defendBtn.className = 'btn';
+  if(window.innerWidth <= 768) { defendBtn.innerHTML = 'Defend<span class="attack-desc">Reduce damage by 50% until hit</span>'; } 
+  else { defendBtn.textContent = 'Defend'; defendBtn.title = 'Reduce damage by 50% until hit'; }
+  defendBtn.addEventListener('click', () => performDefend(idx));
+  panel.appendChild(defendBtn);
+
+  if(slot.card.mobile) {
+    const switchBtn = document.createElement('div'); switchBtn.className = 'btn';
+    if(window.innerWidth <= 768) { switchBtn.innerHTML = 'Switch Position<span class="attack-desc">Move to an empty slot</span>'; } 
+    else { switchBtn.textContent = 'Switch Position'; switchBtn.title = 'Move this card to an empty slot'; }
+    switchBtn.addEventListener('click', () => { hideActionPanel(); startSwitching(idx); });
+    panel.appendChild(switchBtn);
+  }
+
+  document.body.appendChild(panel); currentActionPanel = panel; selected = { side: 'player', idx };
+}
+
+function clearSelections(){ document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected')); selected = null; }
+function hideActionPanel(){ if(currentActionPanel){ currentActionPanel.remove(); currentActionPanel = null; } }
+
+function applyDamage(attacker, target, baseDamage) {
+  let finalDmg = baseDamage;
+  const isPlayerAttacker = playerSlots.includes(attacker);
+
+  // Apply Bushido perk (Samurai Boost)
+  if (isPlayerAttacker && playerDamageBoost > 0) finalDmg = Math.floor(finalDmg * 1.5);
+  if (!isPlayerAttacker && computerDamageBoost > 0) finalDmg = Math.floor(finalDmg * 1.5);
+
+  if(hasStatusEffect(attacker, 'weaken')) {
+    finalDmg = Math.floor(finalDmg * 0.7);
+    addLog('system', `${attacker.card.name}'s attack is weakened!`);
+  }
+
+  if(target.defending && finalDmg > 0) {
+    finalDmg = Math.ceil(finalDmg / 2);
+    target.defending = false; target.defendPersists = false;
+    const targetSlots = target === playerSlots.find(s => s === target) ? playerSlotsEl : computerSlotsEl;
+    const targetIdx = (target === playerSlots.find(s => s === target) ? playerSlots : computerSlots).indexOf(target);
+    const cardEl = targetSlots.children[targetIdx]?.querySelector('.card');
+    if(cardEl) cardEl.style.boxShadow = '';
+    addLog('system', `${target.card.name} defended – reduced damage!`);
+  }
+  return finalDmg;
+}
+
+function performUniqueAttack(attackerIdx, attackIndex){
+  const attacker = playerSlots[attackerIdx];
+  const targetIdx = attackerIdx; 
+  const target = computerSlots[targetIdx];
+  if(!attacker || !target || attacker.used) return;
+
+  const attack = attacker.card.attacks[attackIndex];
+  if(!attack) return;
+
+  const attackerSlotEl = playerSlotsEl.children[attackerIdx]; const targetSlotEl = computerSlotsEl.children[targetIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card'); const targetCardEl = targetSlotEl.querySelector('.card');
+  
+  let finalDmg = attack.damage;
+  if(target.defending && finalDmg > 0){ finalDmg = Math.ceil(finalDmg/2); target.defending = false; addLog('system', `${target.card.name} defended – reduced damage!`); }
+
+  if(attackerCardEl && targetCardEl && finalDmg > 0) {
+    createFlyingProjectile(attackerCardEl, targetCardEl, (damageToApply) => {
+      showDamagePopup(targetSlotEl, damageToApply, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+      target.hp = Math.max(0, target.hp - damageToApply);
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${damageToApply} damage`);
+      applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+      
+      if(target.hp <= 0){
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => { 
+            addToDiscardPile(target.card, 'Computer', target); computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); 
+          }, 600);
+        }, 200);
+      } else { updateSlotUI('computer', targetIdx); checkBattleOver(); }
+    }, finalDmg);
+  } else {
+    addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+    applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+    if(attack.effect === 'poison' && attack.damage > 0) {
+      setTimeout(() => {
+        showDamagePopup(targetSlotEl, attack.damage, '#8B4513');
+        target.hp = Math.max(0, target.hp - attack.damage);
+        addLog('system', `${target.card.name} takes ${attack.damage} poison damage`);
+        if(target.hp <= 0){
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(()=>{ addToDiscardPile(target.card, 'Computer', target); computerSlots[targetIdx] = null; renderAll(); checkBattleOver(); }, 600);
+          }, 200);
+        } else { updateSlotUI('computer', targetIdx); checkBattleOver(); }
+      }, 500);
+    } else { checkBattleOver(); }
+  }
+  hideActionPanel(); renderAll();
+}
+
+function performPatternAttack(attackerIdx, attackIndex, targetIdx, pattern) {
+  const attacker = playerSlots[attackerIdx];
+  const target = computerSlots[targetIdx];
+  const attack = attacker.card.attacks[attackIndex];
+
+  if(!attacker || !target) return;
+  attacker.used = true;
+
+  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN; }
+
+  const attackerSlotEl = playerSlotsEl.children[attackerIdx]; const targetSlotEl = computerSlotsEl.children[targetIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card'); const targetCardEl = targetSlotEl.querySelector('.card');
+  if(!attackerCardEl || !targetCardEl) return;
+
+  let finalDmg = applyDamage(attacker, target, attack.damage);
+  if(attack.effect) applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+
+  const animationClass = getAttackAnimation(attackerIdx, targetIdx, pattern || 'straight', 'player');
+  attackerCardEl.classList.add(animationClass);
+  const animTiming = getAnimationTiming(animationClass);
+
+  setTimeout(() => {
+    if(finalDmg > 0) {
+      createImpactEffect(targetSlotEl, pattern || 'straight');
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => { targetCardEl.classList.remove('hit', 'flash'); }, 400);
+      target.hp = Math.max(0, target.hp - finalDmg);
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name} for ${finalDmg} damage`);
+    
+      if(target.hp <= 0) {
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => {
+            addToDiscardPile(target.card, 'Computer', target);
+            computerSlots[targetIdx] = null;
+            renderAll();
+            recordKill('player'); 
+            checkBattleOver();
+        }, 600);
+      }, 200);
+    } else {
+      updateSlotUI('computer', targetIdx); 
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+      checkBattleOver();
+    }
+  } else {
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}`);
+      checkBattleOver();
+  }
+}, animTiming * 0.6);
+
+setTimeout(() => {
+  attackerCardEl.classList.add('used'); attackerCardEl.classList.remove(animationClass);
+}, animTiming);
+  hideActionPanel();
+}
+
+function performMultiTargetAttack(attackerIdx, attackIndex, pattern) {
+  const attacker = playerSlots[attackerIdx];
+  const attack = attacker.card.attacks[attackIndex];
+  const validTargets = getValidTargets(attackerIdx, pattern, 'player');
+  if(validTargets.length === 0) return;
+  attacker.used = true;
+  
+  if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
+  
+  const attackerSlotEl = playerSlotsEl.children[attackerIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card');
+  const animationClass = getAttackAnimation(attackerIdx, validTargets[0], pattern, 'player');
+  attackerCardEl.classList.add(animationClass);
+  
+  validTargets.forEach((targetIdx, i) => {
+    setTimeout(() => {
+      const target = computerSlots[targetIdx];
+      if(!target) return;
+      const targetSlotEl = computerSlotsEl.children[targetIdx];
+      const targetCardEl = targetSlotEl.querySelector('.card');
+      let finalDmg = applyDamage(attacker, target, attack.damage);
+      if (attack.effect) applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+      
+      if(finalDmg > 0) {
+        createImpactEffect(targetSlotEl, attack.pattern);
+        showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+        target.hp = Math.max(0, target.hp - finalDmg);
+        addLog('player', `${attacker.card.name}'s ${attack.name} hits ${target.card.name} for ${finalDmg} damage!`);
+        
+        if(target.hp <= 0) {
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(() => {
+              addToDiscardPile(target.card, 'Computer', target);
+              computerSlots[targetIdx] = null;
+              renderAll();
+              recordKill('player');
+            }, 600);
+          }, 200);
+        } else { updateSlotUI('computer', targetIdx); }
+      }
+    }, i * 250);
+  });
+  
+  setTimeout(() => {
+    attackerCardEl.classList.add('used'); attackerCardEl.classList.remove(animationClass); checkBattleOver();
+  }, 1000 + (validTargets.length * 250));
+  
+  const hitCount = validTargets.length;
+  addLog('player', `${attacker.card.name} uses ${attack.name} hitting ${hitCount} target${hitCount > 1 ? 's' : ''}!`);
+  hideActionPanel();
+}
+
+function performDefend(slotIdx){
+  const slot = playerSlots[slotIdx];
+  if(!slot || slot.used) return;
+  slot.used = true; slot.defending = true; slot.defendPersists = true; 
+  const slotEl = playerSlotsEl.children[slotIdx]; const cardEl = slotEl.querySelector('.card');
+  if(cardEl){ cardEl.classList.add('defending-anim'); setTimeout(()=>cardEl.classList.remove('defending-anim'), 600); cardEl.style.boxShadow = '0 0 15px rgba(56,239,125,0.9)'; }
+  addLog('player', `${slot.card.name} assumes a defensive stance (persists until hit)`);
+  hideActionPanel(); renderAll();
+}
+
+function startSwitching(fromSlotIdx) {
+  const slot = playerSlots[fromSlotIdx];
+  if(!slot || slot.used) return;
+  slot.used = true;
+  if (slot.card.name === "Sumo Toad" || slot.card.name === "Horny Toad") {
+    [fromSlotIdx - 1, fromSlotIdx + 1].forEach(i => { if(i >= 0 && i < playerSlots.length && playerSlots[i] === null) playerSlotsEl.children[i].classList.add('switch-target'); });
+    addLog('system', `Select an adjacent empty slot to move ${slot.card.name}`);
+  } else {
+    playerSlots.forEach((s, i) => { if(i !== fromSlotIdx && s === null) playerSlotsEl.children[i].classList.add('switch-target'); });
+    addLog('system', `Select any empty slot to move ${slot.card.name}`);
+  }
+  selected = { type: 'switching', fromSlot: fromSlotIdx };
+}
+
+function computerTurn(){
+  if(turnIndicator.textContent.includes('Setup')) return;
+  turnIndicator.textContent = 'Computer Turn'; endTurnBtn.classList.add('disabled'); addLog('system', 'Computer is thinking...');
+  computerSlots.forEach(slot => {
+    if(slot) {
+      if(!slot.attackCooldowns) { slot.attackCooldowns = {}; slot.card.attacks.forEach((attack, attackIdx) => { if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { slot.attackCooldowns[attackIdx] = 0; } }); }
+    }
+  });
+    
+  setTimeout(()=>{
+    processStatusEffects('computer');
+    computerSlots.forEach((slot, idx) => {
+      if(slot) {
+        slot.used = false; slot.defending = false;
+        const slotEl = computerSlotsEl.children[idx]; const cardEl = slotEl?.querySelector('.card');
+        if(cardEl) cardEl.classList.remove('used');
+        if(!slot.attackCooldowns) { slot.attackCooldowns = {}; slot.card.attacks.forEach((attack, idx) => { if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { slot.attackCooldowns[idx] = 0; } }); }
+        if(slot.attackCooldowns) { Object.keys(slot.attackCooldowns).forEach(attackIdx => { if(slot.attackCooldowns[attackIdx] > 0) { slot.attackCooldowns[attackIdx]--; } }); }
+      }
+    });
+    renderAll(); 
+    setTimeout(() => {
+      if(!computerSlots.some(slot => slot && slot.hp > 0)) { addLog('system', 'All computer cards are defeated - player wins!'); setTimeout(() => checkBattleOver(), 500); return; }
+      performComputerActions();
+    }, 500);
+  }, 800);
+}
+
+let computerAggression = 1.0;
+
+function performComputerActions() {
+  if (computerKills >= 5) { window.activateUltimate('computer'); setTimeout(performComputerActions, 1500); return; }
+  if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
+
+  const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
+    .filter(item => item.slot && item.slot.hp > 0 && !item.slot.used && !hasStatusEffect(item.slot, 'stun') && !hasStatusEffect(item.slot, 'sleep') );
+
+  if (activeComputerSlots.length === 0) {
+    const computerCardCount = computerSlots.filter(s => s).length;
+    const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
+    if (canPlaceCard) {
+      const threatIdx = getHighestThreatPlayerSlot();
+      const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+      let targetSlot = emptySlots.includes(threatIdx) ? threatIdx : emptySlots[0];
+      if (computerPlaceCard(targetSlot)) { computerTurnHistory.push('place'); }
+    } else { addLog('system', 'Computer has no available actions this turn.'); }
+    setTimeout(endComputerTurn, 800); return;
+  }
+
+  const computerHP = getTotalHealth('computer'); const playerHP = getTotalHealth('player');
+  const hpRatio = computerHP / Math.max(playerHP, 1);
+  const cardDiff = computerSlots.filter(s => s).length - playerSlots.filter(s => s).length;
+  let aggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
+
+  const isCornered = computerHP < playerHP * 0.5 || (computerReserve.length === 0 && computerSlots.filter(s => s).length <= 1);
+  if (isCornered) { aggression = Math.min(2.5, aggression + 0.8); addLog('system', '...'); } 
+  else if (computerHP < playerHP) { aggression += 0.3; }
+
+  const retreatAllowed = !isCornered && hpRatio > 0.4;
+  const lastMoves = computerTurnHistory.slice(-2);
+  const forceAttack = lastMoves.every(m => m === 'defend' || m === 'switch') || isCornered;
+
+  const possibleMoves = [];
+
+  activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
+    if (!slot.attackCooldowns) slot.attackCooldowns = {};
+    const canKO = playerSlots.some((ps, pi) => {
+      if (!ps) return false;
+      return slot.card.attacks.some((a, ai) => {
+        if (isAttackOnCooldown(slot, ai)) return false;
+        const targets = getValidTargets(attackerIdx, a.pattern, 'computer');
+        return targets.includes(pi) && a.damage >= ps.hp;
+      });
+    });
+
+    if (slot.hp < MAX_HP * 0.35 && !canKO && !isCornered && retreatAllowed && (!slot._streak || slot._streak.defend < 2)) {
+      possibleMoves.push({ type: 'defend', score: 10 - slot.hp / 10, attackerIdx });
+    }
+
+    if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
+      const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+      emptySlots.forEach(destIdx => {
+        if (destIdx === attackerIdx) return;
+        let moveScore = 0;
+        const targetsFromDest = slot.card.attacks.flatMap(a => getValidTargets(destIdx, a.pattern, 'computer'));
+        const targetsFromCurrent = slot.card.attacks.flatMap(a => getValidTargets(attackerIdx, a.pattern, 'computer'));
+        const newTargets = targetsFromDest.filter(t => !targetsFromCurrent.includes(t));
+        const lostTargets = targetsFromCurrent.filter(t => !targetsFromDest.includes(t));
+
+        newTargets.forEach(t => { if (playerSlots[t]) { moveScore += 15 + getPlayerCardThreat(playerSlots[t]) * 0.5; } });
+        moveScore -= lostTargets.length * 10;
+        if (targetsFromDest.includes(getHighestThreatPlayerSlot())) moveScore += 20;
+
+        const dangerAtCurrent = playerSlots.filter((ps, pi) => { if (!ps) return false; return ps.card.attacks.some(a => getValidTargets(pi, a.pattern, 'player').includes(attackerIdx)); }).length;
+        const dangerAtDest = playerSlots.filter((ps, pi) => { if (!ps) return false; return ps.card.attacks.some(a => getValidTargets(pi, a.pattern, 'player').includes(destIdx)); }).length;
+
+        if (dangerAtCurrent > 0 && dangerAtDest === 0 && retreatAllowed) moveScore += 25;
+        if (dangerAtDest > dangerAtCurrent) { moveScore -= isCornered ? 5 * (dangerAtDest - dangerAtCurrent) : 20 * (dangerAtDest - dangerAtCurrent); }
+        if (slot.hp < MAX_HP * 0.4 && dangerAtDest === 0 && retreatAllowed) moveScore += 15;
+        if (slot.hp < MAX_HP * 0.4 && isCornered && newTargets.length > 0) moveScore += 20;
+        if (['cross', 'wide', 'adjacent'].includes(slot.card.attacks[0]?.pattern)) { moveScore += (MAX_SLOTS / 2 - Math.abs(destIdx - (MAX_SLOTS - 1) / 2)) * 3; }
+        if (moveScore > 10) { possibleMoves.push({ type: 'switch', score: moveScore, attackerIdx, targetIdx: destIdx }); }
+      });
+    }
+
+    slot.card.attacks.forEach((attack, attackIdx) => {
+      if (isAttackOnCooldown(slot, attackIdx)) return;
+      const validTargets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+      validTargets.forEach(targetIdx => {
+        const target = playerSlots[targetIdx];
+        if (!target) return;
+        let score = 0;
+        const playerAlive = playerSlots.filter(s => s && s.hp > 0).length;
+        if (playerAlive === 1 && attack.damage >= target.hp) score += 100;
+        const threatScore = getPlayerCardThreat(target);
+        if (attack.effect && !hasStatusEffect(target, attack.effect)) score += threatScore * 1.5;
+        if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 20;
+        if (['cross', 'wide', 'adjacent'].includes(attack.pattern) && validTargets.length > 1) score += 10 * validTargets.length;
+        score += attack.damage * aggression;
+        if (aggression > 1.2 && attack.effect) score += 15;
+        if (forceAttack) score += 30;
+        possibleMoves.push({ type: 'attack', score, attackerIdx, attack, attackIdx, targetIdx });
+      });
+    });
+  });
+
+  const computerCardCount = computerSlots.filter(s => s).length;
+  const playerCardCount = playerSlots.filter(s => s).length;
+  const canPlaceCard = computerCardCount < MAX_SLOTS && computerReserve.length > 0;
+  
+  let placementScore = 0;
+  if (canPlaceCard) {
+    if (playerCardCount >= computerCardCount) placementScore += 30;
+    if (computerCardCount < MAX_SLOTS - 1 && computerReserve.length > 1) placementScore += 15;
+    if (computerHP > playerHP * 1.2) placementScore += 20;
+    if (computerHP < playerHP * 0.6) placementScore += 25;
+    placementScore += computerSlots.filter(s => s === null).length * 8;
+    if (computerCardCount > playerCardCount && computerHP > playerHP) placementScore -= 20;
+    if (computerTurnHistory.slice(-1)[0] === 'switch') placementScore -= 10;
+  }
+
+  const shouldPlaceCard = canPlaceCard && placementScore > 20;
+  if (shouldPlaceCard) {
+    const threatIdx = getHighestThreatPlayerSlot();
+    const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+    let targetSlot = emptySlots.includes(threatIdx) ? threatIdx : emptySlots[0];
+    if (computerPlaceCard(targetSlot)) { computerTurnHistory.push('place'); setTimeout(performComputerActions, 1200); return; }
+  }
+
+  const bestMove = possibleMoves.reduce((best, move) => move.score > best.score ? move : best, { score: -1 });
+
+  if (!bestMove || bestMove.score === -1 || !bestMove.type) { addLog('system', 'Computer hesitates.'); setTimeout(endComputerTurn, 800); return; }
+
+  if (bestMove && bestMove.type) {
+    computerTurnHistory.push(bestMove.type);
+    if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
+    if (bestMove.type === 'defend' || bestMove.type === 'switch') { updateDefendSwitchStreak(computerSlots[bestMove.attackerIdx], bestMove.type); } 
+    else if (bestMove.type === 'attack') { updateDefendSwitchStreak(computerSlots[bestMove.attackerIdx], 'attack'); }
+
+    if (bestMove.type === 'attack') { executeComputerAttack(bestMove); } 
+    else if (bestMove.type === 'switch') { executeComputerSwitch(bestMove); } 
+    else if (bestMove.type === 'defend') { performComputerDefend(bestMove.attackerIdx); }
+  }
+
+  setTimeout(() => {
+    const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
+      .filter(item => item.slot && item.slot.hp > 0 && !item.slot.used && !hasStatusEffect(item.slot, 'stun') && !hasStatusEffect(item.slot, 'sleep') );
+    if (activeComputerSlots.length === 0) { addLog('system', 'Computer has no more actions.'); endComputerTurn(); } 
+    else { performComputerActions(); }
+  }, 1800);
+}
+
+function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
+  const attacker = computerSlots[attackerIdx];
+  if (!attacker) return;
+  attacker.used = true;
+  const attackerSlotEl = computerSlotsEl.children[attackerIdx];
+  const targetSlotEl = playerSlotsEl.children[targetIdx];
+  const attackerCardEl = attackerSlotEl.querySelector('.card');
+  const targetCardEl = targetSlotEl.querySelector('.card');
+  const target = playerSlots[targetIdx];
+
+  if (attack.effect) {
+    const alreadyHas = hasStatusEffect(target, attack.effect);
+    if (['stun', 'sleep', 'poison'].includes(attack.effect)) {
+      if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+      attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+    }
+    if (attack.effect === 'weaken') {
+      const weakenCount = target.statusEffects ? target.statusEffects.filter(e => e.type === 'weaken').length : 0;
+      if (weakenCount < 3) applyStatusEffect(target, 'weaken', attack.duration, attacker.card.name);
+    } else if (!alreadyHas) {
+      applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+    }
+  }
+
+  addLog('computer', `Computer's ${attacker.card.name} uses ${attack.name} on ${target.card.name}!`);
+
+  const animationClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+  attackerCardEl.classList.add(animationClass);
+  const animTiming = getAnimationTiming(animationClass);
+
+  setTimeout(() => {
+    let finalDmg = applyDamage(attacker, target, attack.damage);
+    if (finalDmg > 0) {
+      createImpactEffect(targetSlotEl, attack.pattern);
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+
+      target.hp = Math.max(0, target.hp - finalDmg);
+      if (target.hp <= 0) {
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => {
+            addToDiscardPile(target.card, 'Player', target);
+            playerSlots[targetIdx] = null;
+            renderAll();
+            recordKill('computer');
+            checkBattleOver();
+          }, 600);
+        }, 200);
+      } else updateSlotUI('player', targetIdx);
+    }
+    checkBattleOver();
+  }, animTiming * 0.6);
+
+  setTimeout(() => {
+    attackerCardEl.classList.remove(animationClass);
+    if (attackerCardEl) attackerCardEl.classList.add('used');
+    updateSlotUI('computer', attackerIdx);
+  }, animTiming);
+}
+
+function executeComputerSwitch({ attackerIdx, targetIdx }) {
+  const temp = computerSlots[attackerIdx];
+  computerSlots[attackerIdx] = null; computerSlots[targetIdx] = temp;
+  addLog('system', `Computer moves ${temp.card.name} from slot ${attackerIdx + 1} to ${targetIdx + 1}.`);
+  renderAll(); temp.used = true; updateSlotUI('computer', targetIdx);
+}
+
+function getTotalHealth(side) {
+    const slots = side === 'player' ? playerSlots : computerSlots;
+    return slots.reduce((total, slot) => total + (slot ? slot.hp : 0), 0);
+}
+
+function performComputerDefend(slotIdx){
+  const slot = computerSlots[slotIdx];
+  if(!slot) return;
+  slot.used = true; slot.defending = true;
+  const slotEl = computerSlotsEl.children[slotIdx]; const cardEl = slotEl.querySelector('.card');
+  if(cardEl){ cardEl.classList.add('defending-anim'); setTimeout(()=>cardEl.classList.remove('defending-anim'), 600); }
+  addLog('computer', `${slot.card.name} takes a defensive stance`);
+  renderAll();
+}
+
+function endComputerTurn(){
+  playerTurn = true;
+  computerDamageBoost = 0;   
+  turnIndicator.textContent = 'Player Turn';
+  endTurnBtn.classList.remove('disabled');
+  addLog('system', 'Computer turn ends. Player turn begins.');
+  processStatusEffects('player');
+  
+  playerSlots.forEach(slot => {
+    if(slot) {
+      slot.used = false; slot.defending = false; slot.defendPersists = false;
+      if(slot.attackCooldowns) {
+        Object.keys(slot.attackCooldowns).forEach(attackIdx => {
+          if(slot.attackCooldowns[attackIdx] > 0) {
+            slot.attackCooldowns[attackIdx]--;
+          }
+        });
+      }
+    }
+  });
+  addLog('system', 'Player turn begins');
+  renderAll();
+}
+
+function showDamagePopup(container, damage, color){
+  const popup = document.createElement('div'); popup.className='dmg-pop'; popup.style.color = color || '#ff4444'; popup.textContent = `-${damage}`; popup.style.left = '50%'; popup.style.top = '10%';
+  container.style.position = 'relative'; container.appendChild(popup);
+  setTimeout(()=> popup.remove(), 1000);
+}
+
+function createImpactEffect(targetSlotEl, pattern) {
+  const impact = document.createElement('div');
+  switch(pattern) {
+    case 'diagonal': impact.style.cssText = `position: absolute; top: 0; left: 0; width: 150%; height: 3px; background: linear-gradient(90deg, transparent, var(--accent), transparent); transform: rotate(-45deg); animation: slashFlash 300ms ease-out; z-index: 100;`; break;
+    case 'knight': for(let i = 0; i < 3; i++) { setTimeout(() => { const ripple = document.createElement('div'); ripple.style.cssText = `position: absolute; top: 50%; left: 50%; width: 100%; height: 100%; border: 3px solid var(--accent); border-radius: 50%; animation: rippleExpand 600ms ease-out forwards; pointer-events: none; z-index: 100;`; targetSlotEl.appendChild(ripple); setTimeout(() => ripple.remove(), 600); }, i * 100); } return;
+    case 'cross': case 'wide': case 'adjacent': impact.style.cssText = `position: absolute; top: 50%; left: -20%; width: 140%; height: 4px; background: linear-gradient(90deg, transparent, var(--accent), var(--accent), transparent); animation: sweepFlash 400ms ease-out; z-index: 100;`; break;
+    case 'pierce': case 'straight': impact.style.cssText = `position: absolute; top: -10%; left: 50%; width: 4px; height: 120%; background: linear-gradient(180deg, var(--accent), transparent); transform: translateX(-50%); animation: pierceFlash 250ms ease-out; z-index: 100;`; break;
+    default: impact.style.cssText = `position: absolute; top: 50%; left: 50%; width: 80%; height: 80%; background: radial-gradient(circle, var(--accent), transparent); transform: translate(-50%, -50%); animation: impactFlash 300ms ease-out; z-index: 100;`;
+  }
+  targetSlotEl.style.position = 'relative'; targetSlotEl.appendChild(impact); setTimeout(() => impact.remove(), 500);
+}
+
+function applyStatusEffect(target, effect, duration, attackerName) {
+  if (!effect || !duration) return;
+  if (!target.statusEffects) target.statusEffects = [];
+  const type = effect.toLowerCase();
+  const stackLimits = { poison: 1, sleep: 1, stun: 1, weaken: 3 };
+  const maxStacks = stackLimits[type] ?? 1;
+  const existingEffects = target.statusEffects.filter(e => e.type === type && e.turnsRemaining > 0);
+  const currentStacks = existingEffects.length;
+
+  if (type !== 'weaken' && currentStacks >= 1) { addLog('system', `${target.card.name} is already affected by ${type}!`); return; }
+  if (type === 'weaken' && currentStacks >= maxStacks) { addLog('system', `${target.card.name} is already at max weaken stacks!`); return; }
+
+  target.statusEffects.push({ type, duration, attacker: attackerName, turnsRemaining: duration, justApplied: true });
+  const effectMessages = { stun: `${target.card.name} is stunned and cannot act!`, sleep: `${target.card.name} falls asleep!`, poison: `${target.card.name} is poisoned for ${duration} turns!`, weaken: `${target.card.name} is weakened! (-30% attack damage)` };
+  if (effectMessages[type]) addLog('system', effectMessages[type]);
+
+  setTimeout(() => {
+    let targetSlotEl = null; let targetIndex = -1;
+    targetIndex = computerSlots.indexOf(target);
+    if (targetIndex !== -1) { targetSlotEl = computerSlotsEl.children[targetIndex]; } 
+    else { targetIndex = playerSlots.indexOf(target); if (targetIndex !== -1) { targetSlotEl = playerSlotsEl.children[targetIndex]; } }
+    if (targetSlotEl) showStatusEffectPopup(targetSlotEl, type);
+  }, 600);
+}
+
+function processStatusEffects(side){
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  slots.forEach((slot, idx)=>{
+    if(!slot || !slot.statusEffects) return;
+    slot.statusEffects = slot.statusEffects.filter(effect=>{
+      if(effect.justApplied){ effect.justApplied = false; return true; }
+      if(effect.type === 'poison'){
+        const poisonDmg = 5; slot.hp = Math.max(0, slot.hp - poisonDmg); addLog('system', `${slot.card.name} takes ${poisonDmg} poison damage`);
+        const slotEl = slotsEl.children[idx];
+        if(slotEl) showDamagePopup(slotEl, poisonDmg, '#8B4513');
+        if(slot.hp <= 0){
+          addLog('system', `${slot.card.name} dies from poison!`); const parentEl = slotsEl.children[idx];
+          setTimeout(()=>{
+            const cardEl = parentEl && parentEl.querySelector('.card'); if(cardEl) cardEl.classList.add('die');
+            setTimeout(()=>{ const owner = side === 'player' ? 'Player' : 'Computer'; addToDiscardPile(slot.card, owner, slot); slots[idx] = null; renderAll(); checkBattleOver(); },600);
+          },400); return false; 
+        }
+      }
+      effect.turnsRemaining--;
+      if(effect.turnsRemaining <= 0){
+        const expiredMessages = { stun: `${slot.card.name} is no longer stunned!`, sleep: `${slot.card.name} wakes up!`, poison: `${slot.card.name} recovers from poison!`, weaken: `${slot.card.name} is no longer weakened!` };
+        if(expiredMessages[effect.type]) addLog('system', expiredMessages[effect.type]);
+        return false; 
+      }
+      return true; 
+    });
+    if(slot && slot.hp > 0) updateSlotUI(side, idx);
+  });
+  renderAll();
+}
+
+function hasStatusEffect(slot, effectType) {
+  if(!slot || !slot.statusEffects) return false; return slot.statusEffects.some(effect => effect.type === effectType && effect.turnsRemaining > 0);
+}
+
+function createStatusIcon(effectType, turnsRemaining, iconIndex = 0) {
+  const icon = document.createElement('div'); icon.className = `status-icon ${effectType}`; icon.style.setProperty('--icon-index', iconIndex);
+  const symbols = { poison: 'PSN', stun: 'STN', sleep: 'ZZZ', weaken: 'WKN' };
+  icon.textContent = symbols[effectType] || '?'; icon.title = `${effectType.toUpperCase()} (${turnsRemaining} turns remaining)`; return icon;
+}
+
+function showStatusEffectPopup(container, effectType) {
+  const popup = document.createElement('div'); popup.className = 'status-effect-popup';
+  const effects = { poison: { symbol: '☠ POISONED', color: '#8B4513' }, stun: { symbol: '⚡ STUNNED', color: '#FFD700' }, sleep: { symbol: '💤 ASLEEP', color: '#4169E1' }, weaken: { symbol: '⬇ WEAKENED', color: '#800080' } };
+  const effect = effects[effectType] || { symbol: '? UNKNOWN', color: '#fff' };
+  popup.style.color = effect.color; popup.textContent = effect.symbol;
+  container.style.position = 'relative'; container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1500);
+}
+
+function updateStatusIcons(slotElement, statusEffects) {
+  const existingIcons = slotElement.querySelectorAll('.status-icon');
+  existingIcons.forEach(icon => icon.remove());
+  if (statusEffects && statusEffects.length > 0) {
+    statusEffects.forEach((effect, index) => {
+      if (effect.turnsRemaining > 0) {
+        const displayTurns = effect.justApplied ? effect.turnsRemaining : effect.turnsRemaining;
+        slotElement.appendChild(createStatusIcon(effect.type, displayTurns, index));
+      }
+    });
+  }
+}
+
+function createFlyingProjectile(fromElement, toElement, callback, damage, animationClass = 'flying-attack') {
+  const projectile = fromElement.cloneNode(true); projectile.style.position = 'fixed'; projectile.style.pointerEvents = 'none'; projectile.style.zIndex = '2000';
+  const fromRect = fromElement.getBoundingClientRect(); const toRect = toElement.getBoundingClientRect();
+  const deltaX = toRect.left - fromRect.left; const deltaY = toRect.top - fromRect.top;
+  projectile.style.left = fromRect.left + 'px'; projectile.style.top = fromRect.top + 'px';
+  document.body.appendChild(projectile);
+  projectile.style.setProperty('--target-x', deltaX + 'px'); projectile.style.setProperty('--target-y', deltaY + 'px');
+  projectile.classList.add(animationClass);
+  setTimeout(() => { projectile.remove(); if(callback) callback(damage); }, 800);
+}
+
+function renderAll(){
+  for(let i=0;i<MAX_SLOTS;i++){
+    const pSlotEl = playerSlotsEl.children[i];
+    pSlotEl.innerHTML = ''; pSlotEl.classList.remove('occupied');
+    if(playerSlots[i]){
+      pSlotEl.classList.add('occupied'); const cardEl = makeBattleCardEl(playerSlots[i], 'player', i); pSlotEl.appendChild(cardEl);
+      const hpBar = createCardHPBar(playerSlots[i].hp, MAX_HP); pSlotEl.appendChild(hpBar); cardEl._hpBar = hpBar; 
+      updateStatusIcons(pSlotEl, playerSlots[i].statusEffects);
+    }
+    const cSlotEl = computerSlotsEl.children[i];
+    cSlotEl.innerHTML = ''; cSlotEl.classList.remove('occupied');
+    if(computerSlots[i]){
+      cSlotEl.classList.add('occupied'); const cardEl = makeBattleCardEl(computerSlots[i], 'computer', i); cSlotEl.appendChild(cardEl);
+      const hpBar = createCardHPBar(computerSlots[i].hp, MAX_HP); cSlotEl.appendChild(hpBar); cardEl._hpBar = hpBar; 
+      updateStatusIcons(cSlotEl, computerSlots[i].statusEffects);
+    }
+  }
+  renderHand('player'); renderHand('computer'); updateGlobalHPUI();
+}
+
+function makeBattleCardEl(slotObj, owner, slotIndex){
+  const wrap = document.createElement('div'); wrap.className = `card ${slotObj.used ? 'used' : ''}`; wrap.style.width='104px'; wrap.style.height='140px'; wrap.style.position = 'relative';
+  const img = document.createElement('img'); img.src = slotObj.card.src; img.alt = slotObj.card.name;
+  const stats = document.createElement('div'); stats.className='stats'; stats.innerHTML = `<div style="font-size:10px">${slotObj.card.name}</div><div class="card-hp" style="font-size:10px">HP: ${slotObj.hp}</div>`;
+  wrap.appendChild(img); wrap.appendChild(stats);
+  if(slotObj.defending){ wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)'; }
+  wrap.dataset.owner = owner; wrap.dataset.slot = slotIndex; wrap._hpEl = stats.querySelector('.card-hp');
+  return wrap;
+}
+
+function updateSlotUI(side, idx){
+  const slot = (side==='player' ? playerSlots[idx] : computerSlots[idx]);
+  const slotEl = (side==='player' ? playerSlotsEl : computerSlotsEl).children[idx];
+  if(slot && slotEl.firstChild){
+    const cardEl = slotEl.firstChild; const hpTextEl = cardEl.querySelector('.card-hp');
+    if(hpTextEl) hpTextEl.textContent = `HP: ${slot.hp}`;
+    const hpBar = cardEl._hpBar; if(hpBar) { updateCardHPBar(hpBar, slot.hp, MAX_HP); }
+    updateStatusIcons(slotEl, slot.statusEffects);
+  }
+  updateGlobalHPUI();
+}
+
+function createCardHPBar(currentHP, maxHP) {
+  const hpBar = document.createElement('div'); hpBar.className = 'card-hp-bar';
+  const segments = 8; const hpPerSegment = maxHP / segments;
+  for(let i = 0; i < segments; i++) {
+    const seg = document.createElement('div'); seg.className = 'hp-seg';
+    if(currentHP <= i * hpPerSegment) { seg.classList.add('empty'); } 
+    else if(currentHP < (i + 1) * hpPerSegment) {
+      if((currentHP - i * hpPerSegment) / hpPerSegment < 0.5) { seg.classList.add('critical'); } else { seg.classList.add('damaged'); }
+    }
+    hpBar.appendChild(seg);
+  }
+  return hpBar;
+}
+
+function updateCardHPBar(hpBarElement, currentHP, maxHP) {
+  if(!hpBarElement) return;
+  const segments = hpBarElement.querySelectorAll('.hp-seg');
+  const hpPerSegment = maxHP / segments.length;
+  segments.forEach((seg, i) => {
+    seg.classList.remove('empty', 'damaged', 'critical');
+    if(currentHP <= i * hpPerSegment) { seg.classList.add('empty'); } 
+    else if(currentHP < (i + 1) * hpPerSegment) {
+      if((currentHP - i * hpPerSegment) / hpPerSegment < 0.5) { seg.classList.add('critical'); } else { seg.classList.add('damaged'); }
+    }
+  });
+}
+
+function updateTurnState(){
+  if(!playerTurn) return;
+  const canAct = playerSlots.some(slot => slot && slot.hp > 0 && !slot.used);
+  if(!canAct){ addLog('system', 'All your cards have acted this turn'); }
+}
+
+function updateGlobalHPUI(){
+  const sumPlayer = playerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+  const sumComputer = computerSlots.reduce((s,slot)=> s + (slot?slot.hp:0), 0);
+  playerGlobalHP.innerHTML = ''; computerGlobalHP.innerHTML = '';
+  const totalPossible = MAX_SLOTS * MAX_HP;
+  const playerFrac = sumPlayer / totalPossible; const compFrac = sumComputer / totalPossible;
+  renderSegments(playerGlobalHP, playerFrac); renderSegments(computerGlobalHP, compFrac);
+}
+
+function renderSegments(container, fraction){
+  const segmentsToShow = fraction * SEGMENTS;
+  for(let i=0;i<SEGMENTS;i++){
+    const s = document.createElement('div'); s.className='seg';
+    const remain = segmentsToShow - i;
+    if(remain <= 0) { s.style.opacity = 0.12; } else if(remain < 1) { s.classList.add('half'); }
+    container.appendChild(s);
+  }
+}
+
+function checkBattleOver(){
+  const activePlayerSlots = playerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
+  const activeComputerSlots = computerSlots.map((s, i) => ({slot: s, index: i})).filter(item => item.slot && item.slot.hp > 0);
+  const playerHasCards = activePlayerSlots.length > 0; const computerHasCards = activeComputerSlots.length > 0;
+
+  if(!playerHasCards || !computerHasCards){
+    const result = computerHasCards ? 'defeat' : 'victory';
+    addLog('system', `Battle over: ${result.toUpperCase()}`);
+    setTimeout(() => showGameOver(result), 500);
+  }
+}
+
+function showGameOver(result) {
+  const overlay = document.getElementById('gameOverOverlay');
+  const textEl = document.getElementById('gameOverText');
+  const optionsEl = document.getElementById('gameOverOptions');
+  optionsEl.innerHTML = '';
+  textEl.textContent = result === 'victory' ? 'VICTORY' : 'DEFEAT';
+  textEl.className = `game-over-text ${result}`;
+
+  if (result === 'victory') {
+    const newCard = grantRandomCard();
+    const rewardPanel = document.createElement('div'); rewardPanel.className = 'reward-panel';
+    if (newCard) {
+      const rewardText = document.createElement('div'); rewardText.className = 'reward-text'; rewardText.textContent = 'You won a new card!'; rewardPanel.appendChild(rewardText);
+      const cardEl = createHandCardEl(newCard, -1, 'reward'); rewardPanel.appendChild(cardEl);
+    } else {
+      const rewardText = document.createElement('div'); rewardText.className = 'reward-text'; rewardText.textContent = 'You have collected all available cards!'; rewardPanel.appendChild(rewardText);
+    }
+    optionsEl.appendChild(rewardPanel);
+
+    const nextBtn = document.createElement('div'); nextBtn.className = 'btn'; nextBtn.textContent = 'Next Challenge'; nextBtn.onclick = () => resetGame();
+    const returnBtn = document.createElement('div'); returnBtn.className = 'btn'; returnBtn.textContent = 'Return to LazyToadStudios'; returnBtn.onclick = () => { window.location.href = 'index.html'; };
+    optionsEl.appendChild(nextBtn); optionsEl.appendChild(returnBtn);
+
+  } else { 
+    const retryBtn = document.createElement('div'); retryBtn.className = 'btn'; retryBtn.textContent = 'Retry'; retryBtn.onclick = () => resetGame();
+    const returnBtn = document.createElement('div'); returnBtn.className = 'btn'; returnBtn.textContent = 'Return to LazyToadStudios'; returnBtn.onclick = () => { window.location.href = 'index.html'; };
+    optionsEl.appendChild(retryBtn); optionsEl.appendChild(returnBtn);
+  }
+  overlay.style.display = 'flex'; setTimeout(() => { overlay.classList.add('show'); }, 10);
+}
+
+endTurnBtn.addEventListener('click', ()=>{
+  if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+  hideActionPanel(); clearSelections(); playerTurn = false; playerDamageBoost = 0;
+  addLog('system','Player ended their turn.');
+  if(!turnIndicator.textContent.includes('Setup')){ setTimeout(()=>computerTurn(), 500); }
+});
+
+function fillComputerSlots(){ computerSlots.fill(null); }
+
+function computerInitialPlacement(){
+  const emptySlots = []; for(let i = 0; i < MAX_SLOTS; i++){ if(computerSlots[i] === null) { emptySlots.push(i); } }
+  const playerOccupiedSlots = playerSlots.map((slot, idx) => slot ? idx : -1).filter(idx => idx !== -1);
+  const cardsToPlace = Math.min(Math.max(1, playerOccupiedSlots.length), 3, computerReserve.length);
+  const prioritySlots = playerOccupiedSlots.filter(idx => emptySlots.includes(idx));
+  const remainingSlots = emptySlots.filter(idx => !prioritySlots.includes(idx));
+  const targetSlots = [...prioritySlots, ...remainingSlots].slice(0, cardsToPlace);
+  
+  targetSlots.forEach((slotIdx, i) => {
+    if(i < computerReserve.length){
+      const card = computerReserve[i];
+      const attackCooldowns = {};
+      card.attacks.forEach((attack, attackIdx) => { if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { attackCooldowns[attackIdx] = 0; } });
+      computerSlots[slotIdx] = { card, hp: MAX_HP, defending: false, used: false, statusEffects: [], attackCooldowns: attackCooldowns, reserveIndex: i };
+    }
+  });
+  renderAll(); addLog('system', `Computer placed ${targetSlots.length} cards strategically.`);
+}
+
+function computerPlaceCard(){
+  const emptySlots = []; for(let i = 0; i < MAX_SLOTS; i++){ if(computerSlots[i] === null){ emptySlots.push(i); } }
+  if(emptySlots.length === 0) { return false; }
+  const usedCardIndices = new Set();
+  computerSlots.forEach(slot => { if(slot && typeof slot.reserveIndex === 'number') { usedCardIndices.add(slot.reserveIndex); } });
+  discardPile.forEach(entry => { if(entry.owner === 'Computer' && typeof entry.reserveIndex === 'number') { usedCardIndices.add(entry.reserveIndex); } });
+  const totalCardsUsed = usedCardIndices.size;
+  if(totalCardsUsed >= computerReserve.length) { return false; }
+  
+  let nextCardIndex = 0;
+  while(usedCardIndices.has(nextCardIndex) && nextCardIndex < computerReserve.length) { nextCardIndex++; }
+  if(nextCardIndex >= computerReserve.length) { return false; }
+  
+  const cardToPlace = computerReserve[nextCardIndex];
+  if(!cardToPlace) { return false; }
+  
+  const playerOccupiedSlots = playerSlots.map((slot, idx) => slot && slot.hp > 0 ? idx : -1).filter(idx => idx !== -1);
+  const goodSlots = emptySlots.filter(idx => playerOccupiedSlots.includes(idx));
+  const targetSlot = goodSlots.length > 0 ? goodSlots[Math.floor(Math.random() * goodSlots.length)] : emptySlots[Math.floor(Math.random() * emptySlots.length)];
+  
+  const attackCooldowns = {};
+  cardToPlace.attacks.forEach((attack, attackIdx) => { if(attack.effect && ['stun', 'sleep', 'poison'].includes(attack.effect)) { attackCooldowns[attackIdx] = 0; } });
+  computerSlots[targetSlot] = { card: cardToPlace, hp: MAX_HP, defending: false, defendPersists: false, used: false, statusEffects: [], attackCooldowns: attackCooldowns, reserveIndex: nextCardIndex };
+  renderAll(); renderHand('computer'); addLog('computer', `Computer placed ${cardToPlace.name} in slot ${targetSlot + 1}`);
+  return true;
+}
+
+function addLog(type, text){
+  const div = document.createElement('div'); div.className='entry ' + (type==='player'?'player':type==='computer'?'computer':'system'); div.textContent = text;
+  logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
+}
+
+document.addEventListener('click', (e) => {
+  if(currentActionPanel && !currentActionPanel.contains(e.target) && !e.target.closest('.slot') && !e.target.closest('.card')){ hideActionPanel(); clearSelections(); }
+});
+
+const discardPile = [];
+const discardPileEl = document.getElementById('discardPile');
+const discardedCardsEl = document.getElementById('discardedCards');
+const discardCountEl = document.getElementById('discardCount');
+
+function addToDiscardPile(card, owner, slot) {
+  const entry = { card, owner, timestamp: Date.now() };
+  if (slot && typeof slot.reserveIndex === 'number') { entry.reserveIndex = slot.reserveIndex; }
+  discardPile.push(entry);
+  discardPileEl.style.animation = 'none';
+  setTimeout(() => { discardPileEl.style.animation = 'statusPulse 0.5s ease-in-out'; }, 10);
+  renderDiscardPile();
+}
+
+function renderDiscardPile() {
+  discardedCardsEl.innerHTML = '';
+  const recentFirst = [...discardPile].reverse();
+  recentFirst.forEach((entry, idx) => {
+    const miniCard = document.createElement('div'); miniCard.className = 'mini-card'; miniCard.title = `${entry.card.name}\nDefeated by: ${entry.owner}`;
+    const img = document.createElement('img'); img.src = entry.card.src; img.alt = entry.card.name;
+    miniCard.appendChild(img); miniCard.addEventListener('click', () => showDiscardedCardDetails(entry)); discardedCardsEl.appendChild(miniCard);
+  });
+  discardCountEl.textContent = `${discardPile.length} defeated`;
+}
+
+function showDiscardedCardDetails(entry) {
+  const attacksList = entry.card.attacks.map(a => `• ${a.name} (${a.damage} dmg)`.replace(/undefined/g, '')).join('\n');
+  alert(`${entry.card.name}\n\nDefeated by: ${entry.owner}\nMax HP: ${MAX_HP}\n\nAttacks:\n${attacksList}`);
+}
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){ hideActionPanel(); clearSelections(); }
+  if(e.key === ' ' || e.key === 'Enter'){ if(playerTurn && !endTurnBtn.classList.contains('disabled')){ endTurnBtn.click(); e.preventDefault(); } }
+});
+
+function decideFirstPlayer(){
+  playerTurn = true; turnIndicator.textContent = 'Player Setup Phase'; endTurnBtn.classList.add('disabled'); 
+  addLog('system', 'Place your cards on the battlefield first.');
+}
+
+function checkBattleStart(){
+  const playerHasCards = playerSlots.some(slot => slot !== null);
+  if(playerHasCards && turnIndicator.textContent.includes('Setup')){
+    addLog('system', 'Computer is ready to battle...');
+    computerInitialPlacement();
+    setTimeout(() => {
+      const firstPlayer = Math.random() < 0.5;
+      if(firstPlayer){ turnIndicator.textContent = 'Player Turn'; addLog('system', 'Battle begins! Player goes first.'); playerTurn = true; endTurnBtn.classList.remove('disabled'); } 
+      else { turnIndicator.textContent = 'Computer Turn';  addLog('system', 'Battle begins! Computer goes first.'); playerTurn = false; endTurnBtn.classList.add('disabled'); setTimeout(()=>computerTurn(), 1000); }
+    }, 1500);
+  }
+}
+
+function showTutorialIfNeeded() {
+  const overlay = document.getElementById('tutorialOverlay'); if(!overlay) return;
+  const hasSeenTutorial = localStorage.getItem('toadBattle_tutorialSeen');
+  if(hasSeenTutorial) { overlay.style.display = 'none'; } else { overlay.style.display = 'flex'; }
+  const closeBtn = document.getElementById('tutorialClose');
+  if(closeBtn) { closeBtn.addEventListener('click', () => { overlay.style.display = 'none'; localStorage.setItem('toadBattle_tutorialSeen', 'true'); }); }
+}
+
+function grantRandomCard() {
+  let currentCards = [];
+  try { const storedData = localStorage.getItem('collectedCards'); if (storedData) { currentCards = JSON.parse(storedData); } } catch (e) { }
+  if (!currentCards || !Array.isArray(currentCards) || currentCards.length === 0) { currentCards = playerHand.map(card => ({ name: card.name, src: card.src })); }
+  const newCard = cardPool[Math.floor(Math.random() * cardPool.length)];
+  currentCards.push({ name: newCard.name, src: newCard.src });
+  try { localStorage.setItem('collectedCards', JSON.stringify(currentCards)); } catch (e) { }
+  return newCard;
+}
+
+function resetGame() {
+  const overlay = document.getElementById('gameOverOverlay'); overlay.classList.remove('show');
+  playerSlots = new Array(MAX_SLOTS).fill(null); computerSlots = new Array(MAX_SLOTS).fill(null); discardPile.length = 0; selected = null;
+  clearSelections(); hideActionPanel(); loadPlayerInventory(); buildComputerReserve();
+  playerTurn = true; turnIndicator.textContent = 'Player Setup Phase'; endTurnBtn.classList.add('disabled');
+  playerKills = 0; computerKills = 0; playerDamageBoost = 0; computerDamageBoost = 0; updateUltimates();
+  logEl.innerHTML = ''; addLog('system', 'Battle ready – place cards to begin.'); renderAll(); renderDiscardPile();
+}
+
+window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
+
+// START THE GAME BY SHOWING CHARACTER SELECT INSTEAD OF init()
+showCharacterSelect();
+
+function isAttackOnCooldown(slot, attackIndex) { if(!slot || !slot.attackCooldowns) return false; return slot.attackCooldowns[attackIndex] > 0; }
+function getAttackCooldown(slot, attackIndex) { if(!slot || !slot.attackCooldowns) return 0; return slot.attackCooldowns[attackIndex] || 0; }
+
+let touchTimer = null; let touchStarted = false;
+function addTouchHoldListeners() { document.addEventListener('touchstart', handleTouchStart, { passive: false }); document.addEventListener('touchend', handleTouchEnd); document.addEventListener('touchmove', handleTouchMove); }
+function handleTouchStart(e) { const card = e.target.closest('.hand .card'); if (!card || window.innerWidth > 768) return; touchStarted = true; touchTimer = setTimeout(() => { if (touchStarted) { expandCard(card); } }, 500); }
+function handleTouchMove(e) { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } touchStarted = false; }
+function handleTouchEnd(e) { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } touchStarted = false; if (e.target.classList.contains('touch-backdrop') || e.target.closest('.touch-expanded-image')) { collapseCard(); } }
+
+function expandCard(card) {
+  document.body.style.overflow = 'hidden';
+  const backdrop = document.createElement('div'); backdrop.className = 'touch-backdrop'; document.body.appendChild(backdrop);
+  const cardImg = card.querySelector('img'); const imageSrc = cardImg ? cardImg.src : '';
+  const expandedImage = document.createElement('img'); expandedImage.className = 'touch-expanded-image'; expandedImage.src = imageSrc; expandedImage.alt = cardImg ? cardImg.alt : 'Card Image';
+  expandedImage.style.cssText = `position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; max-width: 90vw !important; max-height: 90vh !important; width: auto !important; height: auto !important; z-index: 1000 !important; border: 3px solid var(--accent) !important; border-radius: 8px !important; box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important; object-fit: contain !important;`;
+  document.body.appendChild(expandedImage);
+  setTimeout(() => { backdrop.classList.add('show'); }, 10);
+  card._backdrop = backdrop; card._expandedImage = expandedImage;
+}
+
+function collapseCard() {
+  const expandedImage = document.querySelector('.touch-expanded-image'); if (!expandedImage) return;
+  let ownerCard = null; document.querySelectorAll('.hand .card').forEach(card => { if (card._expandedImage === expandedImage) { ownerCard = card; } });
+  expandedImage.remove();
+  if (ownerCard && ownerCard._backdrop) { ownerCard._backdrop.classList.remove('show'); setTimeout(() => { if (ownerCard._backdrop && ownerCard._backdrop.parentNode) { ownerCard._backdrop.parentNode.removeChild(ownerCard._backdrop); } ownerCard._backdrop = null; ownerCard._expandedImage = null; }, 300); }
+  document.body.style.overflow = '';
+}
+
+addTouchHoldListeners();
+})();
+</script>
+</body>
+</html>
