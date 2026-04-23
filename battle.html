@@ -2223,6 +2223,10 @@ function showCardActions(side, idx){
     addLog('system', `${slot.card.name} cannot act due to status effects!`);
     return;
   }
+  if(slot.disabled && slot.disabled > 0) {
+    addLog('system', `${slot.card.name} is DISABLED and cannot act!`);
+    return;
+  }
 
   hideActionPanel();
   clearSelections();
@@ -2737,9 +2741,11 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 }
 
   // computer AI: attacks opposite slots, defends sometimes
-    function computerTurn(){
+  function computerTurn(){
     // Don't start computer turn if we're still in setup phase
     if(turnIndicator.textContent.includes('Setup')) return;
+    // Don't run if it's the player's turn
+    if(playerTurn) return;
     
     turnIndicator.textContent = 'Computer Turn';
     endTurnBtn.classList.add('disabled');
@@ -2825,6 +2831,8 @@ slot.card.attacks.forEach((attack, attackIndex) => {
 let computerAggression = 1.0; // 1 = neutral, >1 = aggressive, <1 = defensive
 
 function performComputerActions() {
+  // Hard guard — never run during player's turn
+  if (playerTurn) return;
   // Track last moves for dynamic playstyle
   if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
 
@@ -2834,7 +2842,8 @@ function performComputerActions() {
       item.slot.hp > 0 &&
       !item.slot.used &&
       !hasStatusEffect(item.slot, 'stun') &&
-      !hasStatusEffect(item.slot, 'sleep')
+      !hasStatusEffect(item.slot, 'sleep') &&
+      !(item.slot.disabled && item.slot.disabled > 0)
     );
 
   if (activeComputerSlots.length === 0) {
@@ -3461,8 +3470,10 @@ function applyStatusEffect(target, effect, duration, attackerName) {
               const cardEl = parentEl && parentEl.querySelector('.card');
               if(cardEl) cardEl.classList.add('die');
               setTimeout(()=>{ 
-                const owner = side === 'player' ? 'Player' : 'Computer'; // Properly capitalize
+                const owner = side === 'player' ? 'Player' : 'Computer';
                 addToDiscardPile(slot.card, owner, slot);
+                // Credit the kill to the opposing side
+                recordKill(side === 'player' ? 'computer' : 'player');
                 slots[idx] = null; renderAll(); checkBattleOver(); },600);
             },400);
             return false; // remove effect (card dead)
