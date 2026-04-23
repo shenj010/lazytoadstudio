@@ -2082,32 +2082,43 @@ body::after {
     // ===================== END SPLIT BANNER JS =====================
 
     // 1. DATA ARRAY (Using your Artifact structure)
-        const galleryItems = [
-            { 
-                id: 'item-1', 
-                name: 'The Toad Pack', 
-                category: 'EQUIPMENT / STORAGE', 
-                desc: 'A rugged, weather-proof carrier used by marsh researchers to transport sensitive swamp samples.', 
-                stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'], 
-                images: ["images/Watcher site.jpg"] 
-            },
-            { 
-                id: 'item-2', 
-                name: 'Marsh Boots', 
-                category: 'EQUIPMENT / WEARABLE', 
-                desc: 'Specifically designed for navigation through deep mire and acidic pond water.', 
-                stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'], 
-                images: ["images/sails site.jpg"] 
-            },
-            { 
-                id: 'item-3', 
-                name: 'Elder Flute', 
-                category: 'ARTIFACT / MUSIC', 
-                desc: 'Carved from root-wood. Can calm the local wildlife if played correctly by an expert.', 
-                stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'], 
-                images: ["https://via.placeholder.com/600x600?text=Elder+Flute"] 
-            }
-        ];
+       const artworkData = {
+    'watcher': {
+        title: 'PTSD Machine',
+        category: 'Acrylic Painting',
+        description: 'An exploration of the mechanical nature of trauma and the recurring cycles of memory.',
+        image: 'images/Watcher site.jpg',
+        stats: ['YEAR: 2023', 'MEDIUM: Acrylic on Canvas', 'DIMENSIONS: 24x36']
+    },
+    'sails': {
+        title: 'Sails of Thought',
+        category: 'Acrylic Painting',
+        description: 'Visualizing the navigation through complex mental landscapes during recovery.',
+        image: 'images/sails site.jpg',
+        stats: ['YEAR: 2023', 'MEDIUM: Mixed Acrylic', 'STATUS: Private Collection']
+    },
+    'respite': {
+        title: 'Respite',
+        category: 'Gouache Painting',
+        description: 'A moment of stillness amidst the chaos of a post-war environment.',
+        image: 'images/1 Joe Shenton - Respite.jpg',
+        stats: ['YEAR: 2022', 'MEDIUM: Gouache on Paper', 'SERIES: After the War']
+    },
+    'routine': {
+        title: 'Transporter (Routine)',
+        category: 'Digital Illustration',
+        description: 'Daily life in a high-tech, low-life future where the mundane becomes mechanical.',
+        image: 'images/2 Joe Shenton - Routine.jpg',
+        stats: ['YEAR: 2021', 'TOOLS: Procreate', 'STYLE: Cyberpunk']
+    },
+    'temple': {
+        title: 'Quiet Day at the Beach',
+        category: 'Digital Painting',
+        description: 'The contrast between the ancient scale of the walking temples and the quiet serenity of the coastline.',
+        image: 'images/walking temple website.jpg',
+        stats: ['YEAR: 2023', 'TOOLS: Photoshop', 'THEME: Surrealism']
+    }
+};
 
         // 2. GRID INITIALIZATION
         // This function creates the thumbnails and sets up the click trigger
