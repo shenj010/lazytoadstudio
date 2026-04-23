@@ -1423,14 +1423,14 @@ html, body {
     <div class="game-container">
       <div class="arena" id="arena">
         <!-- COMPUTER AREA -->
-        <div class="area" id="computerArea">
-          <div class="player-info">
+        <div class="player-info">
             <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
             <div class="name" id="computerNameLabel">Computer</div>
             <div class="hp-bar" title="Computer total HP">
               <div class="hp-segments" id="computerGlobalHP"></div>
             </div>
-            <div style="height:6px"></div>
+            <div class="perk-kills" id="computerKillCount">Kills: <span>0</span>/3</div>
+            <div class="perk-btn perk-used" id="computerPerkBtn">PERK<br>LOCKED</div>
           </div>
 
           <div class="slots" id="computerSlots">
@@ -1471,14 +1471,14 @@ html, body {
 </div>
 
         <!-- PLAYER AREA -->
-        <div class="area" id="playerArea">
-          <div class="player-info">
+        <div class="player-info">
             <img id="playerPortrait" class="computer-portrait" src="" alt="Player" style="display:none">
             <div class="name" id="playerNameLabel">Player</div>
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
             </div>
-            <div style="height:6px"></div>
+            <div class="perk-kills" id="playerKillCount">Kills: <span>0</span>/3</div>
+            <button class="perk-btn" id="playerPerkBtn" disabled>PERK<br>LOCKED</button>
           </div>
 
           <div class="slots" id="playerSlots">
@@ -2109,8 +2109,17 @@ function renderHand(side) {
   }
 
   // slot click: either place a hand card there (if player slot) or show actions if occupied
-  function onSlotClick(side, idx){
+ function onSlotClick(side, idx){
   if(side === 'player'){
+    // Stranger perk: player picking a card to protect
+    if(strangerPickingMode) {
+      if(playerSlots[idx] && playerSlots[idx].hp > 0) {
+        strangerPickingMode = false;
+        document.querySelectorAll('.stranger-target').forEach(el => el.classList.remove('stranger-target'));
+        applyStrangerPerk('player', idx);
+      }
+      return;
+    }
     if(selected && selected.type === 'hand'){
       if(playerSlots[idx] === null){
         const card = playerHand.splice(selected.index, 1)[0];
@@ -2363,7 +2372,24 @@ slot.card.attacks.forEach((attack, attackIndex) => {
   // Apply damage with weaken and defend effects
   function applyDamage(attacker, target, baseDamage) {
     let finalDmg = baseDamage;
-  
+
+  // Block damage if target is immune
+    if (target.immune && target.immune > 0) {
+      addLog('system', `${target.card.name} is IMMUNE — no damage!`);
+      return 0;
+    }
+
+  // Block attacker if disabled
+    if (attacker.disabled && attacker.disabled > 0) {
+      addLog('system', `${attacker.card.name} is DISABLED and cannot attack!`);
+      return 0;
+    }
+
+  // Samurai perk: +20% damage boost
+    const isPlayerAttacker = playerSlots.includes(attacker);
+    if (isPlayerAttacker && playerPerkActive) finalDmg = Math.floor(finalDmg * 1.2);
+    if (!isPlayerAttacker && computerPerkActive) finalDmg = Math.floor(finalDmg * 1.2);
+
   // Apply weaken effect - percentage-based
     if(hasStatusEffect(attacker, 'weaken')) {
     finalDmg = Math.floor(finalDmg * 0.7); // 30% reduction
@@ -2450,6 +2476,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
             setTimeout(() => { 
               addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
+              recordKill('player');
               renderAll(); 
               checkBattleOver(); 
             }, 600);
@@ -2550,6 +2577,7 @@ slot.card.attacks.forEach((attack, attackIndex) => {
             setTimeout(() => {
               addToDiscardPile(target.card, 'Computer', target);
               computerSlots[targetIdx] = null;
+              recordKill('player');
               renderAll();
               checkBattleOver();
           }, 600);
@@ -2721,11 +2749,10 @@ slot.card.attacks.forEach((attack, attackIndex) => {
       }
     });
       
-  setTimeout(()=>{
-  // Process status effects on computer cards FIRST
-  processStatusEffects('computer');
-  // Reset ALL computer card used status and process cooldowns
-  computerSlots.forEach((slot, idx) => {
+ setTimeout(()=>{
+    if (computerPerkReady) computerUsePerk();
+    processStatusEffects('computer');
+    computerSlots.forEach((slot, idx) => {
     if(slot) {
       slot.used = false;
       slot.defending = false;
@@ -3131,6 +3158,7 @@ function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
           setTimeout(() => {
             addToDiscardPile(target.card, 'Player', target);
             playerSlots[targetIdx] = null;
+            recordKill('computer');
             renderAll();
             checkBattleOver();
           }, 600);
@@ -3191,6 +3219,7 @@ function getTotalHealth(side) {
   
   addLog('system', 'Computer turn ends. Player turn begins.');
   
+  tickPerkEffects('player');
   processStatusEffects('player');
   
   playerSlots.forEach(slot => {
@@ -3830,18 +3859,12 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
 
   // end turn button handler
   endTurnBtn.addEventListener('click', ()=>{
-    if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
-    
-    hideActionPanel();
-    clearSelections();
-    playerTurn = false;
-    addLog('system','Player ended their turn.');
-    
-    // Only start computer turn if we're past setup phase
-    if(!turnIndicator.textContent.includes('Setup')){
-      setTimeout(()=>computerTurn(), 500);
-    }
-  });
+  if(!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+  hideActionPanel(); clearSelections(); playerTurn = false;
+  tickPerkEffects('computer');
+  addLog('system','Player ended their turn.');
+  if(!turnIndicator.textContent.includes('Setup')){ setTimeout(()=>computerTurn(), 500); }
+});
 
   // place initial computer slots - but don't fill until player places cards
   function fillComputerSlots(){
@@ -4018,7 +4041,243 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
       clearSelections();
     }
   });
-// Random computer portrait
+// ========== PERK SYSTEM ==========
+let playerKills = 0;
+let computerKills = 0;
+let playerPerkReady = false;
+let computerPerkReady = false;
+let playerPerkActive = false; // samurai boost active
+let playerPerkTurnsLeft = 0;
+let computerPerkActive = false;
+let computerPerkTurnsLeft = 0;
+let strangerPickingMode = false; // player is picking a card for stranger perk
+
+function recordKill(killerSide) {
+  if (killerSide === 'player') {
+    playerKills++;
+    updatePerkUI('player');
+    if (playerKills >= 3 && !playerPerkReady) {
+      playerPerkReady = true;
+      updatePerkUI('player');
+      addLog('system', `★ ${playerCharacter ? playerCharacter.name : 'Player'} PERK READY! Click the perk button to activate.`);
+    }
+  } else {
+    computerKills++;
+    updatePerkUI('computer');
+    if (computerKills >= 3 && !computerPerkReady) {
+      computerPerkReady = true;
+      updatePerkUI('computer');
+      addLog('system', `★ ${computerCharacter ? computerCharacter.name : 'Computer'} perk is charged...`);
+    }
+  }
+}
+
+function updatePerkUI(side) {
+  if (side === 'player') {
+    const btn = document.getElementById('playerPerkBtn');
+    const counter = document.getElementById('playerKillCount');
+    if (!btn || !counter) return;
+    counter.innerHTML = `Kills: <span>${Math.min(playerKills, 3)}</span>/3`;
+    if (playerPerkReady) {
+      btn.className = 'perk-btn perk-ready';
+      btn.disabled = false;
+      btn.innerHTML = `${playerCharacter ? playerCharacter.perkName : 'PERK'}<br>READY!`;
+    } else {
+      btn.className = 'perk-btn';
+      btn.disabled = true;
+      btn.innerHTML = `PERK<br>LOCKED`;
+    }
+  } else {
+    const btn = document.getElementById('computerPerkBtn');
+    const counter = document.getElementById('computerKillCount');
+    if (!btn || !counter) return;
+    counter.innerHTML = `Kills: <span>${Math.min(computerKills, 3)}</span>/3`;
+    if (computerPerkReady) {
+      btn.className = 'perk-btn perk-ready';
+      btn.innerHTML = `${computerCharacter ? computerCharacter.perkName : 'PERK'}<br>READY!`;
+    } else {
+      btn.className = 'perk-btn perk-used';
+      btn.innerHTML = `PERK<br>LOCKED`;
+    }
+  }
+}
+
+function activatePlayerPerk() {
+  if (!playerPerkReady || !playerCharacter) return;
+  playerPerkReady = false;
+  playerKills -= 3;
+  updatePerkUI('player');
+
+  if (playerCharacter.id === 'samurai') {
+    playerPerkActive = true;
+    playerPerkTurnsLeft = 2;
+    addLog('player', `⚔ Bushido Fury! All attacks deal +20% damage for 2 turns!`);
+    // Flash all player cards
+    playerSlots.forEach((slot, i) => {
+      if (!slot) return;
+      const cardEl = playerSlotsEl.children[i].querySelector('.card');
+      if (cardEl) { cardEl.style.boxShadow = '0 0 16px rgba(255,193,7,0.9)'; setTimeout(() => { if(cardEl) cardEl.style.boxShadow = ''; }, 2000); }
+    });
+
+  } else if (playerCharacter.id === 'mage') {
+    showMageModal('player');
+
+  } else if (playerCharacter.id === 'stranger') {
+    startStrangerPick('player');
+  }
+}
+
+function showMageModal(side) {
+  const modal = document.createElement('div');
+  modal.className = 'mage-modal';
+  modal.id = 'mageModal';
+  modal.innerHTML = `
+    <h3>ARCANE HEX</h3>
+    <p>Choose a status effect to apply to ALL enemy cards</p>
+    <div class="mage-choices">
+      <div class="mage-choice-btn" data-effect="poison">☠ POISON<br><span style="font-size:7px;color:#aaa">5 dmg/turn</span></div>
+      <div class="mage-choice-btn" data-effect="sleep">💤 SLEEP<br><span style="font-size:7px;color:#aaa">Skip 2 turns</span></div>
+      <div class="mage-choice-btn" data-effect="weaken">⬇ WEAKEN<br><span style="font-size:7px;color:#aaa">-30% attack</span></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelectorAll('.mage-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const effect = btn.dataset.effect;
+      modal.remove();
+      applyMagePerk(side, effect);
+    });
+  });
+}
+
+function applyMagePerk(side, effect) {
+  const enemySlots = side === 'player' ? computerSlots : playerSlots;
+  const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+  const duration = effect === 'sleep' ? 2 : effect === 'poison' ? 3 : 2;
+  let count = 0;
+
+  enemySlots.forEach((slot, i) => {
+    if (!slot || slot.hp <= 0) return;
+    if (!hasStatusEffect(slot, effect)) {
+      applyStatusEffect(slot, effect, duration, side === 'player' ? playerCharacter.name : computerCharacter.name);
+      const slotEl = enemySlotsEl.children[i];
+      showStatusEffectPopup(slotEl, effect);
+      count++;
+    }
+  });
+
+  addLog(side === 'player' ? 'player' : 'computer',
+    `✦ Arcane Hex! ${effect.toUpperCase()} applied to ${count} enemy card${count !== 1 ? 's' : ''}!`);
+  renderAll();
+}
+
+function startStrangerPick(side) {
+  if (side === 'player') {
+    strangerPickingMode = true;
+    addLog('player', `👁 Ghost Ward: Click one of YOUR cards to grant immunity for 2 turns.`);
+    // Highlight all player cards as pickable
+    playerSlots.forEach((slot, i) => {
+      if (!slot || slot.hp <= 0) return;
+      playerSlotsEl.children[i].classList.add('stranger-target');
+    });
+  }
+}
+
+function applyStrangerPerk(side, friendlySlotIdx) {
+  // Grant immunity to chosen friendly card
+  const friendlySlots = side === 'player' ? playerSlots : computerSlots;
+  const friendlySlotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  const slot = friendlySlots[friendlySlotIdx];
+  if (!slot) return;
+
+  slot.immune = 2; // turns of immunity
+  const slotEl = friendlySlotsEl.children[friendlySlotIdx];
+  slotEl.classList.add('immune-glow');
+  addLog(side === 'player' ? 'player' : 'computer',
+    `🛡 ${slot.card.name} is IMMUNE for 2 turns!`);
+
+  // Disable a random enemy card for 2 turns
+  const enemySlots = side === 'player' ? computerSlots : playerSlots;
+  const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+  const liveEnemies = enemySlots.map((s, i) => s && s.hp > 0 ? i : -1).filter(i => i !== -1);
+
+  if (liveEnemies.length > 0) {
+    const targetIdx = liveEnemies[Math.floor(Math.random() * liveEnemies.length)];
+    enemySlots[targetIdx].disabled = 2;
+    enemySlotsEl.children[targetIdx].classList.add('disabled-glow');
+    addLog(side === 'player' ? 'player' : 'computer',
+      `💀 ${enemySlots[targetIdx].card.name} is DISABLED for 2 turns!`);
+  }
+
+  renderAll();
+}
+
+function tickPerkEffects(side) {
+  // Tick down samurai boost
+  if (side === 'player' && playerPerkActive) {
+    playerPerkTurnsLeft--;
+    if (playerPerkTurnsLeft <= 0) { playerPerkActive = false; addLog('system', 'Bushido Fury fades.'); }
+  }
+  if (side === 'computer' && computerPerkActive) {
+    computerPerkTurnsLeft--;
+    if (computerPerkTurnsLeft <= 0) { computerPerkActive = false; addLog('system', 'Computer\'s damage boost fades.'); }
+  }
+
+  // Tick down immunity and disabled states
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  slots.forEach((slot, i) => {
+    if (!slot) return;
+    if (slot.immune > 0) {
+      slot.immune--;
+      if (slot.immune <= 0) {
+        slotsEl.children[i].classList.remove('immune-glow');
+        addLog('system', `${slot.card.name}'s immunity expires.`);
+      }
+    }
+    if (slot.disabled > 0) {
+      slot.disabled--;
+      if (slot.disabled <= 0) {
+        slotsEl.children[i].classList.remove('disabled-glow');
+        addLog('system', `${slot.card.name} is no longer disabled.`);
+      }
+    }
+  });
+}
+
+function computerUsePerk() {
+  if (!computerPerkReady || !computerCharacter) return;
+  computerPerkReady = false;
+  computerKills -= 3;
+  updatePerkUI('computer');
+
+  if (computerCharacter.id === 'samurai') {
+    computerPerkActive = true;
+    computerPerkTurnsLeft = 2;
+    addLog('computer', `⚔ Computer's Bushido Fury! All attacks deal +20% damage for 2 turns!`);
+
+  } else if (computerCharacter.id === 'mage') {
+    // Computer picks the most useful status effect automatically
+    const playerAlive = playerSlots.filter(s => s && s.hp > 0);
+    const hasPoison = playerAlive.every(s => hasStatusEffect(s, 'poison'));
+    const hasSleep = playerAlive.every(s => hasStatusEffect(s, 'sleep'));
+    const effect = hasSleep ? 'poison' : hasPoison ? 'weaken' : 'sleep';
+    applyMagePerk('computer', effect);
+
+  } else if (computerCharacter.id === 'stranger') {
+    // Computer picks its lowest-HP card to protect
+    const liveComputer = computerSlots.map((s, i) => s && s.hp > 0 ? i : -1).filter(i => i !== -1);
+    if (liveComputer.length > 0) {
+      const lowestHpIdx = liveComputer.reduce((a, b) =>
+        computerSlots[a].hp < computerSlots[b].hp ? a : b);
+      applyStrangerPerk('computer', lowestHpIdx);
+    }
+  }
+}
+
+// ========== END PERK SYSTEM ==========
+
 // Character definitions
 const CHARACTERS = [
   {
@@ -4070,6 +4329,12 @@ function buildCharSelectScreen() {
 
 function onCharacterSelected(charId) {
   playerCharacter = CHARACTERS.find(c => c.id === charId);
+  // Reset perk state
+  playerKills = 0; computerKills = 0;
+  playerPerkReady = false; computerPerkReady = false;
+  playerPerkActive = false; playerPerkTurnsLeft = 0;
+  computerPerkActive = false; computerPerkTurnsLeft = 0;
+  strangerPickingMode = false;
   const others = CHARACTERS.filter(c => c.id !== charId);
   computerCharacter = others[Math.floor(Math.random() * others.length)];
 
@@ -4088,6 +4353,12 @@ function onCharacterSelected(charId) {
   const computerNameEl = document.getElementById('computerNameLabel');
   if (computerNameEl) computerNameEl.textContent = computerCharacter.name;
 
+  // Wire up perk button
+  const perkBtn = document.getElementById('playerPerkBtn');
+  if (perkBtn) perkBtn.addEventListener('click', () => { if (playerPerkReady && playerTurn) activatePlayerPerk(); });
+  // Update perk button labels with character name
+  updatePerkUI('player');
+  updatePerkUI('computer');
   // Start the game
   init();
 }
@@ -4283,10 +4554,14 @@ function resetGame() {
   // Build fresh computer reserve
   buildComputerReserve();
   
-  // Reset turn state
   playerTurn = true;
   turnIndicator.textContent = 'Player Setup Phase';
   endTurnBtn.classList.add('disabled');
+  playerKills = 0; computerKills = 0;
+  playerPerkReady = false; computerPerkReady = false;
+  playerPerkActive = false; computerPerkActive = false;
+  strangerPickingMode = false;
+  updatePerkUI('player'); updatePerkUI('computer');
   
   // Clear and reset battle log
   logEl.innerHTML = '';
@@ -5052,6 +5327,131 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   .game-over-text {
     font-size: 32px !important;
   }
+}
+
+/* ========== PERK SYSTEM ========== */
+.perk-btn {
+  margin-top: 8px;
+  background: #111;
+  color: #555;
+  border: 2px solid #444;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  cursor: not-allowed;
+  text-align: center;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  width: 160px;
+}
+.perk-btn.perk-ready {
+  background: linear-gradient(135deg, #FFC107, #FFD03A);
+  color: #000;
+  border-color: #fff;
+  cursor: pointer;
+  animation: perkPulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(255,193,7,0.6);
+}
+.perk-btn.perk-used {
+  background: #222;
+  color: #444;
+  border-color: #333;
+  cursor: not-allowed;
+  animation: none;
+}
+@keyframes perkPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,193,7,0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 20px rgba(255,193,7,0.9); transform: scale(1.04); }
+}
+.perk-kills {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 4px;
+  text-align: center;
+}
+.perk-kills span { color: #FFC107; }
+
+/* Mage perk choice modal */
+.mage-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 15000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.mage-modal h3 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: #FFC107;
+  text-align: center;
+  margin: 0;
+}
+.mage-modal p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  margin: 0;
+}
+.mage-choices {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mage-choice-btn {
+  background: #1a2535;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fff;
+  text-align: center;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+.mage-choice-btn:hover {
+  border-color: #FFC107;
+  color: #FFC107;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255,193,7,0.3);
+}
+
+/* Stranger immunity glow */
+.slot.immune-glow {
+  box-shadow: 0 0 18px rgba(255,255,255,0.8), inset 0 0 12px rgba(255,255,255,0.15) !important;
+  border-color: #fff !important;
+  border-style: solid !important;
+}
+.slot.disabled-glow {
+  box-shadow: 0 0 18px rgba(255,68,68,0.6) !important;
+  border-color: #ff4444 !important;
+  border-style: solid !important;
+  filter: grayscale(0.5);
+}
+
+/* Stranger target picking */
+.slot.stranger-target {
+  border-color: #FFC107 !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  animation: strangerPulse 0.8s ease-in-out infinite;
+  cursor: pointer;
+}
+@keyframes strangerPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,193,7,0.5); }
+  50% { box-shadow: 0 0 24px rgba(255,193,7,1); }
+}
+@media (max-width: 1200px) {
+  .perk-btn { width: 120px; font-size: 6px; padding: 5px 8px; }
 }
 </style>
 </body>
