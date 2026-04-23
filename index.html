@@ -1769,74 +1769,66 @@ body::after {
     <h2 id="galleryHeader" class="gallery-section-header">Gallery</h2>
 </div>
         <div class="gallery-grid">
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/Watcher site.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/sails site.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/after-the-war.html">
-                    <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Respite</div>
-                        <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/transporter.html">
-                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Transporter</div>
-                        <div class="gallery-overlay-meta">Digital illustration · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ramen-battleship.html">
-                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Ramen Battleship</div>
-                        <div class="gallery-overlay-meta">Watercolor · 2020</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/walking-temple.html">
-                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Quiet day at the beach</div>
-                        <div class="gallery-overlay-meta">Digital painting · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
+        <!-- 1. Watcher -->
+        <div class="gallery-item">
+            <a href="gallery/ptsd-machine.html" onclick="openGalleryInspect(event, 'watcher')">
+                <img src="images/Watcher site.jpg" alt="PTSD Machine">
+                <div class="gallery-overlay">
+                    <div class="gallery-overlay-title">PTSD Machine</div>
+                    <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
+                    <span class="gallery-overlay-view">View details</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- 2. Sails -->
+        <div class="gallery-item">
+            <a href="gallery/ptsd-machine.html" onclick="openGalleryInspect(event, 'sails')">
+                <img src="images/sails site.jpg" alt="PTSD Machine">
+                <div class="gallery-overlay">
+                    <div class="gallery-overlay-title">Sails of Thought</div>
+                    <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
+                    <span class="gallery-overlay-view">View details</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- 3. Respite -->
+        <div class="gallery-item">
+            <a href="gallery/after-the-war.html" onclick="openGalleryInspect(event, 'respite')">
+                <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
+                <div class="gallery-overlay">
+                    <div class="gallery-overlay-title">Respite</div>
+                    <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
+                    <span class="gallery-overlay-view">View details</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- 4. Routine -->
+        <div class="gallery-item">
+            <a href="gallery/transporter.html" onclick="openGalleryInspect(event, 'routine')">
+                <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
+                <div class="gallery-overlay">
+                    <div class="gallery-overlay-title">Transporter</div>
+                    <div class="gallery-overlay-meta">Digital illustration · 2021</div>
+                    <span class="gallery-overlay-view">View details</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- 5. Walking Temple -->
+        <div class="gallery-item">
+            <a href="gallery/walking-temple.html" onclick="openGalleryInspect(event, 'temple')">
+                <img src="images/walking temple website.jpg" alt="Walking Temple">
+                <div class="gallery-overlay">
+                    <div class="gallery-overlay-title">Quiet day at the beach</div>
+                    <div class="gallery-overlay-meta">Digital painting · 2023</div>
+                    <span class="gallery-overlay-view">View details</span>
+                </div>
+            </a>
+        </div>
+    </div>
                 </a>
             </div>
             <div class="gallery-item">
