@@ -1472,7 +1472,7 @@ html, body {
 
         <!-- PLAYER AREA -->
         <div class="player-info">
-            <img id="playerPortrait" class="computer-portrait" src="" alt="Player">
+            <img id="playerPortrait" class="computer-portrait" src="" alt="Player" style="display:none">
             <div class="name" id="playerNameLabel">Player</div>
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
@@ -4078,7 +4078,7 @@ function onCharacterSelected(charId) {
 
   // Set player portrait + name
   const playerPortraitEl = document.getElementById('playerPortrait');
-  if (playerPortraitEl) playerPortraitEl.src = playerCharacter.src;
+  if (playerPortraitEl) { playerPortraitEl.src = playerCharacter.src; playerPortraitEl.style.display = ''; }
   const playerNameEl = document.getElementById('playerNameLabel');
   if (playerNameEl) playerNameEl.textContent = playerCharacter.name;
 
