@@ -757,6 +757,70 @@ body::after {
         font-family: 'Press Start 2P', cursive, monospace;
         text-align: center;
     }
+
+    /* The Inspector Modal (Cleaned up from work.html) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 100000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            border: 6px solid #181818;
+            position: relative;
+            flex-direction: row;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content { flex-direction: column; height: 90vh; overflow-y: auto; }
+        }
+
+        .modal-display { 
+            flex: 1.2; 
+            background: #000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .modal-display img { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            object-fit: contain; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .modal-info { 
+            flex: 0.8; 
+            padding: 40px; 
+            color: #181818; 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .close-btn { 
+            position: absolute; top: 10px; right: 20px; font-size: 40px; 
+            cursor: pointer; color: #181818; z-index: 10;
+        }
+        
+        .stats-box {
+            margin-top: auto;
+            padding: 15px;
+            background: #f4f4f4;
+            border-left: 5px solid #FFC107;
+            font-family: 'DotGothic16';
+            font-size: 14px;
+        }
     .footer-social {
             width: 100%;
             padding: 40px 0 30px 0;
@@ -1711,154 +1775,54 @@ body::after {
         <div style="max-width: 700px; margin: 0px auto 0 auto; padding: 20px;">
     <h2 id="galleryHeader" class="gallery-section-header">Gallery</h2>
 </div>
-        <div class="gallery-grid">
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/Watcher site.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/sails site.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/after-the-war.html">
-                    <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Respite</div>
-                        <div class="gallery-overlay-meta">Gouache on paper · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ptsd-machine.html">
-                    <img src="images/4 Joe Shenton - Reflection.jpg" alt="PTSD Machine">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">PTSD Machine</div>
-                        <div class="gallery-overlay-meta">Acrylic on canvas · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/transporter.html">
-                    <img src="images/2 Joe Shenton - Routine.jpg" alt="Transporter">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Transporter</div>
-                        <div class="gallery-overlay-meta">Digital illustration · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/ramen-battleship.html">
-                    <img src="images/3 Joe Shenton - Reunion.jpg" alt="Ramen Battleship">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Ramen Battleship</div>
-                        <div class="gallery-overlay-meta">Watercolor · 2020</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/walking-temple.html">
-                    <img src="images/walking temple website.jpg" alt="Quiet day at the beach. Cold, but beautiful">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Quiet day at the beach</div>
-                        <div class="gallery-overlay-meta">Digital painting · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/demons.html">
-                    <img src="images/demons website.jpg" alt="Waiting for the bus in the desert">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Waiting for the bus in the desert</div>
-                        <div class="gallery-overlay-meta">Ink · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/mountain.html">
-                    <img src="images/mountain website.jpg" alt="Nature again.. At its finest!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Nature again.. At its finest!</div>
-                        <div class="gallery-overlay-meta">Acrylic · 2021</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/osaka.html">
-                    <img src="images/osaka wesbite.jpg" alt="Canoeing again">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">Canoeing again</div>
-                        <div class="gallery-overlay-meta">Gouache · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/girl-train.html">
-                    <img src="images/fisherman website.jpg" alt="A girl, and a train passing">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">A girl, and a train passing</div>
-                        <div class="gallery-overlay-meta">Mixed media · 2023</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/closegirl.html">
-                    <img src="images/wanderer website.jpg" alt="What a beautiful day!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">What a beautiful day!</div>
-                        <div class="gallery-overlay-meta">Digital · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/closegirl.html">
-                    <img src="images/Lunchbreak site.jpg" alt="What a beautiful day!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">What a beautiful day!</div>
-                        <div class="gallery-overlay-meta">Digital · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
-            </div>
-            <div class="gallery-item">
-                <a href="gallery/closegirl.html">
-                    <img src="images/lighthouse site.jpg" alt="What a beautiful day!">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-title">What a beautiful day!</div>
-                        <div class="gallery-overlay-meta">Digital · 2022</div>
-                        <span class="gallery-overlay-view">View details</span>
-                    </div>
-                </a>
+        <div class="gallery-grid" id="mainGallery">
+        
+        <div class="gallery-item" data-id="watcher">
+            <img src="images/Watcher site.jpg" alt="PTSD Machine">
+            <div class="gallery-overlay">
+                <div>PTSD Machine</div>
+                <small style="font-family: 'DotGothic16';">Click to Inspect</small>
             </div>
         </div>
-    </section>
-    <div id="imgModal" class="modal" onclick="event.target === this && closeModal()">
+
+        <div class="gallery-item" data-id="sails">
+            <img src="images/sails site.jpg" alt="Sails">
+            <div class="gallery-overlay">
+                <div>Sails</div>
+                <small style="font-family: 'DotGothic16';">Click to Inspect</small>
+            </div>
+        </div>
+
+        <div class="gallery-item" data-id="respite">
+            <img src="images/1 Joe Shenton - Respite.jpg" alt="Respite">
+            <div class="gallery-overlay">
+                <div>After the War</div>
+                <small style="font-family: 'DotGothic16';">Click to Inspect</small>
+            </div>
+        </div>
+
+        <div class="gallery-item" data-id="reflection">
+            <img src="images/4 Joe Shenton - Reflection.jpg" alt="Reflection">
+            <div class="gallery-overlay">
+                <div>Reflection</div>
+                <small style="font-family: 'DotGothic16';">Click to Inspect</small>
+            </div>
+        </div>
+
+    </div>
+</section>
+    <!-- The Inspector Modal -->
+    <div id="inspectorModal" class="modal">
         <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()" aria-label="Close">&times;</button>
-            <img id="modalImg" class="modal-img" src="" alt="">
-            <div id="modalCaption" class="modal-caption"></div>
+            <span class="close-btn" id="closeInspect">&times;</span>
+            <div class="modal-display">
+                <img id="inspectImg" src="" alt="">
+            </div>
+            <div class="modal-info">
+                <h2 id="inspectTitle">TITLE</h2>
+                <p id="inspectDesc" style="font-family: 'DotGothic16'; line-height: 1.6;"></p>
+                <div id="inspectStats" class="stats-box"></div>
+            </div>
         </div>
     </div>
     <footer class="footer-social">
@@ -2023,6 +1987,68 @@ body::after {
     setInterval(renderBoard, 15000); // re-scramble every 15s
 
     // ===================== END SPLIT BANNER JS =====================
+
+    // 1. Data Store (Easy to add/edit)
+        const artworks = {
+            'watcher': {
+                title: 'PTSD Machine',
+                desc: 'A haunting visualization of mechanical trauma and repetitive cognitive loops in the post-war landscape.',
+                img: 'images/Watcher site.jpg',
+                stats: ['Medium: Acrylic on Canvas', 'Year: 2023', 'Dimensions: 24" x 36"']
+            },
+            'sails': {
+                title: 'Sails',
+                desc: 'An exploration of wind, structure, and the passage of time through abstract mechanical forms.',
+                img: 'images/sails site.jpg',
+                stats: ['Medium: Acrylic', 'Year: 2023', 'Status: Private Collection']
+            },
+            'respite': {
+                title: 'After the War (Respite)',
+                desc: 'Finding stillness in the aftermath. A study of heavy machinery at rest in a silent world.',
+                img: 'images/1 Joe Shenton - Respite.jpg',
+                stats: ['Medium: Gouache', 'Year: 2022', 'Paper: 300gsm Cold Pressed']
+            },
+            'reflection': {
+                title: 'Reflection',
+                desc: 'A mechanical consciousness contemplating its own existence through a mirrored landscape.',
+                img: 'images/4 Joe Shenton - Reflection.jpg',
+                stats: ['Medium: Acrylic', 'Year: 2023', 'Series: Automata']
+            }
+        };
+
+        // 2. Elements
+        const modal = document.getElementById('inspectorModal');
+        const closeBtn = document.getElementById('closeInspect');
+        const gallery = document.getElementById('mainGallery');
+
+        // 3. Logic
+        function openInspect(id) {
+            const data = artworks[id];
+            if (!data) return;
+
+            document.getElementById('inspectTitle').innerText = data.title;
+            document.getElementById('inspectDesc').innerText = data.desc;
+            document.getElementById('inspectImg').src = data.img;
+            
+            const statsHtml = data.stats.map(s => `<div>• ${s}</div>`).join('');
+            document.getElementById('inspectStats').innerHTML = statsHtml;
+
+            modal.style.display = 'flex';
+        }
+
+        // Event Delegation: Listen for clicks on any gallery item
+        gallery.addEventListener('click', (e) => {
+            const item = e.target.closest('.gallery-item');
+            if (item) {
+                const id = item.getAttribute('data-id');
+                openInspect(id);
+            }
+        });
+
+        // Close functions
+        closeBtn.onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") modal.style.display = 'none'; });
 
     // Modal & scroll logic
     function openModal(img) {
