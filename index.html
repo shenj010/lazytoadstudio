@@ -1684,6 +1684,23 @@ body::after {
   overflow-y: auto;
   font-family: 'Press Start 2P', monospace;
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #181818 #f0f0f0;
+}
+
+.wallet-modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+.wallet-modal-content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-left: 3px solid #181818;
+}
+.wallet-modal-content::-webkit-scrollbar-thumb {
+  background: #181818;
+  border: 2px solid #f0f0f0;
+}
+.wallet-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #FFC107;
 }
 .close-wallet {
   position: absolute;
