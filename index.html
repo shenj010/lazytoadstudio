@@ -1664,6 +1664,111 @@ body::after {
   100% { transform: translate(calc(100vw - 60px), calc(100vh - 60px)) scale(0.2); opacity: 0; }
 }
 
+/* ========== ABOUT MODAL ========== */
+.about-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100000;
+  justify-content: center;
+  align-items: center;
+}
+.about-modal.open {
+  display: flex;
+}
+.about-modal-content {
+  background: #fff;
+  border: 6px solid #181818;
+  width: 90%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  font-family: 'Press Start 2P', monospace;
+  scrollbar-width: thin;
+  scrollbar-color: #181818 #f0f0f0;
+}
+.about-modal-content::-webkit-scrollbar { width: 10px; }
+.about-modal-content::-webkit-scrollbar-track { background: #f0f0f0; border-left: 3px solid #181818; }
+.about-modal-content::-webkit-scrollbar-thumb { background: #181818; border: 2px solid #f0f0f0; }
+.about-modal-content::-webkit-scrollbar-thumb:hover { background: #FFC107; }
+
+.about-img-panel {
+  flex: 0 0 220px;
+  background: #181818;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.about-img-panel img {
+  width: 100%;
+  border: 4px solid #FFC107;
+  display: block;
+}
+.about-text-panel {
+  flex: 1;
+  padding: 32px 28px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.about-studio-name {
+  font-size: 13px;
+  color: #181818;
+  line-height: 1.6;
+  border-bottom: 4px solid #181818;
+  padding-bottom: 12px;
+}
+.about-body {
+  font-size: 8px;
+  color: #333;
+  line-height: 2;
+}
+.about-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.about-tag {
+  background: #181818;
+  color: #FFC107;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 4px 8px;
+}
+.about-close {
+  position: absolute;
+  top: -4px;
+  right: 10px;
+  background: #181818;
+  border: 4px solid #fff;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  z-index: 10;
+}
+.about-close:hover {
+  background: #fff;
+  color: #181818;
+  border-color: #181818;
+}
+@media (max-width: 600px) {
+  .about-modal-content { flex-direction: column; }
+  .about-img-panel { flex: none; width: 100%; padding: 20px; }
+  .about-img-panel img { width: 140px; margin: 0 auto; }
+  .about-text-panel { padding: 20px; }
+  .about-studio-name { font-size: 11px; }
+}
+
 /* Wallet modal */
 .wallet-modal {
   display: none;
@@ -1789,7 +1894,7 @@ body::after {
         <span class="icon" aria-hidden="true"></span>
         Gallery
       </a>
-      <a href="/about.html" class="about" title="About">
+      <a href="#" class="about" title="About" id="aboutNavLink">
         <span class="icon" aria-hidden="true"></span>
         About
       </a>
@@ -2861,6 +2966,25 @@ window.addEventListener('DOMContentLoaded', () => {
   // Wallet click = open inventory
   wallet.addEventListener('click', showInventory);
 
+// About modal
+  const aboutNavLink = document.getElementById('aboutNavLink');
+  const aboutModal = document.getElementById('aboutModal');
+  const aboutClose = document.getElementById('aboutClose');
+  if (aboutNavLink) {
+    aboutNavLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      aboutModal.classList.add('open');
+    });
+  }
+  if (aboutClose) {
+    aboutClose.addEventListener('click', () => aboutModal.classList.remove('open'));
+  }
+  if (aboutModal) {
+    aboutModal.addEventListener('click', (e) => {
+      if (e.target === aboutModal) aboutModal.classList.remove('open');
+    });
+  }
+
   // Close wallet modal (× button)
   closeBtn.addEventListener('click', () => {
     modal.style.display = 'none';
@@ -2901,6 +3025,32 @@ window.addEventListener('DOMContentLoaded', () => {
 <!-- 🃏 Reward Card (appears in center, flies into wallet) -->
 <div id="rewardCard" class="reward-card">
   <img src="" alt="Toad Card">
+</div>
+
+<!-- 🐸 About Modal -->
+<div id="aboutModal" class="about-modal">
+  <div class="about-modal-content">
+    <button class="about-close" id="aboutClose">&times;</button>
+    <div class="about-img-panel">
+      <img src="images/studio-profile.png" alt="Lazy Toad Studios">
+    </div>
+    <div class="about-text-panel">
+      <div class="about-studio-name">Lazy Toad<br>Studios</div>
+      <div class="about-body">
+        A one-person maker studio based in Kobe, Japan.<br><br>
+        Lazy Toad Studios makes hand-crafted objects that sit somewhere between electronics, woodworking, and whatever else seems interesting that week.<br><br>
+        Projects range from custom smartwatches and handmade bags to card games and furniture — all built with hand tools and a healthy disregard for doing things the easy way.<br><br>
+        This site is the shop front, the gallery, and the ongoing record of what's being made.
+      </div>
+      <div class="about-tags">
+        <span class="about-tag">Kobe, Japan</span>
+        <span class="about-tag">Electronics</span>
+        <span class="about-tag">Woodworking</span>
+        <span class="about-tag">Sewing</span>
+        <span class="about-tag">Open Source</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 📔 Wallet Inventory Modal -->
