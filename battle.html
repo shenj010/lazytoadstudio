@@ -150,12 +150,15 @@ body::after {
   box-sizing: border-box;
 }
 
-.player-info{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  min-width:160px;
-  flex-shrink: 0;
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Use these three together to lock the width */
+  width: 180px; 
+  flex-basis: 180px;
+  flex-shrink: 0; 
+  /* This prevents the slots from pushing the portrait area smaller */
 }
 
 .name{
@@ -5346,6 +5349,7 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
   line-height: 1.5;
   transition: all 0.2s ease;
   width: 160px;
+  box-sizing: border-box;
 }
 .perk-btn.perk-ready {
   background: linear-gradient(135deg, #FFC107, #FFD03A);
