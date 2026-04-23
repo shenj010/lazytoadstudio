@@ -757,6 +757,63 @@ body::after {
         font-family: 'Press Start 2P', cursive, monospace;
         text-align: center;
     }
+    /* --- MODAL --- */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 20000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: #FFFFFF;
+        border: 8px solid #181818;
+        width: 95%;
+        max-width: 1000px;
+        display: flex;
+        flex-direction: row;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: -20px; right: -20px;
+        background: #181818;
+        border: 4px solid #FFFFFF;
+        color: #FFFFFF;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-family: 'Press Start 2P';
+        z-index: 10;
+    }
+
+    .modal-display {
+        flex: 1.2;
+        background: #F2C010; /* Mustard background for item preview */
+        border-right: 8px solid #181818;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+    }
+
+    .modal-data {
+        flex: 1;
+        padding: 40px;
+        color: #181818;
+    }
+
+    .stats-container {
+        margin-top: 20px;
+        font-size: 10px;
+        border: 3px solid #181818;
+        padding: 15px;
+        background: #f9f9f9;
+    }
     .footer-social {
             width: 100%;
             padding: 40px 0 30px 0;
@@ -1854,13 +1911,20 @@ body::after {
             </div>
         </div>
     </section>
-    <div id="imgModal" class="modal" onclick="event.target === this && closeModal()">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()" aria-label="Close">&times;</button>
-            <img id="modalImg" class="modal-img" src="" alt="">
-            <div id="modalCaption" class="modal-caption"></div>
+    <div id="galleryInspectModal" class="modal">
+    <div class="modal-content">
+        <div class="close-btn" onclick="closeGalleryInspect()">&times;</div>
+        <div class="modal-display" id="galleryModalDisplay">
+            <img id="gFullImage" src="" alt="Full Illustration" style="max-width: 100%; height: auto; border-radius: 8px;">
+        </div>
+        <div class="modal-data">
+            <div id="gCat" style="font-size: 10px; color: #666; margin-bottom: 8px; text-transform: uppercase; font-family: 'Press Start 2P';">GALLERY</div>
+            <h2 id="gName" style="text-transform: uppercase; margin: 0; font-family: 'Press Start 2P'; font-size: 18px;">PIECE TITLE</h2>
+            <p class="item-desc" id="gDesc" style="font-family: 'DotGothic16'; font-size: 22px; margin-top: 20px; line-height: 1.4; color: #333;"></p>
+            <div class="stats-container" id="gStats"></div>
         </div>
     </div>
+</div>
     <footer class="footer-social">
         <div class="footer-social-links">
             <a class="footer-social-link" href="mailto:contact@lazytoadstudios.com" target="_blank" rel="noopener" title="Contact Email">
@@ -2024,6 +2088,101 @@ body::after {
 
     // ===================== END SPLIT BANNER JS =====================
 
+    // 1. DATA ARRAY (Using your Artifact structure)
+        const galleryItems = [
+            { 
+                id: 'item-1', 
+                name: 'The Toad Pack', 
+                category: 'EQUIPMENT / STORAGE', 
+                desc: 'A rugged, weather-proof carrier used by marsh researchers to transport sensitive swamp samples.', 
+                stats: ['CAPACITY: 24L', 'WEIGHT: 1.2KG', 'DURABILITY: MAX'], 
+                images: ["images/Watcher site.jpg"] 
+            },
+            { 
+                id: 'item-2', 
+                name: 'Marsh Boots', 
+                category: 'EQUIPMENT / WEARABLE', 
+                desc: 'Specifically designed for navigation through deep mire and acidic pond water.', 
+                stats: ['TRACTION: +15', 'WATERPROOF: YES', 'STAMINA: +5'], 
+                images: ["images/sails site.jpg"] 
+            },
+            { 
+                id: 'item-3', 
+                name: 'Elder Flute', 
+                category: 'ARTIFACT / MUSIC', 
+                desc: 'Carved from root-wood. Can calm the local wildlife if played correctly by an expert.', 
+                stats: ['TONE: DEEP', 'CHARM: +20', 'RARITY: RARE'], 
+                images: ["https://via.placeholder.com/600x600?text=Elder+Flute"] 
+            }
+        ];
+
+        // 2. GRID INITIALIZATION
+        // This function creates the thumbnails and sets up the click trigger
+        function initGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            
+            galleryItems.forEach(item => {
+                const element = document.createElement('div');
+                element.className = 'gallery-item';
+                
+                // Show the first image in the array as the thumbnail
+                element.innerHTML = `
+                    <img src="${item.images[0]}" alt="${item.name}">
+                    <div class="item-label">${item.name}</div>
+                `;
+
+                // ✅ TRIGGER: This opens the popup and passes the item data
+                element.onclick = () => openInspect(item);
+                
+                grid.appendChild(element);
+            });
+        }
+
+        // 3. POPUP OPENER (The "Pop" Logic)
+        // This function fills the hidden HTML with the data from the clicked item
+        function openInspect(item) {
+            const modal = document.getElementById('inspectModal');
+            
+            // Inject text data
+            document.getElementById('mName').innerText = item.name;
+            document.getElementById('mCat').innerText = item.category;
+            document.getElementById('mDesc').innerText = item.desc;
+            document.getElementById('mImg').src = item.images[0];
+            
+            // Build the stats list using the .map() logic from your work section
+            document.getElementById('mStats').innerHTML = item.stats.map(s => 
+                `<div class="stat-line">${s}</div>`
+            ).join('');
+            
+            // Reveal the modal
+            modal.style.display = 'flex';
+            
+            // Lock body scroll so the user focuses on the artifact
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 4. POPUP CLOSER
+        function closeInspect() {
+            document.getElementById('inspectModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scroll
+        }
+
+        // Start the engine
+        window.onload = initGallery;
+
+        // Close if clicking the background overlay
+        window.onclick = function(event) {
+            const modal = document.getElementById('inspectModal');
+            if (event.target == modal) {
+                closeInspect();
+            }
+        }
+
+        // Escape key support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeInspect();
+        });
     // Modal & scroll logic
     function openModal(img) {
         var modal = document.getElementById('imgModal');
