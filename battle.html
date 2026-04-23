@@ -1267,9 +1267,153 @@ html, body {
     top: -10px !important;
   }
 }
+/* ========== CHARACTER SELECT SCREEN ========== */
+.char-select-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 60% 40%, #1e2e45 0%, #0d1520 100%);
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.cso-eyebrow {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: rgba(255,193,7,0.6);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.cso-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(14px, 3vw, 22px);
+  color: #FFC107;
+  text-align: center;
+  text-shadow: 0 0 24px rgba(255,193,7,0.5), 2px 2px 0 #000;
+  margin: 0;
+  line-height: 1.5;
+}
+.cso-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+}
+.cso-cards-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 900px;
+}
+.cso-card {
+  width: 220px;
+  background: linear-gradient(160deg, #1a2d45 0%, #111e2e 100%);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 22px 18px 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cso-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,193,7,0.08) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 12px;
+}
+.cso-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: #FFC107;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,193,7,0.2);
+}
+.cso-card:hover::before { opacity: 1; }
+.cso-card:active { transform: translateY(-4px) scale(1.01); }
+
+.cso-portrait-wrap {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,193,7,0.35);
+  overflow: hidden;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cso-portrait-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cso-char-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #FFFFFF;
+  text-align: center;
+}
+.cso-divider {
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,193,7,0.4), transparent);
+}
+.cso-perk-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #FFC107;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.cso-perk-desc {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255,255,255,0.65);
+  text-align: center;
+  line-height: 1.7;
+}
+.cso-select-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .cso-cards-row { flex-direction: column; align-items: center; gap: 14px; }
+  .cso-card { width: 90%; max-width: 340px; flex-direction: row; padding: 14px 16px; text-align: left; align-items: flex-start; gap: 14px; }
+  .cso-portrait-wrap { width: 70px; height: 70px; flex-shrink: 0; }
+  .cso-divider { display: none; }
+  .cso-char-name, .cso-perk-label, .cso-perk-desc { text-align: left; }
+}
 </style>
 </head>
 <body>
+  <!-- CHARACTER SELECT OVERLAY -->
+<div class="char-select-overlay" id="charSelectOverlay">
+  <div class="cso-eyebrow">Lazy Toad Studios</div>
+  <div class="cso-title">CHOOSE YOUR<br>CHAMPION</div>
+  <div class="cso-sub">Select a character to enter the arena</div>
+  <div class="cso-cards-row" id="csoCardsRow">
+    <!-- injected by JS -->
+  </div>
+  <div class="cso-select-hint">Click a card to confirm your choice</div>
+</div>
+
   <div class="wrap">
     <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
     
@@ -1282,7 +1426,7 @@ html, body {
         <div class="area" id="computerArea">
           <div class="player-info">
             <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
-            <div class="name">Computer</div>
+            <div class="name" id="computerNameLabel">Computer</div>
             <div class="hp-bar" title="Computer total HP">
               <div class="hp-segments" id="computerGlobalHP"></div>
             </div>
@@ -1327,9 +1471,9 @@ html, body {
 </div>
 
         <!-- PLAYER AREA -->
-        <div class="area" id="playerArea">
-          <div class="player-info">
-            <div class="name">Player</div>
+        <div class="player-info">
+            <img id="playerPortrait" class="computer-portrait" src="" alt="Player">
+            <div class="name" id="playerNameLabel">Player</div>
             <div class="hp-bar" title="Player total HP">
               <div class="hp-segments" id="playerGlobalHP"></div>
             </div>
@@ -3875,18 +4019,78 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     }
   });
 // Random computer portrait
-const computerPortraits = [
-  { src: 'images/mage profile.png',     name: 'Mage Toad'    },
-  { src: 'images/samurai profile.png',  name: 'Samurai Toad' },
-  { src: 'images/stranger profile.png', name: 'The Stranger' },
+// Character definitions
+const CHARACTERS = [
+  {
+    id: 'samurai',
+    name: 'Samurai Toad',
+    src: 'images/samurai profile.png',
+    perkName: 'Bushido Fury',
+    perkDesc: 'All your cards deal +20% damage for 2 turns'
+  },
+  {
+    id: 'mage',
+    name: 'Mage Toad',
+    src: 'images/mage profile.png',
+    perkName: 'Arcane Hex',
+    perkDesc: 'Apply poison, weaken, or sleep to all enemy cards'
+  },
+  {
+    id: 'stranger',
+    name: 'The Stranger',
+    src: 'images/stranger profile.png',
+    perkName: 'Ghost Ward',
+    perkDesc: 'One chosen card gains immunity for 2 turns'
+  }
 ];
-const chosen = computerPortraits[Math.floor(Math.random() * computerPortraits.length)];
-const portraitEl = document.getElementById('computerPortrait');
-if (portraitEl) portraitEl.src = chosen.src;
 
-// Update the Computer name label
-const computerNameEl = document.querySelector('#computerArea .name');
-if (computerNameEl) computerNameEl.textContent = chosen.name;
+let playerCharacter = null;
+let computerCharacter = null;
+
+function buildCharSelectScreen() {
+  const row = document.getElementById('csoCardsRow');
+  row.innerHTML = '';
+  CHARACTERS.forEach(char => {
+    const card = document.createElement('div');
+    card.className = 'cso-card';
+    card.innerHTML = `
+      <div class="cso-portrait-wrap">
+        <img src="${char.src}" alt="${char.name}">
+      </div>
+      <div class="cso-char-name">${char.name}</div>
+      <div class="cso-divider"></div>
+      <div class="cso-perk-label">${char.perkName}</div>
+      <div class="cso-perk-desc">${char.perkDesc}</div>
+    `;
+    card.addEventListener('click', () => onCharacterSelected(char.id));
+    row.appendChild(card);
+  });
+  document.getElementById('charSelectOverlay').style.display = 'flex';
+}
+
+function onCharacterSelected(charId) {
+  playerCharacter = CHARACTERS.find(c => c.id === charId);
+  const others = CHARACTERS.filter(c => c.id !== charId);
+  computerCharacter = others[Math.floor(Math.random() * others.length)];
+
+  // Hide select screen
+  document.getElementById('charSelectOverlay').style.display = 'none';
+
+  // Set player portrait + name
+  const playerPortraitEl = document.getElementById('playerPortrait');
+  if (playerPortraitEl) playerPortraitEl.src = playerCharacter.src;
+  const playerNameEl = document.getElementById('playerNameLabel');
+  if (playerNameEl) playerNameEl.textContent = playerCharacter.name;
+
+  // Set computer portrait + name
+  const computerPortraitEl = document.getElementById('computerPortrait');
+  if (computerPortraitEl) computerPortraitEl.src = computerCharacter.src;
+  const computerNameEl = document.getElementById('computerNameLabel');
+  if (computerNameEl) computerNameEl.textContent = computerCharacter.name;
+
+  // Start the game
+  init();
+}
 
 // Discard pile management
 const discardPile = [];
@@ -4098,7 +4302,7 @@ function resetGame() {
   // expose for debugging
   window._debug = { playerSlots, computerSlots, playerHand, computerReserve };
 
-  init();
+  buildCharSelectScreen();
 
 
   // Check if an attack is on cooldown
