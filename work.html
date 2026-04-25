@@ -1538,7 +1538,9 @@ body::after {
           }
         
           .modal-display {
-            min-height: 260px;
+            height: 320px; /* ADDED: Explicit height so the 80% image stack knows how tall to be */
+            min-height: 320px;
+            flex-shrink: 0; /* ADDED: Prevents the text below from squishing the image box */
             border-right: none;
             border-bottom: 8px solid #181818;
             width: 100%;
