@@ -921,10 +921,18 @@ html, body {
     padding: 8px !important;
   }
 
-  .player-info { 
+ .player-info { 
     min-width: 120px !important; 
-    order: -1 !important;
-  }
+}
+
+/* Mobile area ordering */
+#computerArea .player-info { order: 1 !important; }
+#computerArea #computerHand { order: 2 !important; }
+#computerArea #computerSlots { order: 3 !important; }
+
+#playerArea #playerHand { order: 1 !important; }
+#playerArea #playerSlots { order: 2 !important; }
+#playerArea .player-info { order: 3 !important; }
 
   .name { font-size: 11px !important; }
 
@@ -965,7 +973,6 @@ html, body {
   .hand {
     min-height: 90px !important;
     gap: 6px !important;
-    order: 1 !important;
     overflow: visible !important;  /* allow pop-up cards to overflow */
     position: relative !important;
     z-index: 5 !important;
