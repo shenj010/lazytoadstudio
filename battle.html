@@ -5388,27 +5388,33 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
 }
 
 /* Fix for animations being cut off and game over text size */
-@media (max-width: 1200px) {
-  /* Only apply fixed positioning to actual animations, not structure elements */
-  .attacking-forward, .attacking-backward, 
-  .attacking-diagonal-left, .attacking-diagonal-right,
-  .attacking-knight, .attacking-sweep, .attacking-pierce,
-  .attacking-adjacent-left, .attacking-adjacent-right,
-  .flying-attack {
-    position: fixed !important;
-    z-index: 5000 !important;
-  }
+/* WITH THIS: */
+.attacking-forward,
+.attacking-backward, 
+.attacking-diagonal-left,
+.attacking-diagonal-right,
+.attacking-knight,
+.attacking-sweep,
+.attacking-pierce,
+.attacking-adjacent-left,
+.attacking-adjacent-right {
+  z-index: 2000 !important;
+  position: relative !important;
+}
+
+.flying-attack {
+  z-index: 2000 !important;
+  position: fixed !important;
+}
+
+.status-icon {
+  z-index: 50 !important;
+}
   
   /* Only target actual damage popups and effect popups, not structure */
   .dmg-pop, .status-effect-popup {
     position: fixed !important;
     z-index: 5001 !important;
-  }
-  
-  /* Keep status icons where they belong */
-  .status-icon {
-    /* Don't change positioning - keep them attached to their cards */
-    z-index: 5001 !important; 
   }
   
   /* Fix 2: Make game over text smaller on mobile */
