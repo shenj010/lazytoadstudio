@@ -763,8 +763,8 @@ html, body {
 }
 
 @keyframes statusPulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.1); opacity: 1; }
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
 }
 
 /* Animated status effect popup */
@@ -1206,7 +1206,7 @@ html, body {
   .attacking-adjacent-right,
   .flying-attack {
     z-index: 2000 !important;
-    position: absolute !important;
+    position: relative !important;
   }
 
   .slot:has(.card.selected),
@@ -5479,7 +5479,7 @@ text-shadow: 0 0 20px rgba(255, 68, 68, 0.7);
     position: absolute !important;
     top: -18px !important; /* Move further up to avoid clipping */
     right: 8px !important;
-    z-index: 5001 !important; /* Very high z-index to ensure visibility */
+    z-index: 50 !important; /* Very high z-index to ensure visibility */
   }
   
   /* Make sure containers don't clip the icons */
