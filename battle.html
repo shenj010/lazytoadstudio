@@ -1300,7 +1300,7 @@ html, body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 999;
+    z-index: 9999;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -1331,6 +1331,7 @@ html, body {
 @media (max-width: 480px) {
   .hand .card.touch-expanded {
     transform: translate(-50%, -50%) scale(1.8) !important;
+    z-index: 9999 !important;
   }
 }
 @media (min-width: 600px) and (max-width: 1200px) {
