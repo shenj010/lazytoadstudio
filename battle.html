@@ -1093,6 +1093,7 @@ html, body {
     width: auto !important;
     max-width: 220px !important;
     padding: 8px !important;
+    z-index: 99999 !important;
   }
   
   .card-action-panel .btn {
@@ -1368,6 +1369,7 @@ html, body {
     left: 50% !important;
     transform: translateX(-50%) !important;
     box-sizing: border-box !important;
+    z-index: 99999 !important;
   }
   
   /* Simplified button text on mobile */
@@ -2357,6 +2359,8 @@ function showCardActions(side, idx){
   
   const panel = document.createElement('div');
   panel.className = 'card-action-panel';
+  panel.style.isolation = 'isolate';
+  panel.style.zIndex = '99999';
   
   const rect = slotEl.getBoundingClientRect();
   
