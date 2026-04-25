@@ -1207,10 +1207,20 @@ html, body {
     z-index: 2000 !important;
     position: absolute !important;
   }
+
+  .slot:has(.card.selected),
+.slot:has([class*="attacking"]) {
+  z-index: 100 !important;
+}
+
+/* Expanded touch card sits above everything except damage popups */
+.hand .card.touch-expanded {
+  z-index: 3000 !important;
+}
   
   /* Ensure status icons are visible above containers */
   .status-icon {
-    z-index: 50 !important;
+    z-index: 10 !important;
   }
   
   /* Prevent status effect popup from being cut off */
@@ -4163,15 +4173,41 @@ function updateCardHPBar(hpBarElement, currentHP, maxHP) {
     logEl.appendChild(div); 
     logEl.scrollTop = logEl.scrollHeight;
   }
+  document.addEventListener('touchend', (e) => {
+  if(selected && selected.type === 'hand') {
+    const touch = e.changedTouches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if(!target) return;
+    if(!target.closest('.card') && 
+       !target.closest('.slot') && 
+       !target.closest('#playerHand') &&
+       !target.closest('.card-action-panel')) {
+      clearSelections();
+    }
+  }
+}, { passive: true });
 
   // click outside to hide action panel
   document.addEventListener('click', (e) => {
-    if(currentActionPanel && !currentActionPanel.contains(e.target) && 
-       !e.target.closest('.slot') && !e.target.closest('.card')){
-      hideActionPanel();
+  // Close action panel if clicking outside
+  if(currentActionPanel && !currentActionPanel.contains(e.target) && 
+     !e.target.closest('.slot') && !e.target.closest('.card')){
+    hideActionPanel();
+    clearSelections();
+  }
+
+  // On mobile: deselect hand card if tapping outside hand or slots
+  if(selected && selected.type === 'hand') {
+    const clickedCard = e.target.closest('.card');
+    const clickedSlot = e.target.closest('.slot');
+    const clickedHand = e.target.closest('#playerHand');
+    
+    if(!clickedCard && !clickedSlot && !clickedHand) {
       clearSelections();
     }
-  });
+  }
+});
 // ========== PERK SYSTEM ==========
 let playerKills = 0;
 let computerKills = 0;
