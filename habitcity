@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit City</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Caveat:wght@400;700&display=swap');
+
+:root {
+  --ink: #0f0e0c;
+  --paper: #1a1912;
+  --amber: #f0a500;
+  --amber2: #ffd166;
+  --dim: #2a2920;
+  --dimmer: #222218;
+  --grass: #3a5c2a;
+  --grass2: #4a7a36;
+  --sky: #0d1f35;
+  --stone: #5a5448;
+  --red: #c0392b;
+  --blue: #2980b9;
+  --green: #27ae60;
+  --panel: #13120e;
+  --border: #3a3828;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: #e0d8c0;
+  font-family: 'Caveat', cursive;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 52px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 20px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'VT323', monospace;
+  font-size: 28px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.habit-name {
+  font-size: 17px;
+  color: #a09870;
+  font-style: italic;
+  flex: 1;
+}
+
+.habit-name span {
+  color: var(--amber2);
+  font-style: normal;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 1px dashed var(--amber2);
+}
+
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+}
+
+.stat { color: #6a6450; }
+.stat b { color: var(--amber2); margin-left: 4px; }
+
+/* ── MAIN LAYOUT ── */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── ISO CANVAS ── */
+#isoCanvas {
+  flex: 1;
+  cursor: grab;
+  display: block;
+}
+#isoCanvas:active { cursor: grabbing; }
+
+/* ── SIDE PANEL ── */
+.side {
+  width: 220px;
+  background: var(--panel);
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.panel-section {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-label {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: #6a6450;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/* ── TIMER ── */
+.timer-display {
+  font-family: 'VT323', monospace;
+  font-size: 52px;
+  color: var(--amber);
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 3px;
+  text-shadow: 0 0 20px rgba(240,165,0,0.4);
+}
+
+.timer-display.running { color: var(--amber2); animation: pulse 2s ease-in-out infinite; }
+.timer-display.done { color: #27ae60; }
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.quads-earned {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.quad-pip {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  background: var(--dim);
+  transition: all 0.3s;
+}
+.quad-pip.earned {
+  background: var(--amber);
+  border-color: var(--amber2);
+  box-shadow: 0 0 8px rgba(240,165,0,0.5);
+}
+
+.timer-btn {
+  width: 100%;
+  padding: 8px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  border: 2px solid var(--border);
+  background: var(--dim);
+  color: #e0d8c0;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.timer-btn:hover { background: var(--amber); color: var(--ink); border-color: var(--amber2); }
+.timer-btn.danger:hover { background: var(--red); border-color: #e74c3c; }
+.timer-btn.go { background: var(--green); color: #fff; border-color: #2ecc71; }
+
+/* ── BUILDING PICKER ── */
+.buildings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bld-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 2px solid var(--border);
+  background: var(--dim);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.bld-opt:hover { border-color: var(--amber); }
+.bld-opt.selected { border-color: var(--amber); background: #2a2810; }
+.bld-opt.locked { opacity: 0.35; cursor: not-allowed; }
+.bld-opt.locked:hover { border-color: var(--border); }
+
+.bld-icon {
+  width: 32px; height: 32px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.bld-info { flex: 1; }
+.bld-name { font-size: 15px; font-weight: 700; line-height: 1; }
+.bld-quads { font-size: 12px; color: #6a6450; }
+
+.quad-dots {
+  display: flex; gap: 2px; flex-wrap: wrap; width: 16px;
+}
+.qdot {
+  width: 6px; height: 6px;
+  background: var(--amber);
+  opacity: 0.3;
+}
+.qdot.on { opacity: 1; }
+
+/* ── PLACE BUTTON ── */
+.place-btn {
+  margin: 12px;
+  padding: 10px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  border: 2px solid var(--amber);
+  background: #2a2810;
+  color: var(--amber);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.place-btn:hover { background: var(--amber); color: var(--ink); }
+.place-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.place-btn:disabled:hover { background: #2a2810; color: var(--amber); }
+
+/* ── TODAY INDICATOR ── */
+.today-info {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #7a7260;
+}
+.today-info .hi { color: var(--amber2); }
+
+/* ── SETUP MODAL ── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.modal {
+  background: var(--panel);
+  border: 2px solid var(--amber);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 0 60px rgba(240,165,0,0.2);
+}
+.modal h2 {
+  font-family: 'VT323', monospace;
+  font-size: 36px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.modal p { font-size: 16px; color: #8a8268; margin-bottom: 20px; line-height: 1.5; }
+.modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  background: var(--dim);
+  border: 2px solid var(--border);
+  color: #e0d8c0;
+  margin-bottom: 12px;
+  outline: none;
+}
+.modal input:focus { border-color: var(--amber); }
+.modal button {
+  width: 100%;
+  padding: 12px;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  letter-spacing: 1px;
+  background: var(--amber);
+  color: var(--ink);
+  border: none;
+  cursor: pointer;
+}
+.modal button:hover { background: var(--amber2); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--amber);
+  color: var(--ink);
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  padding: 8px 24px;
+  z-index: 300;
+  transition: transform 0.3s;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* scrollbar */
+.side::-webkit-scrollbar { width: 4px; }
+.side::-webkit-scrollbar-track { background: var(--panel); }
+.side::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<!-- Setup Modal -->
+<div class="modal-bg" id="setupModal">
+  <div class="modal">
+    <h2>HABIT CITY</h2>
+    <p>Name your habit or routine. Every day you do it, you earn quadrants to build with. A 2-hour session fills all four.</p>
+    <input type="text" id="habitInput" placeholder="e.g. morning run, deep work, drawing..." maxlength="40" />
+    <button onclick="startApp()">BUILD MY CITY →</button>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo">HABIT CITY</div>
+  <div class="habit-name">habit: <span id="habitLabel" onclick="renameHabit()">—</span></div>
+  <div class="stats-bar">
+    <div class="stat">streak <b id="statStreak">0</b></div>
+    <div class="stat">days <b id="statDays">0</b></div>
+    <div class="stat">buildings <b id="statBuildings">0</b></div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <canvas id="isoCanvas"></canvas>
+
+  <div class="side">
+
+    <!-- Timer -->
+    <div class="panel-section">
+      <div class="panel-label">today's session</div>
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <div class="quads-earned" id="quadsEarned">
+        <div class="quad-pip" id="qp0"></div>
+        <div class="quad-pip" id="qp1"></div>
+        <div class="quad-pip" id="qp2"></div>
+        <div class="quad-pip" id="qp3"></div>
+      </div>
+      <div class="today-info" id="todayInfo"></div>
+      <button class="timer-btn" id="timerBtn" onclick="toggleTimer()">▶ START SESSION</button>
+      <button class="timer-btn danger" id="resetBtn" onclick="resetTimer()" style="display:none">✕ RESET</button>
+    </div>
+
+    <!-- Building picker -->
+    <div class="panel-section">
+      <div class="panel-label">structures</div>
+      <div class="buildings-list" id="buildingsList"></div>
+    </div>
+
+    <button class="place-btn" id="placeBtn" onclick="placeOnToday()">⬡ PLACE ON TODAY</button>
+
+    <!-- Legend -->
+    <div class="panel-section" style="margin-top:auto">
+      <div class="panel-label">legend</div>
+      <div style="font-size:13px; line-height:2; color:#5a5448">
+        <div>🟨 today's plot</div>
+        <div>🟩 built day</div>
+        <div>⬛ empty / skipped</div>
+        <div style="color:#3a3828">drag to pan · scroll to zoom</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+
+let state = {
+  habit: '',
+  city: {},      // dateKey → { quads: 0-4, buildings: [{id,q}] }
+  timer: { running: false, elapsed: 0, startedAt: null },
+  selectedBuilding: 'hut',
+  view: { x: 0, y: 0, zoom: 1 }
+};
+
+function load() {
+  try {
+    const s = localStorage.getItem('habitcity2');
+    if (s) state = { ...state, ...JSON.parse(s) };
+    // reset running state on load
+    if (state.timer.running) {
+      state.timer.elapsed += Date.now() - (state.timer.startedAt || Date.now());
+      state.timer.running = false; state.timer.startedAt = null;
+    }
+  } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem('habitcity2', JSON.stringify(state)); } catch(e) {}
+}
+
+load();
+
+const TODAY_KEY = (() => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  SPIRAL GRID  (Ulam spiral order)
+// ═══════════════════════════════════════════════════════
+
+function spiralCoords(n) {
+  // Returns array of {x,y} in outward spiral order, n entries
+  const out = [];
+  let x=0, y=0, dx=0, dy=-1;
+  for (let i=0; i<n; i++) {
+    out.push({x, y});
+    if (x===y || (x<0 && x===-y) || (x>0 && x===1-y)) { [dx,dy]=[-dy,dx]; }
+    x+=dx; y+=dy;
+  }
+  return out;
+}
+
+// Generate enough for 2 years
+const SPIRAL = spiralCoords(800);
+
+// Map each day-index to an iso grid position
+// Day 0 = today in prototype; in real use we assign days chronologically
+function getDayCoords(dateKey) {
+  // All keys sorted chronologically
+  const allKeys = getAllDaysSorted();
+  const idx = allKeys.indexOf(dateKey);
+  if (idx < 0) return null;
+  return SPIRAL[idx] || null;
+}
+
+function getAllDaysSorted() {
+  // Collect all days from city + today, sorted
+  const keys = new Set(Object.keys(state.city));
+  keys.add(TODAY_KEY);
+  return [...keys].sort();
+}
+
+// ═══════════════════════════════════════════════════════
+//  BUILDINGS
+// ═══════════════════════════════════════════════════════
+
+const BUILDINGS = [
+  { id:'tent',     name:'Tent',       quads:1, desc:'1 quad · 30 min' },
+  { id:'hut',      name:'Hut',        quads:1, desc:'1 quad · 30 min' },
+  { id:'cottage',  name:'Cottage',    quads:2, desc:'2 quads · 1 hr' },
+  { id:'house',    name:'House',      quads:2, desc:'2 quads · 1 hr' },
+  { id:'tower',    name:'Tower',      quads:3, desc:'3 quads · 1.5 hr' },
+  { id:'market',   name:'Market',     quads:3, desc:'3 quads · 1.5 hr' },
+  { id:'castle',   name:'Castle',     quads:4, desc:'4 quads · 2 hr' },
+  { id:'manor',    name:'Manor',      quads:4, desc:'4 quads · 2 hr' },
+];
+
+// Isometric building drawers — each draws onto a tile canvas
+// Tile = 64x64 (flat top iso diamond), buildings sit on top
+
+const BLDG_COLORS = {
+  tent:    { wall:'#8B3A2A', roof:'#c0392b', accent:'#f0a500' },
+  hut:     { wall:'#c8a96e', roof:'#5d8a45', accent:'#a06030' },
+  cottage: { wall:'#e8d8b0', roof:'#c0392b', accent:'#3a6ea8' },
+  house:   { wall:'#d0c8b0', roof:'#2980b9', accent:'#f0a500' },
+  tower:   { wall:'#90887a', roof:'#5a5448', accent:'#c0392b' },
+  market:  { wall:'#f0e0b0', roof:'#f0a500', accent:'#c0392b' },
+  castle:  { wall:'#a09888', roof:'#7a7268', accent:'#c0392b' },
+  manor:   { wall:'#c8c0a8', roof:'#3a5c8a', accent:'#f0a500' },
+};
+
+// ═══════════════════════════════════════════════════════
+//  ISO RENDERING
+// ═══════════════════════════════════════════════════════
+
+const canvas = document.getElementById('isoCanvas');
+const ctx = canvas.getContext('2d');
+
+// Tile dimensions
+const TW = 64; // width of diamond
+const TH = 32; // height of diamond
+const TILE_H_MAX = 80; // max building height
+
+function isoProject(gx, gy) {
+  // grid → screen
+  return {
+    sx: (gx - gy) * (TW / 2),
+    sy: (gx + gy) * (TH / 2)
+  };
+}
+
+function screenToGrid(sx, sy, vx, vy, zoom) {
+  // inverse iso with pan/zoom
+  const wx = (sx - canvas.width/2 - vx) / zoom;
+  const wy = (sy - canvas.height/2 - vy) / zoom;
+  const gx = (wx / (TW/2) + wy / (TH/2)) / 2;
+  const gy = (wy / (TH/2) - wx / (TW/2)) / 2;
+  return { gx: Math.round(gx), gy: Math.round(gy) };
+}
+
+function drawTile(gx, gy, fillTop, fillLeft, fillRight, stroke='#0f0e0c') {
+  const {sx, sy} = isoProject(gx, gy);
+  const hw = TW/2, hh = TH/2;
+
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - hh);
+  ctx.lineTo(sx + hw, sy);
+  ctx.lineTo(sx, sy + hh);
+  ctx.lineTo(sx - hw, sy);
+  ctx.closePath();
+  ctx.fillStyle = fillTop;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Left face
+  ctx.beginPath();
+  ctx.moveTo(sx - hw, sy);
+  ctx.lineTo(sx, sy + hh);
+  ctx.lineTo(sx, sy + hh + 6);
+  ctx.lineTo(sx - hw, sy + 6);
+  ctx.closePath();
+  ctx.fillStyle = fillLeft;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+
+  // Right face
+  ctx.beginPath();
+  ctx.moveTo(sx, sy + hh);
+  ctx.lineTo(sx + hw, sy);
+  ctx.lineTo(sx + hw, sy + 6);
+  ctx.lineTo(sx, sy + hh + 6);
+  ctx.closePath();
+  ctx.fillStyle = fillRight;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+}
+
+function lerpColor(a, b, t) {
+  const ah = a.replace('#',''), bh = b.replace('#','');
+  const ar=parseInt(ah.slice(0,2),16), ag=parseInt(ah.slice(2,4),16), ab=parseInt(ah.slice(4,6),16);
+  const br=parseInt(bh.slice(0,2),16), bg=parseInt(bh.slice(2,4),16), bb=parseInt(bh.slice(4,6),16);
+  const r=Math.round(ar+(br-ar)*t), g=Math.round(ag+(bg-ag)*t), b2=Math.round(ab+(bb-ab)*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b2.toString(16).padStart(2,'0')}`;
+}
+
+function darken(hex, f) { return lerpColor(hex,'#000000',f); }
+function lighten(hex, f) { return lerpColor(hex,'#ffffff',f); }
+
+// Draw building on iso tile
+function drawBuilding(gx, gy, bldgId, quadsUsed) {
+  const {sx, sy} = isoProject(gx, gy);
+  const c = BLDG_COLORS[bldgId] || BLDG_COLORS.hut;
+  const hw = TW/2;
+
+  if (bldgId === 'tent') {
+    // Simple triangular tent
+    const h = 28 + quadsUsed * 4;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - TH/2 - h);
+    ctx.lineTo(sx + 18, sy - 2);
+    ctx.lineTo(sx - 18, sy - 2);
+    ctx.closePath();
+    ctx.fillStyle = c.roof;
+    ctx.fill();
+    ctx.strokeStyle = '#0f0e0c'; ctx.lineWidth = 1.2; ctx.stroke();
+    // door
+    ctx.fillStyle = darken(c.roof, 0.5);
+    ctx.fillRect(sx-4, sy-12, 8, 10);
+    // flag
+    ctx.beginPath(); ctx.moveTo(sx, sy-TH/2-h); ctx.lineTo(sx, sy-TH/2-h-8); ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=c.accent; ctx.fillRect(sx, sy-TH/2-h-8, 6, 5);
+  }
+  else if (bldgId === 'hut') {
+    const bh = 14, rh = 18;
+    // walls iso box
+    drawIsoBox(sx, sy - TH/2, 20, 20, bh, c.wall);
+    // roof
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - TH/2 - bh - rh);
+    ctx.lineTo(sx + 22, sy - TH/2 - bh + 2);
+    ctx.lineTo(sx, sy - TH/2 - bh + 8);
+    ctx.lineTo(sx - 22, sy - TH/2 - bh + 2);
+    ctx.closePath();
+    ctx.fillStyle = c.roof; ctx.fill();
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1.2; ctx.stroke();
+  }
+  else if (bldgId === 'cottage') {
+    drawIsoBox(sx, sy - TH/2, 24, 22, 18, c.wall);
+    // pitched roof
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - TH/2 - 18 - 22);
+    ctx.lineTo(sx + 26, sy - TH/2 - 18);
+    ctx.lineTo(sx - 26, sy - TH/2 - 18);
+    ctx.closePath();
+    ctx.fillStyle = c.roof; ctx.fill();
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1.2; ctx.stroke();
+    // chimney
+    ctx.fillStyle=darken(c.wall,0.3);
+    ctx.fillRect(sx+6, sy-TH/2-18-20, 6, 14);
+    ctx.fillStyle='#c0392b'; ctx.fillRect(sx+5, sy-TH/2-18-21, 8, 3);
+    // window
+    ctx.fillStyle=lighten('#3a6ea8',0.4);
+    ctx.fillRect(sx-10, sy-TH/2-12, 8, 8);
+  }
+  else if (bldgId === 'house') {
+    drawIsoBox(sx, sy - TH/2, 26, 24, 20, c.wall);
+    // gabled roof
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - TH/2 - 20 - 24);
+    ctx.lineTo(sx + 28, sy - TH/2 - 20);
+    ctx.lineTo(sx - 28, sy - TH/2 - 20);
+    ctx.closePath();
+    ctx.fillStyle = c.roof; ctx.fill();
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1.2; ctx.stroke();
+    // two windows
+    ctx.fillStyle=lighten(c.accent,0.6);
+    ctx.fillRect(sx-14, sy-TH/2-14, 7, 8);
+    ctx.fillRect(sx+7, sy-TH/2-14, 7, 8);
+    // panes
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=0.7;
+    [sx-10, sx+10].forEach(wx => {
+      ctx.beginPath(); ctx.moveTo(wx, sy-TH/2-14); ctx.lineTo(wx, sy-TH/2-6); ctx.stroke();
+    });
+  }
+  else if (bldgId === 'tower') {
+    drawIsoBox(sx, sy - TH/2, 16, 16, 44, c.wall);
+    // battlements
+    for (let i=-1; i<=1; i++) {
+      ctx.fillStyle = i%2===0 ? c.wall : darken(c.wall,0.2);
+      ctx.fillRect(sx + i*8 - 3, sy - TH/2 - 44 - 6, 6, 7);
+      ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=0.8;
+      ctx.strokeRect(sx + i*8 - 3, sy - TH/2 - 44 - 6, 6, 7);
+    }
+    // arrow slits
+    ctx.fillStyle = '#0f0e0c';
+    [0.3,0.6].forEach(f => ctx.fillRect(sx-1, sy-TH/2-44*f-4, 2, 8));
+    // flag
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(sx, sy-TH/2-50); ctx.lineTo(sx, sy-TH/2-62); ctx.stroke();
+    ctx.fillStyle=c.accent; ctx.fillRect(sx, sy-TH/2-62, 10, 7);
+  }
+  else if (bldgId === 'market') {
+    drawIsoBox(sx, sy - TH/2, 30, 28, 16, c.wall);
+    // awning
+    ctx.fillStyle = c.roof;
+    ctx.beginPath();
+    ctx.moveTo(sx-32, sy-TH/2-16+4);
+    ctx.lineTo(sx+32, sy-TH/2-16+4);
+    ctx.lineTo(sx+36, sy-TH/2-16+12);
+    ctx.lineTo(sx-36, sy-TH/2-16+12);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1; ctx.stroke();
+    // stripes
+    ctx.strokeStyle=darken(c.roof,0.3); ctx.lineWidth=3;
+    for(let i=-28;i<32;i+=8) {
+      ctx.beginPath(); ctx.moveTo(sx+i, sy-TH/2-16+4); ctx.lineTo(sx+i+4, sy-TH/2-16+12); ctx.stroke();
+    }
+    // sign
+    ctx.fillStyle='#5a3a1a';
+    ctx.fillRect(sx-12, sy-TH/2-16-12, 24, 10);
+    ctx.fillStyle=c.accent;
+    ctx.fillRect(sx-10, sy-TH/2-16-10, 20, 6);
+  }
+  else if (bldgId === 'castle') {
+    // main keep
+    drawIsoBox(sx, sy-TH/2, 28, 26, 34, c.wall);
+    // side towers
+    drawIsoBox(sx-22, sy-TH/2+4, 14, 12, 38, darken(c.wall,0.1));
+    drawIsoBox(sx+22, sy-TH/2+4, 14, 12, 38, darken(c.wall,0.1));
+    // battlements on towers
+    [sx-22, sx+22].forEach(tx => {
+      for(let i=-1;i<=1;i+=2) {
+        ctx.fillStyle=c.wall;
+        ctx.fillRect(tx+i*5-2, sy-TH/2+4-38-5, 5, 6);
+        ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=0.8;
+        ctx.strokeRect(tx+i*5-2, sy-TH/2+4-38-5, 5, 6);
+      }
+      // tower flag
+      ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(tx, sy-TH/2+4-38-5); ctx.lineTo(tx, sy-TH/2+4-38-14); ctx.stroke();
+      ctx.fillStyle=c.accent; ctx.fillRect(tx, sy-TH/2+4-38-14, 8, 6);
+    });
+    // keep battlements
+    for(let i=-2;i<=2;i++) {
+      if(i%2!==0) continue;
+      ctx.fillStyle=c.wall;
+      ctx.fillRect(sx+i*7-3, sy-TH/2-34-6, 6, 7);
+      ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=0.8;
+      ctx.strokeRect(sx+i*7-3, sy-TH/2-34-6, 6, 7);
+    }
+    // portcullis
+    ctx.fillStyle=darken(c.wall,0.6);
+    ctx.fillRect(sx-7, sy-TH/2-16, 14, 16);
+    ctx.beginPath(); ctx.arc(sx, sy-TH/2-16, 7, Math.PI,0); ctx.fill();
+  }
+  else if (bldgId === 'manor') {
+    drawIsoBox(sx, sy-TH/2, 32, 30, 26, c.wall);
+    // wing left
+    drawIsoBox(sx-24, sy-TH/2+6, 18, 16, 20, darken(c.wall,0.08));
+    // wing right
+    drawIsoBox(sx+24, sy-TH/2+6, 18, 16, 20, darken(c.wall,0.08));
+    // main roof
+    ctx.beginPath();
+    ctx.moveTo(sx, sy-TH/2-26-20);
+    ctx.lineTo(sx+34, sy-TH/2-26);
+    ctx.lineTo(sx-34, sy-TH/2-26);
+    ctx.closePath();
+    ctx.fillStyle=c.roof; ctx.fill();
+    ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1.2; ctx.stroke();
+    // dormer windows
+    [sx-14, sx+10].forEach(wx => {
+      ctx.fillStyle=lighten(c.accent,0.5);
+      ctx.fillRect(wx, sy-TH/2-26-10, 8, 8);
+    });
+    // chimneys
+    [sx-8, sx+4].forEach(cx2 => {
+      ctx.fillStyle=darken(c.wall,0.3);
+      ctx.fillRect(cx2, sy-TH/2-26-24, 6, 12);
+      ctx.fillStyle='#c0392b'; ctx.fillRect(cx2-1, sy-TH/2-26-25, 8, 3);
+    });
+    // grand entrance
+    ctx.fillStyle=darken(c.wall,0.5);
+    ctx.fillRect(sx-8, sy-TH/2-16, 16, 16);
+    ctx.beginPath(); ctx.arc(sx, sy-TH/2-16, 8, Math.PI,0); ctx.fill();
+  }
+}
+
+function drawIsoBox(sx, sy, hw, hd, height, wallColor) {
+  // Top face
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - height - hd/2);
+  ctx.lineTo(sx + hw, sy - height);
+  ctx.lineTo(sx, sy - height + hd/2);
+  ctx.lineTo(sx - hw, sy - height);
+  ctx.closePath();
+  ctx.fillStyle = lighten(wallColor, 0.15); ctx.fill();
+  ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1; ctx.stroke();
+
+  // Left face
+  ctx.beginPath();
+  ctx.moveTo(sx - hw, sy - height);
+  ctx.lineTo(sx, sy - height + hd/2);
+  ctx.lineTo(sx, sy + hd/2);
+  ctx.lineTo(sx - hw, sy);
+  ctx.closePath();
+  ctx.fillStyle = darken(wallColor, 0.2); ctx.fill();
+  ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1; ctx.stroke();
+
+  // Right face
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - height + hd/2);
+  ctx.lineTo(sx + hw, sy - height);
+  ctx.lineTo(sx + hw, sy);
+  ctx.lineTo(sx, sy + hd/2);
+  ctx.closePath();
+  ctx.fillStyle = darken(wallColor, 0.35); ctx.fill();
+  ctx.strokeStyle='#0f0e0c'; ctx.lineWidth=1; ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════
+
+let hoverGridPos = null;
+
+function render() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Sky gradient
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, '#0d1f35');
+  grad.addColorStop(1, '#1a1912');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.translate(W/2 + state.view.x, H/2 + state.view.y);
+  ctx.scale(state.view.zoom, state.view.zoom);
+
+  const allKeys = getAllDaysSorted();
+
+  // Sort tiles back-to-front for painter's algo (iso depth sort)
+  const tiles = allKeys.map((key, idx) => {
+    const coord = SPIRAL[idx];
+    return { key, gx: coord.x, gy: coord.y, depth: coord.x + coord.y };
+  }).sort((a,b) => a.depth - b.depth);
+
+  tiles.forEach(({ key, gx, gy }) => {
+    const isToday = key === TODAY_KEY;
+    const data = state.city[key];
+    const hasBuilding = data && data.buildings && data.buildings.length > 0;
+    const isEmpty = !hasBuilding;
+    const isFuture = key > TODAY_KEY;
+
+    let topColor, leftColor, rightColor;
+
+    if (isToday) {
+      topColor   = '#4a7a36';
+      leftColor  = '#2a4a20';
+      rightColor = '#355e28';
+      // Pulsing amber border
+    } else if (hasBuilding) {
+      topColor   = '#3a5c2a';
+      leftColor  = '#1e3215';
+      rightColor = '#2a4520';
+    } else if (isFuture) {
+      topColor = '#1e1e18'; leftColor='#151510'; rightColor='#181814';
+    } else {
+      // past empty lot
+      topColor = '#252520'; leftColor='#181815'; rightColor='#1e1e1a';
+    }
+
+    if (isToday) {
+      // Amber glow outline
+      const {sx, sy} = isoProject(gx, gy);
+      ctx.save();
+      ctx.shadowColor = '#f0a500';
+      ctx.shadowBlur = 14;
+      drawTile(gx, gy, topColor, leftColor, rightColor, '#f0a500');
+      ctx.restore();
+    } else {
+      drawTile(gx, gy, topColor, leftColor, rightColor);
+    }
+
+    // Draw building
+    if (hasBuilding) {
+      const bld = data.buildings[data.buildings.length - 1];
+      drawBuilding(gx, gy, bld.id, data.quads);
+    }
+
+    // Day number label on empty past tiles
+    if (!hasBuilding && !isFuture) {
+      const {sx, sy} = isoProject(gx, gy);
+      ctx.fillStyle = '#3a3828';
+      ctx.font = '9px VT323, monospace';
+      ctx.textAlign = 'center';
+      const d = new Date(key);
+      ctx.fillText(d.getDate(), sx, sy + 4);
+    }
+  });
+
+  // Hover highlight
+  if (hoverGridPos) {
+    const {gx, gy} = hoverGridPos;
+    const {sx, sy} = isoProject(gx, gy);
+    const hw = TW/2, hh = TH/2;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy-hh); ctx.lineTo(sx+hw,sy); ctx.lineTo(sx,sy+hh); ctx.lineTo(sx-hw,sy); ctx.closePath();
+    ctx.strokeStyle='rgba(240,165,0,0.5)'; ctx.lineWidth=2; ctx.stroke();
+  }
+
+  ctx.restore();
+  requestAnimationFrame(render);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════
+
+const QUAD_MS = 30 * 60 * 1000; // 30 min per quad
+let timerInterval = null;
+
+function quadsEarned() {
+  return Math.min(4, Math.floor(state.timer.elapsed / QUAD_MS));
+}
+
+function currentElapsed() {
+  if (!state.timer.running) return state.timer.elapsed;
+  return state.timer.elapsed + (Date.now() - state.timer.startedAt);
+}
+
+function toggleTimer() {
+  if (state.timer.running) {
+    // Pause
+    state.timer.elapsed += Date.now() - state.timer.startedAt;
+    state.timer.running = false;
+    state.timer.startedAt = null;
+    clearInterval(timerInterval);
+    document.getElementById('timerBtn').textContent = '▶ RESUME';
+  } else {
+    if (currentElapsed() >= QUAD_MS * 4) return; // maxed
+    state.timer.running = true;
+    state.timer.startedAt = Date.now();
+    document.getElementById('timerBtn').textContent = '⏸ PAUSE';
+    timerInterval = setInterval(updateTimerUI, 500);
+  }
+  document.getElementById('resetBtn').style.display = 'block';
+  save();
+  updateTimerUI();
+}
+
+function resetTimer() {
+  if (!confirm('Reset today\'s timer?')) return;
+  clearInterval(timerInterval);
+  state.timer = { running: false, elapsed: 0, startedAt: null };
+  document.getElementById('timerBtn').textContent = '▶ START SESSION';
+  document.getElementById('resetBtn').style.display = 'none';
+  save();
+  updateTimerUI();
+  buildBuildingList();
+}
+
+function updateTimerUI() {
+  const ms = currentElapsed();
+  const total = Math.min(ms, QUAD_MS * 4);
+  const secs = Math.floor(total / 1000);
+  const mm = String(Math.floor(secs/60)).padStart(2,'0');
+  const ss = String(secs%60).padStart(2,'0');
+
+  const disp = document.getElementById('timerDisplay');
+  disp.textContent = `${mm}:${ss}`;
+  disp.className = 'timer-display' + (state.timer.running ? ' running' : '') + (ms >= QUAD_MS*4 ? ' done' : '');
+
+  const earned = Math.min(4, Math.floor(total / QUAD_MS));
+  for (let i=0; i<4; i++) {
+    document.getElementById(`qp${i}`).className = 'quad-pip' + (i < earned ? ' earned' : '');
+  }
+
+  const todayData = state.city[TODAY_KEY];
+  const usedQuads = todayData ? todayData.quads : 0;
+  const freeQuads = earned - usedQuads;
+
+  let infoText = '';
+  if (ms === 0) infoText = 'start your session to earn quadrants';
+  else if (earned === 0) infoText = `${Math.ceil((QUAD_MS - ms)/60000)} min to first quadrant`;
+  else infoText = `<span class="hi">${earned} quad${earned!==1?'s':''} earned</span> · ${freeQuads} free`;
+  if (ms >= QUAD_MS*4) infoText = `<span class="hi">🏆 full 2hrs! all 4 quads unlocked</span>`;
+
+  document.getElementById('todayInfo').innerHTML = infoText;
+
+  // Stop if maxed
+  if (ms >= QUAD_MS * 4 && state.timer.running) {
+    state.timer.elapsed = QUAD_MS * 4;
+    state.timer.running = false;
+    clearInterval(timerInterval);
+    state.timer.startedAt = null;
+    document.getElementById('timerBtn').textContent = '✓ COMPLETE';
+    document.getElementById('timerBtn').disabled = true;
+    save();
+    showToast('🏆 2 hours complete! All 4 quadrants unlocked!');
+  }
+
+  buildBuildingList();
+}
+
+// ═══════════════════════════════════════════════════════
+//  BUILDING UI
+// ═══════════════════════════════════════════════════════
+
+function buildBuildingList() {
+  const earned = Math.min(4, Math.floor(currentElapsed() / QUAD_MS));
+  const todayData = state.city[TODAY_KEY];
+  const usedQuads = todayData ? todayData.quads : 0;
+  const freeQuads = earned - usedQuads;
+
+  const list = document.getElementById('buildingsList');
+  list.innerHTML = '';
+
+  BUILDINGS.forEach(b => {
+    const locked = b.quads > freeQuads;
+    const div = document.createElement('div');
+    div.className = 'bld-opt' + (state.selectedBuilding===b.id?' selected':'') + (locked?' locked':'');
+
+    // Mini preview canvas
+    const cv = document.createElement('canvas');
+    cv.className = 'bld-icon';
+    cv.width = 32; cv.height = 32;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#3a5c2a';
+    // draw tiny iso tile
+    c.save(); c.translate(16,20);
+    const col = BLDG_COLORS[b.id]||BLDG_COLORS.hut;
+    // tiny tile
+    c.beginPath(); c.moveTo(0,-6); c.lineTo(14,0); c.lineTo(0,6); c.lineTo(-14,0); c.closePath();
+    c.fillStyle='#3a5c2a'; c.fill();
+    c.strokeStyle='#0f0e0c'; c.lineWidth=0.8; c.stroke();
+    // tiny building blob
+    c.fillStyle=col.wall;
+    c.fillRect(-6,-6-b.quads*4, 12, b.quads*5+4);
+    c.fillStyle=col.roof;
+    c.beginPath(); c.moveTo(0,-6-b.quads*4-6); c.lineTo(8,-6-b.quads*4); c.lineTo(-8,-6-b.quads*4); c.closePath(); c.fill();
+    c.restore();
+    div.appendChild(cv);
+
+    const info = document.createElement('div');
+    info.className = 'bld-info';
+    info.innerHTML = `<div class="bld-name">${b.name}</div><div class="bld-quads">${b.desc}</div>`;
+    div.appendChild(info);
+
+    const dots = document.createElement('div');
+    dots.className = 'quad-dots';
+    for (let i=0;i<4;i++) {
+      const d = document.createElement('div');
+      d.className = 'qdot' + (i<b.quads?' on':'');
+      dots.appendChild(d);
+    }
+    div.appendChild(dots);
+
+    if (!locked) {
+      div.addEventListener('click', () => {
+        state.selectedBuilding = b.id;
+        save();
+        buildBuildingList();
+      });
+    }
+
+    list.appendChild(div);
+  });
+}
+
+function placeOnToday() {
+  const bDef = BUILDINGS.find(b=>b.id===state.selectedBuilding);
+  if (!bDef) return;
+
+  const earned = Math.min(4, Math.floor(currentElapsed() / QUAD_MS));
+  const todayData = state.city[TODAY_KEY] || { quads: 0, buildings: [] };
+  const usedQuads = todayData.quads;
+  const freeQuads = earned - usedQuads;
+
+  if (bDef.quads > freeQuads) {
+    showToast(`Need ${bDef.quads} quads, only ${freeQuads} free. Keep going!`);
+    return;
+  }
+
+  if (!state.city[TODAY_KEY]) state.city[TODAY_KEY] = { quads: 0, buildings: [] };
+  state.city[TODAY_KEY].quads += bDef.quads;
+  state.city[TODAY_KEY].buildings.push({ id: bDef.id, q: bDef.quads });
+
+  save();
+  buildBuildingList();
+  calcStats();
+  showToast(`${bDef.name} placed! 🏗️`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════
+
+function calcStats() {
+  const keys = Object.keys(state.city).filter(k => state.city[k].buildings && state.city[k].buildings.length > 0).sort();
+  document.getElementById('statDays').textContent = keys.length;
+
+  let buildings = 0;
+  keys.forEach(k => { buildings += (state.city[k].buildings||[]).length; });
+  document.getElementById('statBuildings').textContent = buildings;
+
+  // streak
+  let streak = 0;
+  let d = new Date();
+  while (true) {
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (state.city[k] && state.city[k].buildings && state.city[k].buildings.length > 0) {
+      streak++; d.setDate(d.getDate()-1);
+    } else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PAN / ZOOM
+// ═══════════════════════════════════════════════════════
+
+let dragging = false, dragStart = null;
+
+canvas.addEventListener('mousedown', e => {
+  dragging = true;
+  dragStart = { x: e.clientX - state.view.x, y: e.clientY - state.view.y };
+});
+canvas.addEventListener('mousemove', e => {
+  if (dragging) {
+    state.view.x = e.clientX - dragStart.x;
+    state.view.y = e.clientY - dragStart.y;
+  }
+  // hover
+  const rect = canvas.getBoundingClientRect();
+  const {gx, gy} = screenToGrid(e.clientX - rect.left, e.clientY - rect.top, state.view.x, state.view.y, state.view.zoom);
+  hoverGridPos = {gx, gy};
+});
+canvas.addEventListener('mouseup', () => dragging = false);
+canvas.addEventListener('mouseleave', () => { dragging = false; hoverGridPos = null; });
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  state.view.zoom = Math.max(0.3, Math.min(3, state.view.zoom * delta));
+}, { passive: false });
+
+// Touch pan
+let touch1 = null;
+canvas.addEventListener('touchstart', e => { if(e.touches.length===1) touch1={x:e.touches[0].clientX-state.view.x, y:e.touches[0].clientY-state.view.y}; });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); if(e.touches.length===1 && touch1){ state.view.x=e.touches[0].clientX-touch1.x; state.view.y=e.touches[0].clientY-touch1.y; }}, {passive:false});
+canvas.addEventListener('touchend', ()=>{ touch1=null; });
+
+// ═══════════════════════════════════════════════════════
+//  CANVAS RESIZE
+// ═══════════════════════════════════════════════════════
+
+function resize() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SETUP / RENAME
+// ═══════════════════════════════════════════════════════
+
+function startApp() {
+  const val = document.getElementById('habitInput').value.trim();
+  if (!val) return;
+  state.habit = val;
+  save();
+  document.getElementById('setupModal').style.display = 'none';
+  document.getElementById('habitLabel').textContent = val;
+  updateTimerUI();
+  buildBuildingList();
+  calcStats();
+}
+
+function renameHabit() {
+  const val = prompt('Rename your habit:', state.habit);
+  if (val && val.trim()) {
+    state.habit = val.trim();
+    document.getElementById('habitLabel').textContent = state.habit;
+    save();
+  }
+}
+
+document.getElementById('habitInput').addEventListener('keydown', e => { if(e.key==='Enter') startApp(); });
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+
+if (state.habit) {
+  document.getElementById('setupModal').style.display = 'none';
+  document.getElementById('habitLabel').textContent = state.habit;
+  if (state.timer.running) {
+    // was running on close — resume counting from now
+    document.getElementById('timerBtn').textContent = '⏸ PAUSE';
+    document.getElementById('resetBtn').style.display = 'block';
+    timerInterval = setInterval(updateTimerUI, 500);
+  }
+  updateTimerUI();
+  buildBuildingList();
+  calcStats();
+}
+
+render();
+</script>
+</body>
+</html>
