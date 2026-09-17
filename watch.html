@@ -422,7 +422,7 @@ function drawTimeElement(el, now) {
       yy += rowH;
     }
   } else if (el.style === 'microhex') {
-    const s = el.scale || 1;
+    const s = microhexScale(el);
     const glyphW = (MHEX_WIDTH + 1) * s;
     let xx = el.x;
     for (const c of (hh + mm).split('').map(Number)) {
@@ -463,7 +463,7 @@ function drawWeatherElement(el) {
 }
 
 function drawTempElement(el) {
-  const s = el.scale || 1;
+  const s = microhexScale(el);
   const temp = 21;
   const glyphW = (MHEX_WIDTH + 1) * s;
   let xx = el.x;
