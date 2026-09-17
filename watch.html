@@ -907,16 +907,14 @@ canvas.addEventListener('mousemove', e => {
         break;
     }
 
-        const MIN = 4;
+    const MIN = 4;
 
     // Force square for icon element types
     const squareTypes = new Set(['weekday', 'weather']);
     if (squareTypes.has(el.type)) {
-      // Average the two dimensions so both grow and shrink respond
       const size = Math.max(MIN, Math.round((newW + newH) / 2));
       newW = size;
       newH = size;
-      // Keep the opposite corner anchored
       if (dragState.handle === 'TL' || dragState.handle === 'BL') {
         newX = dragState.startX + dragState.startW - size;
       }
@@ -936,8 +934,9 @@ canvas.addEventListener('mousemove', e => {
     el.y = newY;
     el.w = newW;
     el.h = newH;
+  }                       // ← closes the else-if branch
 
-  render();
+  render();               // ← runs after either move or resize
 });
 
 canvas.addEventListener('mouseup', () => {
