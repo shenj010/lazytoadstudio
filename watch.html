@@ -268,8 +268,15 @@ function drawMicroHexDigit(x, y, digit, scale) {
 function drawGlyphColumns(x, y, cols, w, h, scale) {
   for (let cx = 0; cx < w; cx++) {
     const col = cols[cx];
+
+    // Vertical flip of the column bits — matches firmware's drawBladeDigit
+    let flipped = 0;
+    for (let b = 0; b < h; b++) {
+      if (col & (1 << b)) flipped |= (1 << (h - 1 - b));
+    }
+
     for (let row = 0; row < h; row++) {
-      if (col & (1 << row)) {
+      if (flipped & (1 << row)) {
         fillRectPx(x + cx * scale, y + row * scale, scale, scale);
       }
     }
