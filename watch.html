@@ -486,13 +486,6 @@ function drawPlaceholder(x, y, w, h, label) {
   ctx.restore();
 }
 
- function autoScale(el, glyphNaturalH) {
-  // Largest integer scale that fits the element height
-  const scaleH = Math.floor(el.h / glyphNaturalH);
-  const scaleW = Math.floor(el.w / (MHEX_WIDTH + 1));   // for microhex
-  return Math.max(1, Math.min(scaleH, scaleW, 6));
-}
-
 // ============================================================
 // Main render dispatcher
 // ============================================================
@@ -532,6 +525,63 @@ function updateFaceStatus() {
 }
 
 // ============================================================
+// Placement helpers
+// ============================================================
+function overlapsAny(x, y, w, h) {
+  for (const el of elements) {
+    if (x < el.x + el.w && x + w > el.x &&
+        y < el.y + el.h && y + h > el.y) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function findFreeSpot(w, h) {
+  const step = 4;
+  for (let y = 0; y <= H - h; y += step) {
+    for (let x = 0; x <= W - w; x += step) {
+      if (!overlapsAny(x, y, w, h)) return { x, y };
+    }
+  }
+  return {
+    x: Math.max(0, Math.floor((W - w) / 2)),
+    y: Math.max(0, Math.floor((H - h) / 2)),
+  };
+}
+
+function addElement(type) {
+  const defaults = {
+    time:    { w: 32, h: 56, style: '7seg', thick: 3 },
+    date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
+    weekday: { w: 16, h: 16 },
+    weather: { w: 16, h: 16 },
+    temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
+    bar:     { w: 4,  h: 48, axis: 'v', source: 'time.hourProgress' },
+    text:    { w: 32, h: 16, content: 'Hello' },
+  };
+  const def = defaults[type];
+  if (!def) return;
+
+  const { w, h, ...props } = def;
+  const spot = findFreeSpot(w, h);
+
+  const el = {
+    id: nextId++,
+    type,
+    x: spot.x,
+    y: spot.y,
+    w,
+    h,
+    ...props,
+  };
+  elements.push(el);
+  selectedId = el.id;
+  rebuildProps();
+  render();
+}
+
+// ============================================================
 // Palette & properties rebuild
 // ============================================================
 function rebuildPalette() {
@@ -546,17 +596,18 @@ function rebuildPalette() {
     wireAnimTools();
   } else {
     body.innerHTML = `
-      <button disabled>Time</button>
-      <button disabled>Date</button>
-      <button disabled>Weekday</button>
-      <button disabled>Weather</button>
-      <button disabled>Temp</button>
-      <button disabled>Bar</button>
-      <button disabled>Text</button>
-      <div style="font-size:11px;color:#666;margin-top:8px">
-        Phase 4: palette becomes interactive
-      </div>
+      <h2 style="font-size:12px;margin-top:0">Add Element</h2>
+      <button data-add="time">Time</button>
+      <button data-add="date">Date</button>
+      <button data-add="weekday">Weekday</button>
+      <button data-add="weather">Weather</button>
+      <button data-add="temp">Temp</button>
+      <button data-add="bar">Bar</button>
+      <button data-add="text">Text</button>
     `;
+    body.querySelectorAll('[data-add]').forEach(btn => {
+      btn.onclick = () => addElement(btn.dataset.add);
+    });
   }
 }
 
@@ -607,6 +658,12 @@ function rebuildProps() {
       ${el.scale !== undefined ? `<div class="prop-row"><label>Scale</label>
         <input type="number" id="propScale" value="${el.scale}" min="1" max="6"></div>` : ''}
       ${dateFields}
+      <button id="propDelete" style="
+        margin-top:16px;
+        background:#4a2020;
+        border-color:#833;
+        color:#fbb;
+      ">Delete Element</button>
       <div style="font-size:11px;color:#666;margin-top:12px">
         Drag body to move · drag corners to resize
       </div>
@@ -637,6 +694,19 @@ function rebuildProps() {
     if (fmt) {
       fmt.onchange = () => {
         el.format = fmt.value;
+        render();
+      };
+    }
+
+    const del = document.getElementById('propDelete');
+    if (del) {
+      del.onclick = () => {
+        const idx = elements.findIndex(e => e.id === el.id);
+        if (idx < 0) return;
+        if (!confirm(`Delete the ${el.type} element?`)) return;
+        elements.splice(idx, 1);
+        selectedId = null;
+        rebuildProps();
         render();
       };
     }
@@ -778,7 +848,7 @@ canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null
 canvas.addEventListener('mouseleave', () => { mouseDown = false; lastCell = null; });
 
 // ============================================================
-// FACE MODE INTERACTION (Phase 3: move + resize)
+// FACE MODE INTERACTION
 // ============================================================
 let dragState = null;
 
@@ -934,9 +1004,9 @@ canvas.addEventListener('mousemove', e => {
     el.y = newY;
     el.w = newW;
     el.h = newH;
-  }                       // ← closes the else-if branch
+  }
 
-  render();               // ← runs after either move or resize
+  render();
 });
 
 canvas.addEventListener('mouseup', () => {
