@@ -414,10 +414,11 @@ function drawTimeElement(el, now) {
 
   if (el.style === '7seg') {
     const rowH = Math.floor(el.h / 4);
+    const thick = Math.max(1, Math.round(rowH / 6));
     const digits = [hh[0], hh[1], mm[0], mm[1]].map(Number);
     let yy = el.y;
     for (let i = 0; i < 4; i++) {
-      draw7SegDigit(el.x, yy, el.w, rowH - 2, el.thick, digits[i]);
+      draw7SegDigit(el.x, yy, el.w, rowH - 2, thick, digits[i]);
       yy += rowH;
     }
   } else if (el.style === 'microhex') {
@@ -432,7 +433,7 @@ function drawTimeElement(el, now) {
 }
 
 function drawDateElement(el, now) {
-  const s = el.scale || 1;
+  const s = autoScale(el, MHEX_HEIGHT);
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
 
@@ -483,6 +484,13 @@ function drawPlaceholder(x, y, w, h, label) {
   ctx.textBaseline = 'middle';
   ctx.fillText(label, (x + w / 2) * SCALE, (y + h / 2) * SCALE);
   ctx.restore();
+}
+
+ function autoScale(el, glyphNaturalH) {
+  // Largest integer scale that fits the element height
+  const scaleH = Math.floor(el.h / glyphNaturalH);
+  const scaleW = Math.floor(el.w / (MHEX_WIDTH + 1));   // for microhex
+  return Math.max(1, Math.min(scaleH, scaleW, 6));
 }
 
 // ============================================================
