@@ -1,28 +1,213 @@
-
 <!doctype html>
+<html>
+<head>
 <meta charset="utf-8">
-<button id="go">Connect & Send "hello watch"</button>
-<pre id="log"></pre>
-<script>
-const log = (s) => document.getElementById('log').textContent += s + '\n';
-const SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+<title>Watch Face Designer</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#1a1a1a; color:#e0e0e0;
+         margin:0; padding:20px; display:flex; gap:20px; }
+  #canvasWrap { background:#000; padding:8px; border-radius:6px; display:inline-block; }
+  canvas { image-rendering: pixelated; display:block; cursor: crosshair; }
+  .panel { min-width: 220px; }
+  button { display:block; width:100%; margin:6px 0; padding:8px; font-size:14px;
+           background:#333; color:#e0e0e0; border:1px solid #555; border-radius:4px;
+           cursor:pointer; }
+  button:hover { background:#444; }
+  h2 { margin-top:0; font-size:14px; text-transform:uppercase; letter-spacing:1px;
+       color:#888; }
+  #status { font-size:12px; color:#888; margin-top:12px; }
+</style>
+</head>
+<body>
 
-document.getElementById('go').onclick = async () => {
-  try {
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{ services: [SERVICE] }],
-      optionalServices: [SERVICE]
-    });
-    log('Device: ' + device.name);
-    const server = await device.gatt.connect();
-    const service = await server.getPrimaryService(SERVICE);
-    const rx = await service.getCharacteristic(RX_CHAR);
-    const data = new TextEncoder().encode('hello watch');
-    await rx.writeValue(data);
-    log('Sent ' + data.length + ' bytes');
-  } catch (e) {
-    log('Error: ' + e.message);
+<div id="canvasWrap">
+  <canvas id="c"></canvas>
+</div>
+
+<div class="panel">
+  <h2>Tools</h2>
+  <button id="btnClear">Clear</button>
+  <button id="btnInvert">Invert</button>
+  <button id="btnUndo">Undo</button>
+  <button id="btnDemo">Load demo pattern</button>
+  <button id="btnExport">Export as JSON</button>
+
+  <div id="status">—</div>
+</div>
+
+<script>
+// ----- Screen config (must match the watch) -----
+const W = 32;         // logical width in pixels
+const H = 128;        // logical height in pixels
+const SCALE = 6;      // display zoom (6x -> 192 x 768)
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width  = W * SCALE;
+canvas.height = H * SCALE;
+
+// ----- Pixel buffer: 0 = off, 1 = on -----
+let pixels = new Uint8Array(W * H);
+let undoStack = [];
+
+function idx(x, y) { return y * W + x; }
+
+function render() {
+  // Draw grid background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw "on" pixels
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (pixels[idx(x, y)]) {
+        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+      }
+    }
   }
+
+  // Optional faint grid every 8 pixels (helps eyeballing)
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 8) {
+    ctx.beginPath();
+    ctx.moveTo(x * SCALE + 0.5, 0);
+    ctx.lineTo(x * SCALE + 0.5, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 8) {
+    ctx.beginPath();
+    ctx.moveTo(0, y * SCALE + 0.5);
+    ctx.lineTo(canvas.width, y * SCALE + 0.5);
+    ctx.stroke();
+  }
+
+  updateStatus();
+}
+
+function updateStatus() {
+  let count = 0;
+  for (let i = 0; i < pixels.length; i++) if (pixels[i]) count++;
+  document.getElementById('status').textContent =
+    `${W}×${H} • ${count} px on • zoom ${SCALE}×`;
+}
+
+// ----- Drawing -----
+let mouseDown = false;
+let paintValue = 1;   // 1 when drawing, 0 when erasing
+let lastCell = null;
+
+function cellFromEvent(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / SCALE);
+  const y = Math.floor((e.clientY - r.top)  / SCALE);
+  if (x < 0 || x >= W || y < 0 || y >= H) return null;
+  return { x, y };
+}
+
+function paint(cell) {
+  if (!cell) return;
+  const i = idx(cell.x, cell.y);
+  if (pixels[i] === paintValue) return;
+  pixels[i] = paintValue;
+  // Cheap incremental redraw of just that cell
+  ctx.fillStyle = paintValue ? '#ffffff' : '#000';
+  ctx.fillRect(cell.x * SCALE, cell.y * SCALE, SCALE, SCALE);
+  updateStatus();
+}
+
+function pushUndo() {
+  undoStack.push(new Uint8Array(pixels));
+  if (undoStack.length > 50) undoStack.shift();
+}
+
+canvas.addEventListener('mousedown', e => {
+  mouseDown = true;
+  pushUndo();
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  // Erase if the target pixel is already on; otherwise draw
+  paintValue = pixels[idx(cell.x, cell.y)] ? 0 : 1;
+  lastCell = null;
+  paint(cell);
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!mouseDown) return;
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  if (lastCell && (cell.x !== lastCell.x || cell.y !== lastCell.y)) {
+    // Interpolate between lastCell and cell to avoid gaps on fast drags
+    lineTo(lastCell, cell);
+  } else {
+    paint(cell);
+  }
+  lastCell = cell;
+});
+
+function lineTo(a, b) {
+  let x0 = a.x, y0 = a.y;
+  const x1 = b.x, y1 = b.y;
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    paint({ x: x0, y: y0 });
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+
+canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null; });
+canvas.addEventListener('mouseleave', () => { mouseDown = false; lastCell = null; });
+
+// ----- Buttons -----
+document.getElementById('btnClear').onclick = () => {
+  pushUndo();
+  pixels.fill(0);
+  render();
 };
+
+document.getElementById('btnInvert').onclick = () => {
+  pushUndo();
+  for (let i = 0; i < pixels.length; i++) pixels[i] ^= 1;
+  render();
+};
+
+document.getElementById('btnUndo').onclick = () => {
+  if (!undoStack.length) return;
+  pixels = undoStack.pop();
+  render();
+};
+
+document.getElementById('btnDemo').onclick = () => {
+  pushUndo();
+  pixels.fill(0);
+  // Simple bordered rectangle
+  for (let x = 0; x < W; x++) { pixels[idx(x, 0)] = 1; pixels[idx(x, H - 1)] = 1; }
+  for (let y = 0; y < H; y++) { pixels[idx(0, y)] = 1; pixels[idx(W - 1, y)] = 1; }
+  render();
+};
+
+document.getElementById('btnExport').onclick = () => {
+  // Row-major, 1 byte per pixel for now (easy to eyeball).
+  // We'll compress to bit-packed bytes later when we design the real format.
+  const out = {
+    w: W, h: H,
+    pixels: Array.from(pixels)
+  };
+  const text = JSON.stringify(out);
+  console.log(text);
+  navigator.clipboard?.writeText(text);
+  document.getElementById('status').textContent = 'JSON logged & copied';
+};
+
+// Initial render
+render();
 </script>
+
+</body>
+</html>
