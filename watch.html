@@ -238,18 +238,18 @@ function draw7SegDigit(x, y, w, h, thick, d) {
   const hSeg = (yy) => fillRectPx(x, yy, w, thick);
   const vSeg = (xx, yy, len) => { if (len > 0) fillRectPx(xx, yy, thick, len); };
 
-  if (mask & (1 << 0)) hSeg(y);
-  if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));
-  if (mask & (1 << 3)) hSeg(y + h - thick);
+  // Flip vertical: top segment draws at bottom, bottom draws at top
+  if (mask & (1 << 0)) hSeg(y + h - thick);   // top
+  if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));  // middle unchanged
+  if (mask & (1 << 3)) hSeg(y);                // bottom
 
-  // segment 5 (originally top-left) drawn lower, segment 4 (bl) drawn upper
-  // — compensates for the browser's un-rotated space
-  if (mask & (1 << 5)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
-  if (mask & (1 << 1)) vSeg(x + w - thick, y + thick, upperLen);
-  if (mask & (1 << 4)) vSeg(x, y + thick, upperLen);
-  if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
+  // Vertical segments: top-left/right draw into bottom half, bottom-left/right draw into top half
+  if (mask & (1 << 5)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);       // TL → lower
+  if (mask & (1 << 1)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen); // TR → lower
+  if (mask & (1 << 4)) vSeg(x, y + thick, upperLen);                          // BL → upper
+  if (mask & (1 << 2)) vSeg(x + w - thick, y + thick, upperLen);              // BR → upper
 }
-
+ 
 // ============================================================
 // Bitmap glyph renderer
 // ============================================================
