@@ -48,10 +48,7 @@
     align-items: flex-start;
   }
 
-  aside {
-    min-width: 220px;
-    max-width: 260px;
-  }
+  aside { min-width: 220px; max-width: 260px; }
 
   #canvasWrap {
     background: #000; padding: 8px; border-radius: 6px;
@@ -82,6 +79,13 @@
 
   #status { font-size: 12px; color: #888; margin-top: 12px; }
   #propsEmpty { font-size: 12px; color: #666; }
+
+  .checkbox-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; font-size: 13px; color: #ccc;
+    cursor: pointer;
+  }
+  .checkbox-row input { margin: 0; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -111,13 +115,34 @@
   <aside id="props">
     <h2>Properties</h2>
     <div id="propsBody"><div id="propsEmpty">Nothing selected</div></div>
+    <div id="effectsBox" style="display:none">
+      <h2>Face Effects</h2>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxScanline"> Scanline
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxGlitch"> Glitch
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxJitter"> Jitter
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxCorners" checked> Corner brackets
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxStatus"> Status bar
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxAd" checked> Ad override
+      </label>
+    </div>
     <div id="status">—</div>
   </aside>
 </main>
 
 <script>
 // ============================================================
-// Screen config (must match the watch)
+// Screen config
 // ============================================================
 const W = 32;
 const H = 128;
@@ -128,10 +153,10 @@ const ctx = canvas.getContext('2d');
 canvas.width  = W * SCALE;
 canvas.height = H * SCALE;
 
-let currentMode = 'face';   // 'face' | 'anim'
+let currentMode = 'face';
 
 // ============================================================
-// ANIMATION STATE (existing pixel editor)
+// ANIMATION STATE
 // ============================================================
 let pixels = new Uint8Array(W * H);
 let undoStack = [];
@@ -139,10 +164,8 @@ let undoStack = [];
 function idx(x, y) { return y * W + x; }
 
 // ============================================================
-// FACE STATE (new)
+// FACE STATE
 // ============================================================
-// Phase 1: a hardcoded face that mirrors the watch's builtin
-// layout. Later, these will be user-created / draggable.
 let elements = [
   { id: 1, type: 'time',    style: '7seg',     x: 0,  y: 2,   w: 32, h: 56, thick: 3 },
   { id: 2, type: 'date',    style: 'microhex', scale: 2, x: 0,  y: 64,  w: 26, h: 16 },
@@ -151,35 +174,58 @@ let elements = [
   { id: 5, type: 'temp',    style: 'microhex', scale: 2, x: 0,  y: 108, w: 26, h: 16 },
 ];
 let selectedId = null;
-let nextId = 1;
+let nextId = 6;
+
+let effects = {
+  scanline: false,
+  glitch: false,
+  jitter: false,
+  corners: true,
+  status: false,
+  ad: true,
+};
+
+let scanY = 0;   // animated by the tick timer
 
 // ============================================================
-// MICROHEX glyphs ported to the browser (10 digits, 6x8)
-// column-major, bit0 = top row (matches micro_fonts.h)
+// Fonts
 // ============================================================
 const MHEX_GLYPHS = [
-  [0x3C,0x4A,0x52,0x62,0x42,0x3C], // 0
-  [0x00,0x22,0x7E,0x02,0x00,0x00], // 1
-  [0x26,0x4A,0x4A,0x4A,0x52,0x24], // 2
-  [0x24,0x42,0x4A,0x4A,0x4A,0x34], // 3
-  [0x18,0x28,0x48,0x7E,0x08,0x08], // 4
-  [0x72,0x52,0x52,0x52,0x52,0x5E], // 5
-  [0x3C,0x52,0x52,0x52,0x52,0x0C], // 6
-  [0x40,0x40,0x46,0x58,0x60,0x40], // 7
-  [0x2C,0x52,0x52,0x52,0x52,0x2C], // 8
-  [0x3C,0x52,0x52,0x52,0x52,0x20], // 9
+  [0x3C,0x4A,0x52,0x62,0x42,0x3C],
+  [0x00,0x22,0x7E,0x02,0x00,0x00],
+  [0x26,0x4A,0x4A,0x4A,0x52,0x24],
+  [0x24,0x42,0x4A,0x4A,0x4A,0x34],
+  [0x18,0x28,0x48,0x7E,0x08,0x08],
+  [0x72,0x52,0x52,0x52,0x52,0x5E],
+  [0x3C,0x52,0x52,0x52,0x52,0x0C],
+  [0x40,0x40,0x46,0x58,0x60,0x40],
+  [0x2C,0x52,0x52,0x52,0x52,0x2C],
+  [0x3C,0x52,0x52,0x52,0x52,0x20],
 ];
 const MHEX_WIDTH = 6;
 const MHEX_HEIGHT = 8;
 
-// ============================================================
-// 7-segment renderer (port of drawSevenSegDigit)
-// ============================================================
 const SEG_MAP = [
   0b0111111, 0b0000110, 0b1011011, 0b1001111, 0b1100110,
   0b1101101, 0b1111101, 0b0000111, 0b1111111, 0b1101111
 ];
 
+// ============================================================
+// Low-level pixel writes
+// ============================================================
+function fillRectPx(x, y, w, h) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x * SCALE, y * SCALE, w * SCALE, h * SCALE);
+}
+
+function drawPixelPx(x, y) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+}
+
+// ============================================================
+// 7-segment renderer (segment 4/5 flipped to match browser)
+// ============================================================
 function draw7SegDigit(x, y, w, h, thick, d) {
   if (d < 0 || d > 9) return;
   const mask = SEG_MAP[d];
@@ -196,14 +242,16 @@ function draw7SegDigit(x, y, w, h, thick, d) {
   if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));
   if (mask & (1 << 3)) hSeg(y + h - thick);
 
-  if (mask & (1 << 5)) vSeg(x, y + thick, lowerLen);
+  // segment 5 (originally top-left) drawn lower, segment 4 (bl) drawn upper
+  // — compensates for the browser's un-rotated space
+  if (mask & (1 << 5)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
   if (mask & (1 << 1)) vSeg(x + w - thick, y + thick, upperLen);
-  if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), upperLen);
+  if (mask & (1 << 4)) vSeg(x, y + thick, upperLen);
   if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
 }
 
 // ============================================================
-// Bitmap glyph renderer (ports drawBladeDigit for microhex)
+// Bitmap glyph renderer
 // ============================================================
 function drawMicroHexDigit(x, y, digit, scale) {
   if (digit < 0 || digit > 9) return;
@@ -214,7 +262,6 @@ function drawMicroHexDigit(x, y, digit, scale) {
 function drawGlyphColumns(x, y, cols, w, h, scale) {
   for (let cx = 0; cx < w; cx++) {
     const col = cols[cx];
-    // vertical flip to match firmware
     let flipped = 0;
     for (let b = 0; b < h; b++) {
       if (col & (1 << b)) flipped |= (1 << (h - 1 - b));
@@ -228,18 +275,20 @@ function drawGlyphColumns(x, y, cols, w, h, scale) {
 }
 
 // ============================================================
-// Low-level pixel writes to canvas
-// ============================================================
-function fillRectPx(x, y, w, h) {
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x * SCALE, y * SCALE, w * SCALE, h * SCALE);
-}
-
-// ============================================================
-// FACE renderer (Phase 1: hardcoded demo)
+// FACE renderer
 // ============================================================
 function renderFace() {
-  // Faint grid
+  drawGrid();
+
+  for (const el of elements) drawElement(el);
+
+  // Effects applied after elements, in the same order the firmware does
+  if (effects.scanline) drawScanline();
+  if (effects.corners)  drawCornerBrackets();
+  if (effects.status)   drawStatusBar();
+}
+
+function drawGrid() {
   ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
   for (let x = 0; x <= W; x += 8) {
@@ -254,12 +303,49 @@ function renderFace() {
     ctx.lineTo(canvas.width, y * SCALE + 0.5);
     ctx.stroke();
   }
+}
 
-  // Draw each element
-  for (const el of elements) {
-    drawElement(el);
+// ---------- Effects ----------
+
+function drawScanline() {
+  fillRectPx(0, scanY, W, 1);
+}
+
+function drawCornerBrackets() {
+  // Mirrors drawCornerBrackets() from firmware (8px horizontal, 6px vertical)
+  fillRectPx(0, 0, 8, 1);
+  fillRectPx(0, 0, 1, 6);
+  fillRectPx(W - 8, 0, 8, 1);
+  fillRectPx(W - 1, 0, 1, 6);
+  fillRectPx(0, H - 1, 8, 1);
+  fillRectPx(0, H - 6, 1, 6);
+  fillRectPx(W - 8, H - 1, 8, 1);
+  fillRectPx(W - 1, H - 6, 1, 6);
+}
+
+function drawStatusBar() {
+  // Simplified placeholder: BAT: + 3 bars at top-left, SIG: + 3 bars below
+  drawTextSmall(0, 0, 'BAT');
+  // Three small bar placeholders
+  for (let i = 0; i < 3; i++) {
+    fillRectPx(20 + i * 4, 0, 2, 5);
+  }
+  drawTextSmall(0, 6, 'SIG');
+  for (let i = 0; i < 2; i++) {
+    fillRectPx(20 + i * 4, 6, 2, 5);
   }
 }
+
+function drawTextSmall(x, y, str) {
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '5px monospace';
+  ctx.textBaseline = 'top';
+  ctx.fillText(str, x * SCALE, y * SCALE);
+  ctx.restore();
+}
+
+// ---------- Element dispatch ----------
 
 function drawElement(el) {
   const now = new Date();
@@ -278,7 +364,6 @@ function drawTimeElement(el, now) {
   const mm = String(now.getMinutes()).padStart(2, '0');
 
   if (el.style === '7seg') {
-    // Stacked 4 digits, one per row, full width (mirrors builtin)
     const rowH = Math.floor(el.h / 4);
     const digits = [hh[0], hh[1], mm[0], mm[1]].map(Number);
     let yy = el.y;
@@ -290,8 +375,7 @@ function drawTimeElement(el, now) {
     const s = el.scale || 1;
     const glyphW = (MHEX_WIDTH + 1) * s;
     let xx = el.x;
-    const chars = (hh + mm).split('').map(Number);
-    for (const c of chars) {
+    for (const c of (hh + mm).split('').map(Number)) {
       drawMicroHexDigit(xx, el.y, c, s);
       xx += glyphW;
     }
@@ -299,21 +383,18 @@ function drawTimeElement(el, now) {
 }
 
 function drawDateElement(el, now) {
-  // Simplified: show MM/DD in microhex scale
   const s = el.scale || 1;
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  const chars = (mm + dd).split('').map(Number);
   const glyphW = (MHEX_WIDTH + 1) * s;
   let xx = el.x;
-  for (const c of chars) {
+  for (const c of (mm + dd).split('').map(Number)) {
     drawMicroHexDigit(xx, el.y, c, s);
     xx += glyphW;
   }
 }
 
 function drawWeekdayElement(el, now) {
-  // Phase 1: draw a small placeholder block (kanji icons come later)
   drawPlaceholder(el.x, el.y, el.w, el.h, 'WD');
 }
 
@@ -323,12 +404,10 @@ function drawWeatherElement(el) {
 
 function drawTempElement(el) {
   const s = el.scale || 1;
-  // Fake temp for now
   const temp = 21;
-  const chars = String(temp).split('').map(Number);
   const glyphW = (MHEX_WIDTH + 1) * s;
   let xx = el.x;
-  for (const c of chars) {
+  for (const c of String(temp).split('').map(Number)) {
     drawMicroHexDigit(xx, el.y, c, s);
     xx += glyphW;
   }
@@ -363,34 +442,14 @@ function render() {
   }
 }
 
-// ============================================================
-// ANIMATION renderer (existing pixel-buffer drawing)
-// ============================================================
 function renderAnim() {
   ctx.fillStyle = '#ffffff';
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      if (pixels[idx(x, y)]) {
-        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
-      }
+      if (pixels[idx(x, y)]) ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
     }
   }
-
-  // Faint grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x <= W; x += 8) {
-    ctx.beginPath();
-    ctx.moveTo(x * SCALE + 0.5, 0);
-    ctx.lineTo(x * SCALE + 0.5, canvas.height);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= H; y += 8) {
-    ctx.beginPath();
-    ctx.moveTo(0, y * SCALE + 0.5);
-    ctx.lineTo(canvas.width, y * SCALE + 0.5);
-    ctx.stroke();
-  }
+  drawGrid();
 }
 
 function updateAnimStatus() {
@@ -406,7 +465,7 @@ function updateFaceStatus() {
 }
 
 // ============================================================
-// Palette & properties rebuild (mode-dependent)
+// Palette & properties rebuild
 // ============================================================
 function rebuildPalette() {
   const body = document.getElementById('paletteBody');
@@ -436,48 +495,61 @@ function rebuildPalette() {
 
 function rebuildProps() {
   const body = document.getElementById('propsBody');
+  const fx   = document.getElementById('effectsBox');
+
   if (currentMode === 'face') {
+    fx.style.display = '';
     if (selectedId === null) {
       body.innerHTML = '<div id="propsEmpty">Nothing selected</div>';
     } else {
-      body.innerHTML = '<div id="propsEmpty">Selected element (editing comes in Phase 2)</div>';
+      body.innerHTML = '<div id="propsEmpty">Selected (editing comes in Phase 2)</div>';
     }
   } else {
+    fx.style.display = 'none';
     body.innerHTML = '<div id="propsEmpty">Drawing tools active</div>';
   }
 }
 
 // ============================================================
-// Animation tool buttons (existing handlers, moved into a fn)
+// Animation tools
 // ============================================================
 function wireAnimTools() {
-  const btnClear = document.getElementById('btnClear');
+  const btnClear  = document.getElementById('btnClear');
   const btnInvert = document.getElementById('btnInvert');
-  const btnUndo = document.getElementById('btnUndo');
-  const btnDemo = document.getElementById('btnDemo');
+  const btnUndo   = document.getElementById('btnUndo');
+  const btnDemo   = document.getElementById('btnDemo');
 
-  if (btnClear) btnClear.onclick = () => {
-    pushUndo();
-    pixels.fill(0);
+  if (btnClear)  btnClear.onclick  = () => { pushUndo(); pixels.fill(0); render(); };
+  if (btnInvert) btnInvert.onclick = () => { pushUndo(); for (let i=0;i<pixels.length;i++) pixels[i]^=1; render(); };
+  if (btnUndo)   btnUndo.onclick   = () => { if(!undoStack.length) return; pixels = undoStack.pop(); render(); };
+  if (btnDemo)   btnDemo.onclick   = () => {
+    pushUndo(); pixels.fill(0);
+    for (let x=0;x<W;x++){pixels[idx(x,0)]=1;pixels[idx(x,H-1)]=1;}
+    for (let y=0;y<H;y++){pixels[idx(0,y)]=1;pixels[idx(W-1,y)]=1;}
     render();
   };
-  if (btnInvert) btnInvert.onclick = () => {
-    pushUndo();
-    for (let i = 0; i < pixels.length; i++) pixels[i] ^= 1;
-    render();
+}
+
+// ============================================================
+// Effects checkboxes
+// ============================================================
+function wireEffects() {
+  const map = {
+    fxScanline: 'scanline',
+    fxGlitch:   'glitch',
+    fxJitter:   'jitter',
+    fxCorners:  'corners',
+    fxStatus:   'status',
+    fxAd:       'ad',
   };
-  if (btnUndo) btnUndo.onclick = () => {
-    if (!undoStack.length) return;
-    pixels = undoStack.pop();
-    render();
-  };
-  if (btnDemo) btnDemo.onclick = () => {
-    pushUndo();
-    pixels.fill(0);
-    for (let x = 0; x < W; x++) { pixels[idx(x, 0)] = 1; pixels[idx(x, H - 1)] = 1; }
-    for (let y = 0; y < H; y++) { pixels[idx(0, y)] = 1; pixels[idx(W - 1, y)] = 1; }
-    render();
-  };
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    el.checked = effects[key];
+    el.onchange = () => {
+      effects[key] = el.checked;
+      render();
+    };
+  }
 }
 
 // ============================================================
@@ -499,7 +571,7 @@ document.querySelectorAll('.tabs button').forEach(btn => {
 });
 
 // ============================================================
-// ANIMATION drawing input handlers (existing)
+// Animation drawing input handlers
 // ============================================================
 let mouseDown = false;
 let paintValue = 1;
@@ -570,7 +642,7 @@ canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null
 canvas.addEventListener('mouseleave', () => { mouseDown = false; lastCell = null; });
 
 // ============================================================
-// BLE (existing)
+// BLE
 // ============================================================
 const SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -660,12 +732,11 @@ btnConnect.onclick = () => {
 };
 
 // ============================================================
-// Build outgoing JSON (mode-dependent)
+// Build outgoing JSON
 // ============================================================
 function buildAnimJson() {
   const bytesPerRow = Math.ceil(W / 8);
   const packed = new Uint8Array(bytesPerRow * H);
-
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       if (pixels[idx(x, y)]) {
@@ -675,7 +746,6 @@ function buildAnimJson() {
       }
     }
   }
-
   let binary = '';
   for (let i = 0; i < packed.length; i++) binary += String.fromCharCode(packed[i]);
   const b64 = btoa(binary);
@@ -696,6 +766,7 @@ function buildFaceConfigJson() {
     kind: 'face',
     v: 1,
     name: 'untitled',
+    effects: effects,
     elements: elements
   });
 }
@@ -705,7 +776,7 @@ function buildPayload() {
 }
 
 // ============================================================
-// Send to watch (existing chunked transfer)
+// Send to watch
 // ============================================================
 const CHUNK_SIZE = 180;
 
@@ -756,8 +827,14 @@ btnSend.onclick = async () => {
 // ============================================================
 // Boot
 // ============================================================
+wireEffects();
 setMode('face');
-setInterval(() => { if (currentMode === 'face') render(); }, 1000);
+
+// 250ms tick: advances scanline, refreshes clock
+setInterval(() => {
+  scanY = (scanY + 1) % H;
+  if (currentMode === 'face') render();
+}, 250);
 </script>
 
 </body>
