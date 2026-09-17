@@ -86,6 +86,14 @@
     cursor: pointer;
   }
   .checkbox-row input { margin: 0; cursor: pointer; }
+
+  .prop-row {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; font-size: 13px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .prop-row label { color: #888; }
+  .prop-row span  { color: #e0e0e0; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -185,7 +193,7 @@ let effects = {
   ad: true,
 };
 
-let scanY = 0;   // animated by the tick timer
+let scanY = 0;
 
 // ============================================================
 // Fonts
@@ -224,7 +232,7 @@ function drawPixelPx(x, y) {
 }
 
 // ============================================================
-// 7-segment renderer (segment 4/5 flipped to match browser)
+// 7-segment renderer
 // ============================================================
 function draw7SegDigit(x, y, w, h, thick, d) {
   if (d < 0 || d > 9) return;
@@ -247,7 +255,7 @@ function draw7SegDigit(x, y, w, h, thick, d) {
   if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
   if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
 }
- 
+
 // ============================================================
 // Bitmap glyph renderer
 // ============================================================
@@ -276,10 +284,29 @@ function renderFace() {
 
   for (const el of elements) drawElement(el);
 
-  // Effects applied after elements, in the same order the firmware does
+  // Selection outline (after elements, before effects)
+  if (selectedId !== null) {
+    const el = elements.find(e => e.id === selectedId);
+    if (el) drawSelectionOutline(el);
+  }
+
   if (effects.scanline) drawScanline();
   if (effects.corners)  drawCornerBrackets();
   if (effects.status)   drawStatusBar();
+}
+
+function drawSelectionOutline(el) {
+  ctx.save();
+  ctx.strokeStyle = '#3af';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.strokeRect(
+    el.x * SCALE + 1,
+    el.y * SCALE + 1,
+    el.w * SCALE - 2,
+    el.h * SCALE - 2
+  );
+  ctx.restore();
 }
 
 function drawGrid() {
@@ -306,7 +333,6 @@ function drawScanline() {
 }
 
 function drawCornerBrackets() {
-  // Mirrors drawCornerBrackets() from firmware (8px horizontal, 6px vertical)
   fillRectPx(0, 0, 8, 1);
   fillRectPx(0, 0, 1, 6);
   fillRectPx(W - 8, 0, 8, 1);
@@ -318,9 +344,7 @@ function drawCornerBrackets() {
 }
 
 function drawStatusBar() {
-  // Simplified placeholder: BAT: + 3 bars at top-left, SIG: + 3 bars below
   drawTextSmall(0, 0, 'BAT');
-  // Three small bar placeholders
   for (let i = 0; i < 3; i++) {
     fillRectPx(20 + i * 4, 0, 2, 5);
   }
@@ -481,7 +505,7 @@ function rebuildPalette() {
       <button disabled>Bar</button>
       <button disabled>Text</button>
       <div style="font-size:11px;color:#666;margin-top:8px">
-        Phase 1: palette not yet interactive
+        Phase 2: palette not yet interactive
       </div>
     `;
   }
@@ -494,9 +518,29 @@ function rebuildProps() {
   if (currentMode === 'face') {
     fx.style.display = '';
     if (selectedId === null) {
-      body.innerHTML = '<div id="propsEmpty">Nothing selected</div>';
+      body.innerHTML = '<div id="propsEmpty">Click an element to select</div>';
     } else {
-      body.innerHTML = '<div id="propsEmpty">Selected (editing comes in Phase 2)</div>';
+      const el = elements.find(e => e.id === selectedId);
+      if (!el) {
+        selectedId = null;
+        body.innerHTML = '<div id="propsEmpty">Click an element to select</div>';
+        return;
+      }
+      body.innerHTML = `
+        <div style="font-size:12px;color:#aaa;margin-bottom:8px">
+          <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
+          ${el.style ? `<span style="color:#888"> · ${el.style}</span>` : ''}
+        </div>
+        <div class="prop-row"><label>X</label><span>${el.x}</span></div>
+        <div class="prop-row"><label>Y</label><span>${el.y}</span></div>
+        <div class="prop-row"><label>W</label><span>${el.w}</span></div>
+        <div class="prop-row"><label>H</label><span>${el.h}</span></div>
+        ${el.thick !== undefined ? `<div class="prop-row"><label>Thick</label><span>${el.thick}</span></div>` : ''}
+        ${el.scale !== undefined ? `<div class="prop-row"><label>Scale</label><span>${el.scale}</span></div>` : ''}
+        <div style="font-size:11px;color:#666;margin-top:12px">
+          Drag to move. Editing values comes in Phase 3.
+        </div>
+      `;
     }
   } else {
     fx.style.display = 'none';
@@ -634,6 +678,82 @@ function lineTo(a, b) {
 
 canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null; });
 canvas.addEventListener('mouseleave', () => { mouseDown = false; lastCell = null; });
+
+// ============================================================
+// FACE MODE INTERACTION (Phase 2)
+// ============================================================
+let dragState = null;
+
+function elementAtPoint(px, py) {
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const el = elements[i];
+    if (px >= el.x && px < el.x + el.w &&
+        py >= el.y && py < el.y + el.h) {
+      return el;
+    }
+  }
+  return null;
+}
+
+function canvasToPixel(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: Math.floor((clientX - r.left) / SCALE),
+    y: Math.floor((clientY - r.top)  / SCALE),
+  };
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (currentMode !== 'face') return;
+  const p = canvasToPixel(e.clientX, e.clientY);
+
+  const hit = elementAtPoint(p.x, p.y);
+  if (hit) {
+    selectedId = hit.id;
+    dragState = {
+      el: hit,
+      offsetX: p.x - hit.x,
+      offsetY: p.y - hit.y,
+    };
+  } else {
+    selectedId = null;
+    dragState = null;
+  }
+  rebuildProps();
+  render();
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (currentMode !== 'face' || !dragState) return;
+  const p = canvasToPixel(e.clientX, e.clientY);
+  const el = dragState.el;
+
+  let nx = p.x - dragState.offsetX;
+  let ny = p.y - dragState.offsetY;
+  nx = Math.max(0, Math.min(W - el.w, nx));
+  ny = Math.max(0, Math.min(H - el.h, ny));
+
+  el.x = nx;
+  el.y = ny;
+
+  render();
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (currentMode !== 'face') return;
+  if (dragState) {
+    dragState = null;
+    rebuildProps();
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (currentMode !== 'face') return;
+  if (dragState) {
+    dragState = null;
+    rebuildProps();
+  }
+});
 
 // ============================================================
 // BLE
@@ -824,7 +944,6 @@ btnSend.onclick = async () => {
 wireEffects();
 setMode('face');
 
-// 250ms tick: advances scanline, refreshes clock
 setInterval(() => {
   scanY = (scanY + 1) % H;
   if (currentMode === 'face') render();
