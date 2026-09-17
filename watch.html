@@ -433,7 +433,7 @@ function drawTimeElement(el, now) {
 }
 
 function drawDateElement(el, now) {
-  const s = autoScale(el, MHEX_HEIGHT);
+  const s = el.scale || 1;
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
 
