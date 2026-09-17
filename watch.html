@@ -400,6 +400,7 @@ function drawElement(el) {
   const now = new Date();
   switch (el.type) {
     case 'time':     drawTimeElement(el, now);   break;
+    case 'seconds':  drawSecondsElement(el, now); break;   // ← add this
     case 'date':     drawDateElement(el, now);   break;
     case 'weekday':  drawWeekdayElement(el, now);break;
     case 'weather':  drawWeatherElement(el);     break;
@@ -572,6 +573,7 @@ function findFreeSpot(w, h) {
 function addElement(type) {
   const defaults = {
     time:    { w: 32, h: 56, style: '7seg', thick: 3 },
+    seconds: { w: 20, h: 10, style: '7seg' },  
     date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
     weekday: { w: 16, h: 16 },
     weather: { w: 16, h: 16 },
