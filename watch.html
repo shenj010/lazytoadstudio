@@ -907,6 +907,21 @@ canvas.addEventListener('mousemove', e => {
         break;
     }
 
+   // Force square for icon types
+   const squareTypes = new Set(['weekday', 'weather']);
+   if (squareTypes.has(el.type)) {
+     const size = Math.max(MIN, Math.round((newW + newH) / 2));
+     newW = size;
+     newH = size;
+     // Reapply anchor rules based on handle
+     if (dragState.handle === 'TL' || dragState.handle === 'BL') {
+       newX = dragState.startX + dragState.startW - size;
+     }
+     if (dragState.handle === 'TL' || dragState.handle === 'TR') {
+       newY = dragState.startY + dragState.startH - size;
+     }
+   }
+
     const MIN = 4;
     if (newW < MIN) newW = MIN;
     if (newH < MIN) newH = MIN;
