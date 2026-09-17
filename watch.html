@@ -452,8 +452,10 @@ function drawSecondsElement(el, now) {
     }
   }
 }
+ 
 function drawDateElement(el, now) {
   const s = el.scale || 1;
+  const rot = el.rotation || 0;
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
 
@@ -466,11 +468,24 @@ function drawDateElement(el, now) {
     default:     str = mm + dd; break;
   }
 
+  const digits = str.split('').map(Number);
   const glyphW = (MHEX_WIDTH + 1) * s;
-  let xx = el.x;
-  for (const c of str.split('').map(Number)) {
-    drawMicroHexDigit(xx, el.y, c, s);
-    xx += glyphW;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+
+  if (rot === 90 || rot === 270) {
+    // Vertical layout: one digit per row
+    let yy = el.y;
+    for (const c of digits) {
+      drawMicroHexDigit(el.x, yy, c, s);
+      yy += glyphH;
+    }
+  } else {
+    // Horizontal layout: one digit per column (default, and 180)
+    let xx = el.x;
+    for (const c of digits) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
   }
 }
 
@@ -484,12 +499,25 @@ function drawWeatherElement(el) {
 
 function drawTempElement(el) {
   const s = el.scale || 1;
+  const rot = el.rotation || 0;
   const temp = 21;
+  const digits = String(temp).split('').map(Number);
+
   const glyphW = (MHEX_WIDTH + 1) * s;
-  let xx = el.x;
-  for (const c of String(temp).split('').map(Number)) {
-    drawMicroHexDigit(xx, el.y, c, s);
-    xx += glyphW;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+
+  if (rot === 90 || rot === 270) {
+    let yy = el.y;
+    for (const c of digits) {
+      drawMicroHexDigit(el.x, yy, c, s);
+      yy += glyphH;
+    }
+  } else {
+    let xx = el.x;
+    for (const c of digits) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
   }
 }
 
@@ -661,6 +689,17 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
+       const rotateFields = ['date', 'temp'].includes(el.type) ? `
+      <div class="prop-row">
+        <label>Rotation</label>
+        <select id="propRotation">
+          <option value="0"   ${(el.rotation||0)===0  ?'selected':''}>0°</option>
+          <option value="90"  ${(el.rotation||0)===90 ?'selected':''}>90°</option>
+          <option value="180" ${(el.rotation||0)===180?'selected':''}>180°</option>
+          <option value="270" ${(el.rotation||0)===270?'selected':''}>270°</option>
+        </select>
+      </div>
+    ` : '';
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -716,6 +755,30 @@ function rebuildProps() {
     if (fmt) {
       fmt.onchange = () => {
         el.format = fmt.value;
+        render();
+      };
+    }
+
+       const rot = document.getElementById('propRotation');
+    if (rot) {
+      rot.onchange = () => {
+        const newRot = parseInt(rot.value, 10);
+        const oldRot = el.rotation || 0;
+        const isVerticalNew = (newRot === 90 || newRot === 270);
+        const isVerticalOld = (oldRot === 90 || oldRot === 270);
+
+        // Swap W/H if the orientation changed between horizontal and vertical
+        if (isVerticalNew !== isVerticalOld) {
+          const t = el.w;
+          el.w = el.h;
+          el.h = t;
+          // Keep in bounds after swap
+          el.x = Math.max(0, Math.min(W - el.w, el.x));
+          el.y = Math.max(0, Math.min(H - el.h, el.y));
+        }
+
+        el.rotation = newRot;
+        rebuildProps();   // refresh the W/H fields to show swapped values
         render();
       };
     }
