@@ -238,16 +238,14 @@ function draw7SegDigit(x, y, w, h, thick, d) {
   const hSeg = (yy) => fillRectPx(x, yy, w, thick);
   const vSeg = (xx, yy, len) => { if (len > 0) fillRectPx(xx, yy, thick, len); };
 
-  // Flip vertical: top segment draws at bottom, bottom draws at top
-  if (mask & (1 << 0)) hSeg(y + h - thick);   // top
-  if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));  // middle unchanged
-  if (mask & (1 << 3)) hSeg(y);                // bottom
+  if (mask & (1 << 0)) hSeg(y);
+  if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));
+  if (mask & (1 << 3)) hSeg(y + h - thick);
 
-  // Vertical segments: top-left/right draw into bottom half, bottom-left/right draw into top half
-  if (mask & (1 << 5)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);       // TL → lower
-  if (mask & (1 << 1)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen); // TR → lower
-  if (mask & (1 << 4)) vSeg(x, y + thick, upperLen);                          // BL → upper
-  if (mask & (1 << 2)) vSeg(x + w - thick, y + thick, upperLen);              // BR → upper
+  if (mask & (1 << 5)) vSeg(x, y + thick, upperLen);
+  if (mask & (1 << 1)) vSeg(x + w - thick, y + thick, upperLen);
+  if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
+  if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
 }
  
 // ============================================================
@@ -262,12 +260,8 @@ function drawMicroHexDigit(x, y, digit, scale) {
 function drawGlyphColumns(x, y, cols, w, h, scale) {
   for (let cx = 0; cx < w; cx++) {
     const col = cols[cx];
-    let flipped = 0;
-    for (let b = 0; b < h; b++) {
-      if (col & (1 << b)) flipped |= (1 << (h - 1 - b));
-    }
     for (let row = 0; row < h; row++) {
-      if (flipped & (1 << row)) {
+      if (col & (1 << row)) {
         fillRectPx(x + cx * scale, y + row * scale, scale, scale);
       }
     }
