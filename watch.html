@@ -196,9 +196,9 @@ function draw7SegDigit(x, y, w, h, thick, d) {
   if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));
   if (mask & (1 << 3)) hSeg(y + h - thick);
 
-  if (mask & (1 << 5)) vSeg(x, y + thick, upperLen);
+  if (mask & (1 << 5)) vSeg(x, y + thick, lowerLen);
   if (mask & (1 << 1)) vSeg(x + w - thick, y + thick, upperLen);
-  if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
+  if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), upperLen);
   if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
 }
 
