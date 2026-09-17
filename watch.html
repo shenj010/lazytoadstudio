@@ -422,7 +422,7 @@ function drawTimeElement(el, now) {
       yy += rowH;
     }
   } else if (el.style === 'microhex') {
-    const s = microhexScale(el);
+    const s = el.scale || 1;
     const glyphW = (MHEX_WIDTH + 1) * s;
     let xx = el.x;
     for (const c of (hh + mm).split('').map(Number)) {
@@ -463,7 +463,7 @@ function drawWeatherElement(el) {
 }
 
 function drawTempElement(el) {
-  const s = microhexScale(el);
+  const s = el.scale || 1;
   const temp = 21;
   const glyphW = (MHEX_WIDTH + 1) * s;
   let xx = el.x;
@@ -486,9 +486,10 @@ function drawPlaceholder(x, y, w, h, label) {
   ctx.restore();
 }
 
-function microhexScale(el) {
-  const scaleH = Math.floor(el.h / MHEX_HEIGHT);
-  const scaleW = Math.floor(el.w / (MHEX_WIDTH + 1));
+ function autoScale(el, glyphNaturalH) {
+  // Largest integer scale that fits the element height
+  const scaleH = Math.floor(el.h / glyphNaturalH);
+  const scaleW = Math.floor(el.w / (MHEX_WIDTH + 1));   // for microhex
   return Math.max(1, Math.min(scaleH, scaleW, 6));
 }
 
@@ -906,24 +907,19 @@ canvas.addEventListener('mousemove', e => {
         break;
     }
 
-  const MIN = 4;
-  
-  // Force square for icon types
-  const squareTypes = new Set(['weekday', 'weather']);
-  if (squareTypes.has(el.type)) {
-    const size = Math.max(MIN, Math.min(newW, newH));
-    newW = size;
-    newH = size;
-    if (dragState.handle === 'TL' || dragState.handle === 'BL') {
-      newX = dragState.startX + dragState.startW - size;
-    }
-    if (dragState.handle === 'TL' || dragState.handle === 'TR') {
-      newY = dragState.startY + dragState.startH - size;
-    }
+    const MIN = 4;
+    if (newW < MIN) newW = MIN;
+    if (newH < MIN) newH = MIN;
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
+    if (newX + newW > W) newW = W - newX;
+    if (newY + newH > H) newH = H - newY;
+
+    el.x = newX;
+    el.y = newY;
+    el.w = newW;
+    el.h = newH;
   }
-  
-  if (newW < MIN) newW = MIN;
-  if (newH < MIN) newH = MIN;
 
   render();
 });
