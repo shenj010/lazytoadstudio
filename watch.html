@@ -910,7 +910,7 @@ canvas.addEventListener('mousemove', e => {
    // Force square for icon types
    const squareTypes = new Set(['weekday', 'weather']);
    if (squareTypes.has(el.type)) {
-     const size = Math.max(MIN, Math.round((newW + newH) / 2));
+     const size = Math.max(MIN, Math.min(newW, newH));
      newW = size;
      newH = size;
      // Reapply anchor rules based on handle
@@ -921,7 +921,6 @@ canvas.addEventListener('mousemove', e => {
        newY = dragState.startY + dragState.startH - size;
      }
    }
-
     const MIN = 4;
     if (newW < MIN) newW = MIN;
     if (newH < MIN) newH = MIN;
