@@ -1109,6 +1109,41 @@ function rebuildProps() {
       };
     }
 
+       const barSource = document.getElementById('propBarSource');
+    if (barSource) {
+      barSource.onchange = () => {
+        el.source = barSource.value;
+        render();
+      };
+    }
+
+    const barStyle = document.getElementById('propBarStyle');
+    if (barStyle) {
+      barStyle.onchange = () => {
+        el.barStyle = barStyle.value;
+        rebuildProps();   // re-render panel so segments field appears/disappears
+        render();
+      };
+    }
+
+    const barSegments = document.getElementById('propBarSegments');
+    if (barSegments) {
+      barSegments.oninput = () => {
+        const v = parseInt(barSegments.value, 10);
+        if (isNaN(v) || v < 2) return;
+        el.segments = v;
+        render();
+      };
+    }
+
+    const barOutline = document.getElementById('propBarOutline');
+    if (barOutline) {
+      barOutline.onchange = () => {
+        el.barOutline = barOutline.checked;
+        render();
+      };
+    }
+
     const del = document.getElementById('propDelete');
     if (del) {
       del.onclick = () => {
