@@ -11,6 +11,7 @@
     margin: 0; padding: 0;
     display: flex; flex-direction: column;
     min-height: 100vh;
+    overscroll-behavior: none;   /* prevent pull-to-refresh and bounce */
   }
 
   header {
@@ -55,9 +56,13 @@
     display: inline-block;
   }
   canvas {
-    image-rendering: pixelated; display: block;
-    cursor: crosshair;
-  }
+  image-rendering: pixelated; display: block;
+  cursor: crosshair;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;   /* prevents iOS long-press popup */
+}
   canvas.face-mode { cursor: default; }
 
   button {
