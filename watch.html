@@ -1668,12 +1668,19 @@ function buildAnimJson() {
 }
 
 function buildFaceConfigJson() {
+  const outElements = elements.map(e => {
+    const copy = { ...e };
+    if (e.type === 'weekday') {
+      copy.style = (e.weekdayStyle === 'english') ? 'text' : '7seg';
+    }
+    return copy;
+  });
   return JSON.stringify({
     kind: 'face',
     v: 1,
     name: 'untitled',
     effects: effects,
-    elements: elements
+    elements: outElements
   });
 }
 
