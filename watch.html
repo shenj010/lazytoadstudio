@@ -104,7 +104,9 @@
   }
   .prop-row select { width: 120px; text-align: left; }
 
-   #timeline {
+  #timeline {
+    width: 192px;
+    box-sizing: border-box;
     margin-top: 10px;
     padding: 8px;
     background: #111;
@@ -117,6 +119,8 @@
     overflow-x: auto;
     padding: 4px 0;
     min-height: 60px;
+    width: 100%;
+    box-sizing: border-box;
   }
   #timelineFrames::-webkit-scrollbar {
     height: 6px;
@@ -157,6 +161,7 @@
   }
   #timelineControls {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     margin-top: 6px;
   }
@@ -171,7 +176,10 @@
     color: #888;
     margin-top: 6px;
   }
-
+  #btnPlayAnim {
+    min-width: 70px;
+    text-align: center;
+  }
 </style>
 <script src="glcdfont.js"></script>
 </head>
