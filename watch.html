@@ -1390,7 +1390,7 @@ function rebuildProps() {
    };
  }
 
-    const del = document.getElementById('propDelete');
+       const del = document.getElementById('propDelete');
     if (del) {
       del.onclick = () => {
         const idx = elements.findIndex(e => e.id === el.id);
@@ -1401,22 +1401,12 @@ function rebuildProps() {
         rebuildProps();
         render();
       };
+    }
   } else {
     fx.style.display = 'none';
     const cur = frames[currentFrameIndex];
     body.innerHTML = `
-      <div style="font-size:12px;color:#aaa;margin-bottom:8px">
-        <strong style="color:#fff">Frame ${currentFrameIndex + 1}</strong>
-        <span style="color:#888"> · of ${frames.length}</span>
-      </div>
-      <div class="prop-row">
-        <label>Duration</label>
-        <input type="number" id="propFrameMs" value="${cur.durationMs}" min="20" max="5000" step="10">
-      </div>
-      <div class="prop-row">
-        <label>Total</label>
-        <span>${frames.reduce((a, f) => a + f.durationMs, 0)}ms</span>
-      </div>
+      ...
     `;
     const ms = document.getElementById('propFrameMs');
     if (ms) {
@@ -1428,6 +1418,7 @@ function rebuildProps() {
       };
     }
   }
+}
 // ============================================================
 // Animation tools
 // ============================================================
