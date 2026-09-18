@@ -1759,8 +1759,13 @@ canvas.addEventListener('mousedown', e => {
     shapeActive = true;
     previewPixels.fill(0);
     render();
+  } else if (currentTool === 'rect' || currentTool === 'rectFill') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
+    previewPixels.fill(0);
+    render();
   }
-  // Other tools: added in later chunks
 });
 
 canvas.addEventListener('mousemove', e => {
@@ -1775,29 +1780,7 @@ canvas.addEventListener('mousemove', e => {
       paint(cell);
     }
     lastCell = cell;
-    } else if (currentTool === 'line') {
-    shapeStart = { x: cell.x, y: cell.y };
-    shapeEnd   = { x: cell.x, y: cell.y };
-    shapeActive = true;
-    previewPixels.fill(0);
-    render();
-  } else if (currentTool === 'rect' || currentTool === 'rectFill') {
-    shapeStart = { x: cell.x, y: cell.y };
-    shapeEnd   = { x: cell.x, y: cell.y };
-    shapeActive = true;
-    previewPixels.fill(0);
-    render();
-  }
-  // Other tools: added in later chunks
-});
-
- canvas.addEventListener('mouseup', () => {
-  if (currentMode !== 'anim') { mouseDown = false; return; }
-  if (!mouseDown) return;
-  mouseDown = false;
-  lastCell = null;
-
-    } else if (currentTool === 'line' && shapeActive) {
+  } else if (currentTool === 'line' && shapeActive) {
     shapeEnd = { x: cell.x, y: cell.y };
     previewPixels.fill(0);
     drawLineToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1);
@@ -1813,6 +1796,25 @@ canvas.addEventListener('mousemove', e => {
       currentTool === 'rectFill'
     );
     render();
+  }
+});
+
+ canvas.addEventListener('mouseup', () => {
+  if (currentMode !== 'anim') { mouseDown = false; return; }
+  if (!mouseDown) return;
+  mouseDown = false;
+  lastCell = null;
+
+  if ((currentTool === 'line' || currentTool === 'rect' || currentTool === 'rectFill') && shapeActive) {
+    for (let i = 0; i < previewPixels.length; i++) {
+      if (previewPixels[i]) pixels[i] = 1;
+    }
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+    renderTimeline();
   }
 });
 
