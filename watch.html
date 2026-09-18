@@ -177,7 +177,17 @@ let currentMode = 'face';
 // ============================================================
 // ANIMATION STATE
 // ============================================================
-let pixels = new Uint8Array(W * H);
+// Animation state
+let frames = [{ durationMs: 100, pixels: new Uint8Array(W * H) }];
+let currentFrameIndex = 0;
+let defaultFrameMs = 100;
+let animationPlaying = false;
+let animationPlayStart = 0;
+let animationPlayHandle = null;
+
+// `pixels` is an alias for the current frame's pixel buffer.
+// All existing drawing code operates on this and works unchanged.
+let pixels = frames[0].pixels;
 let undoStack = [];
 
 function idx(x, y) { return y * W + x; }
@@ -267,6 +277,13 @@ function fillRectPx(x, y, w, h) {
 function drawPixelPx(x, y) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+}
+
+function switchToFrame(i) {
+  if (i < 0 || i >= frames.length) return;
+  currentFrameIndex = i;
+  pixels = frames[i].pixels;
+  render();
 }
 
 // ============================================================
@@ -1250,7 +1267,13 @@ function wireAnimTools() {
 
   if (btnClear)  btnClear.onclick  = () => { pushUndo(); pixels.fill(0); render(); };
   if (btnInvert) btnInvert.onclick = () => { pushUndo(); for (let i=0;i<pixels.length;i++) pixels[i]^=1; render(); };
-  if (btnUndo)   btnUndo.onclick   = () => { if(!undoStack.length) return; pixels = undoStack.pop(); render(); };
+  if (btnUndo)   btnUndo.onclick   = () => {
+  if (!undoStack.length) return;
+  const restored = undoStack.pop();
+  frames[currentFrameIndex].pixels = restored;
+  pixels = restored;
+  render();
+};
   if (btnDemo)   btnDemo.onclick   = () => {
     pushUndo(); pixels.fill(0);
     for (let x=0;x<W;x++){pixels[idx(x,0)]=1;pixels[idx(x,H-1)]=1;}
