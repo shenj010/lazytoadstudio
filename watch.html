@@ -523,22 +523,26 @@ function drawBarElement(el) {
       if (fillW > 0) fillRectPx(bx, by, fillW, bh);
     }
   } else if (style === 'segmented') {
-    const segCount = Math.max(2, el.segments || 10);
-    const gap = 1;
-    const totalGaps = (segCount - 1) * gap;
-    const segSize = Math.floor((bh - totalGaps) / segCount);   // vertical assumed
-    if (segSize < 1) return;
+  const segCount = Math.max(2, el.segments || 10);
+  const gap = 1;
+  const totalGaps = (segCount - 1) * gap;
+  const litCount = Math.round(segCount * value);
 
-    const litCount = Math.round(segCount * value);
-
+  if (vertical) {
+    const segH = Math.floor((bh - totalGaps) / segCount);
+    if (segH < 1) return;
     for (let i = 0; i < segCount; i++) {
-      // i = 0 is at the bottom (fills from bottom up)
-      const segY = by + bh - (i + 1) * segSize - i * gap;
-      const lit = (i < litCount);
-      if (lit) {
-        fillRectPx(bx, segY, bw, segSize);
-      }
+      const segY = by + bh - (i + 1) * segH - i * gap;
+      if (i < litCount) fillRectPx(bx, segY, bw, segH);
     }
+  } else {
+    const segW = Math.floor((bw - totalGaps) / segCount);
+    if (segW < 1) return;
+    for (let i = 0; i < segCount; i++) {
+      const segX = bx + i * (segW + gap);
+      if (i < litCount) fillRectPx(segX, by, segW, bh);
+    }
+  }
   } else if (style === 'dotted') {
     if (vertical) {
       const fillH = Math.floor(bh * value);
@@ -939,7 +943,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-       const rotateFields = ['time', 'seconds', 'date', 'temp', 'text'].includes(el.type) ? `
+       const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
