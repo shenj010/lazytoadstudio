@@ -301,6 +301,7 @@ let defaultFrameMs = 100;
 let animationPlaying = false;
 let animationPlayStart = 0;
 let animationPlayHandle = null;
+let loopCount = 1;   // applies to whatever animation is sent next
 
 // `pixels` is an alias for the current frame's pixel buffer.
 // All existing drawing code operates on this and works unchanged.
@@ -545,8 +546,14 @@ function renderTimeline() {
   const totalMs = frames.reduce((a, f) => a + f.durationMs, 0);
   const info = document.getElementById('timelineInfo');
   if (info) {
-    info.textContent = `${frames.length} frame${frames.length === 1 ? '' : 's'} · ${totalMs}ms total${totalMs > 20000 ? ' (over 20s limit!)' : ''}`;
-    info.style.color = totalMs > 20000 ? '#c66' : '#888';
+        const perLoopMs = frames.reduce((a, f) => a + f.durationMs, 0);
+    const totalPlayMs = perLoopMs * loopCount;
+    const over = totalPlayMs > 30000;
+    info.textContent =
+      `${frames.length} frame${frames.length === 1 ? '' : 's'} · ` +
+      `${perLoopMs}ms/loop × ${loopCount} = ${(totalPlayMs / 1000).toFixed(2)}s` +
+      (over ? ' (over 30s!)' : '');
+    info.style.color = over ? '#c66' : '#888';
   }
 }
 
@@ -1564,26 +1571,59 @@ function rebuildProps() {
       };
      }
     } else {
-    fx.style.display = 'none';
-    const cur = frames[currentFrameIndex];
+        fx.style.display = 'none';
     const uniformMs = frames[0].durationMs || 125;
+    const frameCount = frames.length;
+    const oneLoopMs = frameCount * uniformMs;
+    const maxLoopsByCap = Math.max(1, Math.floor(30000 / oneLoopMs));
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
-        <strong style="color:#fff">Frame ${currentFrameIndex + 1} of ${frames.length}</strong>
+        <strong style="color:#fff">Frame ${currentFrameIndex + 1} of ${frameCount}</strong>
       </div>
       <div class="prop-row">
         <label>Frame ms</label>
         <input type="number" id="propFrameMs" value="${uniformMs}" min="20" max="2000" step="5">
       </div>
+      <div class="prop-row">
+        <label>Loops</label>
+        <input type="number" id="propLoopCount" value="${loopCount}" min="1" max="${maxLoopsByCap}">
+      </div>
+      <div id="propAnimSummary" style="font-size:11px;color:#888;margin-top:10px">
+        ${frameCount} frame${frameCount === 1 ? '' : 's'} × ${uniformMs}ms × ${loopCount} loop${loopCount === 1 ? '' : 's'}
+        = <strong style="color:#ccc">${(oneLoopMs * loopCount / 1000).toFixed(2)}s</strong> total
+        <br>Max ${maxLoopsByCap} loops (30s cap)
+      </div>
       <div style="font-size:11px;color:#666;margin-top:12px">
-        All frames share one duration (uniform timing). Changing this
-        value applies to every frame.
+        All frames share one duration (uniform timing).
       </div>
       <div style="font-size:11px;color:#666;margin-top:6px">
-        Max ${AD_MAX_FRAMES} frames (5s @ 8fps).
+        Max ${AD_MAX_FRAMES} frames.
       </div>
     `;
+
+    const refreshSummary = () => {
+      const msVal = frames[0].durationMs || 125;
+      const cnt = frames.length;
+      const oneLoop = cnt * msVal;
+      const maxLoops = Math.max(1, Math.floor(30000 / oneLoop));
+      const summary = document.getElementById('propAnimSummary');
+      if (summary) {
+        summary.innerHTML = `
+          ${cnt} frame${cnt === 1 ? '' : 's'} × ${msVal}ms × ${loopCount} loop${loopCount === 1 ? '' : 's'}
+          = <strong style="color:#ccc">${(oneLoop * loopCount / 1000).toFixed(2)}s</strong> total
+          <br>Max ${maxLoops} loops (30s cap)
+        `;
+      }
+      // Also update the loops input's max in case frameMs/frameCount changed
+      const loopsInput = document.getElementById('propLoopCount');
+      if (loopsInput) loopsInput.max = maxLoops;
+      if (loopCount > maxLoops) {
+        loopCount = maxLoops;
+        if (loopsInput) loopsInput.value = maxLoops;
+      }
+    };
+
     const ms = document.getElementById('propFrameMs');
     if (ms) {
       ms.oninput = () => {
@@ -1591,6 +1631,20 @@ function rebuildProps() {
         if (isNaN(v) || v < 20 || v > 2000) return;
         for (const f of frames) f.durationMs = v;
         renderTimeline();
+        refreshSummary();
+      };
+    }
+
+    const loops = document.getElementById('propLoopCount');
+    if (loops) {
+      loops.oninput = () => {
+        const v = parseInt(loops.value, 10);
+        if (isNaN(v) || v < 1) return;
+        const msVal = frames[0].durationMs || 125;
+        const maxLoops = Math.max(1, Math.floor(30000 / (frames.length * msVal)));
+        loopCount = Math.min(v, maxLoops);
+        if (loopCount !== v) loops.value = loopCount;
+        refreshSummary();
       };
     }
   }
@@ -2184,6 +2238,10 @@ const AD_MAX_FRAMES = 40;
 function buildAnimJson() {
   const frameCount = frames.length;
   if (frameCount > AD_MAX_FRAMES) {
+     const totalMs = frameCount * frameMs * loopCount;
+  if (totalMs > 30000) {
+    throw new Error(`Total play time ${(totalMs/1000).toFixed(1)}s exceeds 30s cap`);
+  }
     throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
   }
 
@@ -2219,7 +2277,7 @@ function buildAnimJson() {
   // Uniform frame duration. Take frame 0's as the canonical value.
   const frameMs = frames[0].durationMs || 125;
 
-  return JSON.stringify({
+    return JSON.stringify({
     kind: 'animation',
     v: 1,
     name: 'untitled',
@@ -2228,6 +2286,7 @@ function buildAnimJson() {
     offsetY: AD_OFFSET_Y,
     frameMs: frameMs,
     frameCount: frameCount,
+    loopCount: loopCount,
     format: 'bitpacked-row-lsb',
     data: b64
   });
