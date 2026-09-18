@@ -495,6 +495,7 @@ function drawTimeElement(el, now) {
   const mm = String(now.getMinutes()).padStart(2, '0');
   const str = hh + mm;
   const s = el.scale || 1;
+  const s = microhexScaleFor(el, str.length);
 
   if (el.style === '7seg') {
     const rowH = Math.floor(el.h / 4);
@@ -673,7 +674,7 @@ function findFreeSpot(w, h) {
 
 function addElement(type) {
   const defaults = {
-    time:    { w: 32, h: 56, style: '7seg', thick: 3 },
+    time: { w: 32, h: 56, style: '7seg', thick: 3, scale: 1 },
     seconds: { w: 20, h: 10, style: '7seg' },  
     date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
     weekday: { w: 16, h: 16 },
@@ -750,7 +751,11 @@ function rebuildProps() {
       body.innerHTML = '<div id="propsEmpty">Click an element to select</div>';
       return;
     }
-
+     function microhexScaleFor(el, charCount) {
+       const sH = Math.floor(el.h / MHEX_HEIGHT);
+       const sW = Math.floor(el.w / (charCount * (MHEX_WIDTH + 1)));
+       return Math.max(1, Math.min(sH, sW, 6));
+     }
     const dateFields = el.type === 'date' ? `
       <div class="prop-row">
         <label>Format</label>
