@@ -306,11 +306,25 @@ function drawGlyphColumns(x, y, cols, w, h, scale) {
 
 function drawTextElement(el) {
   const s = el.scale || 1;
+  const rot = el.rotation || 0;
   const content = el.content || 'Hello';
-  let xx = el.x;
-  for (const ch of content) {
-    drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
-    xx += 6 * s;   // 5 columns + 1 spacing
+  const charW = 6 * s;
+  const charH = 8 * s;
+
+  if (rot === 90 || rot === 270) {
+    // Vertical layout: one char per row
+    let yy = el.y;
+    for (const ch of content) {
+      drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+      yy += charH;
+    }
+  } else {
+    // Horizontal layout (default and 180)
+    let xx = el.x;
+    for (const ch of content) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += charW;
+    }
   }
 }
 // ============================================================
