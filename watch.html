@@ -362,6 +362,80 @@ function switchToFrame(i) {
   currentFrameIndex = i;
   pixels = frames[i].pixels;
   render();
+  renderTimeline();
+}
+
+function addFrame() {
+  frames.push({ durationMs: defaultFrameMs, pixels: new Uint8Array(W * H) });
+  switchToFrame(frames.length - 1);
+  renderTimeline();
+  rebuildProps();
+}
+
+function duplicateFrame() {
+  const cur = frames[currentFrameIndex];
+  const copy = { durationMs: cur.durationMs, pixels: new Uint8Array(cur.pixels) };
+  frames.splice(currentFrameIndex + 1, 0, copy);
+  switchToFrame(currentFrameIndex + 1);
+  renderTimeline();
+  rebuildProps();
+}
+
+function deleteFrame() {
+  if (frames.length <= 1) return;
+  frames.splice(currentFrameIndex, 1);
+  if (currentFrameIndex >= frames.length) currentFrameIndex = frames.length - 1;
+  switchToFrame(currentFrameIndex);
+  renderTimeline();
+  rebuildProps();
+}
+
+function renderTimeline() {
+  const wrap = document.getElementById('timelineFrames');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  for (let i = 0; i < frames.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'timeline-thumb' + (i === currentFrameIndex ? ' selected' : '');
+
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const cctx = c.getContext('2d');
+    const img = cctx.createImageData(W, H);
+    const px = frames[i].pixels;
+    for (let p = 0; p < W * H; p++) {
+      const on = px[p];
+      img.data[p * 4 + 0] = on ? 255 : 0;
+      img.data[p * 4 + 1] = on ? 255 : 0;
+      img.data[p * 4 + 2] = on ? 255 : 0;
+      img.data[p * 4 + 3] = 255;
+    }
+    cctx.putImageData(img, 0, 0);
+    div.appendChild(c);
+
+    const label = document.createElement('div');
+    label.className = 'thumb-label';
+    label.textContent = i;
+    div.appendChild(label);
+
+    div.onclick = () => {
+      switchToFrame(i);
+      renderTimeline();
+      rebuildProps();
+    };
+
+    wrap.appendChild(div);
+  }
+
+  // Update info line
+  const totalMs = frames.reduce((a, f) => a + f.durationMs, 0);
+  const info = document.getElementById('timelineInfo');
+  if (info) {
+    info.textContent = `${frames.length} frame${frames.length === 1 ? '' : 's'} · ${totalMs}ms total${totalMs > 20000 ? ' (over 20s limit!)' : ''}`;
+    info.style.color = totalMs > 20000 ? '#c66' : '#888';
+  }
 }
 
 // ============================================================
@@ -1328,12 +1402,33 @@ function rebuildProps() {
         render();
       };
     }
-  } else {
+    } else {
     fx.style.display = 'none';
-    body.innerHTML = '<div id="propsEmpty">Drawing tools active</div>';
+    const cur = frames[currentFrameIndex];
+    body.innerHTML = `
+      <div style="font-size:12px;color:#aaa;margin-bottom:8px">
+        <strong style="color:#fff">Frame ${currentFrameIndex + 1}</strong>
+        <span style="color:#888"> · of ${frames.length}</span>
+      </div>
+      <div class="prop-row">
+        <label>Duration</label>
+        <input type="number" id="propFrameMs" value="${cur.durationMs}" min="20" max="5000" step="10">
+      </div>
+      <div class="prop-row">
+        <label>Total</label>
+        <span>${frames.reduce((a, f) => a + f.durationMs, 0)}ms</span>
+      </div>
+    `;
+    const ms = document.getElementById('propFrameMs');
+    if (ms) {
+      ms.oninput = () => {
+        const v = parseInt(ms.value, 10);
+        if (isNaN(v) || v < 20) return;
+        cur.durationMs = v;
+        renderTimeline();
+      };
+    }
   }
-}
-
 // ============================================================
 // Animation tools
 // ============================================================
@@ -1342,6 +1437,12 @@ function wireAnimTools() {
   const btnInvert = document.getElementById('btnInvert');
   const btnUndo   = document.getElementById('btnUndo');
   const btnDemo   = document.getElementById('btnDemo');
+  const btnAddFrame = document.getElementById('btnAddFrame');
+  const btnDupFrame = document.getElementById('btnDupFrame');
+  const btnDelFrame = document.getElementById('btnDelFrame');
+  if (btnAddFrame) btnAddFrame.onclick = addFrame;
+  if (btnDupFrame) btnDupFrame.onclick = duplicateFrame;
+  if (btnDelFrame) btnDelFrame.onclick = deleteFrame;
 
   if (btnClear)  btnClear.onclick  = () => { pushUndo(); pixels.fill(0); render(); };
   if (btnInvert) btnInvert.onclick = () => { pushUndo(); for (let i=0;i<pixels.length;i++) pixels[i]^=1; render(); };
@@ -1392,6 +1493,7 @@ function setMode(mode) {
   });
   canvas.classList.toggle('face-mode', mode === 'face');
   document.getElementById('timeline').style.display = (mode === 'anim') ? '' : 'none';
+  if (mode === 'anim') renderTimeline();
   rebuildPalette();
   rebuildProps();
   render();
@@ -1845,6 +1947,7 @@ btnSend.onclick = async () => {
 // ============================================================
 wireEffects();
 setMode('face');
+renderTimeline();   // <-- add this
 
 setInterval(() => {
   scanY = (scanY + 1) % H;
