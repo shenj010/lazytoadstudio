@@ -448,49 +448,6 @@ function drawWeatherElement(el) {
   drawPlaceholder(el.x, el.y, el.w, el.h, 'WX');
 }
 
-function drawTempElement(el) {
-  const s = el.scale || 1;
-  const rot = el.rotation || 0;
-  const temp = 21;
-  const str = String(temp);
-
-    if (el.style === 'text') {
-    if (rot === 90 || rot === 270) {
-      let yy = el.y;
-      for (const ch of str) {
-        drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
-        yy += 8 * s;
-      }
-    } else {
-      let xx = el.x;
-      for (const ch of str) {
-        drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
-        xx += 6 * s;
-      }
-    }
-    return;
-  }
-
-  // microhex (default)
-  const digits = str.split('').map(Number);
-  const glyphW = (MHEX_WIDTH + 1) * s;
-  const glyphH = (MHEX_HEIGHT + 1) * s;
-
-  if (rot === 90 || rot === 270) {
-    let yy = el.y;
-    for (const c of digits) {
-      drawMicroHexDigit(el.x, yy, c, s);
-      yy += glyphH;
-    }
-  } else {
-    let xx = el.x;
-    for (const c of digits) {
-      drawMicroHexDigit(xx, el.y, c, s);
-      xx += glyphW;
-    }
-  }
-}
-
 function drawElement(el) {
   const now = new Date();
   switch (el.type) {
