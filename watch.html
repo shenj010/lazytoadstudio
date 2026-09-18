@@ -358,6 +358,7 @@ function drawPixelPx(x, y) {
 }
 
 function switchToFrame(i) {
+  if (animationPlaying) stopAnimation();
   if (i < 0 || i >= frames.length) return;
   currentFrameIndex = i;
   pixels = frames[i].pixels;
@@ -388,6 +389,62 @@ function deleteFrame() {
   switchToFrame(currentFrameIndex);
   renderTimeline();
   rebuildProps();
+}
+
+function playAnimation() {
+  if (animationPlaying) {
+    stopAnimation();
+    return;
+  }
+  animationPlaying = true;
+  animationPlayStart = performance.now();
+  document.getElementById('btnPlayAnim').textContent = '■ Stop';
+  animationPlayHandle = requestAnimationFrame(animationLoop);
+}
+
+function stopAnimation() {
+  animationPlaying = false;
+  if (animationPlayHandle) {
+    cancelAnimationFrame(animationPlayHandle);
+    animationPlayHandle = null;
+  }
+  document.getElementById('btnPlayAnim').textContent = '▶ Play';
+  render();   // restore the actual current frame
+}
+
+function animationLoop() {
+  if (!animationPlaying) return;
+
+  const elapsed = performance.now() - animationPlayStart;
+  const totalMs = frames.reduce((a, f) => a + f.durationMs, 0);
+  if (totalMs <= 0) { stopAnimation(); return; }
+
+  const t = elapsed % totalMs;
+
+  let cumulative = 0;
+  let shownFrame = 0;
+  for (let i = 0; i < frames.length; i++) {
+    cumulative += frames[i].durationMs;
+    if (t < cumulative) { shownFrame = i; break; }
+  }
+
+  drawPreviewFrame(shownFrame);
+  animationPlayHandle = requestAnimationFrame(animationLoop);
+}
+
+function drawPreviewFrame(i) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const px = frames[i].pixels;
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (px[y * W + x]) {
+        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+      }
+    }
+  }
 }
 
 function renderTimeline() {
@@ -1430,6 +1487,11 @@ function wireAnimTools() {
   const btnAddFrame = document.getElementById('btnAddFrame');
   const btnDupFrame = document.getElementById('btnDupFrame');
   const btnDelFrame = document.getElementById('btnDelFrame');
+  const btnPlay = document.getElementById('btnPlayAnim');
+  if (btnPlay) btnPlay.onclick = () => {
+    if (animationPlaying) stopAnimation();
+    else playAnimation();
+  };
   if (btnAddFrame) btnAddFrame.onclick = addFrame;
   if (btnDupFrame) btnDupFrame.onclick = duplicateFrame;
   if (btnDelFrame) btnDelFrame.onclick = deleteFrame;
@@ -1477,6 +1539,7 @@ function wireEffects() {
 // Mode switching
 // ============================================================
 function setMode(mode) {
+  if (mode !== 'anim' && animationPlaying) stopAnimation();
   currentMode = mode;
   document.querySelectorAll('.tabs button').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === mode);
