@@ -1745,10 +1745,12 @@ function pushUndo() {
   if (undoStack.length > 50) undoStack.shift();
 }
 
-canvas.addEventListener('mousedown', e => {
+canvas.addEventListener('pointerdown', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'anim') return;
-  mouseDown = true;
+  e.preventDefault();
   canvas.setPointerCapture(e.pointerId);
+  mouseDown = true;
   pushUndo();
   const cell = cellFromEvent(e);
   if (!cell) return;
@@ -1774,7 +1776,8 @@ canvas.addEventListener('mousedown', e => {
   }
 });
 
-canvas.addEventListener('mousemove', e => {
+canvas.addEventListener('pointermove', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'anim' || !mouseDown) return;
   const cell = cellFromEvent(e);
   if (!cell) return;
@@ -1805,7 +1808,8 @@ canvas.addEventListener('mousemove', e => {
   }
 });
 
- canvas.addEventListener('mouseup', () => {
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'anim') { mouseDown = false; return; }
   if (!mouseDown) return;
   mouseDown = false;
@@ -1824,6 +1828,20 @@ canvas.addEventListener('mousemove', e => {
   }
 });
 
+canvas.addEventListener('pointerleave', e => {
+  if (!e.isPrimary) return;
+  if (!mouseDown) return;
+  mouseDown = false;
+  lastCell = null;
+  if (shapeActive) {
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+  }
+});
+
 function lineTo(a, b) {
   let x0 = a.x, y0 = a.y;
   const x1 = b.x, y1 = b.y;
@@ -1839,18 +1857,6 @@ function lineTo(a, b) {
   }
 }
 
-canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null; });
-canvas.addEventListener('mouseleave', () => {
-  mouseDown = false;
-  lastCell = null;
-  if (shapeActive) {
-    previewPixels.fill(0);
-    shapeActive = false;
-    shapeStart = null;
-    shapeEnd = null;
-    render();
-  }
-});
 // ============================================================
 // FACE MODE INTERACTION
 // ============================================================
@@ -1901,6 +1907,7 @@ canvas.addEventListener('pointerdown', e => {
   if (!e.isPrimary) return;
   if (currentMode !== 'face') return;
   e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
 
   const handle = handleAtPoint(e.clientX, e.clientY);
   if (handle) {
@@ -2032,7 +2039,7 @@ canvas.addEventListener('pointerleave', e => {
     rebuildProps();
   }
 });
-
+ 
 // ============================================================
 // BLE
 // ============================================================
