@@ -1748,6 +1748,7 @@ function pushUndo() {
 canvas.addEventListener('mousedown', e => {
   if (currentMode !== 'anim') return;
   mouseDown = true;
+  canvas.setPointerCapture(e.pointerId);
   pushUndo();
   const cell = cellFromEvent(e);
   if (!cell) return;
