@@ -714,7 +714,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-       const rotateFields = ['date', 'temp'].includes(el.type) ? `
+       const rotateFields = ['date', 'temp', 'text'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
