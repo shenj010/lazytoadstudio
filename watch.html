@@ -898,8 +898,8 @@ function rebuildProps() {
         <input type="number" id="propH" value="${el.h}" min="1" max="${H}"></div>
       ${el.thick !== undefined ? `<div class="prop-row"><label>Thick</label>
         <input type="number" id="propThick" value="${el.thick}" min="1" max="10"></div>` : ''}
-      ${el.scale !== undefined ? `<div class="prop-row"><label>Scale</label>
-        <input type="number" id="propScale" value="${el.scale}" min="1" max="6"></div>` : ''}
+      ${['time', 'seconds', 'date', 'temp', 'text'].includes(el.type) ? `<div class="prop-row"><label>Scale</label>
+  <input type="number" id="propScale" value="${el.scale ?? 1}" min="1" max="6"></div>` : ''}
       ${dateFields}
       ${rotateFields}
       ${textFields}
@@ -934,7 +934,15 @@ function rebuildProps() {
     bind('propW', 'w');
     bind('propH', 'h');
     if (el.thick !== undefined) bind('propThick', 'thick');
-    if (el.scale !== undefined) bind('propScale', 'scale');
+        const scaleInput = document.getElementById('propScale');
+    if (scaleInput) {
+      scaleInput.oninput = () => {
+        const v = parseInt(scaleInput.value, 10);
+        if (isNaN(v)) return;
+        el.scale = v;
+        render();
+      };
+    }
 
     const fmt = document.getElementById('propFormat');
     if (fmt) {
