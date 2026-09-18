@@ -291,6 +291,12 @@ function drawGlyphColumns(x, y, cols, w, h, scale) {
   }
 }
 
+function scaleForBox(boxW, boxH, charW, charH, charCount) {
+  const scaleH = Math.floor(boxH / charH);
+  const scaleW = Math.floor(boxW / (charW * charCount));
+  return Math.max(1, Math.min(scaleH, scaleW, 6));
+}
+
  function drawGLCDFontChar(x, y, code, scale) {
   if (code < 0 || code > 255) code = '?'.charCodeAt(0);
   const base = code * 5;
