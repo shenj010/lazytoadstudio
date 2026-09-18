@@ -509,13 +509,11 @@ function drawTimeElement(el, now) {
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
   const str = hh + mm;
-  const s = el.scale || 1;
   const rot = el.rotation || 0;
   const vertical = (rot === 90 || rot === 270);
 
   if (el.style === '7seg') {
     if (vertical) {
-      // Horizontal row of 4 segments
       const digitW = Math.floor((el.w - 3) / 4);
       const h = el.h;
       const thick = Math.max(1, Math.round(Math.min(digitW, h) / 6));
@@ -524,7 +522,6 @@ function drawTimeElement(el, now) {
         draw7SegDigit(el.x + i * (digitW + 1), el.y, digitW, h, thick, digits[i]);
       }
     } else {
-      // Vertical stack (default)
       const rowH = Math.floor(el.h / 4);
       const thick = Math.max(1, Math.round(rowH / 6));
       const digits = str.split('').map(Number);
@@ -536,12 +533,14 @@ function drawTimeElement(el, now) {
     }
   } else if (el.style === 'text') {
     if (vertical) {
+      const s = scaleForBox(el.w, el.h, 5, 8, str.length);
       let yy = el.y;
       for (const ch of str) {
         drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
         yy += 8 * s;
       }
     } else {
+      const s = scaleForBox(el.w, el.h, 6, 8, str.length);
       let xx = el.x;
       for (const ch of str) {
         drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
@@ -549,16 +548,18 @@ function drawTimeElement(el, now) {
       }
     }
   } else {
-    // microhex (default)
-    const glyphW = (MHEX_WIDTH + 1) * s;
-    const glyphH = (MHEX_HEIGHT + 1) * s;
+    // microhex
     if (vertical) {
+      const s = scaleForBox(el.w, el.h, MHEX_WIDTH, MHEX_HEIGHT, str.length);
+      const glyphH = (MHEX_HEIGHT + 1) * s;
       let yy = el.y;
       for (const c of str.split('').map(Number)) {
         drawMicroHexDigit(el.x, yy, c, s);
         yy += glyphH;
       }
     } else {
+      const s = scaleForBox(el.w, el.h, MHEX_WIDTH + 1, MHEX_HEIGHT, str.length);
+      const glyphW = (MHEX_WIDTH + 1) * s;
       let xx = el.x;
       for (const c of str.split('').map(Number)) {
         drawMicroHexDigit(xx, el.y, c, s);
@@ -570,7 +571,6 @@ function drawTimeElement(el, now) {
 
 function drawSecondsElement(el, now) {
   const ss = String(now.getSeconds()).padStart(2, '0');
-  const s = el.scale || 1;
   const rot = el.rotation || 0;
   const vertical = (rot === 90 || rot === 270);
 
@@ -591,12 +591,14 @@ function drawSecondsElement(el, now) {
     }
   } else if (el.style === 'text') {
     if (vertical) {
+      const s = scaleForBox(el.w, el.h, 5, 8, ss.length);
       let yy = el.y;
       for (const ch of ss) {
         drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
         yy += 8 * s;
       }
     } else {
+      const s = scaleForBox(el.w, el.h, 6, 8, ss.length);
       let xx = el.x;
       for (const ch of ss) {
         drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
@@ -605,15 +607,17 @@ function drawSecondsElement(el, now) {
     }
   } else {
     // microhex
-    const glyphW = (MHEX_WIDTH + 1) * s;
-    const glyphH = (MHEX_HEIGHT + 1) * s;
     if (vertical) {
+      const s = scaleForBox(el.w, el.h, MHEX_WIDTH, MHEX_HEIGHT, ss.length);
+      const glyphH = (MHEX_HEIGHT + 1) * s;
       let yy = el.y;
       for (const c of ss.split('').map(Number)) {
         drawMicroHexDigit(el.x, yy, c, s);
         yy += glyphH;
       }
     } else {
+      const s = scaleForBox(el.w, el.h, MHEX_WIDTH + 1, MHEX_HEIGHT, ss.length);
+      const glyphW = (MHEX_WIDTH + 1) * s;
       let xx = el.x;
       for (const c of ss.split('').map(Number)) {
         drawMicroHexDigit(xx, el.y, c, s);
@@ -622,8 +626,8 @@ function drawSecondsElement(el, now) {
     }
   }
 }
+
 function drawDateElement(el, now) {
-  const s = el.scale || 1;
   const rot = el.rotation || 0;
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
@@ -637,14 +641,18 @@ function drawDateElement(el, now) {
     default:     str = mm + dd; break;
   }
 
-    if (el.style === 'text') {
-    if (rot === 90 || rot === 270) {
+  const vertical = (rot === 90 || rot === 270);
+
+  if (el.style === 'text') {
+    if (vertical) {
+      const s = scaleForBox(el.w, el.h, 5, 8, str.length);
       let yy = el.y;
       for (const ch of str) {
         drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
         yy += 8 * s;
       }
     } else {
+      const s = scaleForBox(el.w, el.h, 6, 8, str.length);
       let xx = el.x;
       for (const ch of str) {
         drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
@@ -653,18 +661,20 @@ function drawDateElement(el, now) {
     }
     return;
   }
-  // microhex (default)
-  const digits = str.split('').map(Number);
-  const glyphW = (MHEX_WIDTH + 1) * s;
-  const glyphH = (MHEX_HEIGHT + 1) * s;
 
-  if (rot === 90 || rot === 270) {
+  // microhex
+  const digits = str.split('').map(Number);
+  if (vertical) {
+    const s = scaleForBox(el.w, el.h, MHEX_WIDTH, MHEX_HEIGHT, str.length);
+    const glyphH = (MHEX_HEIGHT + 1) * s;
     let yy = el.y;
     for (const c of digits) {
       drawMicroHexDigit(el.x, yy, c, s);
       yy += glyphH;
     }
   } else {
+    const s = scaleForBox(el.w, el.h, MHEX_WIDTH + 1, MHEX_HEIGHT, str.length);
+    const glyphW = (MHEX_WIDTH + 1) * s;
     let xx = el.x;
     for (const c of digits) {
       drawMicroHexDigit(xx, el.y, c, s);
@@ -672,6 +682,53 @@ function drawDateElement(el, now) {
     }
   }
 }
+
+function drawTempElement(el) {
+  const rot = el.rotation || 0;
+  const temp = 21;
+  const str = String(temp);
+  const vertical = (rot === 90 || rot === 270);
+
+  if (el.style === 'text') {
+    if (vertical) {
+      const s = scaleForBox(el.w, el.h, 5, 8, str.length);
+      let yy = el.y;
+      for (const ch of str) {
+        drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+        yy += 8 * s;
+      }
+    } else {
+      const s = scaleForBox(el.w, el.h, 6, 8, str.length);
+      let xx = el.x;
+      for (const ch of str) {
+        drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+        xx += 6 * s;
+      }
+    }
+    return;
+  }
+
+  // microhex
+  const digits = str.split('').map(Number);
+  if (vertical) {
+    const s = scaleForBox(el.w, el.h, MHEX_WIDTH, MHEX_HEIGHT, str.length);
+    const glyphH = (MHEX_HEIGHT + 1) * s;
+    let yy = el.y;
+    for (const c of digits) {
+      drawMicroHexDigit(el.x, yy, c, s);
+      yy += glyphH;
+    }
+  } else {
+    const s = scaleForBox(el.w, el.h, MHEX_WIDTH + 1, MHEX_HEIGHT, str.length);
+    const glyphW = (MHEX_WIDTH + 1) * s;
+    let xx = el.x;
+    for (const c of digits) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
+  }
+}
+ 
 function drawPlaceholder(x, y, w, h, label) {
   ctx.save();
   ctx.strokeStyle = '#f80';
