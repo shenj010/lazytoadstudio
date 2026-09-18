@@ -458,7 +458,107 @@ function drawElement(el) {
     case 'weather':  drawWeatherElement(el);      break;
     case 'temp':     drawTempElement(el);         break;
     case 'text':     drawTextElement(el);         break;
+    case 'bar':      drawBarElement(el);         break;
     default:         break;
+  }
+}
+
+function drawBarElement(el) {
+  const now = new Date();
+  let value = 0;
+
+  switch (el.source) {
+    case 'time.hourProgress':
+      value = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+      break;
+    case 'time.dayProgress':
+      value = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+      break;
+    case 'weather.humidity':
+      value = 0.65;   // placeholder until real weather is used
+      break;
+    case 'battery.percent':
+      value = 0.73;
+      break;
+    default:
+      value = 0.5;
+  }
+
+  if (value < 0) value = 0;
+  if (value > 1) value = 1;
+
+  const vertical = (el.rotation === 90 || el.rotation === 270);
+  const style = el.barStyle || 'solid';
+
+  // Outline (if enabled) is drawn first, underneath the fill
+  if (el.barOutline) {
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      el.x * SCALE + 0.5,
+      el.y * SCALE + 0.5,
+      el.w * SCALE - 1,
+      el.h * SCALE - 1
+    );
+    ctx.restore();
+  }
+
+  // For outline-only style, use the full-extent box for drawing the fill
+  // For other styles, inset by 1px so the outline doesn't get overdrawn
+  const inset = el.barOutline ? 1 : 0;
+  const bx = el.x + inset;
+  const by = el.y + inset;
+  const bw = el.w - inset * 2;
+  const bh = el.h - inset * 2;
+
+  if (bw <= 0 || bh <= 0) return;
+
+  if (style === 'solid') {
+    if (vertical) {
+      const fillH = Math.floor(bh * value);
+      if (fillH > 0) fillRectPx(bx, by + bh - fillH, bw, fillH);
+    } else {
+      const fillW = Math.floor(bw * value);
+      if (fillW > 0) fillRectPx(bx, by, fillW, bh);
+    }
+  } else if (style === 'segmented') {
+    const segCount = Math.max(2, el.segments || 10);
+    const gap = 1;
+    const totalGaps = (segCount - 1) * gap;
+    const segSize = Math.floor((bh - totalGaps) / segCount);   // vertical assumed
+    if (segSize < 1) return;
+
+    const litCount = Math.round(segCount * value);
+
+    for (let i = 0; i < segCount; i++) {
+      // i = 0 is at the bottom (fills from bottom up)
+      const segY = by + bh - (i + 1) * segSize - i * gap;
+      const lit = (i < litCount);
+      if (lit) {
+        fillRectPx(bx, segY, bw, segSize);
+      }
+    }
+  } else if (style === 'dotted') {
+    if (vertical) {
+      const fillH = Math.floor(bh * value);
+      for (let py = by + bh - fillH; py < by + bh; py++) {
+        for (let px = bx; px < bx + bw; px++) {
+          if (((px + py) & 1) === 0) {
+            fillRectPx(px, py, 1, 1);
+          }
+        }
+      }
+    } else {
+      const fillW = Math.floor(bw * value);
+      for (let py = by; py < by + bh; py++) {
+        for (let px = bx; px < bx + fillW; px++) {
+          if (((px + py) & 1) === 0) {
+            fillRectPx(px, py, 1, 1);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -756,7 +856,7 @@ function addElement(type) {
     weekday: { w: 16, h: 16 },
     weather: { w: 16, h: 16 },
     temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
-    bar:     { w: 4,  h: 48, axis: 'v', source: 'time.hourProgress' },
+    bar: { w: 4, h: 48, source: 'time.hourProgress', barStyle: 'solid', segments: 10, barOutline: true,},
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
   };
   const def = defaults[type];
@@ -868,6 +968,36 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
+       const barFields = el.type === 'bar' ? `
+      <div class="prop-row">
+        <label>Source</label>
+        <select id="propBarSource">
+          <option value="time.hourProgress" ${el.source==='time.hourProgress'?'selected':''}>Hour progress</option>
+          <option value="time.dayProgress"  ${el.source==='time.dayProgress' ?'selected':''}>Day progress</option>
+          <option value="weather.humidity"  ${el.source==='weather.humidity' ?'selected':''}>Humidity</option>
+          <option value="battery.percent"   ${el.source==='battery.percent'  ?'selected':''}>Battery</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propBarStyle">
+          <option value="solid"     ${el.barStyle==='solid'    ?'selected':''}>Solid</option>
+          <option value="segmented" ${el.barStyle==='segmented'?'selected':''}>Segmented</option>
+          <option value="dotted"    ${el.barStyle==='dotted'   ?'selected':''}>Dotted</option>
+        </select>
+      </div>
+      ${el.barStyle === 'segmented' ? `
+        <div class="prop-row">
+          <label>Segments</label>
+          <input type="number" id="propBarSegments" value="${el.segments || 10}" min="2" max="40">
+        </div>
+      ` : ''}
+      <div class="prop-row">
+        <label>Outline</label>
+        <input type="checkbox" id="propBarOutline" ${el.barOutline ? 'checked' : ''}>
+      </div>
+    ` : '';
+   
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -890,6 +1020,7 @@ function rebuildProps() {
       ${rotateFields}
       ${textFields}
       ${styleFields}
+      ${barFields}
       <button id="propDelete" style="
         margin-top:16px;
         background:#4a2020;
