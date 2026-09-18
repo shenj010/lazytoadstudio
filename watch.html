@@ -103,7 +103,9 @@
     width: 70px; text-align: right;
   }
   .prop-row select { width: 120px; text-align: left; }
+
 </style>
+<script src="glcdfont.js"></script>
 </head>
 <body>
 
@@ -289,6 +291,28 @@ function drawGlyphColumns(x, y, cols, w, h, scale) {
   }
 }
 
+ function drawGLCDFontChar(x, y, code, scale) {
+  if (code < 0 || code > 255) code = '?'.charCodeAt(0);
+  const base = code * 5;
+  for (let cx = 0; cx < 5; cx++) {
+    const col = GLCDFONT[base + cx];
+    for (let row = 0; row < 8; row++) {
+      if (col & (1 << row)) {
+        fillRectPx(x + cx * scale, y + row * scale, scale, scale);
+      }
+    }
+  }
+}
+
+function drawTextElement(el) {
+  const s = el.scale || 1;
+  const content = el.content || 'Hello';
+  let xx = el.x;
+  for (const ch of content) {
+    drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+    xx += 6 * s;   // 5 columns + 1 spacing
+  }
+}
 // ============================================================
 // FACE renderer
 // ============================================================
