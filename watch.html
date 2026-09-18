@@ -469,6 +469,13 @@ function drawTimeElement(el, now) {
       drawMicroHexDigit(xx, el.y, c, s);
       xx += glyphW;
     }
+  } else if (el.style === 'text') {
+    const s = el.scale || 1;
+    let xx = el.x;
+    for (const ch of (hh + mm)) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
   }
 }
 function drawSecondsElement(el, now) {
@@ -488,6 +495,13 @@ function drawSecondsElement(el, now) {
     for (const c of ss.split('').map(Number)) {
       drawMicroHexDigit(xx, el.y, c, s);
       xx += glyphW;
+    }
+   } else if (style === 'text') {
+  const s = el.scale || 1;
+  let xx = el.x;
+  for (const ch of str) {
+    drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+    xx += 6 * s;
     }
   }
 }
@@ -525,6 +539,13 @@ function drawDateElement(el, now) {
       drawMicroHexDigit(xx, el.y, c, s);
       xx += glyphW;
     }
+   } else if (style === 'text') {
+  const s = el.scale || 1;
+  let xx = el.x;
+  for (const ch of str) {
+    drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+    xx += 6 * s;
+    }
   }
 }
 
@@ -540,8 +561,136 @@ function drawTempElement(el) {
   const s = el.scale || 1;
   const rot = el.rotation || 0;
   const temp = 21;
-  const digits = String(temp).split('').map(Number);
+  const str = String(temp);
 
+  if (el.style === 'text') {
+    let xx = el.x;
+    for (const ch of str) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+    return;
+  }
+
+  // microhex (default)
+  const digits = str.split('').map(Number);
+  const glyphW = (MHEX_WIDTH + 1) * s;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+
+  if (rot === 90 || rot === 270) {
+    let yy = el.y;
+    for (const c of digits) {
+      drawMicroHexDigit(el.x, yy, c, s);
+      yy += glyphH;
+    }
+  } else {
+    let xx = el.x;
+    for (const c of digits) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
+  }
+}
+  function drawElement(el) {
+  const now = new Date();
+  switch (el.type) {
+    case 'time':     drawTimeElement(el, now);    break;
+    case 'seconds':  drawSecondsElement(el, now); break;
+    case 'date':     drawDateElement(el, now);    break;
+    case 'weekday':  drawWeekdayElement(el, now); break;
+    case 'weather':  drawWeatherElement(el);      break;
+    case 'temp':     drawTempElement(el);         break;
+    case 'text':     drawTextElement(el);         break;
+    default:         break;
+  }
+}
+
+function drawTimeElement(el, now) {
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const str = hh + mm;
+  const s = el.scale || 1;
+
+  if (el.style === '7seg') {
+    const rowH = Math.floor(el.h / 4);
+    const thick = Math.max(1, Math.round(rowH / 6));
+    const digits = str.split('').map(Number);
+    let yy = el.y;
+    for (let i = 0; i < 4; i++) {
+      draw7SegDigit(el.x, yy, el.w, rowH - 2, thick, digits[i]);
+      yy += rowH;
+    }
+  } else if (el.style === 'text') {
+    let xx = el.x;
+    for (const ch of str) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+  } else {
+    // default: microhex
+    const glyphW = (MHEX_WIDTH + 1) * s;
+    let xx = el.x;
+    for (const c of str.split('').map(Number)) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
+  }
+}
+
+function drawSecondsElement(el, now) {
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const s = el.scale || 1;
+
+  if (el.style === '7seg') {
+    const digitW = Math.floor((el.w - 2) / 2);
+    const h = el.h;
+    const thick = Math.max(1, Math.round(Math.min(digitW, h) / 6));
+    const y = el.y + Math.floor((el.h - h) / 2);
+    draw7SegDigit(el.x, y, digitW, h, thick, Number(ss[0]));
+    draw7SegDigit(el.x + digitW + 2, y, digitW, h, thick, Number(ss[1]));
+  } else if (el.style === 'text') {
+    let xx = el.x;
+    for (const ch of ss) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+  } else {
+    // default: microhex
+    const glyphW = (MHEX_WIDTH + 1) * s;
+    let xx = el.x;
+    for (const c of ss.split('').map(Number)) {
+      drawMicroHexDigit(xx, el.y, c, s);
+      xx += glyphW;
+    }
+  }
+}
+ 
+function drawDateElement(el, now) {
+  const s = el.scale || 1;
+  const rot = el.rotation || 0;
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+
+  let str = '';
+  switch (el.format || 'MMDD') {
+    case 'DDMM': str = dd + mm; break;
+    case 'MM':   str = mm;      break;
+    case 'DD':   str = dd;      break;
+    case 'MMDD':
+    default:     str = mm + dd; break;
+  }
+
+  if (el.style === 'text') {
+    let xx = el.x;
+    for (const ch of str) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+    return;
+  }
+
+  // microhex (default)
+  const digits = str.split('').map(Number);
   const glyphW = (MHEX_WIDTH + 1) * s;
   const glyphH = (MHEX_HEIGHT + 1) * s;
 
@@ -745,6 +894,18 @@ function rebuildProps() {
         <input type="text" id="propContent" value="${el.content || ''}" style="width:140px;text-align:left">
       </div>
     ` : '';
+       const styleFields = ['time', 'seconds', 'date', 'temp'].includes(el.type) ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propStyle">
+          ${el.type === 'time' || el.type === 'seconds' ? `
+            <option value="7seg"     ${el.style==='7seg'    ?'selected':''}>7-seg</option>
+          ` : ''}
+          <option value="microhex" ${el.style==='microhex'?'selected':''}>Microhex</option>
+          <option value="text"     ${el.style==='text'    ?'selected':''}>Text (5x7)</option>
+        </select>
+      </div>
+    ` : '';
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -766,6 +927,7 @@ function rebuildProps() {
       ${dateFields}
       ${rotateFields}
       ${textFields}
+      ${styleFields}
       <button id="propDelete" style="
         margin-top:16px;
         background:#4a2020;
@@ -829,6 +991,15 @@ function rebuildProps() {
         render();
       };
     }
+
+        const styleSel = document.getElementById('propStyle');
+     if (styleSel) {
+       styleSel.onchange = () => {
+         el.style = styleSel.value;
+         rebuildProps();
+         render();
+       };
+     }
        const content = document.getElementById('propContent');
     if (content) {
       content.oninput = () => {
