@@ -632,7 +632,7 @@ function addElement(type) {
     weather: { w: 16, h: 16 },
     temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
     bar:     { w: 4,  h: 48, axis: 'v', source: 'time.hourProgress' },
-    text:    { w: 32, h: 16, content: 'Hello' },
+    text: { w: 32, h: 16, content: 'Hello', scale: 1 },
   };
   const def = defaults[type];
   if (!def) return;
@@ -725,6 +725,12 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
+       const textFields = el.type === 'text' ? `
+      <div class="prop-row">
+        <label>Content</label>
+        <input type="text" id="propContent" value="${el.content || ''}" style="width:140px;text-align:left">
+      </div>
+    ` : '';
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -805,6 +811,13 @@ function rebuildProps() {
 
         el.rotation = newRot;
         rebuildProps();   // refresh the W/H fields to show swapped values
+        render();
+      };
+    }
+       const content = document.getElementById('propContent');
+    if (content) {
+      content.oninput = () => {
+        el.content = content.value;
         render();
       };
     }
