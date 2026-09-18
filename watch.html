@@ -1891,8 +1891,10 @@ function handleAtPoint(clientX, clientY) {
   return null;
 }
 
-canvas.addEventListener('mousedown', e => {
+canvas.addEventListener('pointerdown', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'face') return;
+  e.preventDefault();
 
   const handle = handleAtPoint(e.clientX, e.clientY);
   if (handle) {
@@ -1907,7 +1909,6 @@ canvas.addEventListener('mousedown', e => {
       startH: el.h,
       startPx: canvasToPixel(e.clientX, e.clientY),
     };
-    e.preventDefault();
     return;
   }
 
@@ -1929,7 +1930,8 @@ canvas.addEventListener('mousedown', e => {
   render();
 });
 
-canvas.addEventListener('mousemove', e => {
+canvas.addEventListener('pointermove', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'face' || !dragState) return;
   const p = canvasToPixel(e.clientX, e.clientY);
 
@@ -2007,7 +2009,8 @@ canvas.addEventListener('mousemove', e => {
   render();
 });
 
-canvas.addEventListener('mouseup', () => {
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'face') return;
   if (dragState) {
     dragState = null;
@@ -2015,7 +2018,8 @@ canvas.addEventListener('mouseup', () => {
   }
 });
 
-canvas.addEventListener('mouseleave', () => {
+canvas.addEventListener('pointerleave', e => {
+  if (!e.isPrimary) return;
   if (currentMode !== 'face') return;
   if (dragState) {
     dragState = null;
