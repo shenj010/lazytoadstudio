@@ -478,9 +478,23 @@ function drawTextSmall(x, y, str) {
 // ---------- Element dispatch ----------
 
 function drawWeekdayElement(el, now) {
-  const s = Math.max(1, Math.floor(el.h / 16));
-  const dow = now.getDay();   // 0 = Sunday
-  drawKanjiBitmap(el.x, el.y, WEEKDAY_KANJI[dow], s);
+  const style = el.weekdayStyle || 'kanji';
+  const s = Math.max(1, Math.floor(el.h / 8));   // base glyph height 8
+
+  if (style === 'kanji') {
+    const kanjiScale = Math.max(1, Math.floor(el.h / 16));
+    const dow = now.getDay();
+    drawKanjiBitmap(el.x, el.y, WEEKDAY_KANJI[dow], kanjiScale);
+  } else {
+    const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const label = DAYS[now.getDay()];
+    const charW = 6 * s;
+    let xx = el.x;
+    for (const ch of label) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += charW;
+    }
+  }
 }
 function drawWeatherElement(el) {
   const s = Math.max(1, Math.floor(el.h / 16));
@@ -1042,6 +1056,15 @@ function rebuildProps() {
         <input type="checkbox" id="propBarOutline" ${el.barOutline ? 'checked' : ''}>
       </div>
     ` : '';
+       const weekdayFields = el.type === 'weekday' ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propWeekdayStyle">
+          <option value="kanji"   ${(el.weekdayStyle||'kanji')==='kanji'  ?'selected':''}>Kanji</option>
+          <option value="english" ${(el.weekdayStyle||'kanji')==='english'?'selected':''}>English</option>
+        </select>
+      </div>
+    ` : '';
    
 
     body.innerHTML = `
@@ -1188,6 +1211,14 @@ function rebuildProps() {
         render();
       };
     }
+
+    const weekdayStyle = document.getElementById('propWeekdayStyle');
+ if (weekdayStyle) {
+   weekdayStyle.onchange = () => {
+     el.weekdayStyle = weekdayStyle.value;
+     render();
+   };
+ }
 
     const del = document.getElementById('propDelete');
     if (del) {
