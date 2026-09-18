@@ -1712,6 +1712,29 @@ function drawLineToBuffer(buf, x0, y0, x1, y1, val) {
   }
 }
 
+ function drawRectToBuffer(buf, x0, y0, x1, y1, val, filled) {
+  if (x0 > x1) { const t = x0; x0 = x1; x1 = t; }
+  if (y0 > y1) { const t = y0; y0 = y1; y1 = t; }
+
+  if (filled) {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        plotBrushToBuffer(buf, x, y, val);
+      }
+    }
+  } else {
+    // Outline: top and bottom edges, then left and right edges
+    for (let x = x0; x <= x1; x++) {
+      plotBrushToBuffer(buf, x, y0, val);
+      plotBrushToBuffer(buf, x, y1, val);
+    }
+    for (let y = y0; y <= y1; y++) {
+      plotBrushToBuffer(buf, x0, y, val);
+      plotBrushToBuffer(buf, x1, y, val);
+    }
+  }
+}
+
 function pushUndo() {
   undoStack.push(new Uint8Array(pixels));
   if (undoStack.length > 50) undoStack.shift();
@@ -1752,12 +1775,20 @@ canvas.addEventListener('mousemove', e => {
       paint(cell);
     }
     lastCell = cell;
-  } else if (currentTool === 'line' && shapeActive) {
-    shapeEnd = { x: cell.x, y: cell.y };
+    } else if (currentTool === 'line') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
     previewPixels.fill(0);
-    drawLineToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1);
+    render();
+  } else if (currentTool === 'rect' || currentTool === 'rectFill') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
+    previewPixels.fill(0);
     render();
   }
+  // Other tools: added in later chunks
 });
 
  canvas.addEventListener('mouseup', () => {
