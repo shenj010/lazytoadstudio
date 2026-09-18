@@ -181,6 +181,31 @@
   min-width: 84px;
   text-align: center;
 }
+   #toolGrid, #brushSizes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  #brushSizes {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #toolGrid button, #brushSizes button {
+    margin: 0;
+    padding: 8px 0;
+    font-size: 16px;
+    line-height: 1;
+    text-align: center;
+    width: auto;
+  }
+  #brushSizes button {
+    font-size: 12px;
+    padding: 6px 0;
+  }
+  #toolGrid button.active, #brushSizes button.active {
+    background: #2a4a6a;
+    border-color: #3af;
+    color: #fff;
+  }
 </style>
 <script src="glcdfont.js"></script>
 </head>
@@ -276,6 +301,9 @@ let animationPlayHandle = null;
 // All existing drawing code operates on this and works unchanged.
 let pixels = frames[0].pixels;
 let undoStack = [];
+// Drawing tool state
+let currentTool = 'pencil';
+let brushSize = 1;
 
 function idx(x, y) { return y * W + x; }
 
@@ -1179,8 +1207,27 @@ function addElement(type) {
 // ============================================================
 function rebuildPalette() {
   const body = document.getElementById('paletteBody');
-  if (currentMode === 'anim') {
+   if (currentMode === 'anim') {
     body.innerHTML = `
+      <h2 style="font-size:12px;margin-top:0">Tools</h2>
+      <div id="toolGrid">
+        <button data-tool="pencil"     title="Pencil">✏</button>
+        <button data-tool="eraser"     title="Eraser">🧽</button>
+        <button data-tool="line"       title="Line">╱</button>
+        <button data-tool="rect"       title="Rectangle">▢</button>
+        <button data-tool="rectFill"   title="Filled rectangle">▣</button>
+        <button data-tool="circle"     title="Circle">○</button>
+        <button data-tool="circleFill" title="Filled circle">●</button>
+        <button data-tool="fill"       title="Fill">🪣</button>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:10px">Brush</div>
+      <div id="brushSizes">
+        <button data-brush="1">1</button>
+        <button data-brush="2">2</button>
+        <button data-brush="3">3</button>
+        <button data-brush="4">4</button>
+      </div>
+      <h2 style="font-size:12px;margin-top:14px">Actions</h2>
       <button id="btnClear">Clear</button>
       <button id="btnInvert">Invert</button>
       <button id="btnUndo">Undo</button>
@@ -1489,6 +1536,25 @@ function rebuildProps() {
 // Animation tools
 // ============================================================
 function wireAnimTools() {
+   // Wire tool buttons
+  document.querySelectorAll('#toolGrid button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tool === currentTool);
+    btn.onclick = () => {
+      currentTool = btn.dataset.tool;
+      document.querySelectorAll('#toolGrid button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tool === currentTool);
+      });
+    };
+  });
+  document.querySelectorAll('#brushSizes button').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.brush, 10) === brushSize);
+    btn.onclick = () => {
+      brushSize = parseInt(btn.dataset.brush, 10);
+      document.querySelectorAll('#brushSizes button').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.brush, 10) === brushSize);
+      });
+    };
+  });
   const btnClear  = document.getElementById('btnClear');
   const btnInvert = document.getElementById('btnInvert');
   const btnUndo   = document.getElementById('btnUndo');
@@ -1580,14 +1646,29 @@ function cellFromEvent(e) {
   return { x, y };
 }
 
+function paintCell(x, y, val) {
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = idx(x, y);
+  if (pixels[i] === val) return;
+  pixels[i] = val;
+  ctx.fillStyle = val ? '#ffffff' : '#000';
+  ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+}
+
+function paintBrush(cx, cy, val) {
+  const half = Math.floor(brushSize / 2);
+  for (let dy = -half; dy < brushSize - half; dy++) {
+    for (let dx = -half; dx < brushSize - half; dx++) {
+      paintCell(cx + dx, cy + dy, val);
+    }
+  }
+  updateAnimStatus();
+}
+
+// Keep the old `paint` name for backwards compatibility with lineTo
 function paint(cell) {
   if (!cell) return;
-  const i = idx(cell.x, cell.y);
-  if (pixels[i] === paintValue) return;
-  pixels[i] = paintValue;
-  ctx.fillStyle = paintValue ? '#ffffff' : '#000';
-  ctx.fillRect(cell.x * SCALE, cell.y * SCALE, SCALE, SCALE);
-  updateAnimStatus();
+  paintBrush(cell.x, cell.y, paintValue);
 }
 
 function pushUndo() {
@@ -1601,9 +1682,18 @@ canvas.addEventListener('mousedown', e => {
   pushUndo();
   const cell = cellFromEvent(e);
   if (!cell) return;
-  paintValue = pixels[idx(cell.x, cell.y)] ? 0 : 1;
-  lastCell = null;
-  paint(cell);
+
+  // Set paintValue based on tool (no more toggle)
+  if (currentTool === 'eraser') paintValue = 0;
+  else                          paintValue = 1;
+
+  // Chunk A only implements pencil + eraser.
+  // Other tools will be added in later chunks.
+  if (currentTool === 'pencil' || currentTool === 'eraser') {
+    lastCell = null;
+    paintBrush(cell.x, cell.y, paintValue);
+  }
+  // Other tools: nothing yet — handled in Chunks B-E
 });
 
 canvas.addEventListener('mousemove', e => {
