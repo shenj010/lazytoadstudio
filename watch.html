@@ -407,7 +407,7 @@ function playAnimation() {
   }
   animationPlaying = true;
   animationPlayStart = performance.now();
-  document.getElementById('btnPlayAnim').textContent = '■ Stop';
+  document.getElementById('btnPlayAnim').textContent = '■ STOP';
   animationPlayHandle = requestAnimationFrame(animationLoop);
 }
 
@@ -417,7 +417,7 @@ function stopAnimation() {
     cancelAnimationFrame(animationPlayHandle);
     animationPlayHandle = null;
   }
-  document.getElementById('btnPlayAnim').textContent = '▶ Play';
+  document.getElementById('btnPlayAnim').textContent = '▶ PLAY';
   render();   // restore the actual current frame
 }
 
