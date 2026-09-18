@@ -414,6 +414,10 @@ function switchToFrame(i) {
 }
 
 function addFrame() {
+  if (frames.length >= AD_MAX_FRAMES) {
+    alert(`Frame limit reached (${AD_MAX_FRAMES} frames = 5s @ 8fps). Delete some frames first.`);
+    return;
+  }
   frames.push({ durationMs: defaultFrameMs, pixels: new Uint8Array(W * H) });
   switchToFrame(frames.length - 1);
   renderTimeline();
@@ -421,6 +425,10 @@ function addFrame() {
 }
 
 function duplicateFrame() {
+  if (frames.length >= AD_MAX_FRAMES) {
+    alert(`Frame limit reached (${AD_MAX_FRAMES} frames). Delete some frames first.`);
+    return;
+  }
   const cur = frames[currentFrameIndex];
   const copy = { durationMs: cur.durationMs, pixels: new Uint8Array(cur.pixels) };
   frames.splice(currentFrameIndex + 1, 0, copy);
@@ -1151,6 +1159,25 @@ function renderAnim() {
     }
   }
   drawGrid();
+  drawAdSafeArea();
+}
+
+function drawAdSafeArea() {
+  // Top strip is discarded on send — show it as a dimmed band with a label.
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 160, 0, 0.12)';
+  ctx.fillRect(0, 0, canvas.width, AD_OFFSET_Y * SCALE);
+  ctx.strokeStyle = 'rgba(255, 160, 0, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, AD_OFFSET_Y * SCALE + 0.5);
+  ctx.lineTo(canvas.width, AD_OFFSET_Y * SCALE + 0.5);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 160, 0, 0.7)';
+  ctx.font = '10px system-ui';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('clock strip — not sent', 6, AD_OFFSET_Y * SCALE / 2);
+  ctx.restore();
 }
 
 function updateAnimStatus() {
@@ -1535,19 +1562,34 @@ function rebuildProps() {
         rebuildProps();
         render();
       };
-    }
-  } else {
+     }
+    } else {
     fx.style.display = 'none';
     const cur = frames[currentFrameIndex];
+    const uniformMs = frames[0].durationMs || 125;
+
     body.innerHTML = `
-      ...
+      <div style="font-size:12px;color:#aaa;margin-bottom:8px">
+        <strong style="color:#fff">Frame ${currentFrameIndex + 1} of ${frames.length}</strong>
+      </div>
+      <div class="prop-row">
+        <label>Frame ms</label>
+        <input type="number" id="propFrameMs" value="${uniformMs}" min="20" max="2000" step="5">
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:12px">
+        All frames share one duration (uniform timing). Changing this
+        value applies to every frame.
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:6px">
+        Max ${AD_MAX_FRAMES} frames (5s @ 8fps).
+      </div>
     `;
     const ms = document.getElementById('propFrameMs');
     if (ms) {
       ms.oninput = () => {
         const v = parseInt(ms.value, 10);
-        if (isNaN(v) || v < 20) return;
-        cur.durationMs = v;
+        if (isNaN(v) || v < 20 || v > 2000) return;
+        for (const f of frames) f.durationMs = v;
         renderTimeline();
       };
     }
@@ -2133,29 +2175,60 @@ btnConnect.onclick = () => {
 // ============================================================
 // Build outgoing JSON
 // ============================================================
+// Ad region constants — must match firmware
+const AD_W         = 32;
+const AD_H         = 96;
+const AD_OFFSET_Y  = 16;   // top strip reserved for firmware HHMM
+const AD_MAX_FRAMES = 40;
+
 function buildAnimJson() {
-  const bytesPerRow = Math.ceil(W / 8);
-  const packed = new Uint8Array(bytesPerRow * H);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      if (pixels[idx(x, y)]) {
-        const byteIndex = y * bytesPerRow + (x >> 3);
-        const bitIndex  = x & 7;
-        packed[byteIndex] |= (1 << bitIndex);
+  const frameCount = frames.length;
+  if (frameCount > AD_MAX_FRAMES) {
+    throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
+  }
+
+  const bytesPerRow = Math.ceil(AD_W / 8);        // 4
+  const bytesPerFrame = bytesPerRow * AD_H;       // 384
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = frames[f].pixels;
+    const base = f * bytesPerFrame;
+    // Crop rows AD_OFFSET_Y .. AD_OFFSET_Y + AD_H - 1 from the 32x128 source
+    for (let y = 0; y < AD_H; y++) {
+      const srcY = y + AD_OFFSET_Y;
+      for (let x = 0; x < AD_W; x++) {
+        if (src[srcY * W + x]) {
+          const byteIndex = base + y * bytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
       }
     }
   }
+
   let binary = '';
-  for (let i = 0; i < packed.length; i++) binary += String.fromCharCode(packed[i]);
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(
+      null, all.subarray(i, Math.min(i + CHUNK, all.length))
+    );
+  }
   const b64 = btoa(binary);
+
+  // Uniform frame duration. Take frame 0's as the canonical value.
+  const frameMs = frames[0].durationMs || 125;
 
   return JSON.stringify({
     kind: 'animation',
     v: 1,
     name: 'untitled',
-    w: W, h: H,
+    w: AD_W,
+    h: AD_H,
+    offsetY: AD_OFFSET_Y,
+    frameMs: frameMs,
+    frameCount: frameCount,
     format: 'bitpacked-row-lsb',
-    overlays: false,
     data: b64
   });
 }
