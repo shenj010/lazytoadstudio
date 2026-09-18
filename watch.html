@@ -448,11 +448,19 @@ function drawTempElement(el) {
   const temp = 21;
   const str = String(temp);
 
-  if (el.style === 'text') {
-    let xx = el.x;
-    for (const ch of str) {
-      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
-      xx += 6 * s;
+    if (el.style === 'text') {
+    if (rot === 90 || rot === 270) {
+      let yy = el.y;
+      for (const ch of str) {
+        drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+        yy += 8 * s;
+      }
+    } else {
+      let xx = el.x;
+      for (const ch of str) {
+        drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+        xx += 6 * s;
+      }
     }
     return;
   }
@@ -623,15 +631,22 @@ function drawDateElement(el, now) {
     default:     str = mm + dd; break;
   }
 
-  if (el.style === 'text') {
-    let xx = el.x;
-    for (const ch of str) {
-      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
-      xx += 6 * s;
+    if (el.style === 'text') {
+    if (rot === 90 || rot === 270) {
+      let yy = el.y;
+      for (const ch of str) {
+        drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+        yy += 8 * s;
+      }
+    } else {
+      let xx = el.x;
+      for (const ch of str) {
+        drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+        xx += 6 * s;
+      }
     }
     return;
   }
-
   // microhex (default)
   const digits = str.split('').map(Number);
   const glyphW = (MHEX_WIDTH + 1) * s;
