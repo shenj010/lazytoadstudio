@@ -1797,17 +1797,22 @@ canvas.addEventListener('mousemove', e => {
   mouseDown = false;
   lastCell = null;
 
-  if (currentTool === 'line' && shapeActive) {
-    // Commit the preview into real pixels
-    for (let i = 0; i < previewPixels.length; i++) {
-      if (previewPixels[i]) pixels[i] = 1;
-    }
+    } else if (currentTool === 'line' && shapeActive) {
+    shapeEnd = { x: cell.x, y: cell.y };
     previewPixels.fill(0);
-    shapeActive = false;
-    shapeStart = null;
-    shapeEnd = null;
+    drawLineToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1);
     render();
-    renderTimeline();
+  } else if ((currentTool === 'rect' || currentTool === 'rectFill') && shapeActive) {
+    shapeEnd = { x: cell.x, y: cell.y };
+    previewPixels.fill(0);
+    drawRectToBuffer(
+      previewPixels,
+      shapeStart.x, shapeStart.y,
+      shapeEnd.x, shapeEnd.y,
+      1,
+      currentTool === 'rectFill'
+    );
+    render();
   }
 });
 
