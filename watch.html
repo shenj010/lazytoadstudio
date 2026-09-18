@@ -304,6 +304,11 @@ let undoStack = [];
 // Drawing tool state
 let currentTool = 'pencil';
 let brushSize = 1;
+// Preview overlay for shape tools (line, rect, circle)
+let previewPixels = new Uint8Array(W * H);
+let shapeStart = null;      // { x, y } on mousedown
+let shapeEnd = null;        // { x, y } on mousemove
+let shapeActive = false;
 
 function idx(x, y) { return y * W + x; }
 
@@ -1129,6 +1134,17 @@ function renderAnim() {
       if (pixels[idx(x, y)]) ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
     }
   }
+  // Preview overlay (uncommitted shape) rendered last so it sits on top
+  if (shapeActive) {
+    ctx.fillStyle = '#ffffff';
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (previewPixels[idx(x, y)]) {
+          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+        }
+      }
+    }
+  }
   drawGrid();
 }
 
@@ -1671,6 +1687,31 @@ function paint(cell) {
   paintBrush(cell.x, cell.y, paintValue);
 }
 
+function plotBrushToBuffer(buf, cx, cy, val) {
+  const half = Math.floor(brushSize / 2);
+  for (let dy = -half; dy < brushSize - half; dy++) {
+    for (let dx = -half; dx < brushSize - half; dx++) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if (x < 0 || x >= W || y < 0 || y >= H) continue;
+      buf[idx(x, y)] = val;
+    }
+  }
+}
+
+function drawLineToBuffer(buf, x0, y0, x1, y1, val) {
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    plotBrushToBuffer(buf, x0, y0, val);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+
 function pushUndo() {
   undoStack.push(new Uint8Array(pixels));
   if (undoStack.length > 50) undoStack.shift();
@@ -1683,29 +1724,60 @@ canvas.addEventListener('mousedown', e => {
   const cell = cellFromEvent(e);
   if (!cell) return;
 
-  // Set paintValue based on tool (no more toggle)
   if (currentTool === 'eraser') paintValue = 0;
   else                          paintValue = 1;
 
-  // Chunk A only implements pencil + eraser.
-  // Other tools will be added in later chunks.
   if (currentTool === 'pencil' || currentTool === 'eraser') {
     lastCell = null;
     paintBrush(cell.x, cell.y, paintValue);
+  } else if (currentTool === 'line') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
+    previewPixels.fill(0);
+    render();
   }
-  // Other tools: nothing yet — handled in Chunks B-E
+  // Other tools: added in later chunks
 });
 
 canvas.addEventListener('mousemove', e => {
   if (currentMode !== 'anim' || !mouseDown) return;
   const cell = cellFromEvent(e);
   if (!cell) return;
-  if (lastCell && (cell.x !== lastCell.x || cell.y !== lastCell.y)) {
-    lineTo(lastCell, cell);
-  } else {
-    paint(cell);
+
+  if (currentTool === 'pencil' || currentTool === 'eraser') {
+    if (lastCell && (cell.x !== lastCell.x || cell.y !== lastCell.y)) {
+      lineTo(lastCell, cell);
+    } else {
+      paint(cell);
+    }
+    lastCell = cell;
+  } else if (currentTool === 'line' && shapeActive) {
+    shapeEnd = { x: cell.x, y: cell.y };
+    previewPixels.fill(0);
+    drawLineToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1);
+    render();
   }
-  lastCell = cell;
+});
+
+ canvas.addEventListener('mouseup', () => {
+  if (currentMode !== 'anim') { mouseDown = false; return; }
+  if (!mouseDown) return;
+  mouseDown = false;
+  lastCell = null;
+
+  if (currentTool === 'line' && shapeActive) {
+    // Commit the preview into real pixels
+    for (let i = 0; i < previewPixels.length; i++) {
+      if (previewPixels[i]) pixels[i] = 1;
+    }
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+    renderTimeline();
+  }
 });
 
 function lineTo(a, b) {
@@ -1724,8 +1796,17 @@ function lineTo(a, b) {
 }
 
 canvas.addEventListener('mouseup',    () => { mouseDown = false; lastCell = null; });
-canvas.addEventListener('mouseleave', () => { mouseDown = false; lastCell = null; });
-
+canvas.addEventListener('mouseleave', () => {
+  mouseDown = false;
+  lastCell = null;
+  if (shapeActive) {
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+  }
+});
 // ============================================================
 // FACE MODE INTERACTION
 // ============================================================
