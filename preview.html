@@ -24,6 +24,15 @@
   #frames { display: flex; gap: 2px; flex-wrap: wrap; max-width: 520px; }
   #frames canvas { border: 1px solid #222; }
   #status { font-size: 12px; color: #888; max-width: 400px; line-height: 1.4; }
+  .section-divider {
+    border-top: 1px solid #333;
+    padding-top: 12px;
+    margin-top: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+  }
 </style>
 </head>
 <body>
@@ -35,16 +44,29 @@
   <video id="video" style="display:none" muted playsinline></video>
   <div id="gifInfo" style="font-size:12px;color:#666"></div>
 
-  <h2>Conversion</h2>
+  <h2>Framing</h2>
   <label>Start (s) <input type="number" id="start" value="0" step="0.1" min="0"></label>
   <label>Length (s) <input type="number" id="length" value="2" step="0.5" min="0.5" max="5"></label>
   <label>FPS <input type="number" id="fps" value="8" min="1" max="12"></label>
-
   <label>Zoom <input type="range" id="zoom" min="0.2" max="4" step="0.05" value="1"></label>
   <label>Crop X <input type="range" id="cropX" min="0" max="100" value="50"></label>
   <label>Crop Y <input type="range" id="cropY" min="0" max="100" value="50"></label>
 
+  <div class="section-divider">Tone</div>
+  <label>Contrast stretch <input type="checkbox" id="stretch" checked></label>
+  <label>Gamma <input type="range" id="gamma" min="0.4" max="2.5" step="0.05" value="1.0"></label>
+  <label>Sharpen <input type="range" id="sharpen" min="0" max="2" step="0.05" value="0.5"></label>
+  <label>Auto threshold <input type="checkbox" id="autoThresh"></label>
   <label>Threshold <input type="range" id="threshold" min="0" max="255" value="128"></label>
+
+  <div class="section-divider">Output</div>
+  <label>Downsample
+    <select id="downsample">
+      <option value="lanczos" selected>Lanczos 3</option>
+      <option value="area">Area average</option>
+      <option value="bilinear">Bilinear</option>
+    </select>
+  </label>
   <label>Dither
     <select id="dither">
       <option value="none">None (hard threshold)</option>
@@ -68,7 +90,7 @@
 </div>
 
 <!-- ============================================================
-     Minimal GIF89a decoder — parse + LZW + frame compositing.
+     Minimal GIF89a decoder
      ============================================================ -->
 <script>
 (function(global) {
@@ -112,11 +134,7 @@
 
     while (true) {
       const code = readCode();
-      if (code === clearCode) {
-        resetDictionary();
-        prev = null;
-        continue;
-      }
+      if (code === clearCode) { resetDictionary(); prev = null; continue; }
       if (code === endCode) break;
 
       let entry;
@@ -124,41 +142,27 @@
         entry = dictionary[code];
       } else if (code === nextCode && prev !== null) {
         entry = prev.concat(prev[0]);
-      } else {
-        break;
-      }
+      } else break;
 
       for (let i = 0; i < entry.length; i++) output.push(entry[i]);
 
       if (prev !== null) {
         if (nextCode < MAX_CODE) {
           dictionary[nextCode++] = prev.concat(entry[0]);
-          if (nextCode === (1 << codeSize) && codeSize < 12) {
-            codeSize++;
-          }
+          if (nextCode === (1 << codeSize) && codeSize < 12) codeSize++;
         }
       }
       prev = entry;
     }
-
     return output;
   }
 
   function parseGIF(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
     let pos = 0;
-
-    function read() { return bytes[pos++]; }
-    function readU16() {
-      const v = bytes[pos] | (bytes[pos + 1] << 8);
-      pos += 2;
-      return v;
-    }
-    function readBytes(n) {
-      const out = bytes.slice(pos, pos + n);
-      pos += n;
-      return out;
-    }
+    const read = () => bytes[pos++];
+    const readU16 = () => { const v = bytes[pos] | (bytes[pos + 1] << 8); pos += 2; return v; };
+    const readBytes = (n) => { const o = bytes.slice(pos, pos + n); pos += n; return o; };
 
     const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2]);
     if (sig !== 'GIF') throw new Error('Not a GIF file');
@@ -167,16 +171,13 @@
     const width = readU16();
     const height = readU16();
     const packed = read();
-    read();
-    read();
+    read(); read();
 
     let globalColorTable = null;
     if (packed & 0x80) {
       const size = 2 << (packed & 0x07);
       globalColorTable = new Array(size);
-      for (let i = 0; i < size; i++) {
-        globalColorTable[i] = [read(), read(), read()];
-      }
+      for (let i = 0; i < size; i++) globalColorTable[i] = [read(), read(), read()];
     }
 
     const rawFrames = [];
@@ -199,10 +200,7 @@
           pending.disposal = (flags >> 2) & 0x07;
         } else {
           let sz = read();
-          while (sz !== 0) {
-            readBytes(sz);
-            sz = read();
-          }
+          while (sz !== 0) { readBytes(sz); sz = read(); }
         }
       } else if (b === 0x2C) {
         const left = readU16();
@@ -215,27 +213,19 @@
         if (fPacked & 0x80) {
           const size = 2 << (fPacked & 0x07);
           localColorTable = new Array(size);
-          for (let i = 0; i < size; i++) {
-            localColorTable[i] = [read(), read(), read()];
-          }
+          for (let i = 0; i < size; i++) localColorTable[i] = [read(), read(), read()];
         }
         const interlaced = !!(fPacked & 0x40);
         const minCodeSize = read();
 
         const chunks = [];
         let sz = read();
-        while (sz !== 0) {
-          chunks.push(readBytes(sz));
-          sz = read();
-        }
+        while (sz !== 0) { chunks.push(readBytes(sz)); sz = read(); }
         let total = 0;
         for (const c of chunks) total += c.length;
         const lzwData = new Uint8Array(total);
         let off = 0;
-        for (const c of chunks) {
-          lzwData.set(c, off);
-          off += c.length;
-        }
+        for (const c of chunks) { lzwData.set(c, off); off += c.length; }
 
         const colorTable = localColorTable || globalColorTable;
         if (!colorTable) throw new Error('No color table available');
@@ -284,35 +274,25 @@
           delay: pending.delay,
           disposalType: pending.disposal,
         });
-
         pending = { delay: 10, transparent: -1, disposal: 0 };
-      } else {
-        pos++;
-      }
+      } else pos++;
     }
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
     const frames = [];
 
     for (let fi = 0; fi < rawFrames.length; fi++) {
       const f = rawFrames[fi];
-
       if (fi > 0) {
         const prevFrame = rawFrames[fi - 1];
         if (prevFrame.disposalType === 2) {
-          ctx.clearRect(
-            prevFrame.dims.left,
-            prevFrame.dims.top,
-            prevFrame.dims.width,
-            prevFrame.dims.height
-          );
+          ctx.clearRect(prevFrame.dims.left, prevFrame.dims.top,
+                        prevFrame.dims.width, prevFrame.dims.height);
         }
       }
-
       const patchData = ctx.createImageData(f.dims.width, f.dims.height);
       const p = f.patch;
       for (let i = 0; i < p.length; i += 4) {
@@ -323,13 +303,11 @@
           patchData.data[i + 3] = 255;
         }
       }
-
       const tmp = document.createElement('canvas');
       tmp.width = f.dims.width;
       tmp.height = f.dims.height;
       tmp.getContext('2d').putImageData(patchData, 0, 0);
       ctx.drawImage(tmp, f.dims.left, f.dims.top);
-
       const snapshot = ctx.getImageData(0, 0, width, height);
       frames.push({
         dims: f.dims,
@@ -338,10 +316,8 @@
         disposalType: f.disposalType,
       });
     }
-
     return { width, height, frames };
   }
-
   global.gifuct = { parseGIF };
 })(window);
 </script>
@@ -394,9 +370,7 @@ fileInput.onchange = async (e) => {
         delayMs: f.delay,
       }));
       gifTotalMs = gifFrames.reduce((a, f) => a + f.delayMs, 0);
-
       renderSourceGifFrame(0);
-
       gifInfo.textContent =
         `${gifW}×${gifH} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total`;
       statusEl.textContent = 'GIF loaded. Adjust settings and hit Convert.';
@@ -446,22 +420,15 @@ function drawCropOverlay() {
   const scaledW = srcW * scale;
   const scaledH = srcH * scale;
 
-  // Rectangle in source coords that maps to the output viewport
   let rectX, rectY, rectW, rectH;
   if (scaledW >= OUT_W) {
     rectW = OUT_W / scale;
     rectX = ((scaledW - OUT_W) * cropXpct) / scale;
-  } else {
-    rectW = srcW;
-    rectX = 0;
-  }
+  } else { rectW = srcW; rectX = 0; }
   if (scaledH >= OUT_H) {
     rectH = OUT_H / scale;
     rectY = ((scaledH - OUT_H) * cropYpct) / scale;
-  } else {
-    rectH = srcH;
-    rectY = 0;
-  }
+  } else { rectH = srcH; rectY = 0; }
 
   const scaleX = srcPrev.width / srcW;
   const scaleY = srcPrev.height / srcH;
@@ -474,11 +441,342 @@ function drawCropOverlay() {
   srcCtx.fillRect(0, rectY * scaleY, rectX * scaleX, rectH * scaleY);
   srcCtx.fillRect((rectX + rectW) * scaleX, rectY * scaleY,
                   srcPrev.width - (rectX + rectW) * scaleX, rectH * scaleY);
-
   srcCtx.strokeStyle = '#3af';
   srcCtx.lineWidth = 2;
   srcCtx.strokeRect(rectX * scaleX, rectY * scaleY, rectW * scaleX, rectH * scaleY);
   srcCtx.restore();
+}
+
+// ---------- source region computation ----------
+
+function computeSrcRegion(srcW, srcH) {
+  const zoom = Math.max(0.1, parseFloat(document.getElementById('zoom').value) || 1);
+  const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
+  const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
+
+  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
+  const scale = coverScale * zoom;
+
+  const viewW = OUT_W / scale;
+  const viewH = OUT_H / scale;
+
+  let cx, cy;
+  if (srcW > viewW) cx = (srcW - viewW) * cropXpct;
+  else cx = (srcW - viewW) / 2;
+  if (srcH > viewH) cy = (srcH - viewH) * cropYpct;
+  else cy = (srcH - viewH) / 2;
+
+  return { sx: cx, sy: cy, sw: viewW, sh: viewH };
+}
+
+// ---------- downsamplers ----------
+
+function areaDownsample(srcData, srcW, srcH) {
+  const { sx, sy, sw, sh } = computeSrcRegion(srcW, srcH);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const pixelW = sw / OUT_W;
+  const pixelH = sh / OUT_H;
+
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const y0 = sy + oy * pixelH;
+    const y1 = y0 + pixelH;
+    const iy0 = Math.max(0, Math.floor(y0));
+    const iy1 = Math.min(srcH, Math.ceil(y1));
+
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const x0 = sx + ox * pixelW;
+      const x1 = x0 + pixelW;
+      const ix0 = Math.max(0, Math.floor(x0));
+      const ix1 = Math.min(srcW, Math.ceil(x1));
+
+      let sumR = 0, sumG = 0, sumB = 0, sumW = 0;
+      for (let y = iy0; y < iy1; y++) {
+        const wy = Math.min(y1, y + 1) - Math.max(y0, y);
+        if (wy <= 0) continue;
+        for (let x = ix0; x < ix1; x++) {
+          const wx = Math.min(x1, x + 1) - Math.max(x0, x);
+          if (wx <= 0) continue;
+          const w = wx * wy;
+          const i = (y * srcW + x) * 4;
+          const a = srcData[i + 3] / 255;
+          sumR += srcData[i + 0] * w * a;
+          sumG += srcData[i + 1] * w * a;
+          sumB += srcData[i + 2] * w * a;
+          sumW += w * a;
+        }
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (sumW > 0) {
+        out[oi + 0] = sumR / sumW;
+        out[oi + 1] = sumG / sumW;
+        out[oi + 2] = sumB / sumW;
+      }
+    }
+  }
+  return out;
+}
+
+function lanczosKernel(x, a) {
+  if (x === 0) return 1;
+  const ax = Math.abs(x);
+  if (ax >= a) return 0;
+  const pix = Math.PI * x;
+  return (a * Math.sin(pix) * Math.sin(pix / a)) / (pix * pix);
+}
+
+function lanczosDownsample(srcData, srcW, srcH) {
+  const { sx, sy, sw, sh } = computeSrcRegion(srcW, srcH);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const A = 3;
+
+  // Precompute weights per output pixel (they're the same for every row/column, so just 1D)
+  // For each output column ox, we need weights for source columns in [x0-A, x0+A]
+  // where x0 = sx + ox * (sw/OUT_W). Sample stride is 1 source pixel.
+  // We'll build column weights for all OUT_W and row weights for all OUT_H once.
+
+  const scaleX = sw / OUT_W;   // source pixels per output pixel
+  const scaleY = sh / OUT_H;
+
+  const colWeights = [];   // [{i0, weights: [...]}, ...]
+  for (let ox = 0; ox < OUT_W; ox++) {
+    const center = sx + (ox + 0.5) * scaleX - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleX)) ;
+    const i1 = Math.ceil(center + A * Math.max(1, scaleX));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = lanczosKernel((i - center) / Math.max(1, scaleX), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    colWeights.push({ i0, weights });
+  }
+
+  const rowWeights = [];
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const center = sy + (oy + 0.5) * scaleY - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleY));
+    const i1 = Math.ceil(center + A * Math.max(1, scaleY));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = lanczosKernel((i - center) / Math.max(1, scaleY), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    rowWeights.push({ i0, weights });
+  }
+
+  // Two-pass: for each output row, combine weighted source rows into a temp row;
+  // then for each output column, combine weighted temp-row columns.
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const { i0: ry0, weights: rw } = rowWeights[oy];
+
+    // temp row: Float32Array of srcW * 3
+    const tempRow = new Float32Array(srcW * 3);
+    for (let i = 0; i < rw.length; i++) {
+      const y = ry0 + i;
+      if (y < 0 || y >= srcH) continue;
+      const w = rw[i];
+      if (w === 0) continue;
+      const rowBase = y * srcW * 4;
+      for (let x = 0; x < srcW; x++) {
+        const si = rowBase + x * 4;
+        const a = srcData[si + 3] / 255;
+        tempRow[x * 3 + 0] += srcData[si + 0] * w * a;
+        tempRow[x * 3 + 1] += srcData[si + 1] * w * a;
+        tempRow[x * 3 + 2] += srcData[si + 2] * w * a;
+      }
+    }
+
+    // Now downsample columns
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const { i0: cx0, weights: cw } = colWeights[ox];
+      let r = 0, g = 0, b = 0, wsum = 0;
+      for (let i = 0; i < cw.length; i++) {
+        const x = cx0 + i;
+        if (x < 0 || x >= srcW) continue;
+        const w = cw[i];
+        if (w === 0) continue;
+        r += tempRow[x * 3 + 0] * w;
+        g += tempRow[x * 3 + 1] * w;
+        b += tempRow[x * 3 + 2] * w;
+        wsum += w;
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (wsum > 0) {
+        out[oi + 0] = r / wsum;
+        out[oi + 1] = g / wsum;
+        out[oi + 2] = b / wsum;
+      }
+    }
+  }
+
+  return out;
+}
+
+function bilinearDownsample(src, srcW, srcH, srcIsRgbaArray) {
+  const { sx, sy, sw, sh } = computeSrcRegion(srcW, srcH);
+  const out = document.createElement('canvas');
+  out.width = OUT_W;
+  out.height = OUT_H;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.fillStyle = '#000';
+  octx.fillRect(0, 0, OUT_W, OUT_H);
+
+  let sourceEl;
+  if (srcIsRgbaArray) {
+    const tmp = document.createElement('canvas');
+    tmp.width = srcW; tmp.height = srcH;
+    tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(src), srcW, srcH), 0, 0);
+    sourceEl = tmp;
+  } else {
+    sourceEl = src;
+  }
+
+  octx.drawImage(sourceEl, sx, sy, sw, sh, 0, 0, OUT_W, OUT_H);
+
+  const img = octx.getImageData(0, 0, OUT_W, OUT_H);
+  const rgb = new Float32Array(OUT_W * OUT_H * 3);
+  for (let i = 0; i < OUT_W * OUT_H; i++) {
+    rgb[i * 3 + 0] = img.data[i * 4 + 0];
+    rgb[i * 3 + 1] = img.data[i * 4 + 1];
+    rgb[i * 3 + 2] = img.data[i * 4 + 2];
+  }
+  return rgb;
+}
+
+// ---------- tone processing ----------
+
+function srgbToLinear(v) {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function rgbToGrayLinear(rgb, invert) {
+  const n = OUT_W * OUT_H;
+  const gray = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const lr = srgbToLinear(rgb[i*3]);
+    const lg = srgbToLinear(rgb[i*3+1]);
+    const lb = srgbToLinear(rgb[i*3+2]);
+    let v = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+    if (invert) v = 1 - v;
+    gray[i] = v;
+  }
+  return gray;
+}
+
+function applyGamma(gray, gamma) {
+  if (Math.abs(gamma - 1.0) < 0.01) return;
+  const inv = 1 / gamma;
+  for (let i = 0; i < gray.length; i++) {
+    gray[i] = Math.pow(Math.max(0, Math.min(1, gray[i])), inv);
+  }
+}
+
+function contrastStretch(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  const lowTarget  = total * 0.02;
+  const highTarget = total * 0.98;
+  let acc = 0, lo = 0, hi = 255;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= lowTarget) { lo = i; break; }
+  }
+  acc = 0;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= highTarget) { hi = i; break; }
+  }
+  if (hi <= lo) return;
+  const loV = lo / 255;
+  const hiV = hi / 255;
+  const range = hiV - loV;
+  for (let i = 0; i < gray.length; i++) {
+    let v = (gray[i] - loV) / range;
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+// 3x3 gaussian blur (sigma ≈ 1), separably
+function gaussianBlur3(gray, w, h) {
+  const kernel = [0.27901, 0.44198, 0.27901];
+  const tmp = new Float32Array(w * h);
+  const out = new Float32Array(w * h);
+
+  // Horizontal
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const xx = x + k;
+        if (xx < 0 || xx >= w) continue;
+        sum += gray[y * w + xx] * kernel[k + 1];
+      }
+      tmp[y * w + x] = sum;
+    }
+  }
+  // Vertical
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const yy = y + k;
+        if (yy < 0 || yy >= h) continue;
+        sum += tmp[yy * w + x] * kernel[k + 1];
+      }
+      out[y * w + x] = sum;
+    }
+  }
+  return out;
+}
+
+// Unsharp mask: out = gray + amount * (gray - blur(gray))
+function unsharpMask(gray, w, h, amount) {
+  if (amount <= 0) return;
+  const blurred = gaussianBlur3(gray, w, h);
+  for (let i = 0; i < gray.length; i++) {
+    let v = gray[i] + amount * (gray[i] - blurred[i]);
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+function otsuThreshold(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * bins[i];
+  let sumB = 0, wB = 0, maxVar = 0, best = 128;
+  for (let i = 0; i < 256; i++) {
+    wB += bins[i];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += i * bins[i];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maxVar) { maxVar = between; best = i; }
+  }
+  return best;
 }
 
 // ---------- dithering ----------
@@ -518,37 +816,44 @@ function thresholdValue(v, x, y, thresh, ditherMode) {
   }
 }
 
-function ditherFS(gray, w, h, thresh) {
+// grayscale is 0..1, converted to 0..255 for dithering internal use
+function grayToByte(gray) {
+  const out = new Float32Array(gray.length);
+  for (let i = 0; i < gray.length; i++) out[i] = gray[i] * 255;
+  return out;
+}
+
+function ditherFS(gray255, w, h, thresh) {
   const out = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      const old = gray[i];
+      const old = gray255[i];
       const nv = old > thresh ? 255 : 0;
       out[i] = nv;
       const err = old - nv;
-      if (x + 1 < w) gray[i + 1]       += err * 7/16;
+      if (x + 1 < w) gray255[i + 1]       += err * 7/16;
       if (y + 1 < h) {
-        if (x > 0)     gray[i + w - 1] += err * 3/16;
-                       gray[i + w]     += err * 5/16;
-        if (x + 1 < w) gray[i + w + 1] += err * 1/16;
+        if (x > 0)     gray255[i + w - 1] += err * 3/16;
+                       gray255[i + w]     += err * 5/16;
+        if (x + 1 < w) gray255[i + w + 1] += err * 1/16;
       }
     }
   }
   return out;
 }
 
-function ditherAtkinson(gray, w, h, thresh) {
+function ditherAtkinson(gray255, w, h, thresh) {
   const out = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      const old = gray[i];
+      const old = gray255[i];
       const nv = old > thresh ? 255 : 0;
       out[i] = nv;
       const err = (old - nv) / 8;
       const push = (xx, yy) => {
-        if (xx >= 0 && xx < w && yy >= 0 && yy < h) gray[yy * w + xx] += err;
+        if (xx >= 0 && xx < w && yy >= 0 && yy < h) gray255[yy * w + xx] += err;
       };
       push(x + 1, y); push(x + 2, y);
       push(x - 1, y + 1); push(x, y + 1); push(x + 1, y + 1);
@@ -558,102 +863,77 @@ function ditherAtkinson(gray, w, h, thresh) {
   return out;
 }
 
-function extractVideoFrameAt(t) {
-  return new Promise((resolve) => {
-    const onSeeked = () => {
-      video.removeEventListener('seeked', onSeeked);
-      const tmp = document.createElement('canvas');
-      tmp.width = video.videoWidth;
-      tmp.height = video.videoHeight;
-      tmp.getContext('2d').drawImage(video, 0, 0);
-      resolve(tmp);
-    };
-    video.addEventListener('seeked', onSeeked);
-    video.currentTime = t;
-  });
-}
+// ---------- main processing ----------
 
-function fitToOutput(src, srcW, srcH, srcIsRgbaArray) {
-  const out = document.createElement('canvas');
-  out.width = OUT_W;
-  out.height = OUT_H;
-  const octx = out.getContext('2d');
-  octx.imageSmoothingEnabled = true;
-  octx.imageSmoothingQuality = 'high';
-  octx.fillStyle = '#000';
-  octx.fillRect(0, 0, OUT_W, OUT_H);
-
-  const zoom = Math.max(0.1, parseFloat(document.getElementById('zoom').value) || 1);
-  const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
-  const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
-
-  // "Cover" fit at zoom=1: image fills output, overflowing on long axis
-  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
-  const scale = coverScale * zoom;
-
-  const scaledW = srcW * scale;
-  const scaledH = srcH * scale;
-
-  const overflowX = Math.max(0, scaledW - OUT_W);
-  const overflowY = Math.max(0, scaledH - OUT_H);
-  const underflowX = Math.max(0, OUT_W - scaledW);
-  const underflowY = Math.max(0, OUT_H - scaledH);
-
-  let dx, dy;
-  if (scaledW > OUT_W) {
-    dx = -overflowX * cropXpct;
-  } else {
-    dx = underflowX / 2;
-  }
-  if (scaledH > OUT_H) {
-    dy = -overflowY * cropYpct;
-  } else {
-    dy = underflowY / 2;
-  }
-
-  let sourceEl;
-  if (srcIsRgbaArray) {
-    const tmp = document.createElement('canvas');
-    tmp.width = srcW; tmp.height = srcH;
-    tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(src), srcW, srcH), 0, 0);
-    sourceEl = tmp;
-  } else {
-    sourceEl = src;
-  }
-
-  octx.drawImage(sourceEl, 0, 0, srcW, srcH, dx, dy, scaledW, scaledH);
-  return out;
-}
-
-function toGray(canvas) {
-  const c = canvas.getContext('2d');
-  const img = c.getImageData(0, 0, canvas.width, canvas.height);
-  const gray = new Float32Array(canvas.width * canvas.height);
+function processFrame(src, srcW, srcH, srcIsRgbaArray) {
+  const down = document.getElementById('downsample').value;
+  const ditherMode = document.getElementById('dither').value;
+  const doStretch = document.getElementById('stretch').checked;
+  const gamma = parseFloat(document.getElementById('gamma').value) || 1;
+  const sharpen = parseFloat(document.getElementById('sharpen').value) || 0;
+  const autoThresh = document.getElementById('autoThresh').checked;
+  const manualThresh = parseInt(document.getElementById('threshold').value, 10);
   const invert = document.getElementById('invert').checked;
-  for (let i = 0; i < gray.length; i++) {
-    const r = img.data[i*4+0];
-    const g = img.data[i*4+1];
-    const b = img.data[i*4+2];
-    let v = 0.2126*r + 0.7152*g + 0.0722*b;
-    if (invert) v = 255 - v;
-    gray[i] = v;
-  }
-  return gray;
-}
 
-function ditherGray(gray, mode) {
-  const t = parseInt(document.getElementById('threshold').value, 10);
-  if (mode === 'fs')       return ditherFS(gray, OUT_W, OUT_H, t);
-  if (mode === 'atkinson') return ditherAtkinson(gray, OUT_W, OUT_H, t);
-  const out = new Uint8Array(OUT_W * OUT_H);
-  for (let y = 0; y < OUT_H; y++) {
-    for (let x = 0; x < OUT_W; x++) {
-      const i = y * OUT_W + x;
-      out[i] = thresholdValue(gray[i], x, y, t, mode);
+  // 1. Downsample to OUT_W x OUT_H RGB float
+  let rgb;
+  if (down === 'lanczos') {
+    let srcData;
+    if (srcIsRgbaArray) {
+      srcData = src;
+    } else {
+      const c = src.getContext('2d', { willReadFrequently: true });
+      srcData = c.getImageData(0, 0, srcW, srcH).data;
+    }
+    rgb = lanczosDownsample(srcData, srcW, srcH);
+  } else if (down === 'area') {
+    let srcData;
+    if (srcIsRgbaArray) {
+      srcData = src;
+    } else {
+      const c = src.getContext('2d', { willReadFrequently: true });
+      srcData = c.getImageData(0, 0, srcW, srcH).data;
+    }
+    rgb = areaDownsample(srcData, srcW, srcH);
+  } else {
+    rgb = bilinearDownsample(src, srcW, srcH, srcIsRgbaArray);
+  }
+
+  // 2. RGB → linear grayscale
+  const gray = rgbToGrayLinear(rgb, invert);
+
+  // 3. Contrast stretch
+  if (doStretch) contrastStretch(gray);
+
+  // 4. Gamma
+  applyGamma(gray, gamma);
+
+  // 5. Sharpen (unsharp mask)
+  if (sharpen > 0) unsharpMask(gray, OUT_W, OUT_H, sharpen);
+
+  // 6. Threshold
+  let threshByte = manualThresh;
+  if (autoThresh) threshByte = otsuThreshold(gray);
+
+  // 7. Dither
+  const gray255 = grayToByte(gray);
+  let bitmap;
+  if (ditherMode === 'fs') bitmap = ditherFS(gray255, OUT_W, OUT_H, threshByte);
+  else if (ditherMode === 'atkinson') bitmap = ditherAtkinson(gray255, OUT_W, OUT_H, threshByte);
+  else {
+    bitmap = new Uint8Array(OUT_W * OUT_H);
+    for (let y = 0; y < OUT_H; y++) {
+      for (let x = 0; x < OUT_W; x++) {
+        const i = y * OUT_W + x;
+        bitmap[i] = thresholdValue(gray255[i], x, y, threshByte, ditherMode);
+      }
     }
   }
-  return out;
+
+  return bitmap;
 }
+
+// ---------- playback and UI ----------
 
 function renderBitFrame(context, bitmap, scale) {
   context.fillStyle = '#000';
@@ -675,6 +955,21 @@ function stopPlayback() {
   }
 }
 
+function extractVideoFrameAt(t) {
+  return new Promise((resolve) => {
+    const onSeeked = () => {
+      video.removeEventListener('seeked', onSeeked);
+      const tmp = document.createElement('canvas');
+      tmp.width = video.videoWidth;
+      tmp.height = video.videoHeight;
+      tmp.getContext('2d').drawImage(video, 0, 0);
+      resolve(tmp);
+    };
+    video.addEventListener('seeked', onSeeked);
+    video.currentTime = t;
+  });
+}
+
 document.getElementById('btnConvert').onclick = async () => {
   stopPlayback();
   if (!currentKind) {
@@ -685,7 +980,6 @@ document.getElementById('btnConvert').onclick = async () => {
   const start = parseFloat(document.getElementById('start').value) || 0;
   const length = Math.min(parseFloat(document.getElementById('length').value) || 5, 5);
   const fps = Math.min(parseInt(document.getElementById('fps').value, 10) || 8, 12);
-  const ditherMode = document.getElementById('dither').value;
 
   const frameCount = Math.round(length * fps);
   const dt = 1 / fps;
@@ -705,26 +999,22 @@ document.getElementById('btnConvert').onclick = async () => {
         idx = j;
       }
       const gf = gifFrames[idx];
-      const small = fitToOutput(gf.rgba, gf.width, gf.height, true);
-      const gray = toGray(small);
-      const bitmap = ditherGray(gray, ditherMode);
+      const bitmap = processFrame(gf.rgba, gf.width, gf.height, true);
       bitmaps.push(bitmap);
       const c = document.createElement('canvas');
       c.width = OUT_W; c.height = OUT_H;
       renderBitFrame(c.getContext('2d'), bitmap, 1);
       framesDiv.appendChild(c);
-      statusEl.textContent = `Resampling GIF ${i + 1} / ${frameCount}…`;
+      statusEl.textContent = `Processing GIF ${i + 1} / ${frameCount}…`;
       await new Promise(r => setTimeout(r, 0));
     }
   } else {
     for (let i = 0; i < frameCount; i++) {
       const t = start + i * dt;
       if (t > video.duration) break;
-      statusEl.textContent = `Extracting ${i + 1} / ${frameCount}…`;
+      statusEl.textContent = `Processing ${i + 1} / ${frameCount}…`;
       const src = await extractVideoFrameAt(t);
-      const small = fitToOutput(src, src.width, src.height, false);
-      const gray = toGray(small);
-      const bitmap = ditherGray(gray, ditherMode);
+      const bitmap = processFrame(src, src.width, src.height, false);
       bitmaps.push(bitmap);
       const c = document.createElement('canvas');
       c.width = OUT_W; c.height = OUT_H;
@@ -749,19 +1039,20 @@ document.getElementById('btnConvert').onclick = async () => {
   tick();
 };
 
-// Debounced re-convert when sliders change
 function debouncedConvert() {
   if (window._convertDebounce) clearTimeout(window._convertDebounce);
   window._convertDebounce = setTimeout(() => {
     drawCropOverlay();
     document.getElementById('btnConvert').click();
-  }, 120);
+  }, 150);
 }
 
-['cropX', 'cropY', 'zoom', 'threshold', 'dither', 'invert'].forEach(id => {
+['cropX', 'cropY', 'zoom', 'threshold', 'dither', 'invert',
+ 'stretch', 'gamma', 'sharpen', 'autoThresh', 'downsample'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', debouncedConvert);
-  if (el && el.tagName === 'SELECT') el.addEventListener('change', debouncedConvert);
+  if (!el) return;
+  el.addEventListener('input', debouncedConvert);
+  if (el.tagName === 'SELECT') el.addEventListener('change', debouncedConvert);
 });
 </script>
 
