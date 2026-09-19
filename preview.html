@@ -2,18 +2,20 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>1-bit preview — 32×96</title>
+<title>1-bit preview — 32×96 (GIF + video)</title>
+<script src="https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct.min.js"></script>
 <style>
   body {
     font-family: system-ui, sans-serif;
     background: #1a1a1a; color: #e0e0e0;
     margin: 0; padding: 20px;
     display: flex; gap: 24px; align-items: flex-start;
+    flex-wrap: wrap;
   }
   .panel { display: flex; flex-direction: column; gap: 12px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin: 0; }
   canvas { image-rendering: pixelated; display: block; background: #000; border: 1px solid #333; }
-  #srcPreview { max-width: 240px; max-height: 240px; }
+  #srcPreview { max-width: 320px; max-height: 320px; }
   label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
   input[type=range] { width: 200px; }
   input[type=number] { width: 60px; background: #222; color: #e0e0e0; border: 1px solid #444; padding: 2px 6px; border-radius: 3px; }
@@ -22,8 +24,7 @@
   button:hover { background: #444; }
   #frames { display: flex; gap: 2px; flex-wrap: wrap; max-width: 520px; }
   #frames canvas { border: 1px solid #222; }
-  .row { display: flex; gap: 10px; align-items: center; }
-  #status { font-size: 12px; color: #888; }
+  #status { font-size: 12px; color: #888; max-width: 400px; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -33,6 +34,7 @@
   <input type="file" id="fileInput" accept="video/*,image/gif">
   <canvas id="srcPreview" width="320" height="320"></canvas>
   <video id="video" style="display:none" muted playsinline></video>
+  <div id="gifInfo" style="font-size:12px;color:#666"></div>
 
   <h2>Conversion</h2>
   <label>Start (s) <input type="number" id="start" value="0" step="0.1" min="0"></label>
@@ -50,6 +52,7 @@
     </select>
   </label>
   <label>Invert <input type="checkbox" id="invert"></label>
+  <label>Loop preview <input type="checkbox" id="loopPreview" checked></label>
 
   <button id="btnConvert">Convert</button>
   <div id="status">—</div>
@@ -57,15 +60,14 @@
 
 <div class="panel">
   <h2>Output frames (32×96 each)</h2>
-  <canvas id="outPreview" width="192" height="576"
-          style="image-rendering: pixelated; transform: scale(1); border: 1px solid #333;"></canvas>
+  <canvas id="outPreview" width="192" height="576"></canvas>
   <div id="frames"></div>
 </div>
 
 <script>
 const OUT_W = 32;
 const OUT_H = 96;
-const SCALE = 6;   // preview zoom
+const SCALE = 6;
 
 const fileInput = document.getElementById('fileInput');
 const video     = document.getElementById('video');
@@ -75,33 +77,71 @@ const outPrev   = document.getElementById('outPreview');
 const outCtx    = outPrev.getContext('2d');
 const framesDiv = document.getElementById('frames');
 const statusEl  = document.getElementById('status');
+const gifInfo   = document.getElementById('gifInfo');
 
-let isGif = false;
-let gifFrames = [];      // for GIF path
-let gifFrameIdx = 0;
+let currentKind = null;     // 'video' or 'gif'
+let gifFrames   = [];       // array of { patch: Uint8ClampedArray(RGBA), width, height, delayMs }
+let gifCanvas   = null;     // composited full-frame canvas at gif dimensions
+let gifTotalMs  = 0;
+let playbackTimer = null;
 
 fileInput.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  stopPlayback();
   framesDiv.innerHTML = '';
-  outCtx.clearRect(0, 0, outPrev.width, outPrev.height);
+  outCtx.fillStyle = '#000';
+  outCtx.fillRect(0, 0, outPrev.width, outPrev.height);
   gifFrames = [];
-  isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+  gifInfo.textContent = '';
+  currentKind = null;
+
+  const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
 
   if (isGif) {
-    statusEl.textContent = 'GIF: decoding…';
-    // Minimal GIF loader — just uses browser's Image element to grab frames.
-    // (Note: this only shows the first frame for preview; real GIF support
-    //  needs gifuct-js or similar. For now, treat GIF as a still preview.)
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      srcPrev.width = img.width;
-      srcPrev.height = img.height;
-      srcCtx.drawImage(img, 0, 0);
-      statusEl.textContent = 'GIF loaded (single-frame preview only — see note)';
-    };
-    img.src = url;
+    statusEl.textContent = 'Decoding GIF…';
+    try {
+      const buf = await file.arrayBuffer();
+      const gif = gifuct.parseGIF(buf);
+      const frames = gifuct.decompressFrames(gif, true);   // true = build RGBA patch
+      // Composite frames onto a persistent canvas
+      const dims = frames[0].dims;
+      gifCanvas = document.createElement('canvas');
+      gifCanvas.width = dims.width;
+      gifCanvas.height = dims.height;
+      const gctx = gifCanvas.getContext('2d');
+
+      // Store full RGBA snapshots per frame (post-composite)
+      gifFrames = [];
+      gifTotalMs = 0;
+      for (const f of frames) {
+        const patch = f.patch;
+        const pd = f.dims;
+        const imgData = new ImageData(patch, pd.width, pd.height);
+        gctx.putImageData(imgData, pd.left, pd.top);
+        // Snapshot the canvas so later frames don't affect this one
+        const snapshot = gctx.getImageData(0, 0, gifCanvas.width, gifCanvas.height);
+        gifFrames.push({
+          rgba: snapshot.data,
+          width: gifCanvas.width,
+          height: gifCanvas.height,
+          delayMs: f.delay || 100,
+        });
+        gifTotalMs += (f.delay || 100);
+      }
+
+      srcPrev.width = dims.width;
+      srcPrev.height = dims.height;
+      srcCtx.drawImage(gifCanvas, 0, 0);
+
+      gifInfo.textContent =
+        `${dims.width}×${dims.height} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total`;
+      statusEl.textContent = 'GIF loaded. Adjust settings and hit Convert.';
+      currentKind = 'gif';
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'GIF decode failed: ' + err.message;
+    }
     return;
   }
 
@@ -112,13 +152,13 @@ fileInput.onchange = async (e) => {
     srcPrev.width = video.videoWidth;
     srcPrev.height = video.videoHeight;
     srcCtx.drawImage(video, 0, 0, srcPrev.width, srcPrev.height);
-    statusEl.textContent = `Loaded: ${video.videoWidth}×${video.videoHeight}, ${video.duration.toFixed(1)}s`;
+    statusEl.textContent = `Video: ${video.videoWidth}×${video.videoHeight}, ${video.duration.toFixed(1)}s`;
+    currentKind = 'video';
   };
 };
 
 // ---------- dithering ----------
 
-// Bayer 4x4 matrix, normalized to 0..1
 const BAYER4 = [
   [ 0, 8, 2,10],
   [12, 4,14, 6],
@@ -127,21 +167,19 @@ const BAYER4 = [
 ].map(row => row.map(v => v / 16));
 
 const BAYER8 = (() => {
-  // Generate 8x8 from 4x4 recursively
   const b = [];
   for (let y = 0; y < 8; y++) {
     b.push([]);
     for (let x = 0; x < 8; x++) {
       const m4 = BAYER4[y % 4][x % 4];
       const quad = (Math.floor(y/4) * 2 + Math.floor(x/4));
-      b[y].push((m4 + quad * (1/4)) / 4 + (m4 / 4));
+      b[y].push((m4 * 4 + quad) / 16);
     }
   }
-  return b.map(row => row.map(v => v % 1));
+  return b;
 })();
 
 function thresholdValue(v, x, y, thresh, ditherMode) {
-  // v: 0..255 grayscale. Returns 0 or 255.
   switch (ditherMode) {
     case 'bayer4': {
       const t = thresh + (BAYER4[y & 3][x & 3] - 0.5) * 128;
@@ -157,7 +195,6 @@ function thresholdValue(v, x, y, thresh, ditherMode) {
 }
 
 function ditherFS(gray, w, h, thresh) {
-  // gray: Float32Array of 0..255, modified in place
   const out = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -189,12 +226,9 @@ function ditherAtkinson(gray, w, h, thresh) {
       const push = (xx, yy) => {
         if (xx >= 0 && xx < w && yy >= 0 && yy < h) gray[yy * w + xx] += err;
       };
-      push(x + 1, y);
-      push(x + 2, y);
-      push(x - 1, y + 1);
-      push(x,     y + 1);
-      push(x + 1, y + 1);
-      push(x,     y + 2);
+      push(x + 1, y); push(x + 2, y);
+      push(x - 1, y + 1); push(x, y + 1); push(x + 1, y + 1);
+      push(x, y + 2);
     }
   }
   return out;
@@ -202,11 +236,10 @@ function ditherAtkinson(gray, w, h, thresh) {
 
 // ---------- frame extraction ----------
 
-function extractFrameAt(t) {
+function extractVideoFrameAt(t) {
   return new Promise((resolve) => {
     const onSeeked = () => {
       video.removeEventListener('seeked', onSeeked);
-      // Draw to a temp canvas at source resolution
       const tmp = document.createElement('canvas');
       tmp.width = video.videoWidth;
       tmp.height = video.videoHeight;
@@ -218,23 +251,21 @@ function extractFrameAt(t) {
   });
 }
 
-function fitToOutput(srcCanvas) {
-  // Crop to 1:3 aspect, then draw into 32x96
-  const sw = srcCanvas.width, sh = srcCanvas.height;
-  const targetAspect = OUT_W / OUT_H;    // ~0.333
-  const srcAspect = sw / sh;
+// Compose source frame at (cw,ch) region into a 32x96 canvas with 1:3 crop
+function fitToOutput(sourceCanvasOrImageData, srcW, srcH, sourceIsImageData) {
+  const targetAspect = OUT_W / OUT_H;
+  const srcAspect = srcW / srcH;
   let cw, ch, cx, cy;
   if (srcAspect > targetAspect) {
-    // source is wider — crop sides
-    ch = sh;
-    cw = sh * targetAspect;
-    cx = (sw - cw) / 2;
+    ch = srcH;
+    cw = srcH * targetAspect;
+    cx = (srcW - cw) / 2;
     cy = 0;
   } else {
-    cw = sw;
-    ch = sw / targetAspect;
+    cw = srcW;
+    ch = srcW / targetAspect;
     cx = 0;
-    cy = (sh - ch) / 2;
+    cy = (srcH - ch) / 2;
   }
   const out = document.createElement('canvas');
   out.width = OUT_W;
@@ -242,7 +273,15 @@ function fitToOutput(srcCanvas) {
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = true;
   octx.imageSmoothingQuality = 'high';
-  octx.drawImage(srcCanvas, cx, cy, cw, ch, 0, 0, OUT_W, OUT_H);
+  if (sourceIsImageData) {
+    // Draw ImageData to a temp canvas at src size first
+    const tmp = document.createElement('canvas');
+    tmp.width = srcW; tmp.height = srcH;
+    tmp.getContext('2d').putImageData(new ImageData(sourceCanvasOrImageData, srcW, srcH), 0, 0);
+    octx.drawImage(tmp, cx, cy, cw, ch, 0, 0, OUT_W, OUT_H);
+  } else {
+    octx.drawImage(sourceCanvasOrImageData, cx, cy, cw, ch, 0, 0, OUT_W, OUT_H);
+  }
   return out;
 }
 
@@ -262,9 +301,8 @@ function toGray(canvas) {
   return gray;
 }
 
-function ditherGray(gray, mode, thresh) {
-  const th = parseInt(document.getElementById('threshold').value, 10);
-  const t = (thresh !== undefined) ? thresh : th;
+function ditherGray(gray, mode) {
+  const t = parseInt(document.getElementById('threshold').value, 10);
   if (mode === 'fs')       return ditherFS(gray, OUT_W, OUT_H, t);
   if (mode === 'atkinson') return ditherAtkinson(gray, OUT_W, OUT_H, t);
   const out = new Uint8Array(OUT_W * OUT_H);
@@ -277,7 +315,7 @@ function ditherGray(gray, mode, thresh) {
   return out;
 }
 
-function renderBitFrameToCanvas(outCtx, bitmap, scale) {
+function renderBitFrame(outCtx, bitmap, scale) {
   outCtx.fillStyle = '#000';
   outCtx.fillRect(0, 0, OUT_W * scale, OUT_H * scale);
   outCtx.fillStyle = '#fff';
@@ -290,13 +328,22 @@ function renderBitFrameToCanvas(outCtx, bitmap, scale) {
   }
 }
 
+function stopPlayback() {
+  if (playbackTimer) {
+    clearTimeout(playbackTimer);
+    playbackTimer = null;
+  }
+}
+
 // ---------- main convert ----------
 
 document.getElementById('btnConvert').onclick = async () => {
-  if (isGif || !video.src) {
-    statusEl.textContent = 'Load a video first (GIF not supported in this test snippet).';
+  stopPlayback();
+  if (!currentKind) {
+    statusEl.textContent = 'Load a file first.';
     return;
   }
+
   const start = parseFloat(document.getElementById('start').value) || 0;
   const length = Math.min(parseFloat(document.getElementById('length').value) || 5, 5);
   const fps = Math.min(parseInt(document.getElementById('fps').value, 10) || 8, 12);
@@ -304,38 +351,65 @@ document.getElementById('btnConvert').onclick = async () => {
 
   const frameCount = Math.round(length * fps);
   const dt = 1 / fps;
-
-  statusEl.textContent = `Extracting ${frameCount} frames…`;
+  const bitmaps = [];
   framesDiv.innerHTML = '';
 
-  const bitmaps = [];
-  for (let i = 0; i < frameCount; i++) {
-    const t = start + i * dt;
-    if (t > video.duration) break;
-    const src = await extractFrameAt(t);
-    const small = fitToOutput(src);
-    const gray = toGray(small);
-    const bitmap = ditherGray(gray, ditherMode);
-    bitmaps.push(bitmap);
-
-    // Show thumbnail in the strip
-    const c = document.createElement('canvas');
-    c.width = OUT_W;
-    c.height = OUT_H;
-    renderBitFrameToCanvas(c.getContext('2d'), bitmap, 1);
-    framesDiv.appendChild(c);
-
-    statusEl.textContent = `Extracting ${i + 1} / ${frameCount}…`;
+  if (currentKind === 'gif') {
+    // Resample GIF frames at target FPS across [start, start+length]
+    const t0 = start * 1000;
+    const t1 = Math.min((start + length) * 1000, gifTotalMs);
+    for (let i = 0; i < frameCount; i++) {
+      const tMs = t0 + i * (dt * 1000);
+      if (tMs > t1) break;
+      // Find the GIF frame whose cumulative time contains tMs
+      let acc = 0, idx = 0;
+      for (let j = 0; j < gifFrames.length; j++) {
+        acc += gifFrames[j].delayMs;
+        if (acc > tMs) { idx = j; break; }
+        idx = j;
+      }
+      const gf = gifFrames[idx];
+      const small = fitToOutput(gf.rgba, gf.width, gf.height, true);
+      const gray = toGray(small);
+      const bitmap = ditherGray(gray, ditherMode);
+      bitmaps.push(bitmap);
+      const c = document.createElement('canvas');
+      c.width = OUT_W; c.height = OUT_H;
+      renderBitFrame(c.getContext('2d'), bitmap, 1);
+      framesDiv.appendChild(c);
+      statusEl.textContent = `Resampling GIF ${i + 1} / ${frameCount}…`;
+      await new Promise(r => setTimeout(r, 0));
+    }
+  } else {
+    // Video path — seek and grab
+    for (let i = 0; i < frameCount; i++) {
+      const t = start + i * dt;
+      if (t > video.duration) break;
+      statusEl.textContent = `Extracting ${i + 1} / ${frameCount}…`;
+      const src = await extractVideoFrameAt(t);
+      const small = fitToOutput(src, src.width, src.height, false);
+      const gray = toGray(small);
+      const bitmap = ditherGray(gray, ditherMode);
+      bitmaps.push(bitmap);
+      const c = document.createElement('canvas');
+      c.width = OUT_W; c.height = OUT_H;
+      renderBitFrame(c.getContext('2d'), bitmap, 1);
+      framesDiv.appendChild(c);
+    }
   }
 
-  // Play back in the big canvas
-  statusEl.textContent = `Done — ${bitmaps.length} frames. Playing…`;
+  statusEl.textContent = `Done — ${bitmaps.length} frames.`;
+  const loopPreview = document.getElementById('loopPreview').checked;
   const frameMs = 1000 / fps;
   let idx = 0;
   const tick = () => {
-    renderBitFrameToCanvas(outCtx, bitmaps[idx], SCALE);
-    idx = (idx + 1) % bitmaps.length;
-    setTimeout(tick, frameMs);
+    renderBitFrame(outCtx, bitmaps[idx], SCALE);
+    idx++;
+    if (idx >= bitmaps.length) {
+      if (!loopPreview) return;
+      idx = 0;
+    }
+    playbackTimer = setTimeout(tick, frameMs);
   };
   tick();
 };
