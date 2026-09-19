@@ -101,9 +101,30 @@ async function decodeGifNative(file) {
     data: await file.arrayBuffer(),
     type: 'image/gif'
   });
+
+  // Wait for both the decoder AND its tracks to be ready
   await decoder.completed;
-  const track = decoder.tracks.selectedTrack;
-  const frameCount = track.frameCount;
+  await decoder.tracks.ready;
+
+  let track = decoder.tracks.selectedTrack;
+
+  // Some Chrome versions return null briefly — poll a few times
+  let attempts = 0;
+  while (!track && attempts < 20) {
+    await new Promise(r => setTimeout(r, 20));
+    track = decoder.tracks.selectedTrack;
+    attempts++;
+  }
+  if (!track) throw new Error('No selected track on decoded GIF');
+
+  let frameCount = track.frameCount;
+  if (!frameCount) {
+    // track.frameCount can be 0 until first decode — decode frame 0 to kick it
+    await decoder.decode({ frameIndex: 0 });
+    frameCount = track.frameCount;
+  }
+  if (!frameCount) throw new Error('GIF reported 0 frames');
+
   const frames = [];
 
   for (let i = 0; i < frameCount; i++) {
@@ -126,7 +147,6 @@ async function decodeGifNative(file) {
 
   return { width: frames[0].width, height: frames[0].height, frames };
 }
-
 function hasNativeGifDecoder() {
   return typeof window.ImageDecoder !== 'undefined';
 }
