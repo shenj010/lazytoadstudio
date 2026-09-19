@@ -89,10 +89,51 @@
   <div id="frames"></div>
 </div>
 
-<!-- ============================================================
-     Minimal GIF89a decoder
-     ============================================================ -->
 <script>
+/* ============================================================
+   GIF decoding
+   Primary: browser-native ImageDecoder (Chrome 94+, Edge)
+   Fallback: hand-rolled GIF89a decoder below
+   ============================================================ */
+
+async function decodeGifNative(file) {
+  const decoder = new ImageDecoder({
+    data: await file.arrayBuffer(),
+    type: 'image/gif'
+  });
+  await decoder.completed;
+  const track = decoder.tracks.selectedTrack;
+  const frameCount = track.frameCount;
+  const frames = [];
+
+  for (let i = 0; i < frameCount; i++) {
+    const { image } = await decoder.decode({ frameIndex: i });
+    const canvas = document.createElement('canvas');
+    canvas.width = image.displayWidth;
+    canvas.height = image.displayHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    // duration is in microseconds
+    const delayMs = Math.max(20, Math.round((image.duration || 100000) / 1000));
+    frames.push({
+      rgba: new Uint8ClampedArray(data),
+      width: canvas.width,
+      height: canvas.height,
+      delayMs,
+    });
+  }
+
+  return { width: frames[0].width, height: frames[0].height, frames };
+}
+
+function hasNativeGifDecoder() {
+  return typeof window.ImageDecoder !== 'undefined';
+}
+
+/* ============================================================
+   Fallback GIF89a decoder
+   ============================================================ */
 (function(global) {
   'use strict';
 
@@ -232,45 +273,32 @@
 
         const indices = lzwDecode(minCodeSize, lzwData);
 
-        const patch = new Uint8ClampedArray(fw * fh * 4);
-        const trans = pending.transparent;
-        for (let p = 0; p < fw * fh; p++) {
-          const ci = indices[p];
-          if (ci === undefined || ci === trans || !colorTable[ci]) {
-            patch[p * 4 + 3] = 0;
-          } else {
-            const rgb = colorTable[ci];
-            patch[p * 4 + 0] = rgb[0];
-            patch[p * 4 + 1] = rgb[1];
-            patch[p * 4 + 2] = rgb[2];
-            patch[p * 4 + 3] = 255;
-          }
-        }
-
-        let finalPatch = patch;
+        // Build pixel indices, de-interlacing if needed
+        const orderedIndices = new Uint8Array(fw * fh);
         if (interlaced) {
-          finalPatch = new Uint8ClampedArray(patch.length);
           const rowOrder = [];
           for (let y = 0; y < fh; y += 8) rowOrder.push(y);
           for (let y = 4; y < fh; y += 8) rowOrder.push(y);
           for (let y = 2; y < fh; y += 4) rowOrder.push(y);
           for (let y = 1; y < fh; y += 2) rowOrder.push(y);
+          let srcIdx = 0;
           for (let i = 0; i < fh; i++) {
-            const srcY = rowOrder[i];
+            const dstY = rowOrder[i];
             for (let x = 0; x < fw; x++) {
-              const si = (srcY * fw + x) * 4;
-              const di = (i * fw + x) * 4;
-              finalPatch[di + 0] = patch[si + 0];
-              finalPatch[di + 1] = patch[si + 1];
-              finalPatch[di + 2] = patch[si + 2];
-              finalPatch[di + 3] = patch[si + 3];
+              orderedIndices[dstY * fw + x] = indices[srcIdx++] || 0;
             }
+          }
+        } else {
+          for (let i = 0; i < fw * fh; i++) {
+            orderedIndices[i] = indices[i] || 0;
           }
         }
 
         rawFrames.push({
           dims: { left, top, width: fw, height: fh },
-          patch: finalPatch,
+          indices: orderedIndices,
+          colorTable: colorTable,
+          transparent: pending.transparent,
           delay: pending.delay,
           disposalType: pending.disposal,
         });
@@ -278,6 +306,7 @@
       } else pos++;
     }
 
+    // Composite onto a persistent canvas
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -293,36 +322,48 @@
                         prevFrame.dims.width, prevFrame.dims.height);
         }
       }
+
+      // Build RGBA patch
       const patchData = ctx.createImageData(f.dims.width, f.dims.height);
-      const p = f.patch;
-      for (let i = 0; i < p.length; i += 4) {
-        if (p[i + 3] !== 0) {
-          patchData.data[i + 0] = p[i + 0];
-          patchData.data[i + 1] = p[i + 1];
-          patchData.data[i + 2] = p[i + 2];
-          patchData.data[i + 3] = 255;
+      const ct = f.colorTable;
+      const trans = f.transparent;
+      for (let p = 0; p < f.dims.width * f.dims.height; p++) {
+        const ci = f.indices[p];
+        if (ci === trans || !ct[ci]) {
+          patchData.data[p * 4 + 3] = 0;
+        } else {
+          patchData.data[p * 4 + 0] = ct[ci][0];
+          patchData.data[p * 4 + 1] = ct[ci][1];
+          patchData.data[p * 4 + 2] = ct[ci][2];
+          patchData.data[p * 4 + 3] = 255;
         }
       }
+
       const tmp = document.createElement('canvas');
       tmp.width = f.dims.width;
       tmp.height = f.dims.height;
       tmp.getContext('2d').putImageData(patchData, 0, 0);
       ctx.drawImage(tmp, f.dims.left, f.dims.top);
+
       const snapshot = ctx.getImageData(0, 0, width, height);
       frames.push({
-        dims: f.dims,
-        patch: snapshot.data,
-        delay: f.delay,
-        disposalType: f.disposalType,
+        rgba: new Uint8ClampedArray(snapshot.data),
+        width: width,
+        height: height,
+        delayMs: f.delay,
       });
     }
+
     return { width, height, frames };
   }
+
   global.gifuct = { parseGIF };
 })(window);
-</script>
 
-<script>
+/* ============================================================
+   Main app
+   ============================================================ */
+
 const OUT_W = 32;
 const OUT_H = 96;
 const SCALE = 6;
@@ -359,20 +400,26 @@ fileInput.onchange = async (e) => {
   if (isGif) {
     statusEl.textContent = 'Decoding GIF…';
     try {
-      const buf = await file.arrayBuffer();
-      const parsed = gifuct.parseGIF(buf);
+      let parsed;
+      if (hasNativeGifDecoder()) {
+        parsed = await decodeGifNative(file);
+      } else {
+        const buf = await file.arrayBuffer();
+        parsed = gifuct.parseGIF(buf);
+      }
       gifW = parsed.width;
       gifH = parsed.height;
       gifFrames = parsed.frames.map(f => ({
-        rgba: f.patch,
-        width: gifW,
-        height: gifH,
-        delayMs: f.delay,
+        rgba: f.rgba,
+        width: f.width || gifW,
+        height: f.height || gifH,
+        delayMs: f.delayMs,
       }));
       gifTotalMs = gifFrames.reduce((a, f) => a + f.delayMs, 0);
       renderSourceGifFrame(0);
       gifInfo.textContent =
-        `${gifW}×${gifH} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total`;
+        `${gifW}×${gifH} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total` +
+        (hasNativeGifDecoder() ? '' : ' (fallback decoder)');
       statusEl.textContent = 'GIF loaded. Adjust settings and hit Convert.';
       currentKind = 'gif';
     } catch (err) {
@@ -397,10 +444,11 @@ fileInput.onchange = async (e) => {
 function renderSourceGifFrame(idx) {
   const gf = gifFrames[idx];
   const tmp = document.createElement('canvas');
-  tmp.width = gifW; tmp.height = gifH;
-  tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(gf.rgba), gifW, gifH), 0, 0);
-  srcPrev.width = gifW;
-  srcPrev.height = gifH;
+  tmp.width = gf.width;
+  tmp.height = gf.height;
+  tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(gf.rgba), gf.width, gf.height), 0, 0);
+  srcPrev.width = gf.width;
+  srcPrev.height = gf.height;
   srcCtx.drawImage(tmp, 0, 0);
   drawCropOverlay();
 }
@@ -447,8 +495,6 @@ function drawCropOverlay() {
   srcCtx.restore();
 }
 
-// ---------- source region computation ----------
-
 function computeSrcRegion(srcW, srcH) {
   const zoom = Math.max(0.1, parseFloat(document.getElementById('zoom').value) || 1);
   const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
@@ -468,8 +514,6 @@ function computeSrcRegion(srcW, srcH) {
 
   return { sx: cx, sy: cy, sw: viewW, sh: viewH };
 }
-
-// ---------- downsamplers ----------
 
 function areaDownsample(srcData, srcW, srcH) {
   const { sx, sy, sw, sh } = computeSrcRegion(srcW, srcH);
@@ -529,18 +573,13 @@ function lanczosDownsample(srcData, srcW, srcH) {
   const out = new Float32Array(OUT_W * OUT_H * 3);
   const A = 3;
 
-  // Precompute weights per output pixel (they're the same for every row/column, so just 1D)
-  // For each output column ox, we need weights for source columns in [x0-A, x0+A]
-  // where x0 = sx + ox * (sw/OUT_W). Sample stride is 1 source pixel.
-  // We'll build column weights for all OUT_W and row weights for all OUT_H once.
-
-  const scaleX = sw / OUT_W;   // source pixels per output pixel
+  const scaleX = sw / OUT_W;
   const scaleY = sh / OUT_H;
 
-  const colWeights = [];   // [{i0, weights: [...]}, ...]
+  const colWeights = [];
   for (let ox = 0; ox < OUT_W; ox++) {
     const center = sx + (ox + 0.5) * scaleX - 0.5;
-    const i0 = Math.floor(center - A * Math.max(1, scaleX)) ;
+    const i0 = Math.floor(center - A * Math.max(1, scaleX));
     const i1 = Math.ceil(center + A * Math.max(1, scaleX));
     const weights = [];
     let wsum = 0;
@@ -569,12 +608,8 @@ function lanczosDownsample(srcData, srcW, srcH) {
     rowWeights.push({ i0, weights });
   }
 
-  // Two-pass: for each output row, combine weighted source rows into a temp row;
-  // then for each output column, combine weighted temp-row columns.
   for (let oy = 0; oy < OUT_H; oy++) {
     const { i0: ry0, weights: rw } = rowWeights[oy];
-
-    // temp row: Float32Array of srcW * 3
     const tempRow = new Float32Array(srcW * 3);
     for (let i = 0; i < rw.length; i++) {
       const y = ry0 + i;
@@ -591,7 +626,6 @@ function lanczosDownsample(srcData, srcW, srcH) {
       }
     }
 
-    // Now downsample columns
     for (let ox = 0; ox < OUT_W; ox++) {
       const { i0: cx0, weights: cw } = colWeights[ox];
       let r = 0, g = 0, b = 0, wsum = 0;
@@ -649,8 +683,6 @@ function bilinearDownsample(src, srcW, srcH, srcIsRgbaArray) {
   }
   return rgb;
 }
-
-// ---------- tone processing ----------
 
 function srgbToLinear(v) {
   const c = v / 255;
@@ -710,13 +742,10 @@ function contrastStretch(gray) {
   }
 }
 
-// 3x3 gaussian blur (sigma ≈ 1), separably
 function gaussianBlur3(gray, w, h) {
   const kernel = [0.27901, 0.44198, 0.27901];
   const tmp = new Float32Array(w * h);
   const out = new Float32Array(w * h);
-
-  // Horizontal
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       let sum = 0;
@@ -728,7 +757,6 @@ function gaussianBlur3(gray, w, h) {
       tmp[y * w + x] = sum;
     }
   }
-  // Vertical
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       let sum = 0;
@@ -743,7 +771,6 @@ function gaussianBlur3(gray, w, h) {
   return out;
 }
 
-// Unsharp mask: out = gray + amount * (gray - blur(gray))
 function unsharpMask(gray, w, h, amount) {
   if (amount <= 0) return;
   const blurred = gaussianBlur3(gray, w, h);
@@ -778,8 +805,6 @@ function otsuThreshold(gray) {
   }
   return best;
 }
-
-// ---------- dithering ----------
 
 const BAYER4 = [
   [ 0, 8, 2,10],
@@ -816,7 +841,6 @@ function thresholdValue(v, x, y, thresh, ditherMode) {
   }
 }
 
-// grayscale is 0..1, converted to 0..255 for dithering internal use
 function grayToByte(gray) {
   const out = new Float32Array(gray.length);
   for (let i = 0; i < gray.length; i++) out[i] = gray[i] * 255;
@@ -863,8 +887,6 @@ function ditherAtkinson(gray255, w, h, thresh) {
   return out;
 }
 
-// ---------- main processing ----------
-
 function processFrame(src, srcW, srcH, srcIsRgbaArray) {
   const down = document.getElementById('downsample').value;
   const ditherMode = document.getElementById('dither').value;
@@ -875,47 +897,33 @@ function processFrame(src, srcW, srcH, srcIsRgbaArray) {
   const manualThresh = parseInt(document.getElementById('threshold').value, 10);
   const invert = document.getElementById('invert').checked;
 
-  // 1. Downsample to OUT_W x OUT_H RGB float
   let rgb;
-  if (down === 'lanczos') {
-    let srcData;
+  let srcData = null;
+  if (down === 'lanczos' || down === 'area') {
     if (srcIsRgbaArray) {
       srcData = src;
     } else {
       const c = src.getContext('2d', { willReadFrequently: true });
       srcData = c.getImageData(0, 0, srcW, srcH).data;
     }
+  }
+
+  if (down === 'lanczos') {
     rgb = lanczosDownsample(srcData, srcW, srcH);
   } else if (down === 'area') {
-    let srcData;
-    if (srcIsRgbaArray) {
-      srcData = src;
-    } else {
-      const c = src.getContext('2d', { willReadFrequently: true });
-      srcData = c.getImageData(0, 0, srcW, srcH).data;
-    }
     rgb = areaDownsample(srcData, srcW, srcH);
   } else {
     rgb = bilinearDownsample(src, srcW, srcH, srcIsRgbaArray);
   }
 
-  // 2. RGB → linear grayscale
   const gray = rgbToGrayLinear(rgb, invert);
-
-  // 3. Contrast stretch
   if (doStretch) contrastStretch(gray);
-
-  // 4. Gamma
   applyGamma(gray, gamma);
-
-  // 5. Sharpen (unsharp mask)
   if (sharpen > 0) unsharpMask(gray, OUT_W, OUT_H, sharpen);
 
-  // 6. Threshold
   let threshByte = manualThresh;
   if (autoThresh) threshByte = otsuThreshold(gray);
 
-  // 7. Dither
   const gray255 = grayToByte(gray);
   let bitmap;
   if (ditherMode === 'fs') bitmap = ditherFS(gray255, OUT_W, OUT_H, threshByte);
@@ -932,8 +940,6 @@ function processFrame(src, srcW, srcH, srcIsRgbaArray) {
 
   return bitmap;
 }
-
-// ---------- playback and UI ----------
 
 function renderBitFrame(context, bitmap, scale) {
   context.fillStyle = '#000';
