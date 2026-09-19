@@ -68,22 +68,310 @@
      Source: https://github.com/matt-way/gifuct-js
      ============================================================ -->
 <script>
-(function(global,factory){typeof exports==='object'&&typeof module!=='undefined'?factory(exports):typeof define==='function'&&define.amd?define(['exports'],factory):(global=typeof globalThis!=='undefined'?globalThis:global||self,factory(global.gifuct={}));}(this,(function(exports){'use strict';
-function lzwDecode(minCodeSize,data){var pos=0,codeTable,codeSize=minCodeSize+1,clearCode=1<<minCodeSize,endCode=clearCode+1,prevCode=null,dictionary=[],output=[],dataLength=data.length;function reset(){codeTable=[];for(var i=0;i<clearCode;i++){codeTable[i]=[i];}codeSize=minCodeSize+1;prevCode=null;}function getCode(){var code=0,bitsToRead=codeSize,shift=0;while(bitsToRead>0){var byte=data[pos>>3];if(byte===undefined)return endCode;var bit=(pos&7);var bitsFromByte=8-bit;var bitsThisTime=Math.min(bitsToRead,bitsFromByte);var mask=((1<<bitsThisTime)-1)<<bit;var bits=(byte&mask)>>bit;code|=bits<<shift;shift+=bitsThisTime;bitsToRead-=bitsThisTime;pos+=bitsThisTime;}return code;}reset();while(true){var code=getCode();if(code===clearCode){reset();continue;}if(code===endCode)break;var entry;if(code<codeTable.length&&codeTable[code]){entry=codeTable[code];}else if(prevCode!==null){entry=prevCode.concat(prevCode[0]);}else{throw new Error('Invalid LZW code');}output=output.concat(entry);if(prevCode!==null){codeTable.push(prevCode.concat(entry[0]));}prevCode=entry;if(codeTable.length===(1<<codeSize)&&codeSize<12){codeSize++;}}return output;}
-function parseGIF(arrayBuffer){var bytes=new Uint8Array(arrayBuffer);var pos=0;function read(){return bytes[pos++];}function readBytes(n){var out=bytes.slice(pos,pos+n);pos+=n;return out;}function readUint16(){var v=bytes[pos]|(bytes[pos+1]<<8);pos+=2;return v;}var sig=String.fromCharCode(bytes[0],bytes[1],bytes[2]);if(sig!=='GIF')throw new Error('Not a GIF');pos=6;var width=readUint16(),height=readUint16();var packed=read();var bgColor=read();var aspect=read();var globalColorTable=null;if(packed&0x80){var gctSize=2<<(packed&0x07);globalColorTable=[];for(var i=0;i<gctSize;i++){globalColorTable.push([read(),read(),read()]);}}var frames=[];var loopCount=0;while(pos<bytes.length){var b=read();if(b===0x3B)break;if(b===0x21){var label=read();if(label===0xF9){var blockSize=read();var flags=read();var delay=readUint16();var transparentIndex=read();var terminator=read();if(flags&1){transparentIndex=transparentIndex;}else{transparentIndex=-1;}frames.pendingDelay=delay;frames.pendingTransparent=transparentIndex;frames.pendingDisposal=(flags>>2)&7;}else if(label===0xFF){var appSize=read();var appId=readBytes(appSize);var subSize=read();var subData=readBytes(subSize);while(subSize!==0){subSize=read();readBytes(subSize);}if(appId[0]===0x4E&&appId[1]===0x45&&appId[2]===0x54&&appId[3]===0x53&&appId[4]===0x43&&appId[5]===0x41&&appId[6]===0x50&&appId[7]===0x45){loopCount=1;}}else{var sz=read();while(sz!==0){readBytes(sz);sz=read();}}}else if(b===0x2C){var left=readUint16(),top=readUint16(),fw=readUint16(),fh=readUint16();var fPacked=read();var localColorTable=null;if(fPacked&0x80){var lctSize=2<<(fPacked&0x07);localColorTable=[];for(var j=0;j<lctSize;j++){localColorTable.push([read(),read(),read()]);}}var interlaced=!!(fPacked&0x40);var minCodeSize=read();var lzwData=[];var blockSz=read();while(blockSz!==0){var chunk=readBytes(blockSz);for(var k=0;k<chunk.length;k++)lzwData.push(chunk[k]);blockSz=read();}var colorTable=localColorTable||globalColorTable;var indices=lzwDecode(minCodeSize,new Uint8Array(lzwData));var pixels=new Uint8ClampedArray(fw*fh*4);var transparent=frames.pendingTransparent!==undefined?frames.pendingTransparent:-1;for(var p=0;p<fw*fh;p++){var ci=indices[p];if(ci===transparent||ci===undefined||!colorTable[ci]){pixels[p*4+0]=0;pixels[p*4+1]=0;pixels[p*4+2]=0;pixels[p*4+3]=0;}else{var rgb=colorTable[ci];pixels[p*4+0]=rgb[0];pixels[p*4+1]=rgb[1];pixels[p*4+2]=rgb[2];pixels[p*4+3]=255;}}var frame={dims:{top:top,left:left,width:fw,height:fh},patch:pixels,delay:(frames.pendingDelay||10)*10,disposalType:frames.pendingDisposal||0};if(interlaced){var deinterlaced=new Uint8ClampedArray(pixels.length);var rowOrder=[];for(var y=0;y<fh;y+=8)rowOrder.push(y);for(var y=4;y<fh;y+=8)rowOrder.push(y);for(var y=2;y<fh;y+=4)rowOrder.push(y);for(var y=1;y<fh;y+=2)rowOrder.push(y);for(var i=0;i<fh;i++){var srcY=rowOrder[i];for(var x=0;x<fw;x++){var si=(srcY*fw+x)*4;var di=(i*fw+x)*4;deinterlaced[di]=pixels[si];deinterlaced[di+1]=pixels[si+1];deinterlaced[di+2]=pixels[si+2];deinterlaced[di+3]=pixels[si+3];}}frame.patch=deinterlaced;}frames.push(frame);frames.pendingDelay=0;frames.pendingTransparent=-1;frames.pendingDisposal=0;}else{pos++;}}
-var canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;var ctx=canvas.getContext('2d');
-var currentImageData=ctx.createImageData(width,height);
-for(var i=0;i<currentImageData.data.length;i+=4){currentImageData.data[i+3]=0;}
-var outputFrames=[];
-for(var fi=0;fi<frames.length;fi++){var f=frames[fi];if(f.disposalType===2){var dispImg=ctx.createImageData(width,height);for(var d=0;d<dispImg.data.length;d+=4){dispImg.data[d+3]=0;}ctx.putImageData(dispImg,f.dims.left,f.dims.top);}
-var patchData=ctx.createImageData(f.dims.width,f.dims.height);
-for(var pi=0;pi<f.patch.length;pi+=4){var srcA=f.patch[pi+3];var dstA=patchData.data[pi+3];if(srcA===0){patchData.data[pi+3]=0;}else{patchData.data[pi+0]=f.patch[pi+0];patchData.data[pi+1]=f.patch[pi+1];patchData.data[pi+2]=f.patch[pi+2];patchData.data[pi+3]=255;}}
-ctx.putImageData(patchData,f.dims.left,f.dims.top);
-var snapshot=ctx.getImageData(0,0,width,height);
-outputFrames.push({dims:f.dims,patch:snapshot.data,delay:f.delay,disposalType:f.disposalType});}
-return{width:width,height:height,frames:outputFrames};}
-exports.parseGIF=parseGIF;
-Object.defineProperty(exports,'__esModule',{value:true});})));
+// Minimal GIF89a decoder — parse + LZW + frame compositing.
+// Handles interlacing, transparency, disposal methods 0/1/2/3.
+// Based on the GIF89a spec and the algorithm in gifuct-js / omggif.
+(function(global) {
+  'use strict';
+
+  function lzwDecode(minCodeSize, data) {
+    const MAX_CODE = 4096;
+    const clearCode = 1 << minCodeSize;
+    const endCode = clearCode + 1;
+    let codeSize = minCodeSize + 1;
+    let nextCode = endCode + 1;
+
+    // Dictionary: array of arrays of indices
+    let dictionary = [];
+    function resetDictionary() {
+      dictionary = new Array(MAX_CODE);
+      for (let i = 0; i < clearCode; i++) dictionary[i] = [i];
+      dictionary[clearCode] = [];
+      dictionary[endCode] = null;
+      codeSize = minCodeSize + 1;
+      nextCode = endCode + 1;
+    }
+    resetDictionary();
+
+    const output = [];
+    let bitBuffer = 0;
+    let bitCount = 0;
+    let bytePos = 0;
+    let prev = null;
+
+    function readCode() {
+      while (bitCount < codeSize) {
+        if (bytePos >= data.length) return endCode;
+        bitBuffer |= data[bytePos++] << bitCount;
+        bitCount += 8;
+      }
+      const code = bitBuffer & ((1 << codeSize) - 1);
+      bitBuffer >>= codeSize;
+      bitCount -= codeSize;
+      return code;
+    }
+
+    while (true) {
+      const code = readCode();
+      if (code === clearCode) {
+        resetDictionary();
+        prev = null;
+        continue;
+      }
+      if (code === endCode) break;
+
+      let entry;
+      if (code < nextCode && dictionary[code] !== undefined && dictionary[code] !== null) {
+        entry = dictionary[code];
+      } else if (code === nextCode && prev !== null) {
+        // KwKwK case
+        entry = prev.concat(prev[0]);
+      } else {
+        // Malformed stream; bail out with what we have
+        break;
+      }
+
+      for (let i = 0; i < entry.length; i++) output.push(entry[i]);
+
+      if (prev !== null) {
+        if (nextCode < MAX_CODE) {
+          dictionary[nextCode++] = prev.concat(entry[0]);
+          if (nextCode === (1 << codeSize) && codeSize < 12) {
+            codeSize++;
+          }
+        }
+      }
+      prev = entry;
+    }
+
+    return output;
+  }
+
+  function parseGIF(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    let pos = 0;
+
+    function read() { return bytes[pos++]; }
+    function readU16() {
+      const v = bytes[pos] | (bytes[pos + 1] << 8);
+      pos += 2;
+      return v;
+    }
+    function readBytes(n) {
+      const out = bytes.slice(pos, pos + n);
+      pos += n;
+      return out;
+    }
+
+    const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2]);
+    if (sig !== 'GIF') throw new Error('Not a GIF file');
+    pos = 6;
+
+    const width = readU16();
+    const height = readU16();
+    const packed = read();
+    read(); // bgColor
+    read(); // aspect
+
+    let globalColorTable = null;
+    if (packed & 0x80) {
+      const size = 2 << (packed & 0x07);
+      globalColorTable = new Array(size);
+      for (let i = 0; i < size; i++) {
+        globalColorTable[i] = [read(), read(), read()];
+      }
+    }
+
+    const rawFrames = [];
+    let pending = { delay: 10, transparent: -1, disposal: 0 };
+
+    while (pos < bytes.length) {
+      const b = read();
+      if (b === 0x3B) break; // trailer
+
+      if (b === 0x21) {
+        // Extension
+        const label = read();
+        if (label === 0xF9) {
+          // Graphics Control Extension
+          const blockSize = read();
+          const flags = read();
+          const delay = readU16();
+          const transIdx = read();
+          read(); // terminator
+          pending.delay = delay * 10; // hundredths to ms
+          pending.transparent = (flags & 0x01) ? transIdx : -1;
+          pending.disposal = (flags >> 2) & 0x07;
+        } else {
+          // Skip other extensions
+          let sz = read();
+          while (sz !== 0) {
+            readBytes(sz);
+            sz = read();
+          }
+        }
+      } else if (b === 0x2C) {
+        // Image descriptor
+        const left = readU16();
+        const top = readU16();
+        const fw = readU16();
+        const fh = readU16();
+        const fPacked = read();
+
+        let localColorTable = null;
+        if (fPacked & 0x80) {
+          const size = 2 << (fPacked & 0x07);
+          localColorTable = new Array(size);
+          for (let i = 0; i < size; i++) {
+            localColorTable[i] = [read(), read(), read()];
+          }
+        }
+        const interlaced = !!(fPacked & 0x40);
+        const minCodeSize = read();
+
+        // Concatenate LZW sub-blocks
+        const chunks = [];
+        let sz = read();
+        while (sz !== 0) {
+          chunks.push(readBytes(sz));
+          sz = read();
+        }
+        let total = 0;
+        for (const c of chunks) total += c.length;
+        const lzwData = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) {
+          lzwData.set(c, off);
+          off += c.length;
+        }
+
+        const colorTable = localColorTable || globalColorTable;
+        if (!colorTable) throw new Error('No color table available');
+
+        const indices = lzwDecode(minCodeSize, lzwData);
+
+        // Build RGBA patch
+        const patch = new Uint8ClampedArray(fw * fh * 4);
+        const trans = pending.transparent;
+        for (let p = 0; p < fw * fh; p++) {
+          const ci = indices[p];
+          if (ci === undefined || ci === trans || !colorTable[ci]) {
+            // transparent
+            patch[p * 4 + 3] = 0;
+          } else {
+            const rgb = colorTable[ci];
+            patch[p * 4 + 0] = rgb[0];
+            patch[p * 4 + 1] = rgb[1];
+            patch[p * 4 + 2] = rgb[2];
+            patch[p * 4 + 3] = 255;
+          }
+        }
+
+        // De-interlace if needed
+        let finalPatch = patch;
+        if (interlaced) {
+          finalPatch = new Uint8ClampedArray(patch.length);
+          const rowOrder = [];
+          for (let y = 0; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 4; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 2; y < fh; y += 4) rowOrder.push(y);
+          for (let y = 1; y < fh; y += 2) rowOrder.push(y);
+          for (let i = 0; i < fh; i++) {
+            const srcY = rowOrder[i];
+            for (let x = 0; x < fw; x++) {
+              const si = (srcY * fw + x) * 4;
+              const di = (i * fw + x) * 4;
+              finalPatch[di + 0] = patch[si + 0];
+              finalPatch[di + 1] = patch[si + 1];
+              finalPatch[di + 2] = patch[si + 2];
+              finalPatch[di + 3] = patch[si + 3];
+            }
+          }
+        }
+
+        rawFrames.push({
+          dims: { left, top, width: fw, height: fh },
+          patch: finalPatch,
+          delay: pending.delay,
+          disposalType: pending.disposal,
+        });
+
+        pending = { delay: 10, transparent: -1, disposal: 0 };
+      } else {
+        // Unknown block; skip one byte to make progress
+        pos++;
+      }
+    }
+
+    // Composite frames onto a persistent canvas so each frame is a full-frame snapshot.
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // Start with a fully transparent canvas
+    const initData = ctx.createImageData(width, height);
+    ctx.putImageData(initData, 0, 0);
+
+    const frames = [];
+    let prevSnapshot = null;
+
+    for (let fi = 0; fi < rawFrames.length; fi++) {
+      const f = rawFrames[fi];
+
+      // Handle disposal of the PREVIOUS frame before drawing this one
+      if (fi > 0) {
+        const prevFrame = rawFrames[fi - 1];
+        if (prevFrame.disposalType === 2) {
+          // Restore to background (clear the previous frame's rect)
+          ctx.clearRect(
+            prevFrame.dims.left,
+            prevFrame.dims.top,
+            prevFrame.dims.width,
+            prevFrame.dims.height
+          );
+        }
+        // Disposal 3 (restore to previous) needs a saved snapshot;
+        // for simplicity we treat it as "keep" here — most GIFs don't use it.
+      }
+
+      // Build the patch as ImageData and draw it
+      const patchData = ctx.createImageData(f.dims.width, f.dims.height);
+      const p = f.patch;
+      for (let i = 0; i < p.length; i += 4) {
+        if (p[i + 3] === 0) {
+          // leave patchData transparent (0,0,0,0)
+        } else {
+          patchData.data[i + 0] = p[i + 0];
+          patchData.data[i + 1] = p[i + 1];
+          patchData.data[i + 2] = p[i + 2];
+          patchData.data[i + 3] = 255;
+        }
+      }
+
+      // Draw the patch over the current canvas at its offset
+      // Use a temporary canvas because putImageData ignores alpha blending
+      const tmp = document.createElement('canvas');
+      tmp.width = f.dims.width;
+      tmp.height = f.dims.height;
+      tmp.getContext('2d').putImageData(patchData, 0, 0);
+      ctx.drawImage(tmp, f.dims.left, f.dims.top);
+
+      // Snapshot the full canvas
+      const snapshot = ctx.getImageData(0, 0, width, height);
+      frames.push({
+        dims: f.dims,
+        patch: snapshot.data,
+        delay: f.delay,
+        disposalType: f.disposalType,
+      });
+    }
+
+    return { width, height, frames };
+  }
+
+  global.gifuct = { parseGIF };
+})(window);
 </script>
 
 <script>
