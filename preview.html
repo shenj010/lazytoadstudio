@@ -14,7 +14,7 @@
   .panel { display: flex; flex-direction: column; gap: 12px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin: 0; }
   canvas { image-rendering: pixelated; display: block; background: #000; border: 1px solid #333; }
-  #srcPreview { max-width: 320px; max-height: 320px; }
+  #srcPreview { max-width: 360px; max-height: 360px; }
   label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
   input[type=range] { width: 200px; }
   input[type=number] { width: 60px; background: #222; color: #e0e0e0; border: 1px solid #444; padding: 2px 6px; border-radius: 3px; }
@@ -31,7 +31,7 @@
 <div class="panel">
   <h2>Source</h2>
   <input type="file" id="fileInput" accept="video/*,image/gif">
-  <canvas id="srcPreview" width="320" height="320"></canvas>
+  <canvas id="srcPreview" width="360" height="360"></canvas>
   <video id="video" style="display:none" muted playsinline></video>
   <div id="gifInfo" style="font-size:12px;color:#666"></div>
 
@@ -39,6 +39,16 @@
   <label>Start (s) <input type="number" id="start" value="0" step="0.1" min="0"></label>
   <label>Length (s) <input type="number" id="length" value="2" step="0.5" min="0.5" max="5"></label>
   <label>FPS <input type="number" id="fps" value="8" min="1" max="12"></label>
+
+  <label>Fit
+    <select id="fit">
+      <option value="crop" selected>Crop to fill</option>
+      <option value="letterbox">Fit (black bars)</option>
+      <option value="stretch">Stretch</option>
+    </select>
+  </label>
+  <label>Crop X <input type="range" id="cropX" min="0" max="100" value="50"></label>
+  <label>Crop Y <input type="range" id="cropY" min="0" max="100" value="50"></label>
 
   <label>Threshold <input type="range" id="threshold" min="0" max="255" value="128"></label>
   <label>Dither
@@ -64,13 +74,10 @@
 </div>
 
 <!-- ============================================================
-     gifuct-js 2.1.2 (minified, MIT license)
-     Source: https://github.com/matt-way/gifuct-js
+     Minimal GIF89a decoder — parse + LZW + frame compositing.
+     Handles interlacing, transparency, disposal 0/1/2.
      ============================================================ -->
 <script>
-// Minimal GIF89a decoder — parse + LZW + frame compositing.
-// Handles interlacing, transparency, disposal methods 0/1/2/3.
-// Based on the GIF89a spec and the algorithm in gifuct-js / omggif.
 (function(global) {
   'use strict';
 
@@ -81,7 +88,6 @@
     let codeSize = minCodeSize + 1;
     let nextCode = endCode + 1;
 
-    // Dictionary: array of arrays of indices
     let dictionary = [];
     function resetDictionary() {
       dictionary = new Array(MAX_CODE);
@@ -124,10 +130,8 @@
       if (code < nextCode && dictionary[code] !== undefined && dictionary[code] !== null) {
         entry = dictionary[code];
       } else if (code === nextCode && prev !== null) {
-        // KwKwK case
         entry = prev.concat(prev[0]);
       } else {
-        // Malformed stream; bail out with what we have
         break;
       }
 
@@ -187,23 +191,20 @@
 
     while (pos < bytes.length) {
       const b = read();
-      if (b === 0x3B) break; // trailer
+      if (b === 0x3B) break;
 
       if (b === 0x21) {
-        // Extension
         const label = read();
         if (label === 0xF9) {
-          // Graphics Control Extension
           const blockSize = read();
           const flags = read();
           const delay = readU16();
           const transIdx = read();
-          read(); // terminator
-          pending.delay = delay * 10; // hundredths to ms
+          read();
+          pending.delay = (delay || 10) * 10;
           pending.transparent = (flags & 0x01) ? transIdx : -1;
           pending.disposal = (flags >> 2) & 0x07;
         } else {
-          // Skip other extensions
           let sz = read();
           while (sz !== 0) {
             readBytes(sz);
@@ -211,7 +212,6 @@
           }
         }
       } else if (b === 0x2C) {
-        // Image descriptor
         const left = readU16();
         const top = readU16();
         const fw = readU16();
@@ -229,7 +229,6 @@
         const interlaced = !!(fPacked & 0x40);
         const minCodeSize = read();
 
-        // Concatenate LZW sub-blocks
         const chunks = [];
         let sz = read();
         while (sz !== 0) {
@@ -250,13 +249,11 @@
 
         const indices = lzwDecode(minCodeSize, lzwData);
 
-        // Build RGBA patch
         const patch = new Uint8ClampedArray(fw * fh * 4);
         const trans = pending.transparent;
         for (let p = 0; p < fw * fh; p++) {
           const ci = indices[p];
           if (ci === undefined || ci === trans || !colorTable[ci]) {
-            // transparent
             patch[p * 4 + 3] = 0;
           } else {
             const rgb = colorTable[ci];
@@ -267,7 +264,6 @@
           }
         }
 
-        // De-interlace if needed
         let finalPatch = patch;
         if (interlaced) {
           finalPatch = new Uint8ClampedArray(patch.length);
@@ -298,32 +294,24 @@
 
         pending = { delay: 10, transparent: -1, disposal: 0 };
       } else {
-        // Unknown block; skip one byte to make progress
         pos++;
       }
     }
 
-    // Composite frames onto a persistent canvas so each frame is a full-frame snapshot.
+    // Composite onto a persistent canvas
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    // Start with a fully transparent canvas
-    const initData = ctx.createImageData(width, height);
-    ctx.putImageData(initData, 0, 0);
-
     const frames = [];
-    let prevSnapshot = null;
 
     for (let fi = 0; fi < rawFrames.length; fi++) {
       const f = rawFrames[fi];
 
-      // Handle disposal of the PREVIOUS frame before drawing this one
       if (fi > 0) {
         const prevFrame = rawFrames[fi - 1];
         if (prevFrame.disposalType === 2) {
-          // Restore to background (clear the previous frame's rect)
           ctx.clearRect(
             prevFrame.dims.left,
             prevFrame.dims.top,
@@ -331,17 +319,12 @@
             prevFrame.dims.height
           );
         }
-        // Disposal 3 (restore to previous) needs a saved snapshot;
-        // for simplicity we treat it as "keep" here — most GIFs don't use it.
       }
 
-      // Build the patch as ImageData and draw it
       const patchData = ctx.createImageData(f.dims.width, f.dims.height);
       const p = f.patch;
       for (let i = 0; i < p.length; i += 4) {
-        if (p[i + 3] === 0) {
-          // leave patchData transparent (0,0,0,0)
-        } else {
+        if (p[i + 3] !== 0) {
           patchData.data[i + 0] = p[i + 0];
           patchData.data[i + 1] = p[i + 1];
           patchData.data[i + 2] = p[i + 2];
@@ -349,15 +332,12 @@
         }
       }
 
-      // Draw the patch over the current canvas at its offset
-      // Use a temporary canvas because putImageData ignores alpha blending
       const tmp = document.createElement('canvas');
       tmp.width = f.dims.width;
       tmp.height = f.dims.height;
       tmp.getContext('2d').putImageData(patchData, 0, 0);
       ctx.drawImage(tmp, f.dims.left, f.dims.top);
 
-      // Snapshot the full canvas
       const snapshot = ctx.getImageData(0, 0, width, height);
       frames.push({
         dims: f.dims,
@@ -423,13 +403,7 @@ fileInput.onchange = async (e) => {
       }));
       gifTotalMs = gifFrames.reduce((a, f) => a + f.delayMs, 0);
 
-      // Render first frame to source preview
-      const tmp = document.createElement('canvas');
-      tmp.width = gifW; tmp.height = gifH;
-      tmp.getContext('2d').putImageData(new ImageData(gifFrames[0].rgba, gifW, gifH), 0, 0);
-      srcPrev.width = gifW;
-      srcPrev.height = gifH;
-      srcCtx.drawImage(tmp, 0, 0);
+      renderSourceGifFrame(0);
 
       gifInfo.textContent =
         `${gifW}×${gifH} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total`;
@@ -448,10 +422,68 @@ fileInput.onchange = async (e) => {
     srcPrev.width = video.videoWidth;
     srcPrev.height = video.videoHeight;
     srcCtx.drawImage(video, 0, 0, srcPrev.width, srcPrev.height);
+    drawCropOverlay();
     statusEl.textContent = `Video: ${video.videoWidth}×${video.videoHeight}, ${video.duration.toFixed(1)}s`;
     currentKind = 'video';
   };
 };
+
+function renderSourceGifFrame(idx) {
+  const gf = gifFrames[idx];
+  const tmp = document.createElement('canvas');
+  tmp.width = gifW; tmp.height = gifH;
+  tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(gf.rgba), gifW, gifH), 0, 0);
+  srcPrev.width = gifW;
+  srcPrev.height = gifH;
+  srcCtx.drawImage(tmp, 0, 0);
+  drawCropOverlay();
+}
+
+function drawCropOverlay() {
+  if (!currentKind) return;
+  const srcW = currentKind === 'gif' ? gifW : video.videoWidth;
+  const srcH = currentKind === 'gif' ? gifH : video.videoHeight;
+  if (!srcW || !srcH) return;
+
+  const targetAspect = OUT_W / OUT_H;
+  const srcAspect = srcW / srcH;
+  const fitMode = document.getElementById('fit').value;
+
+  if (fitMode !== 'crop') return;
+
+  let cw, ch, cx, cy;
+  if (srcAspect > targetAspect) {
+    const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
+    ch = srcH;
+    cw = srcH * targetAspect;
+    cx = (srcW - cw) * cropXpct;
+    cy = 0;
+  } else {
+    const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
+    cw = srcW;
+    ch = srcW / targetAspect;
+    cx = 0;
+    cy = (srcH - ch) * cropYpct;
+  }
+
+  const scaleX = srcPrev.width / srcW;
+  const scaleY = srcPrev.height / srcH;
+
+  srcCtx.save();
+  srcCtx.fillStyle = 'rgba(0,0,0,0.55)';
+  srcCtx.fillRect(0, 0, srcPrev.width, cy * scaleY);
+  srcCtx.fillRect(0, (cy + ch) * scaleY, srcPrev.width, srcPrev.height - (cy + ch) * scaleY);
+  srcCtx.fillRect(0, cy * scaleY, cx * scaleX, ch * scaleY);
+  srcCtx.fillRect((cx + cw) * scaleX, cy * scaleY,
+                  srcPrev.width - (cx + cw) * scaleX, ch * scaleY);
+
+  srcCtx.strokeStyle = '#3af';
+  srcCtx.lineWidth = 2;
+  srcCtx.strokeRect(cx * scaleX, cy * scaleY, cw * scaleX, ch * scaleY);
+  srcCtx.restore();
+}
+
+// ---------- dithering ----------
 
 const BAYER4 = [
   [ 0, 8, 2,10],
@@ -544,35 +576,67 @@ function extractVideoFrameAt(t) {
 }
 
 function fitToOutput(src, srcW, srcH, srcIsRgbaArray) {
-  const targetAspect = OUT_W / OUT_H;
-  const srcAspect = srcW / srcH;
-  let cw, ch, cx, cy;
-  if (srcAspect > targetAspect) {
-    ch = srcH;
-    cw = srcH * targetAspect;
-    cx = (srcW - cw) / 2;
-    cy = 0;
-  } else {
-    cw = srcW;
-    ch = srcW / targetAspect;
-    cx = 0;
-    cy = (srcH - ch) / 2;
-  }
   const out = document.createElement('canvas');
   out.width = OUT_W;
   out.height = OUT_H;
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = true;
   octx.imageSmoothingQuality = 'high';
+  octx.fillStyle = '#000';
+  octx.fillRect(0, 0, OUT_W, OUT_H);
 
+  const fitMode = document.getElementById('fit').value;
+  const targetAspect = OUT_W / OUT_H;
+  const srcAspect = srcW / srcH;
+
+  let cw, ch, cx, cy;
+  let dw, dh, dx, dy;
+
+  if (fitMode === 'stretch') {
+    cw = srcW; ch = srcH; cx = 0; cy = 0;
+    dw = OUT_W; dh = OUT_H; dx = 0; dy = 0;
+  } else if (fitMode === 'letterbox') {
+    cw = srcW; ch = srcH; cx = 0; cy = 0;
+    if (srcAspect > targetAspect) {
+      dw = OUT_W;
+      dh = OUT_W / srcAspect;
+      dx = 0;
+      dy = Math.round((OUT_H - dh) / 2);
+    } else {
+      dh = OUT_H;
+      dw = OUT_H * srcAspect;
+      dy = 0;
+      dx = Math.round((OUT_W - dw) / 2);
+    }
+  } else {
+    const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
+    const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
+
+    if (srcAspect > targetAspect) {
+      ch = srcH;
+      cw = srcH * targetAspect;
+      cx = (srcW - cw) * cropXpct;
+      cy = 0;
+    } else {
+      cw = srcW;
+      ch = srcW / targetAspect;
+      cx = 0;
+      cy = (srcH - ch) * cropYpct;
+    }
+    dw = OUT_W; dh = OUT_H; dx = 0; dy = 0;
+  }
+
+  let sourceEl;
   if (srcIsRgbaArray) {
     const tmp = document.createElement('canvas');
     tmp.width = srcW; tmp.height = srcH;
-    tmp.getContext('2d').putImageData(new ImageData(src, srcW, srcH), 0, 0);
-    octx.drawImage(tmp, cx, cy, cw, ch, 0, 0, OUT_W, OUT_H);
+    tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(src), srcW, srcH), 0, 0);
+    sourceEl = tmp;
   } else {
-    octx.drawImage(src, cx, cy, cw, ch, 0, 0, OUT_W, OUT_H);
+    sourceEl = src;
   }
+
+  octx.drawImage(sourceEl, cx, cy, cw, ch, dx, dy, dw, dh);
   return out;
 }
 
@@ -699,6 +763,21 @@ document.getElementById('btnConvert').onclick = async () => {
   };
   tick();
 };
+
+// Debounced re-convert when sliders change
+function debouncedConvert() {
+  if (window._convertDebounce) clearTimeout(window._convertDebounce);
+  window._convertDebounce = setTimeout(() => {
+    drawCropOverlay();
+    document.getElementById('btnConvert').click();
+  }, 120);
+}
+
+['cropX', 'cropY', 'threshold', 'dither', 'invert', 'fit'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', debouncedConvert);
+  if (el && el.tagName === 'SELECT') el.addEventListener('change', debouncedConvert);
+});
 </script>
 
 </body>
