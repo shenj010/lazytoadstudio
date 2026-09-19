@@ -417,34 +417,57 @@ fileInput.onchange = async (e) => {
 
   const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
 
-  if (isGif) {
+    if (isGif) {
     statusEl.textContent = 'Decoding GIF…';
-    try {
-      let parsed;
-      if (hasNativeGifDecoder()) {
+    let parsed = null;
+    let decoderUsed = 'native';
+
+    // Try native first
+    if (hasNativeGifDecoder()) {
+      try {
         parsed = await decodeGifNative(file);
-      } else {
+      } catch (err) {
+        console.warn('Native GIF decode failed, falling back:', err);
+        decoderUsed = 'fallback';
+        parsed = null;
+      }
+    } else {
+      decoderUsed = 'fallback';
+    }
+
+    // Fallback path
+    if (!parsed) {
+      try {
         const buf = await file.arrayBuffer();
         parsed = gifuct.parseGIF(buf);
+        // Normalize fallback output to match native shape
+        parsed.frames = parsed.frames.map(f => ({
+          rgba: f.rgba !== undefined ? f.rgba : f.patch,
+          width: f.width || parsed.width,
+          height: f.height || parsed.height,
+          delayMs: f.delayMs !== undefined ? f.delayMs : f.delay,
+        }));
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'GIF decode failed (both paths): ' + err.message;
+        return;
       }
+    }
+
+    try {
       gifW = parsed.width;
       gifH = parsed.height;
-      gifFrames = parsed.frames.map(f => ({
-        rgba: f.rgba,
-        width: f.width || gifW,
-        height: f.height || gifH,
-        delayMs: f.delayMs,
-      }));
+      gifFrames = parsed.frames;
       gifTotalMs = gifFrames.reduce((a, f) => a + f.delayMs, 0);
       renderSourceGifFrame(0);
       gifInfo.textContent =
         `${gifW}×${gifH} · ${gifFrames.length} frames · ${(gifTotalMs/1000).toFixed(2)}s total` +
-        (hasNativeGifDecoder() ? '' : ' (fallback decoder)');
+        (decoderUsed === 'fallback' ? ' (fallback decoder)' : '');
       statusEl.textContent = 'GIF loaded. Adjust settings and hit Convert.';
       currentKind = 'gif';
     } catch (err) {
       console.error(err);
-      statusEl.textContent = 'GIF decode failed: ' + err.message;
+      statusEl.textContent = 'GIF post-process failed: ' + err.message;
     }
     return;
   }
