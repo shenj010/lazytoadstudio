@@ -40,13 +40,7 @@
   <label>Length (s) <input type="number" id="length" value="2" step="0.5" min="0.5" max="5"></label>
   <label>FPS <input type="number" id="fps" value="8" min="1" max="12"></label>
 
-  <label>Fit
-    <select id="fit">
-      <option value="crop" selected>Crop to fill</option>
-      <option value="letterbox">Fit (black bars)</option>
-      <option value="stretch">Stretch</option>
-    </select>
-  </label>
+  <label>Zoom <input type="range" id="zoom" min="0.2" max="4" step="0.05" value="1"></label>
   <label>Crop X <input type="range" id="cropX" min="0" max="100" value="50"></label>
   <label>Crop Y <input type="range" id="cropY" min="0" max="100" value="50"></label>
 
@@ -75,7 +69,6 @@
 
 <!-- ============================================================
      Minimal GIF89a decoder — parse + LZW + frame compositing.
-     Handles interlacing, transparency, disposal 0/1/2.
      ============================================================ -->
 <script>
 (function(global) {
@@ -174,8 +167,8 @@
     const width = readU16();
     const height = readU16();
     const packed = read();
-    read(); // bgColor
-    read(); // aspect
+    read();
+    read();
 
     let globalColorTable = null;
     if (packed & 0x80) {
@@ -298,7 +291,6 @@
       }
     }
 
-    // Composite onto a persistent canvas
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -445,25 +437,30 @@ function drawCropOverlay() {
   const srcH = currentKind === 'gif' ? gifH : video.videoHeight;
   if (!srcW || !srcH) return;
 
-  const targetAspect = OUT_W / OUT_H;
-  const srcAspect = srcW / srcH;
-  const fitMode = document.getElementById('fit').value;
+  const zoom = Math.max(0.1, parseFloat(document.getElementById('zoom').value) || 1);
+  const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
+  const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
 
-  if (fitMode !== 'crop') return;
+  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
+  const scale = coverScale * zoom;
+  const scaledW = srcW * scale;
+  const scaledH = srcH * scale;
 
-  let cw, ch, cx, cy;
-  if (srcAspect > targetAspect) {
-    const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
-    ch = srcH;
-    cw = srcH * targetAspect;
-    cx = (srcW - cw) * cropXpct;
-    cy = 0;
+  // Rectangle in source coords that maps to the output viewport
+  let rectX, rectY, rectW, rectH;
+  if (scaledW >= OUT_W) {
+    rectW = OUT_W / scale;
+    rectX = ((scaledW - OUT_W) * cropXpct) / scale;
   } else {
-    const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
-    cw = srcW;
-    ch = srcW / targetAspect;
-    cx = 0;
-    cy = (srcH - ch) * cropYpct;
+    rectW = srcW;
+    rectX = 0;
+  }
+  if (scaledH >= OUT_H) {
+    rectH = OUT_H / scale;
+    rectY = ((scaledH - OUT_H) * cropYpct) / scale;
+  } else {
+    rectH = srcH;
+    rectY = 0;
   }
 
   const scaleX = srcPrev.width / srcW;
@@ -471,15 +468,16 @@ function drawCropOverlay() {
 
   srcCtx.save();
   srcCtx.fillStyle = 'rgba(0,0,0,0.55)';
-  srcCtx.fillRect(0, 0, srcPrev.width, cy * scaleY);
-  srcCtx.fillRect(0, (cy + ch) * scaleY, srcPrev.width, srcPrev.height - (cy + ch) * scaleY);
-  srcCtx.fillRect(0, cy * scaleY, cx * scaleX, ch * scaleY);
-  srcCtx.fillRect((cx + cw) * scaleX, cy * scaleY,
-                  srcPrev.width - (cx + cw) * scaleX, ch * scaleY);
+  srcCtx.fillRect(0, 0, srcPrev.width, rectY * scaleY);
+  srcCtx.fillRect(0, (rectY + rectH) * scaleY,
+                  srcPrev.width, srcPrev.height - (rectY + rectH) * scaleY);
+  srcCtx.fillRect(0, rectY * scaleY, rectX * scaleX, rectH * scaleY);
+  srcCtx.fillRect((rectX + rectW) * scaleX, rectY * scaleY,
+                  srcPrev.width - (rectX + rectW) * scaleX, rectH * scaleY);
 
   srcCtx.strokeStyle = '#3af';
   srcCtx.lineWidth = 2;
-  srcCtx.strokeRect(cx * scaleX, cy * scaleY, cw * scaleX, ch * scaleY);
+  srcCtx.strokeRect(rectX * scaleX, rectY * scaleY, rectW * scaleX, rectH * scaleY);
   srcCtx.restore();
 }
 
@@ -585,45 +583,32 @@ function fitToOutput(src, srcW, srcH, srcIsRgbaArray) {
   octx.fillStyle = '#000';
   octx.fillRect(0, 0, OUT_W, OUT_H);
 
-  const fitMode = document.getElementById('fit').value;
-  const targetAspect = OUT_W / OUT_H;
-  const srcAspect = srcW / srcH;
+  const zoom = Math.max(0.1, parseFloat(document.getElementById('zoom').value) || 1);
+  const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
+  const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
 
-  let cw, ch, cx, cy;
-  let dw, dh, dx, dy;
+  // "Cover" fit at zoom=1: image fills output, overflowing on long axis
+  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
+  const scale = coverScale * zoom;
 
-  if (fitMode === 'stretch') {
-    cw = srcW; ch = srcH; cx = 0; cy = 0;
-    dw = OUT_W; dh = OUT_H; dx = 0; dy = 0;
-  } else if (fitMode === 'letterbox') {
-    cw = srcW; ch = srcH; cx = 0; cy = 0;
-    if (srcAspect > targetAspect) {
-      dw = OUT_W;
-      dh = OUT_W / srcAspect;
-      dx = 0;
-      dy = Math.round((OUT_H - dh) / 2);
-    } else {
-      dh = OUT_H;
-      dw = OUT_H * srcAspect;
-      dy = 0;
-      dx = Math.round((OUT_W - dw) / 2);
-    }
+  const scaledW = srcW * scale;
+  const scaledH = srcH * scale;
+
+  const overflowX = Math.max(0, scaledW - OUT_W);
+  const overflowY = Math.max(0, scaledH - OUT_H);
+  const underflowX = Math.max(0, OUT_W - scaledW);
+  const underflowY = Math.max(0, OUT_H - scaledH);
+
+  let dx, dy;
+  if (scaledW > OUT_W) {
+    dx = -overflowX * cropXpct;
   } else {
-    const cropXpct = (parseInt(document.getElementById('cropX').value, 10) || 50) / 100;
-    const cropYpct = (parseInt(document.getElementById('cropY').value, 10) || 50) / 100;
-
-    if (srcAspect > targetAspect) {
-      ch = srcH;
-      cw = srcH * targetAspect;
-      cx = (srcW - cw) * cropXpct;
-      cy = 0;
-    } else {
-      cw = srcW;
-      ch = srcW / targetAspect;
-      cx = 0;
-      cy = (srcH - ch) * cropYpct;
-    }
-    dw = OUT_W; dh = OUT_H; dx = 0; dy = 0;
+    dx = underflowX / 2;
+  }
+  if (scaledH > OUT_H) {
+    dy = -overflowY * cropYpct;
+  } else {
+    dy = underflowY / 2;
   }
 
   let sourceEl;
@@ -636,7 +621,7 @@ function fitToOutput(src, srcW, srcH, srcIsRgbaArray) {
     sourceEl = src;
   }
 
-  octx.drawImage(sourceEl, cx, cy, cw, ch, dx, dy, dw, dh);
+  octx.drawImage(sourceEl, 0, 0, srcW, srcH, dx, dy, scaledW, scaledH);
   return out;
 }
 
@@ -773,7 +758,7 @@ function debouncedConvert() {
   }, 120);
 }
 
-['cropX', 'cropY', 'threshold', 'dither', 'invert', 'fit'].forEach(id => {
+['cropX', 'cropY', 'zoom', 'threshold', 'dither', 'invert'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', debouncedConvert);
   if (el && el.tagName === 'SELECT') el.addEventListener('change', debouncedConvert);
