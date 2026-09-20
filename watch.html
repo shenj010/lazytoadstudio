@@ -2233,16 +2233,19 @@ btnConnect.onclick = () => {
 const AD_W         = 32;
 const AD_H         = 96;
 const AD_OFFSET_Y  = 16;   // top strip reserved for firmware HHMM
-const AD_MAX_FRAMES = 40;
+const AD_MAX_FRAMES = 80;
 
 function buildAnimJson() {
   const frameCount = frames.length;
   if (frameCount > AD_MAX_FRAMES) {
-     const totalMs = frameCount * frameMs * loopCount;
+    throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
+  }
+
+  const frameMs = frames[0].durationMs || 125;
+
+  const totalMs = frameCount * frameMs * loopCount;
   if (totalMs > 30000) {
     throw new Error(`Total play time ${(totalMs/1000).toFixed(1)}s exceeds 30s cap`);
-  }
-    throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
   }
 
   const bytesPerRow = Math.ceil(AD_W / 8);        // 4
@@ -2273,9 +2276,6 @@ function buildAnimJson() {
     );
   }
   const b64 = btoa(binary);
-
-  // Uniform frame duration. Take frame 0's as the canonical value.
-  const frameMs = frames[0].durationMs || 125;
 
     return JSON.stringify({
     kind: 'animation',
