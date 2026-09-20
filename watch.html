@@ -2472,5 +2472,1182 @@ setInterval(() => {
 }, 250);
 </script>
 
+ <script>
+/* ============================================================
+   IMPORT — GIF / video → 1-bit animation frames
+   Produces a structured animation object and replaces the
+   live timeline with its frames. Designed as the seam for
+   future save/load, sharing, and re-edit support.
+   ============================================================ */
+
+// ---------- constants ----------
+const OUT_W = 32;              // ad region width
+const OUT_H = 96;              // ad region height
+const AD_OFFSET_IMPORT = 16;   // must match AD_OFFSET_Y in buildAnimJson
+
+// ---------- state ----------
+let importSourceKind = null;   // 'gif' | 'video' | null
+let importGifFrames = [];      // for GIF: [{ rgba, width, height, delayMs }]
+let importGifW = 0, importGifH = 0;
+let importGifTotalMs = 0;
+let importVideoURL = null;     // for video: object URL
+let importVideo = null;        // for video: <video> element
+let importConvertedFrames = []; // [{ pixels: Uint8Array(W*H) }] at 32x128
+let importCancelRequested = false;
+let importLastSettings = null; // snapshot for the animation object
+
+// ============================================================
+// GIF decoding — native ImageDecoder with fallback
+// ============================================================
+
+async function importDecodeGifNative(file) {
+  const decoder = new ImageDecoder({
+    data: await file.arrayBuffer(),
+    type: 'image/gif'
+  });
+  await decoder.completed;
+  await decoder.tracks.ready;
+
+  let track = decoder.tracks.selectedTrack;
+  let attempts = 0;
+  while (!track && attempts < 20) {
+    await new Promise(r => setTimeout(r, 20));
+    track = decoder.tracks.selectedTrack;
+    attempts++;
+  }
+  if (!track) throw new Error('No selected track on decoded GIF');
+
+  let frameCount = track.frameCount;
+  if (!frameCount) {
+    await decoder.decode({ frameIndex: 0 });
+    frameCount = track.frameCount;
+  }
+  if (!frameCount) throw new Error('GIF reported 0 frames');
+
+  const frames = [];
+  for (let i = 0; i < frameCount; i++) {
+    const { image } = await decoder.decode({ frameIndex: i });
+    const canvas = document.createElement('canvas');
+    canvas.width = image.displayWidth;
+    canvas.height = image.displayHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const delayMs = Math.max(20, Math.round((image.duration || 100000) / 1000));
+    frames.push({
+      rgba: new Uint8ClampedArray(data),
+      width: canvas.width,
+      height: canvas.height,
+      delayMs,
+    });
+  }
+  return { width: frames[0].width, height: frames[0].height, frames };
+}
+
+function importHasNativeGifDecoder() {
+  return typeof window.ImageDecoder !== 'undefined';
+}
+
+// Fallback GIF89a decoder
+(function(global) {
+  'use strict';
+
+  function lzwDecode(minCodeSize, data) {
+    const MAX_CODE = 4096;
+    const clearCode = 1 << minCodeSize;
+    const endCode = clearCode + 1;
+    let codeSize = minCodeSize + 1;
+    let nextCode = endCode + 1;
+
+    let dictionary = [];
+    function resetDictionary() {
+      dictionary = new Array(MAX_CODE);
+      for (let i = 0; i < clearCode; i++) dictionary[i] = [i];
+      dictionary[clearCode] = [];
+      dictionary[endCode] = null;
+      codeSize = minCodeSize + 1;
+      nextCode = endCode + 1;
+    }
+    resetDictionary();
+
+    const output = [];
+    let bitBuffer = 0;
+    let bitCount = 0;
+    let bytePos = 0;
+    let prev = null;
+
+    function readCode() {
+      while (bitCount < codeSize) {
+        if (bytePos >= data.length) return endCode;
+        bitBuffer |= data[bytePos++] << bitCount;
+        bitCount += 8;
+      }
+      const code = bitBuffer & ((1 << codeSize) - 1);
+      bitBuffer >>= codeSize;
+      bitCount -= codeSize;
+      return code;
+    }
+
+    while (true) {
+      const code = readCode();
+      if (code === clearCode) { resetDictionary(); prev = null; continue; }
+      if (code === endCode) break;
+
+      let entry;
+      if (code < nextCode && dictionary[code] !== undefined && dictionary[code] !== null) {
+        entry = dictionary[code];
+      } else if (code === nextCode && prev !== null) {
+        entry = prev.concat(prev[0]);
+      } else break;
+
+      for (let i = 0; i < entry.length; i++) output.push(entry[i]);
+
+      if (prev !== null) {
+        if (nextCode < MAX_CODE) {
+          dictionary[nextCode++] = prev.concat(entry[0]);
+          if (nextCode === (1 << codeSize) && codeSize < 12) codeSize++;
+        }
+      }
+      prev = entry;
+    }
+    return output;
+  }
+
+  function parseGIF(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    let pos = 0;
+    const read = () => bytes[pos++];
+    const readU16 = () => { const v = bytes[pos] | (bytes[pos + 1] << 8); pos += 2; return v; };
+    const readBytes = (n) => { const o = bytes.slice(pos, pos + n); pos += n; return o; };
+
+    const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2]);
+    if (sig !== 'GIF') throw new Error('Not a GIF file');
+    pos = 6;
+
+    const width = readU16();
+    const height = readU16();
+    const packed = read();
+    read(); read();
+
+    let globalColorTable = null;
+    if (packed & 0x80) {
+      const size = 2 << (packed & 0x07);
+      globalColorTable = new Array(size);
+      for (let i = 0; i < size; i++) globalColorTable[i] = [read(), read(), read()];
+    }
+
+    const rawFrames = [];
+    let pending = { delay: 10, transparent: -1, disposal: 0 };
+
+    while (pos < bytes.length) {
+      const b = read();
+      if (b === 0x3B) break;
+
+      if (b === 0x21) {
+        const label = read();
+        if (label === 0xF9) {
+          const blockSize = read();
+          const flags = read();
+          const delay = readU16();
+          const transIdx = read();
+          read();
+          pending.delay = (delay || 10) * 10;
+          pending.transparent = (flags & 0x01) ? transIdx : -1;
+          pending.disposal = (flags >> 2) & 0x07;
+        } else {
+          let sz = read();
+          while (sz !== 0) { readBytes(sz); sz = read(); }
+        }
+      } else if (b === 0x2C) {
+        const left = readU16();
+        const top = readU16();
+        const fw = readU16();
+        const fh = readU16();
+        const fPacked = read();
+
+        let localColorTable = null;
+        if (fPacked & 0x80) {
+          const size = 2 << (fPacked & 0x07);
+          localColorTable = new Array(size);
+          for (let i = 0; i < size; i++) localColorTable[i] = [read(), read(), read()];
+        }
+        const interlaced = !!(fPacked & 0x40);
+        const minCodeSize = read();
+
+        const chunks = [];
+        let sz = read();
+        while (sz !== 0) { chunks.push(readBytes(sz)); sz = read(); }
+        let total = 0;
+        for (const c of chunks) total += c.length;
+        const lzwData = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) { lzwData.set(c, off); off += c.length; }
+
+        const colorTable = localColorTable || globalColorTable;
+        if (!colorTable) throw new Error('No color table available');
+
+        const indices = lzwDecode(minCodeSize, lzwData);
+
+        const orderedIndices = new Uint8Array(fw * fh);
+        if (interlaced) {
+          const rowOrder = [];
+          for (let y = 0; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 4; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 2; y < fh; y += 4) rowOrder.push(y);
+          for (let y = 1; y < fh; y += 2) rowOrder.push(y);
+          let srcIdx = 0;
+          for (let i = 0; i < fh; i++) {
+            const dstY = rowOrder[i];
+            for (let x = 0; x < fw; x++) {
+              orderedIndices[dstY * fw + x] = indices[srcIdx++] || 0;
+            }
+          }
+        } else {
+          for (let i = 0; i < fw * fh; i++) orderedIndices[i] = indices[i] || 0;
+        }
+
+        rawFrames.push({
+          dims: { left, top, width: fw, height: fh },
+          indices: orderedIndices,
+          colorTable,
+          transparent: pending.transparent,
+          delay: pending.delay,
+          disposalType: pending.disposal,
+        });
+        pending = { delay: 10, transparent: -1, disposal: 0 };
+      } else pos++;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const frames = [];
+
+    for (let fi = 0; fi < rawFrames.length; fi++) {
+      const f = rawFrames[fi];
+      if (fi > 0) {
+        const prevFrame = rawFrames[fi - 1];
+        if (prevFrame.disposalType === 2) {
+          ctx.clearRect(prevFrame.dims.left, prevFrame.dims.top,
+                        prevFrame.dims.width, prevFrame.dims.height);
+        }
+      }
+      const patchData = ctx.createImageData(f.dims.width, f.dims.height);
+      const p = f.indices;
+      const ct = f.colorTable;
+      const trans = f.transparent;
+      for (let i = 0; i < p.length; i++) {
+        const ci = p[i];
+        if (ci === trans || !ct[ci]) {
+          patchData.data[i * 4 + 3] = 0;
+        } else {
+          patchData.data[i * 4 + 0] = ct[ci][0];
+          patchData.data[i * 4 + 1] = ct[ci][1];
+          patchData.data[i * 4 + 2] = ct[ci][2];
+          patchData.data[i * 4 + 3] = 255;
+        }
+      }
+      const tmp = document.createElement('canvas');
+      tmp.width = f.dims.width;
+      tmp.height = f.dims.height;
+      tmp.getContext('2d').putImageData(patchData, 0, 0);
+      ctx.drawImage(tmp, f.dims.left, f.dims.top);
+
+      const snapshot = ctx.getImageData(0, 0, width, height);
+      frames.push({
+        rgba: new Uint8ClampedArray(snapshot.data),
+        width, height,
+        delayMs: f.delay,
+      });
+    }
+
+    return { width, height, frames };
+  }
+  global.importGifuct = { parseGIF };
+})(window);
+
+// ============================================================
+// Source region computation
+// ============================================================
+
+function importComputeSrcRegion(srcW, srcH, s) {
+  const zoom = Math.max(0.1, s.zoom || 1);
+  const cropXpct = (s.cropX ?? 50) / 100;
+  const cropYpct = (s.cropY ?? 50) / 100;
+
+  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
+  const scale = coverScale * zoom;
+
+  const viewW = OUT_W / scale;
+  const viewH = OUT_H / scale;
+
+  let cx, cy;
+  if (srcW > viewW) cx = (srcW - viewW) * cropXpct;
+  else cx = (srcW - viewW) / 2;
+  if (srcH > viewH) cy = (srcH - viewH) * cropYpct;
+  else cy = (srcH - viewH) / 2;
+
+  return { sx: cx, sy: cy, sw: viewW, sh: viewH };
+}
+
+// ============================================================
+// Downsamplers
+// ============================================================
+
+function importAreaDownsample(srcData, srcW, srcH, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const pixelW = sw / OUT_W;
+  const pixelH = sh / OUT_H;
+
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const y0 = sy + oy * pixelH;
+    const y1 = y0 + pixelH;
+    const iy0 = Math.max(0, Math.floor(y0));
+    const iy1 = Math.min(srcH, Math.ceil(y1));
+
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const x0 = sx + ox * pixelW;
+      const x1 = x0 + pixelW;
+      const ix0 = Math.max(0, Math.floor(x0));
+      const ix1 = Math.min(srcW, Math.ceil(x1));
+
+      let sumR = 0, sumG = 0, sumB = 0, sumW = 0;
+      for (let y = iy0; y < iy1; y++) {
+        const wy = Math.min(y1, y + 1) - Math.max(y0, y);
+        if (wy <= 0) continue;
+        for (let x = ix0; x < ix1; x++) {
+          const wx = Math.min(x1, x + 1) - Math.max(x0, x);
+          if (wx <= 0) continue;
+          const w = wx * wy;
+          const i = (y * srcW + x) * 4;
+          const a = srcData[i + 3] / 255;
+          sumR += srcData[i + 0] * w * a;
+          sumG += srcData[i + 1] * w * a;
+          sumB += srcData[i + 2] * w * a;
+          sumW += w * a;
+        }
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (sumW > 0) {
+        out[oi + 0] = sumR / sumW;
+        out[oi + 1] = sumG / sumW;
+        out[oi + 2] = sumB / sumW;
+      }
+    }
+  }
+  return out;
+}
+
+function importLanczosKernel(x, a) {
+  if (x === 0) return 1;
+  const ax = Math.abs(x);
+  if (ax >= a) return 0;
+  const pix = Math.PI * x;
+  return (a * Math.sin(pix) * Math.sin(pix / a)) / (pix * pix);
+}
+
+function importLanczosDownsample(srcData, srcW, srcH, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const A = 3;
+
+  const scaleX = sw / OUT_W;
+  const scaleY = sh / OUT_H;
+
+  const colWeights = [];
+  for (let ox = 0; ox < OUT_W; ox++) {
+    const center = sx + (ox + 0.5) * scaleX - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleX));
+    const i1 = Math.ceil(center + A * Math.max(1, scaleX));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = importLanczosKernel((i - center) / Math.max(1, scaleX), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    colWeights.push({ i0, weights });
+  }
+
+  const rowWeights = [];
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const center = sy + (oy + 0.5) * scaleY - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleY));
+    const i1 = Math.ceil(center + A * Math.max(1, scaleY));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = importLanczosKernel((i - center) / Math.max(1, scaleY), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    rowWeights.push({ i0, weights });
+  }
+
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const { i0: ry0, weights: rw } = rowWeights[oy];
+    const tempRow = new Float32Array(srcW * 3);
+    for (let i = 0; i < rw.length; i++) {
+      const y = ry0 + i;
+      if (y < 0 || y >= srcH) continue;
+      const w = rw[i];
+      if (w === 0) continue;
+      const rowBase = y * srcW * 4;
+      for (let x = 0; x < srcW; x++) {
+        const si = rowBase + x * 4;
+        const a = srcData[si + 3] / 255;
+        tempRow[x * 3 + 0] += srcData[si + 0] * w * a;
+        tempRow[x * 3 + 1] += srcData[si + 1] * w * a;
+        tempRow[x * 3 + 2] += srcData[si + 2] * w * a;
+      }
+    }
+
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const { i0: cx0, weights: cw } = colWeights[ox];
+      let r = 0, g = 0, b = 0, wsum = 0;
+      for (let i = 0; i < cw.length; i++) {
+        const x = cx0 + i;
+        if (x < 0 || x >= srcW) continue;
+        const w = cw[i];
+        if (w === 0) continue;
+        r += tempRow[x * 3 + 0] * w;
+        g += tempRow[x * 3 + 1] * w;
+        b += tempRow[x * 3 + 2] * w;
+        wsum += w;
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (wsum > 0) {
+        out[oi + 0] = r / wsum;
+        out[oi + 1] = g / wsum;
+        out[oi + 2] = b / wsum;
+      }
+    }
+  }
+  return out;
+}
+
+function importBilinearDownsample(src, srcW, srcH, srcIsRgbaArray, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = document.createElement('canvas');
+  out.width = OUT_W;
+  out.height = OUT_H;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.fillStyle = '#000';
+  octx.fillRect(0, 0, OUT_W, OUT_H);
+
+  let sourceEl;
+  if (srcIsRgbaArray) {
+    const tmp = document.createElement('canvas');
+    tmp.width = srcW; tmp.height = srcH;
+    tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(src), srcW, srcH), 0, 0);
+    sourceEl = tmp;
+  } else {
+    sourceEl = src;
+  }
+
+  octx.drawImage(sourceEl, sx, sy, sw, sh, 0, 0, OUT_W, OUT_H);
+
+  const img = octx.getImageData(0, 0, OUT_W, OUT_H);
+  const rgb = new Float32Array(OUT_W * OUT_H * 3);
+  for (let i = 0; i < OUT_W * OUT_H; i++) {
+    rgb[i * 3 + 0] = img.data[i * 4 + 0];
+    rgb[i * 3 + 1] = img.data[i * 4 + 1];
+    rgb[i * 3 + 2] = img.data[i * 4 + 2];
+  }
+  return rgb;
+}
+
+// ============================================================
+// Tone processing
+// ============================================================
+
+function importSrgbToLinear(v) {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function importRgbToGrayLinear(rgb, invert) {
+  const n = OUT_W * OUT_H;
+  const gray = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const lr = importSrgbToLinear(rgb[i*3]);
+    const lg = importSrgbToLinear(rgb[i*3+1]);
+    const lb = importSrgbToLinear(rgb[i*3+2]);
+    let v = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+    if (invert) v = 1 - v;
+    gray[i] = v;
+  }
+  return gray;
+}
+
+function importApplyGamma(gray, gamma) {
+  if (Math.abs(gamma - 1.0) < 0.01) return;
+  const inv = 1 / gamma;
+  for (let i = 0; i < gray.length; i++) {
+    gray[i] = Math.pow(Math.max(0, Math.min(1, gray[i])), inv);
+  }
+}
+
+function importContrastStretch(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  const lowTarget  = total * 0.02;
+  const highTarget = total * 0.98;
+  let acc = 0, lo = 0, hi = 255;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= lowTarget) { lo = i; break; }
+  }
+  acc = 0;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= highTarget) { hi = i; break; }
+  }
+  if (hi <= lo) return;
+  const loV = lo / 255;
+  const hiV = hi / 255;
+  const range = hiV - loV;
+  for (let i = 0; i < gray.length; i++) {
+    let v = (gray[i] - loV) / range;
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+function importGaussianBlur3(gray, w, h) {
+  const kernel = [0.27901, 0.44198, 0.27901];
+  const tmp = new Float32Array(w * h);
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const xx = x + k;
+        if (xx < 0 || xx >= w) continue;
+        sum += gray[y * w + xx] * kernel[k + 1];
+      }
+      tmp[y * w + x] = sum;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const yy = y + k;
+        if (yy < 0 || yy >= h) continue;
+        sum += tmp[yy * w + x] * kernel[k + 1];
+      }
+      out[y * w + x] = sum;
+    }
+  }
+  return out;
+}
+
+function importUnsharpMask(gray, w, h, amount) {
+  if (amount <= 0) return;
+  const blurred = importGaussianBlur3(gray, w, h);
+  for (let i = 0; i < gray.length; i++) {
+    let v = gray[i] + amount * (gray[i] - blurred[i]);
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+function importOtsuThreshold(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * bins[i];
+  let sumB = 0, wB = 0, maxVar = 0, best = 128;
+  for (let i = 0; i < 256; i++) {
+    wB += bins[i];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += i * bins[i];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maxVar) { maxVar = between; best = i; }
+  }
+  return best;
+}
+
+// ============================================================
+// Dithering
+// ============================================================
+
+const IMP_BAYER4 = [
+  [ 0, 8, 2,10],
+  [12, 4,14, 6],
+  [ 3,11, 1, 9],
+  [15, 7,13, 5],
+].map(row => row.map(v => v / 16));
+
+const IMP_BAYER8 = (() => {
+  const b = [];
+  for (let y = 0; y < 8; y++) {
+    b.push([]);
+    for (let x = 0; x < 8; x++) {
+      const m4 = IMP_BAYER4[y % 4][x % 4];
+      const quad = (Math.floor(y/4) * 2 + Math.floor(x/4));
+      b[y].push((m4 * 4 + quad) / 16);
+    }
+  }
+  return b;
+})();
+
+function importThresholdValue(v, x, y, thresh, ditherMode) {
+  switch (ditherMode) {
+    case 'bayer4': {
+      const t = thresh + (IMP_BAYER4[y & 3][x & 3] - 0.5) * 128;
+      return v > t ? 255 : 0;
+    }
+    case 'bayer8': {
+      const t = thresh + (IMP_BAYER8[y & 7][x & 7] - 0.5) * 128;
+      return v > t ? 255 : 0;
+    }
+    default:
+      return v > thresh ? 255 : 0;
+  }
+}
+
+function importGrayToByte(gray) {
+  const out = new Float32Array(gray.length);
+  for (let i = 0; i < gray.length; i++) out[i] = gray[i] * 255;
+  return out;
+}
+
+function importDitherFS(gray255, w, h, thresh) {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = gray255[i];
+      const nv = old > thresh ? 255 : 0;
+      out[i] = nv;
+      const err = old - nv;
+      if (x + 1 < w) gray255[i + 1]       += err * 7/16;
+      if (y + 1 < h) {
+        if (x > 0)     gray255[i + w - 1] += err * 3/16;
+                       gray255[i + w]     += err * 5/16;
+        if (x + 1 < w) gray255[i + w + 1] += err * 1/16;
+      }
+    }
+  }
+  return out;
+}
+
+function importDitherAtkinson(gray255, w, h, thresh) {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = gray255[i];
+      const nv = old > thresh ? 255 : 0;
+      out[i] = nv;
+      const err = (old - nv) / 8;
+      const push = (xx, yy) => {
+        if (xx >= 0 && xx < w && yy >= 0 && yy < h) gray255[yy * w + xx] += err;
+      };
+      push(x + 1, y); push(x + 2, y);
+      push(x - 1, y + 1); push(x, y + 1); push(x + 1, y + 1);
+      push(x, y + 2);
+    }
+  }
+  return out;
+}
+
+// ============================================================
+// Process one source frame → 32x96 bitmap
+// ============================================================
+
+function importProcessFrame(src, srcW, srcH, srcIsRgbaArray, settings) {
+  const s = settings;
+
+  let rgb;
+  let srcData = null;
+  if (s.downsample === 'lanczos' || s.downsample === 'area') {
+    if (srcIsRgbaArray) {
+      srcData = src;
+    } else {
+      const c = src.getContext('2d', { willReadFrequently: true });
+      srcData = c.getImageData(0, 0, srcW, srcH).data;
+    }
+  }
+
+  if (s.downsample === 'lanczos') {
+    rgb = importLanczosDownsample(srcData, srcW, srcH, s);
+  } else if (s.downsample === 'area') {
+    rgb = importAreaDownsample(srcData, srcW, srcH, s);
+  } else {
+    rgb = importBilinearDownsample(src, srcW, srcH, srcIsRgbaArray, s);
+  }
+
+  const gray = importRgbToGrayLinear(rgb, s.invert);
+  if (s.contrastStretch) importContrastStretch(gray);
+  importApplyGamma(gray, s.gamma);
+  if (s.sharpen > 0) importUnsharpMask(gray, OUT_W, OUT_H, s.sharpen);
+
+  let threshByte = s.threshold;
+  if (s.autoThresh) threshByte = importOtsuThreshold(gray);
+
+  const gray255 = importGrayToByte(gray);
+  let bitmap;
+  if (s.dither === 'fs') bitmap = importDitherFS(gray255, OUT_W, OUT_H, threshByte);
+  else if (s.dither === 'atkinson') bitmap = importDitherAtkinson(gray255, OUT_W, OUT_H, threshByte);
+  else {
+    bitmap = new Uint8Array(OUT_W * OUT_H);
+    for (let y = 0; y < OUT_H; y++) {
+      for (let x = 0; x < OUT_W; x++) {
+        const i = y * OUT_W + x;
+        bitmap[i] = importThresholdValue(gray255[i], x, y, threshByte, s.dither);
+      }
+    }
+  }
+
+  return bitmap;
+}
+
+// Wrap a 32x96 bitmap into a 32x128 pixel buffer, top 16 rows empty
+function importWrapToFullCanvas(bitmap96) {
+  const out = new Uint8Array(W * H);
+  for (let y = 0; y < OUT_H; y++) {
+    const srcRow = y * OUT_W;
+    const dstRow = (y + AD_OFFSET_IMPORT) * W;
+    for (let x = 0; x < OUT_W; x++) {
+      out[dstRow + x] = bitmap96[srcRow + x];
+    }
+  }
+  return out;
+}
+
+// ============================================================
+// Settings read from UI
+// ============================================================
+
+function importReadSettings() {
+  const getNum = (id, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseFloat(el.value);
+    return isNaN(v) ? fallback : v;
+  };
+  const getInt = (id, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseInt(el.value, 10);
+    return isNaN(v) ? fallback : v;
+  };
+  const getChecked = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
+  const getSelect = (id, fallback) => {
+    const el = document.getElementById(id);
+    return el ? el.value : fallback;
+  };
+
+  return {
+    start: getNum('impStart', 0),
+    length: Math.min(getNum('impLength', 2), 10),
+    fps: Math.min(getInt('impFPS', 8), 12),
+    zoom: Math.max(0.2, getNum('impZoom', 1)),
+    cropX: getInt('impCropX', 50),
+    cropY: getInt('impCropY', 50),
+    contrastStretch: getChecked('impStretch'),
+    gamma: getNum('impGamma', 1.0),
+    sharpen: getNum('impSharpen', 0.5),
+    autoThresh: getChecked('impAutoThresh'),
+    threshold: getInt('impThreshold', 128),
+    dither: getSelect('impDither', 'fs'),
+    downsample: getSelect('impDownsample', 'lanczos'),
+    invert: getChecked('impInvert'),
+  };
+}
+
+// ============================================================
+// Panel UI
+// ============================================================
+
+function wireImportPanel() {
+  const btn = document.getElementById('btnShowImport');
+  if (btn) {
+    btn.onclick = () => {
+      const panel = document.getElementById('importPanel');
+      if (!panel) return;
+      if (panel.style.display === 'none') {
+        panel.style.display = '';
+        importBuildPanelUI();
+      } else {
+        panel.style.display = 'none';
+      }
+    };
+  }
+}
+
+function importBuildPanelUI() {
+  const panel = document.getElementById('importPanel');
+  if (!panel) return;
+
+  panel.innerHTML = `
+    <input type="file" id="importFile" accept="video/*,image/gif">
+    <div id="importSourceInfo" style="font-size:11px;color:#666">No file loaded</div>
+
+    <h3>Framing</h3>
+    <div class="import-row"><label>Start (s)</label>
+      <input type="number" id="impStart" value="0" step="0.1" min="0"></div>
+    <div class="import-row"><label>Length (s)</label>
+      <input type="number" id="impLength" value="2" step="0.5" min="0.5" max="10"></div>
+    <div class="import-row"><label>FPS</label>
+      <input type="number" id="impFPS" value="8" min="1" max="12"></div>
+    <div class="import-row"><label>Zoom</label>
+      <input type="range" id="impZoom" min="0.2" max="4" step="0.05" value="1"></div>
+    <div class="import-row"><label>Crop X</label>
+      <input type="range" id="impCropX" min="0" max="100" value="50"></div>
+    <div class="import-row"><label>Crop Y</label>
+      <input type="range" id="impCropY" min="0" max="100" value="50"></div>
+
+    <h3>Tone</h3>
+    <div class="import-row"><label>Stretch</label>
+      <input type="checkbox" id="impStretch" checked></div>
+    <div class="import-row"><label>Gamma</label>
+      <input type="range" id="impGamma" min="0.4" max="2.5" step="0.05" value="1"></div>
+    <div class="import-row"><label>Sharpen</label>
+      <input type="range" id="impSharpen" min="0" max="2" step="0.05" value="0.5"></div>
+    <div class="import-row"><label>Auto thr</label>
+      <input type="checkbox" id="impAutoThresh"></div>
+    <div class="import-row"><label>Threshold</label>
+      <input type="range" id="impThreshold" min="0" max="255" value="128"></div>
+
+    <h3>Output</h3>
+    <div class="import-row"><label>Downsample</label>
+      <select id="impDownsample">
+        <option value="lanczos" selected>Lanczos 3</option>
+        <option value="area">Area avg</option>
+        <option value="bilinear">Bilinear</option>
+      </select>
+    </div>
+    <div class="import-row"><label>Dither</label>
+      <select id="impDither">
+        <option value="none">None</option>
+        <option value="bayer4">Bayer 4x4</option>
+        <option value="bayer8">Bayer 8x8</option>
+        <option value="fs" selected>Floyd–Steinberg</option>
+        <option value="atkinson">Atkinson</option>
+      </select>
+    </div>
+    <div class="import-row"><label>Invert</label>
+      <input type="checkbox" id="impInvert"></div>
+
+    <h3>Preview</h3>
+    <div id="importFilmstrip"></div>
+    <div id="importStatus">Choose a file to begin.</div>
+    <div id="importButtons">
+      <button id="btnImportConvert">Convert</button>
+      <button id="btnImportCancel" style="display:none">Cancel</button>
+      <button id="btnImportReplace" style="display:none;background:#2a4a2a;border-color:#4a6a4a;color:#cfc">Replace timeline</button>
+    </div>
+  `;
+
+  document.getElementById('importFile').onchange = importOnFileChosen;
+  document.getElementById('btnImportConvert').onclick = importRunConvert;
+  document.getElementById('btnImportCancel').onclick = importCancel;
+  document.getElementById('btnImportReplace').onclick = importCommit;
+}
+
+// ============================================================
+// File loading
+// ============================================================
+
+async function importOnFileChosen(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const info = document.getElementById('importSourceInfo');
+  const status = document.getElementById('importStatus');
+  const strip = document.getElementById('importFilmstrip');
+  strip.innerHTML = '';
+  importConvertedFrames = [];
+  importGifFrames = [];
+  importSourceKind = null;
+  document.getElementById('btnImportReplace').style.display = 'none';
+
+  const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+
+  if (isGif) {
+    status.textContent = 'Decoding GIF…';
+    try {
+      let parsed, decoderUsed = 'native';
+      if (importHasNativeGifDecoder()) {
+        try {
+          parsed = await importDecodeGifNative(file);
+        } catch (err) {
+          console.warn('Native GIF decode failed:', err);
+          decoderUsed = 'fallback';
+          parsed = null;
+        }
+      } else {
+        decoderUsed = 'fallback';
+      }
+      if (!parsed) {
+        const buf = await file.arrayBuffer();
+        parsed = importGifuct.parseGIF(buf);
+      }
+      importGifW = parsed.width;
+      importGifH = parsed.height;
+      importGifFrames = parsed.frames.map(f => ({
+        rgba: f.rgba,
+        width: f.width || importGifW,
+        height: f.height || importGifH,
+        delayMs: f.delayMs,
+      }));
+      importGifTotalMs = importGifFrames.reduce((a, f) => a + f.delayMs, 0);
+      importSourceKind = 'gif';
+      info.textContent = `${importGifW}×${importGifH} · ${importGifFrames.length} frames · ${(importGifTotalMs/1000).toFixed(2)}s${decoderUsed === 'fallback' ? ' (fallback)' : ''}`;
+      status.textContent = 'GIF loaded. Adjust settings, then hit Convert.';
+      document.getElementById('impLength').value = Math.min(10, importGifTotalMs / 1000).toFixed(1);
+    } catch (err) {
+      console.error(err);
+      status.textContent = 'GIF decode failed: ' + err.message;
+    }
+    return;
+  }
+
+  // Video
+  if (importVideoURL) URL.revokeObjectURL(importVideoURL);
+  importVideoURL = URL.createObjectURL(file);
+
+  if (!importVideo) {
+    importVideo = document.createElement('video');
+    importVideo.muted = true;
+    importVideo.playsInline = true;
+    importVideo.preload = 'auto';
+  }
+  importVideo.src = importVideoURL;
+
+  status.textContent = 'Loading video…';
+  importVideo.onloadedmetadata = () => {
+    importSourceKind = 'video';
+    info.textContent = `${importVideo.videoWidth}×${importVideo.videoHeight} · ${importVideo.duration.toFixed(2)}s`;
+    status.textContent = 'Video loaded. Adjust settings, then hit Convert.';
+    document.getElementById('impLength').value = Math.min(10, importVideo.duration).toFixed(1);
+  };
+}
+
+// ============================================================
+// Convert
+// ============================================================
+
+function importSetBusy(busy, msg) {
+  importCancelRequested = false;
+  const convert = document.getElementById('btnImportConvert');
+  const cancel = document.getElementById('btnImportCancel');
+  const replace = document.getElementById('btnImportReplace');
+  const status = document.getElementById('importStatus');
+  if (busy) {
+    convert.disabled = true;
+    cancel.style.display = '';
+    replace.style.display = 'none';
+    if (msg) status.textContent = msg;
+  } else {
+    convert.disabled = false;
+    cancel.style.display = 'none';
+  }
+}
+
+function importCancel() {
+  importCancelRequested = true;
+  document.getElementById('importStatus').textContent = 'Cancelling…';
+}
+
+function importExtractVideoFrame(t) {
+  return new Promise((resolve) => {
+    const onSeeked = () => {
+      importVideo.removeEventListener('seeked', onSeeked);
+      const tmp = document.createElement('canvas');
+      tmp.width = importVideo.videoWidth;
+      tmp.height = importVideo.videoHeight;
+      tmp.getContext('2d').drawImage(importVideo, 0, 0);
+      resolve(tmp);
+    };
+    importVideo.addEventListener('seeked', onSeeked);
+    importVideo.currentTime = t;
+  });
+}
+
+async function importRunConvert() {
+  if (!importSourceKind) {
+    document.getElementById('importStatus').textContent = 'Load a file first.';
+    return;
+  }
+
+  const settings = importReadSettings();
+  importLastSettings = settings;
+
+  const frameCount = Math.round(settings.length * settings.fps);
+  const dt = 1 / settings.fps;
+  const strip = document.getElementById('importFilmstrip');
+  const status = document.getElementById('importStatus');
+  strip.innerHTML = '';
+  importConvertedFrames = [];
+
+  if (frameCount > AD_MAX_FRAMES) {
+    status.textContent = `Too many frames: ${frameCount} (max ${AD_MAX_FRAMES}). Reduce length or FPS.`;
+    return;
+  }
+
+  importSetBusy(true, `Processing 0 / ${frameCount}…`);
+  await new Promise(r => setTimeout(r, 0));
+
+  try {
+    if (importSourceKind === 'gif') {
+      const t0 = settings.start * 1000;
+      const t1 = Math.min((settings.start + settings.length) * 1000, importGifTotalMs);
+      for (let i = 0; i < frameCount; i++) {
+        if (importCancelRequested) break;
+        const tMs = t0 + i * (dt * 1000);
+        if (tMs > t1) break;
+        let acc = 0, idx = 0;
+        for (let j = 0; j < importGifFrames.length; j++) {
+          acc += importGifFrames[j].delayMs;
+          if (acc > tMs) { idx = j; break; }
+          idx = j;
+        }
+        const gf = importGifFrames[idx];
+        const bitmap96 = importProcessFrame(gf.rgba, gf.width, gf.height, true, settings);
+        const full = importWrapToFullCanvas(bitmap96);
+        importConvertedFrames.push({ pixels: full });
+        importDrawThumb(strip, full);
+        status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        await new Promise(r => setTimeout(r, 0));
+      }
+    } else {
+      for (let i = 0; i < frameCount; i++) {
+        if (importCancelRequested) break;
+        const t = settings.start + i * dt;
+        if (t > importVideo.duration) break;
+        status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        const src = await importExtractVideoFrame(t);
+        const bitmap96 = importProcessFrame(src, src.width, src.height, false, settings);
+        const full = importWrapToFullCanvas(bitmap96);
+        importConvertedFrames.push({ pixels: full });
+        importDrawThumb(strip, full);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Convert failed: ' + err.message;
+    importSetBusy(false);
+    return;
+  }
+
+  importSetBusy(false);
+
+  if (importCancelRequested) {
+    status.textContent = 'Cancelled.';
+    document.getElementById('btnImportReplace').style.display = 'none';
+    return;
+  }
+
+  if (importConvertedFrames.length === 0) {
+    status.textContent = 'No frames were converted.';
+    return;
+  }
+
+  const totalMs = importConvertedFrames.length * (1000 / settings.fps);
+  status.textContent = `Ready: ${importConvertedFrames.length} frames · ${(totalMs/1000).toFixed(2)}s at ${settings.fps}fps`;
+  document.getElementById('btnImportReplace').style.display = '';
+}
+
+function importDrawThumb(strip, fullPixels) {
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const cctx = c.getContext('2d');
+  const img = cctx.createImageData(W, H);
+  for (let p = 0; p < W * H; p++) {
+    const on = fullPixels[p];
+    img.data[p * 4 + 0] = on ? 255 : 0;
+    img.data[p * 4 + 1] = on ? 255 : 0;
+    img.data[p * 4 + 2] = on ? 255 : 0;
+    img.data[p * 4 + 3] = 255;
+  }
+  cctx.putImageData(img, 0, 0);
+  strip.appendChild(c);
+}
+
+// ============================================================
+// Commit — replace timeline
+// ============================================================
+
+function importCommit() {
+  if (!importConvertedFrames.length) return;
+
+  const s = importLastSettings;
+  const frameMs = Math.round(1000 / (s ? s.fps : 8));
+
+  if (frames.length > 0) {
+    const ok = confirm(
+      `Replace current ${frames.length} frame${frames.length === 1 ? '' : 's'} ` +
+      `with ${importConvertedFrames.length} imported frame${importConvertedFrames.length === 1 ? '' : 's'}?`
+    );
+    if (!ok) return;
+  }
+
+  // Build the structured animation object (seam for future save/load)
+  const nowIso = new Date().toISOString();
+  const animObject = {
+    v: 1,
+    name: 'untitled',
+    created: nowIso,
+    modified: nowIso,
+    source: {
+      kind: importSourceKind || 'hand',
+      filename: (document.getElementById('importFile')?.files?.[0]?.name) || null,
+    },
+    settings: s ? { ...s } : null,
+    loopCount: loopCount,
+    frames: importConvertedFrames.map(f => ({
+      durationMs: frameMs,
+      pixels: new Uint8Array(f.pixels),
+    })),
+  };
+
+  // Push into live frames[]
+  frames = animObject.frames;
+  currentFrameIndex = 0;
+  pixels = frames[0].pixels;
+  loopCount = 1;   // reset on import; user can adjust in props
+
+  // Refresh UI
+  document.getElementById('importPanel').style.display = 'none';
+  renderTimeline();
+  rebuildProps();
+  render();
+
+  // Store the object so future save/load can use it (also useful for debugging)
+  window.__lastImportedAnimation = animObject;
+
+  console.log('Imported animation object:', animObject);
+}
+</script>
 </body>
 </html>
