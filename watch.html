@@ -1263,21 +1263,9 @@ function renderAnim() {
 }
 
 function drawAdSafeArea() {
-  // Top strip is discarded on send — show it as a dimmed band with a label.
-  ctx.save();
-  ctx.fillStyle = 'rgba(255, 160, 0, 0.12)';
-  ctx.fillRect(0, 0, canvas.width, AD_OFFSET_Y * SCALE);
-  ctx.strokeStyle = 'rgba(255, 160, 0, 0.6)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, AD_OFFSET_Y * SCALE + 0.5);
-  ctx.lineTo(canvas.width, AD_OFFSET_Y * SCALE + 0.5);
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(255, 160, 0, 0.7)';
-  ctx.font = '10px system-ui';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('clock strip — not sent', 6, AD_OFFSET_Y * SCALE / 2);
-  ctx.restore();
+  // No safe-area strip anymore — the whole 32×128 canvas is sent.
+  // (Kept as a function so callers stay unchanged; can become a no-op
+  // or repurposed later.)
 }
 
 function updateAnimStatus() {
