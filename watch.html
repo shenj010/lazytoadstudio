@@ -3637,11 +3637,19 @@ function importCommit() {
   pixels = frames[0].pixels;
   loopCount = 1;   // reset on import; user can adjust in props
 
-  // Refresh UI
-  document.getElementById('importPanel').style.display = 'none';
+  // Refresh UI — keep import panel open so settings stay editable
   renderTimeline();
   rebuildProps();
   render();
+
+  // Update the status line so the user knows it's live
+  const status = document.getElementById('importStatus');
+  if (status) {
+    status.textContent = `Applied: ${frames.length} frames are now in the timeline. ` +
+      `Adjust settings and hit Convert → Replace again to update.`;
+  }
+  // Re-show Replace button so re-applying is a one-click
+  document.getElementById('btnImportReplace').style.display = '';
 
   // Store the object so future save/load can use it (also useful for debugging)
   window.__lastImportedAnimation = animObject;
