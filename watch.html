@@ -753,21 +753,48 @@ function drawTextElement(el) {
     }
   }
 }
+
+function drawBackgroundElement(el) {
+  if (!currentBackgroundFrames || currentBackgroundFrames.length === 0) {
+    // No background loaded — draw a placeholder so the user knows it exists
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120, 120, 120, 0.4)';
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(el.x * SCALE + 0.5, el.y * SCALE + 0.5, el.w * SCALE, el.h * SCALE);
+    ctx.fillStyle = 'rgba(120, 120, 120, 0.5)';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('no background loaded', (el.x + el.w / 2) * SCALE, (el.y + el.h / 2) * SCALE);
+    ctx.restore();
+    return;
+  }
+
+  // Draw the top-left (el.w × el.h) region of frame 0 at (el.x, el.y)
+  const px = currentBackgroundFrames[0];
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < el.h && y < H; y++) {
+    const srcY = y;               // source row within the bitmap
+    if (srcY >= H) break;
+    const dstY = el.y + y;
+    if (dstY < 0 || dstY >= H) continue;
+
+    for (let x = 0; x < el.w && x < W; x++) {
+      const srcX = x;
+      if (srcX >= W) break;
+      const dstX = el.x + x;
+      if (dstX < 0 || dstX >= W) continue;
+
+      if (px[srcY * W + srcX]) {
+        ctx.fillRect(dstX * SCALE, dstY * SCALE, SCALE, SCALE);
+      }
+    }
+  }
+}
 // ============================================================
 // FACE renderer
 // ============================================================
 function renderFace() {
-  if (currentBackgroundFrames && currentBackgroundFrames.length > 0) {
-    const px = currentBackgroundFrames[0];   // show first frame in designer
-    ctx.fillStyle = '#ffffff';
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        if (px[y * W + x]) {
-          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
-        }
-      }
-    }
-  }
   drawGrid();
 
   for (const el of elements) drawElement(el);
@@ -908,6 +935,7 @@ function drawElement(el) {
     case 'temp':     drawTempElement(el);         break;
     case 'text':     drawTextElement(el);         break;
     case 'bar':      drawBarElement(el);         break;
+    case 'background': drawBackgroundElement(el); break;
     default:         break;
   }
 }
@@ -1329,13 +1357,28 @@ function addElement(type) {
     temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
     bar: { w: 4, h: 48, source: 'time.hourProgress', barStyle: 'solid', segments: 10, barOutline: true,},
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
+    background: { w: 32, h: 128 },
   };
   const def = defaults[type];
   if (!def) return;
 
-  const { w, h, ...props } = def;
-  const spot = findFreeSpot(w, h);
+    const { w, h, ...props } = def;
 
+  // Background: only one allowed, always at (0,0), always first in the array
+  if (type === 'background') {
+    // Remove any existing background element
+    const existingIdx = elements.findIndex(e => e.type === 'background');
+    if (existingIdx >= 0) elements.splice(existingIdx, 1);
+
+    const el = { id: nextId++, type, x: 0, y: 0, w, h, ...props };
+    elements.unshift(el);   // insert at front so it draws first
+    selectedId = el.id;
+    rebuildProps();
+    render();
+    return;
+  }
+
+  const spot = findFreeSpot(w, h);
   const el = {
     id: nextId++,
     type,
@@ -1349,8 +1392,7 @@ function addElement(type) {
   selectedId = el.id;
   rebuildProps();
   render();
-}
-
+ 
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -1398,6 +1440,7 @@ function rebuildPalette() {
       <button data-add="temp">Temp</button>
       <button data-add="bar">Bar</button>
       <button data-add="text">Text</button>
+      <button data-add="background">Background</button>
     `;
     body.querySelectorAll('[data-add]').forEach(btn => {
       btn.onclick = () => addElement(btn.dataset.add);
@@ -1507,10 +1550,10 @@ function rebuildProps() {
         <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
         ${el.style ? `<span style="color:#888"> · ${el.style}</span>` : ''}
       </div>
-      <div class="prop-row"><label>X</label>
-        <input type="number" id="propX" value="${el.x}" min="0" max="${W-1}"></div>
+          <div class="prop-row"><label>X</label>
+        <input type="number" id="propX" value="${el.x}" min="${el.type === 'background' ? -W : 0}" max="${W-1}"></div>
       <div class="prop-row"><label>Y</label>
-        <input type="number" id="propY" value="${el.y}" min="0" max="${H-1}"></div>
+        <input type="number" id="propY" value="${el.y}" min="${el.type === 'background' ? -H : 0}" max="${H-1}"></div>
       <div class="prop-row"><label>W</label>
         <input type="number" id="propW" value="${el.w}" min="1" max="${W}"></div>
       <div class="prop-row"><label>H</label>
@@ -1525,7 +1568,22 @@ function rebuildProps() {
       ${styleFields}
       ${weekdayFields}
       ${barFields}
-        <button id="propDelete" style="
+
+      ${el.type === 'background' ? `
+        <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+            Presets
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button id="bgPresetFill"   style="flex:1;margin:0;padding:6px 4px;font-size:11px">Fill</button>
+            <button id="bgPresetCenter" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Center</button>
+            <button id="bgPresetTop"    style="flex:1;margin:0;padding:6px 4px;font-size:11px">Top</button>
+            <button id="bgPresetBottom" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Bottom</button>
+          </div>
+        </div>
+      ` : ''}
+
+      <button id="propDelete" style="
         margin-top:16px;
         background:#4a2020;
         border-color:#833;
@@ -1547,17 +1605,23 @@ function rebuildProps() {
       </div>
     `;
 
-    const bind = (id, key) => {
+      const bind = (id, key) => {
       const input = document.getElementById(id);
       if (!input) return;
       input.oninput = () => {
         const v = parseInt(input.value, 10);
         if (isNaN(v)) return;
         el[key] = v;
-        el.x = Math.max(0, Math.min(W - el.w, el.x));
-        el.y = Math.max(0, Math.min(H - el.h, el.y));
-        el.w = Math.max(1, Math.min(W, el.w));
-        el.h = Math.max(1, Math.min(H, el.h));
+        // Background elements may extend off-screen; others are clamped
+        if (el.type === 'background') {
+          el.w = Math.max(1, el.w);
+          el.h = Math.max(1, el.h);
+        } else {
+          el.x = Math.max(0, Math.min(W - el.w, el.x));
+          el.y = Math.max(0, Math.min(H - el.h, el.y));
+          el.w = Math.max(1, Math.min(W, el.w));
+          el.h = Math.max(1, Math.min(H, el.h));
+        }
         render();
       };
     };
@@ -1667,7 +1731,7 @@ function rebuildProps() {
    };
  }
 
-              const del = document.getElementById('propDelete');
+                           const del = document.getElementById('propDelete');
     if (del) {
       del.onclick = () => {
         const idx = elements.findIndex(e => e.id === el.id);
@@ -1679,6 +1743,22 @@ function rebuildProps() {
         render();
       };
      }
+
+    if (el.type === 'background') {
+      const setPreset = (x, y, w, h) => {
+        el.x = x; el.y = y; el.w = w; el.h = h;
+        rebuildProps();
+        render();
+      };
+      const pFill   = document.getElementById('bgPresetFill');
+      const pCenter = document.getElementById('bgPresetCenter');
+      const pTop    = document.getElementById('bgPresetTop');
+      const pBottom = document.getElementById('bgPresetBottom');
+      if (pFill)   pFill.onclick   = () => setPreset(0, 0, 32, 128);
+      if (pCenter) pCenter.onclick = () => setPreset(0, 32, 32, 64);
+      if (pTop)    pTop.onclick    = () => setPreset(0, 0, 32, 64);
+      if (pBottom) pBottom.onclick = () => setPreset(0, 64, 32, 64);
+    }
 
     const btnClearBg = document.getElementById('btnClearBg');
     if (btnClearBg) {
@@ -3754,6 +3834,11 @@ async function importUseAsBackground() {
   const frameMs = Math.round(1000 / (s ? s.fps : 8));
 
   const frameCount = importConvertedFrames.length;
+    if (frameCount > 30) {
+    document.getElementById('importStatus').textContent =
+      `Too many frames for a background: ${frameCount} (max 30). Reduce length or FPS.`;
+    return;
+  }
   const bytesPerRow = Math.ceil(AD_W / 8);
   const bytesPerFrame = bytesPerRow * AD_H;
   const all = new Uint8Array(bytesPerFrame * frameCount);
@@ -3798,10 +3883,16 @@ async function importUseAsBackground() {
   try {
     await sendRawPayload(payload);
     status.textContent = `Background sent (${frameCount} frames). It will play on next wake.`;
-    // Store as the current background so the face preview composites it
     currentBackgroundFrames = importConvertedFrames.map(f => new Uint8Array(f.pixels));
     currentBackgroundFrameMs = frameMs;
+
+    // Ensure there's a background element in the face
+    if (!elements.some(e => e.type === 'background')) {
+      elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
+    }
+
     render();
+    rebuildProps();
   } catch (e) {
     console.error(e);
     status.textContent = 'Background send failed: ' + e.message;
