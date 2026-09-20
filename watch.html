@@ -395,6 +395,8 @@ let animationPlaying = false;
 let animationPlayStart = 0;
 let animationPlayHandle = null;
 let loopCount = 1;   // applies to whatever animation is sent next
+let currentBackgroundFrames = null;   // array of Uint8Array(32*128)
+let currentBackgroundFrameMs = 100;
 
 // `pixels` is an alias for the current frame's pixel buffer.
 // All existing drawing code operates on this and works unchanged.
@@ -755,6 +757,17 @@ function drawTextElement(el) {
 // FACE renderer
 // ============================================================
 function renderFace() {
+  if (currentBackgroundFrames && currentBackgroundFrames.length > 0) {
+    const px = currentBackgroundFrames[0];   // show first frame in designer
+    ctx.fillStyle = '#ffffff';
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (px[y * W + x]) {
+          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+        }
+      }
+    }
+  }
   drawGrid();
 
   for (const el of elements) drawElement(el);
@@ -1512,12 +1525,23 @@ function rebuildProps() {
       ${styleFields}
       ${weekdayFields}
       ${barFields}
-      <button id="propDelete" style="
+        <button id="propDelete" style="
         margin-top:16px;
         background:#4a2020;
         border-color:#833;
         color:#fbb;
       ">Delete Element</button>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #2a2a2a">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+          Face Background
+        </div>
+        <div id="bgStatus" style="font-size:12px;color:#aaa;margin-bottom:6px">
+          ${currentBackgroundFrames ? `${currentBackgroundFrames.length} frame${currentBackgroundFrames.length === 1 ? '' : 's'} loaded` : 'None'}
+        </div>
+        <button id="btnClearBg" style="background:#2a2a2a;border-color:#444" ${currentBackgroundFrames ? '' : 'disabled'}>Remove background</button>
+      </div>
+
       <div style="font-size:11px;color:#666;margin-top:12px">
         Drag body to move · drag corners to resize
       </div>
@@ -1643,7 +1667,7 @@ function rebuildProps() {
    };
  }
 
-       const del = document.getElementById('propDelete');
+              const del = document.getElementById('propDelete');
     if (del) {
       del.onclick = () => {
         const idx = elements.findIndex(e => e.id === el.id);
@@ -1655,6 +1679,22 @@ function rebuildProps() {
         render();
       };
      }
+
+    const btnClearBg = document.getElementById('btnClearBg');
+    if (btnClearBg) {
+      btnClearBg.onclick = async () => {
+        if (!currentBackgroundFrames) return;
+        if (!confirm('Remove the background from the watch and the designer?')) return;
+        currentBackgroundFrames = null;
+        try {
+          await sendRawPayload(JSON.stringify({ kind: 'backgroundClear', v: 1 }));
+        } catch (e) {
+          console.error(e);
+        }
+        rebuildProps();
+        render();
+      };
+    }
     } else {
         fx.style.display = 'none';
     const uniformMs = frames[0].durationMs || 125;
@@ -3351,13 +3391,15 @@ function importBuildPanelUI() {
       <button id="btnImportConvert">Convert</button>
       <button id="btnImportCancel" style="display:none">Cancel</button>
       <button id="btnImportReplace" style="display:none;background:#2a4a2a;border-color:#4a6a4a;color:#cfc">Replace timeline</button>
+      <button id="btnImportBackground" style="display:none;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Use as face background</button>
     </div>
   `;
 
-    document.getElementById('importFile').onchange = importOnFileChosen;
+  document.getElementById('importFile').onchange = importOnFileChosen;
   document.getElementById('btnImportConvert').onclick = importRunConvert;
   document.getElementById('btnImportCancel').onclick = importCancel;
   document.getElementById('btnImportReplace').onclick = importCommit;
+  document.getElementById('btnImportBackground').onclick = importUseAsBackground;
 
   // Live re-convert when framing/tone/output controls change.
   // Debounced so dragging a slider doesn't spam the converter.
@@ -3615,7 +3657,8 @@ async function importRunConvert() {
     status.textContent += ' · applied to timeline';
   } else {
     // First-time conversion — show Replace button
-    document.getElementById('btnImportReplace').style.display = '';
+  document.getElementById('btnImportReplace').style.display = '';
+  document.getElementById('btnImportBackground').style.display = '';
   }
 }
 
@@ -3692,11 +3735,106 @@ function importCommit() {
   }
   // Re-show Replace button so re-applying is a one-click
   document.getElementById('btnImportReplace').style.display = '';
+  document.getElementById('btnImportBackground').style.display = '';
 
   // Store the object so future save/load can use it (also useful for debugging)
   window.__lastImportedAnimation = animObject;
 
   console.log('Imported animation object:', animObject);
+}
+
+// ============================================================
+// Use as face background
+// ============================================================
+
+async function importUseAsBackground() {
+  if (!importConvertedFrames.length) return;
+
+  const s = importLastSettings;
+  const frameMs = Math.round(1000 / (s ? s.fps : 8));
+
+  const frameCount = importConvertedFrames.length;
+  const bytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = bytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = importConvertedFrames[f].pixels;
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      for (let x = 0; x < AD_W; x++) {
+        if (src[y * W + x]) {
+          const byteIndex = base + y * bytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(
+      null, all.subarray(i, Math.min(i + CHUNK, all.length))
+    );
+  }
+  const b64 = btoa(binary);
+
+  const payload = JSON.stringify({
+    kind: 'background',
+    v: 1,
+    w: AD_W,
+    h: AD_H,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    format: 'bitpacked-row-lsb',
+    data: b64,
+  });
+
+  const status = document.getElementById('importStatus');
+  status.textContent = `Sending background (${frameCount} frames, ${payload.length} bytes)…`;
+
+  try {
+    await sendRawPayload(payload);
+    status.textContent = `Background sent (${frameCount} frames). It will play on next wake.`;
+    // Store as the current background so the face preview composites it
+    currentBackgroundFrames = importConvertedFrames.map(f => new Uint8Array(f.pixels));
+    currentBackgroundFrameMs = frameMs;
+    render();
+  } catch (e) {
+    console.error(e);
+    status.textContent = 'Background send failed: ' + e.message;
+  }
+}
+
+// ============================================================
+// Raw payload send (used by background uploader)
+// ============================================================
+
+async function sendRawPayload(json) {
+  if (!bleConnected || !bleRxChar) throw new Error('Not connected');
+
+  const payload = new TextEncoder().encode(json);
+  if (payload.length > 0xFFFF) throw new Error('Payload too large (>64 KB)');
+
+  const frame = new Uint8Array(2 + payload.length);
+  frame[0] = payload.length & 0xFF;
+  frame[1] = (payload.length >> 8) & 0xFF;
+  frame.set(payload, 2);
+
+  let sent = 0;
+  while (sent < frame.length) {
+    const slice = frame.slice(sent, sent + CHUNK_SIZE);
+    if (bleRxChar.writeValueWithoutResponse) {
+      await bleRxChar.writeValueWithoutResponse(slice);
+    } else {
+      await bleRxChar.writeValue(slice);
+    }
+    sent += slice.length;
+    connStatus.textContent = `Sending… ${sent}/${frame.length}`;
+    await new Promise(r => setTimeout(r, 3));   // small yield for BLE stack
+  }
 }
 </script>
 </body>
