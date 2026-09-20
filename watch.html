@@ -3366,10 +3366,39 @@ function importBuildPanelUI() {
     </div>
   `;
 
-  document.getElementById('importFile').onchange = importOnFileChosen;
+    document.getElementById('importFile').onchange = importOnFileChosen;
   document.getElementById('btnImportConvert').onclick = importRunConvert;
   document.getElementById('btnImportCancel').onclick = importCancel;
   document.getElementById('btnImportReplace').onclick = importCommit;
+
+  // Live re-convert when framing/tone/output controls change.
+  // Debounced so dragging a slider doesn't spam the converter.
+  const liveIds = [
+    'impStart', 'impLength', 'impFPS',
+    'impZoom', 'impCropX', 'impCropY',
+    'impStretch', 'impGamma', 'impSharpen',
+    'impAutoThresh', 'impThreshold',
+    'impDownsample', 'impDither', 'impInvert',
+  ];
+  for (const id of liveIds) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.addEventListener('input', importDebouncedConvert);
+    if (el.tagName === 'SELECT') {
+      el.addEventListener('change', importDebouncedConvert);
+    }
+  }
+}
+
+let importDebounceTimer = null;
+function importDebouncedConvert() {
+  // Only re-convert if a source is loaded
+  if (!importSourceKind) return;
+  if (importDebounceTimer) clearTimeout(importDebounceTimer);
+  importDebounceTimer = setTimeout(() => {
+    importDebounceTimer = null;
+    importRunConvert();
+  }, 150);
 }
 
 // ============================================================
@@ -3505,16 +3534,21 @@ async function importRunConvert() {
   const dt = 1 / settings.fps;
   const strip = document.getElementById('importFilmstrip');
   const status = document.getElementById('importStatus');
-  strip.innerHTML = '';
-  importConvertedFrames = [];
 
   if (frameCount > AD_MAX_FRAMES) {
     status.textContent = `Too many frames: ${frameCount} (max ${AD_MAX_FRAMES}). Reduce length or FPS.`;
     return;
   }
 
-  importSetBusy(true, `Processing 0 / ${frameCount}…`);
+  // Detect if this is a live re-convert (panel already has thumbs) — if so,
+  // don't clear the strip mid-way, and don't show per-frame progress spam.
+  const isLiveReconvert = importConvertedFrames.length > 0;
+
+  importConvertedFrames = [];
+  importSetBusy(true, isLiveReconvert ? 'Updating…' : `Processing 0 / ${frameCount}…`);
   await new Promise(r => setTimeout(r, 0));
+
+  const newThumbs = [];
 
   try {
     if (importSourceKind === 'gif') {
@@ -3534,8 +3568,8 @@ async function importRunConvert() {
         const bitmap96 = importProcessFrame(gf.rgba, gf.width, gf.height, true, settings);
         const full = importWrapToFullCanvas(bitmap96);
         importConvertedFrames.push({ pixels: full });
-        importDrawThumb(strip, full);
-        status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        newThumbs.push(full);
+        if (!isLiveReconvert) status.textContent = `Processing ${i + 1} / ${frameCount}…`;
         await new Promise(r => setTimeout(r, 0));
       }
     } else {
@@ -3543,12 +3577,12 @@ async function importRunConvert() {
         if (importCancelRequested) break;
         const t = settings.start + i * dt;
         if (t > importVideo.duration) break;
-        status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        if (!isLiveReconvert) status.textContent = `Processing ${i + 1} / ${frameCount}…`;
         const src = await importExtractVideoFrame(t);
         const bitmap96 = importProcessFrame(src, src.width, src.height, false, settings);
         const full = importWrapToFullCanvas(bitmap96);
         importConvertedFrames.push({ pixels: full });
-        importDrawThumb(strip, full);
+        newThumbs.push(full);
         await new Promise(r => setTimeout(r, 0));
       }
     }
@@ -3572,9 +3606,29 @@ async function importRunConvert() {
     return;
   }
 
+  // Rebuild the filmstrip in one shot
+  strip.innerHTML = '';
+  for (const px of newThumbs) importDrawThumb(strip, px);
+
   const totalMs = importConvertedFrames.length * (1000 / settings.fps);
   status.textContent = `Ready: ${importConvertedFrames.length} frames · ${(totalMs/1000).toFixed(2)}s at ${settings.fps}fps`;
-  document.getElementById('btnImportReplace').style.display = '';
+
+  // If we're already live in the timeline, auto-apply the new version
+  // so the user sees the change without clicking Replace each time
+  if (isLiveReconvert && frames.length === importConvertedFrames.length) {
+    const frameMs = Math.round(1000 / settings.fps);
+    for (let i = 0; i < frames.length; i++) {
+      frames[i].pixels = new Uint8Array(importConvertedFrames[i].pixels);
+      frames[i].durationMs = frameMs;
+    }
+    pixels = frames[Math.min(currentFrameIndex, frames.length - 1)].pixels;
+    render();
+    renderTimeline();
+    status.textContent += ' · applied to timeline';
+  } else {
+    // First-time conversion — show Replace button
+    document.getElementById('btnImportReplace').style.display = '';
+  }
 }
 
 function importDrawThumb(strip, fullPixels) {
