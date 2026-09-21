@@ -1,0 +1,4231 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Watch Designer</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #1a1a1a; color: #e0e0e0;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #333;
+    background: #222;
+  }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button {
+    width: auto; margin: 0;
+    padding: 8px 18px;
+    background: transparent; color: #888;
+    border: 1px solid #444; border-radius: 4px;
+    cursor: pointer;
+  }
+  .tabs button.active {
+    background: #3a3a3a; color: #fff; border-color: #666;
+  }
+  .conn {
+    margin-left: auto; display: flex; align-items: center; gap: 10px;
+  }
+  .conn button {
+    width: auto; margin: 0;
+    padding: 8px 14px;
+  }
+  #connStatus { font-size: 12px; color: #888; max-width: 320px; }
+  #connStatus.connected { color: #6c6; }
+  #connStatus.error     { color: #c66; }
+
+  main {
+    flex: 1;
+    display: flex; gap: 20px;
+    padding: 20px;
+    align-items: flex-start;
+  }
+
+  aside { min-width: 220px; max-width: 260px; }
+
+  #canvasWrap {
+    background: #000; padding: 8px; border-radius: 6px;
+    display: inline-block;
+  }
+  canvas {
+  image-rendering: pixelated; display: block;
+  cursor: crosshair;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+  canvas.face-mode { cursor: default; }
+
+  button {
+    display: block; width: 100%; margin: 6px 0;
+    padding: 8px; font-size: 14px;
+    background: #333; color: #e0e0e0;
+    border: 1px solid #555; border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: #444; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  h2 {
+    margin-top: 0; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #888;
+  }
+  h2:not(:first-child) { margin-top: 20px; }
+
+  #status { font-size: 12px; color: #888; margin-top: 12px; }
+  #propsEmpty { font-size: 12px; color: #666; }
+
+  .checkbox-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; font-size: 13px; color: #ccc;
+    cursor: pointer;
+  }
+  .checkbox-row input { margin: 0; cursor: pointer; }
+
+  .prop-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; font-size: 13px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .prop-row label { color: #888; }
+  .prop-row span  { color: #e0e0e0; font-variant-numeric: tabular-nums; }
+
+  .prop-row input,
+  .prop-row select {
+    background: #222; color: #e0e0e0;
+    border: 1px solid #444; border-radius: 3px;
+    padding: 2px 6px; font-size: 13px;
+    width: 70px; text-align: right;
+  }
+  .prop-row select { width: 120px; text-align: left; }
+
+  #timeline {
+    width: 192px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    padding: 8px;
+    background: #111;
+    border-radius: 4px;
+    border-top: 1px solid #2a2a2a;
+  }
+  #timelineFrames {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px 0;
+    min-height: 60px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  #timelineFrames::-webkit-scrollbar { height: 6px; }
+  #timelineFrames::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+  .timeline-thumb {
+    width: 32px;
+    height: 128px;
+    flex-shrink: 0;
+    border: 2px solid #333;
+    border-radius: 2px;
+    cursor: pointer;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+  }
+  .timeline-thumb.selected { border-color: #3af; }
+  .timeline-thumb canvas {
+    width: 100%;
+    flex: 1;
+    image-rendering: pixelated;
+    display: block;
+  }
+  .timeline-thumb .thumb-label {
+    font-size: 9px;
+    text-align: center;
+    color: #666;
+    padding: 1px 0;
+    background: #181818;
+  }
+  .timeline-thumb.selected .thumb-label { color: #3af; }
+
+  #timelineControls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+    min-height: 30px;
+  }
+  #timelineControls button {
+    flex: 0 0 auto;
+    width: 76px;
+    padding: 6px 0;
+    text-align: center;
+  }
+  #timelineInfo {
+    font-size: 11px;
+    color: #888;
+    margin-top: 6px;
+  }
+  #btnPlayAnim { min-width: 84px; text-align: center; }
+
+  #toolGrid, #brushSizes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  #brushSizes { grid-template-columns: repeat(4, 1fr); }
+  #toolGrid button, #brushSizes button {
+    margin: 0;
+    padding: 8px 0;
+    font-size: 16px;
+    line-height: 1;
+    text-align: center;
+    width: auto;
+  }
+  #brushSizes button { font-size: 12px; padding: 6px 0; }
+  #toolGrid button.active, #brushSizes button.active {
+    background: #2a4a6a;
+    border-color: #3af;
+    color: #fff;
+  }
+
+  #importPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  #importPanel h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin: 6px 0 2px 0;
+    font-weight: normal;
+  }
+  .import-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .import-row label { color: #888; }
+  .import-row input[type="number"],
+  .import-row input[type="text"] {
+    width: 52px;
+    background: #222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 12px;
+    text-align: right;
+  }
+  .import-row input[type="text"] { width: 100px; text-align: left; }
+  .import-row input[type="range"] { width: 90px; }
+  .import-row select {
+    background: #222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 12px;
+    flex: 1;
+  }
+  #importFile {
+    width: 100%;
+    font-size: 11px;
+    color: #888;
+  }
+  #importFilmstrip {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    padding: 4px;
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 3px;
+    min-height: 40px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  #importFilmstrip canvas {
+    border: 1px solid #222;
+    image-rendering: pixelated;
+  }
+  #importStatus {
+    font-size: 11px;
+    color: #888;
+    min-height: 14px;
+    line-height: 1.3;
+  }
+  #importButtons {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  #importButtons button {
+    flex: 1;
+    margin: 0;
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  #btnImportReplace {
+    background: #2a4a2a;
+    border-color: #4a6a4a;
+    color: #cfc;
+  }
+  #btnImportCancel {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+#libraryOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+#libraryOverlay.open { display: flex; }
+#libraryPanel {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  width: min(560px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#libraryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #333;
+}
+#libraryHeader h2 {
+  margin: 0;
+  font-size: 15px;
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+#libraryClose {
+  width: auto;
+  margin: 0;
+  padding: 4px 12px;
+  background: #333;
+  border: 1px solid #555;
+  font-size: 16px;
+  line-height: 1;
+}
+#libraryTabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+}
+#libraryTabs button {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px;
+  color: #888;
+  font-size: 13px;
+}
+#libraryTabs button.active {
+  color: #fff;
+  border-bottom-color: #3af;
+  background: #252525;
+}
+#libraryBody {
+  padding: 14px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+#libraryActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+#libraryActions button {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #2a3a5a;
+  border-color: #4a6a8a;
+  color: #cce;
+}
+#libraryActions button.secondary {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #ccc;
+}
+#libraryList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.library-item-name {
+  flex: 1;
+  color: #e0e0e0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-item-meta { color: #666; font-size: 11px; }
+.library-item button {
+  width: auto;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #333;
+  border: 1px solid #555;
+}
+.library-item button.danger {
+  background: #3a1e1e;
+  border-color: #633;
+  color: #fbb;
+}
+#libraryEmpty {
+  text-align: center;
+  color: #555;
+  padding: 40px 0;
+  font-size: 13px;
+}
+</style>
+<script src="glcdfont.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="tabs">
+    <button data-mode="face" class="active">Watch Face</button>
+    <button data-mode="anim">Animation</button>
+  </div>
+  <button id="btnLibrary" style="width:auto;margin-left:12px;padding:8px 14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Library</button>
+  <div class="conn">
+    <button id="btnConnect">Connect to Watch</button>
+    <button id="btnSend" disabled>Send to Watch</button>
+    <span id="connStatus">Not connected</span>
+  </div>
+</header>
+
+<main>
+  <aside id="palette">
+    <h2>Palette</h2>
+    <div id="paletteBody"></div>
+  </aside>
+
+  <section id="canvasWrap">
+    <canvas id="c"></canvas>
+    <div id="timeline" style="display:none">
+      <div id="timelineFrames"></div>
+      <div id="timelineControls">
+        <button id="btnPlayAnim">▶ Play</button>
+        <button id="btnAddFrame">+ Frame</button>
+        <button id="btnDupFrame">Duplicate</button>
+        <button id="btnDelFrame">Delete</button>
+      </div>
+      <div id="timelineInfo">—</div>
+    </div>
+  </section>
+
+  <aside id="props">
+    <h2>Properties</h2>
+    <div id="propsBody"><div id="propsEmpty">Nothing selected</div></div>
+    <div id="effectsBox" style="display:none">
+      <h2>Face Effects</h2>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxScanline"> Scanline
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxGlitch"> Glitch
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxJitter"> Jitter
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxCorners" checked> Corner brackets
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fxStatus"> Status bar
+      </label>
+    </div>
+    <div id="status">—</div>
+  </aside>
+</main>
+
+<script>
+// ============================================================
+// Screen config
+// ============================================================
+const W = 32;
+const H = 128;
+const SCALE = 6;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width  = W * SCALE;
+canvas.height = H * SCALE;
+
+let currentMode = 'face';
+
+// ============================================================
+// ANIMATION STATE
+// ============================================================
+let frames = [{ durationMs: 100, pixels: new Uint8Array(W * H) }];
+let currentFrameIndex = 0;
+let defaultFrameMs = 100;
+let animationPlaying = false;
+let animationPlayStart = 0;
+let animationPlayHandle = null;
+let loopCount = 1;
+let currentBackgroundFrames = null;
+let currentBackgroundFrameMs = 100;
+let importTrigger = 'onWake';
+
+let pixels = frames[0].pixels;
+let undoStack = [];
+let currentTool = 'pencil';
+let brushSize = 1;
+let previewPixels = new Uint8Array(W * H);
+let shapeStart = null;
+let shapeEnd = null;
+let shapeActive = false;
+
+function idx(x, y) { return y * W + x; }
+
+// ============================================================
+// FACE STATE
+// ============================================================
+let elements = [
+  { id: 1, type: 'time',    style: '7seg',     x: 0,  y: 2,   w: 32, h: 56, thick: 3 },
+  { id: 2, type: 'date',    style: 'microhex', format: 'MMDD', scale: 2, x: 0, y: 64, w: 26, h: 16 },
+  { id: 3, type: 'weekday',                     x: 0,  y: 88,  w: 16, h: 16 },
+  { id: 4, type: 'weather',                     x: 16, y: 88,  w: 16, h: 16 },
+  { id: 5, type: 'temp',    style: 'microhex', scale: 2, x: 0, y: 108, w: 26, h: 16 },
+];
+let selectedId = null;
+let nextId = 6;
+
+let effects = {
+  scanline: false,
+  glitch: false,
+  jitter: false,
+  corners: true,
+  status: false,
+};
+
+let scanY = 0;
+
+// ============================================================
+// Fonts
+// ============================================================
+const MHEX_GLYPHS = [
+  [0x3C,0x4A,0x52,0x62,0x42,0x3C],
+  [0x00,0x22,0x7E,0x02,0x00,0x00],
+  [0x26,0x4A,0x4A,0x4A,0x52,0x24],
+  [0x24,0x42,0x4A,0x4A,0x4A,0x34],
+  [0x18,0x28,0x48,0x7E,0x08,0x08],
+  [0x72,0x52,0x52,0x52,0x52,0x5E],
+  [0x3C,0x52,0x52,0x52,0x52,0x0C],
+  [0x40,0x40,0x46,0x58,0x60,0x40],
+  [0x2C,0x52,0x52,0x52,0x52,0x2C],
+  [0x20,0x52,0x52,0x52,0x52,0x3C],
+];
+const MHEX_WIDTH = 6;
+const MHEX_HEIGHT = 8;
+
+const SEG_MAP = [
+  0b0111111, 0b0000110, 0b1011011, 0b1001111, 0b1100110,
+  0b1101101, 0b1111101, 0b0000111, 0b1111111, 0b1101111
+];
+
+const KANJI_SUN    = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x07,0xE0,0x04,0x20,0x04,0x20,0x07,0xE0,0x04,0x20,0x04,0x20,0x07,0xE0,0x04,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_MON    = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x07,0xE0,0x04,0x20,0x07,0xE0,0x04,0x20,0x07,0xE0,0x08,0x20,0x08,0x20,0x10,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_TUE    = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x05,0x20,0x09,0x20,0x09,0x20,0x02,0x80,0x02,0x80,0x0C,0x60,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_WED    = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x0D,0x20,0x05,0xC0,0x05,0x40,0x09,0x60,0x11,0x10,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_THU    = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x1F,0xF0,0x01,0x00,0x03,0x80,0x05,0x40,0x09,0x20,0x11,0x10,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_FRI    = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x02,0x80,0x04,0x40,0x0F,0xB0,0x11,0x00,0x07,0xC0,0x09,0x20,0x01,0x00,0x1F,0xF0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_SAT    = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x0F,0xE0,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x1F,0xF0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+
+const KANJI_SUNNY  = [0x00,0x00,0x01,0x00,0x01,0x00,0x18,0x10,0x01,0x10,0x07,0xC0,0x07,0xC0,0x6F,0xEC,0x07,0xC0,0x07,0xC0,0x11,0x00,0x10,0x30,0x01,0x00,0x01,0x00,0x00,0x00,0x00,0x00];
+const KANJI_CLOUD  = [0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x07,0x80,0x07,0xF0,0x1F,0xF0,0x3F,0xF8,0x3F,0xFC,0x3F,0xF8,0x1F,0xC0,0x01,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_RAINY  = [0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0xA0,0x13,0xE0,0x01,0xF0,0x00,0xF0,0x01,0x38,0x01,0x48,0x12,0x08,0x14,0x08,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_SPRING = [0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x1F,0xF0,0x0F,0xE0,0x1C,0x70,0x0F,0xE0,0x14,0x50,0x17,0xC0,0x04,0x40,0x07,0xC0,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_SUMMER = [0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0xF0,0x04,0x20,0x07,0xE0,0x04,0x20,0x07,0xE0,0x03,0xC0,0x0E,0x40,0x03,0xC0,0x1C,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_AUTUMN = [0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x80,0x1C,0x80,0x04,0xA0,0x1D,0xA0,0x04,0xA0,0x0C,0x80,0x15,0x40,0x05,0x40,0x05,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+const KANJI_WINTER = [0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x03,0xE0,0x04,0x20,0x1A,0x40,0x01,0x80,0x02,0x60,0x1D,0x18,0x00,0xC0,0x06,0x00,0x01,0xE0,0x00,0x00,0x00,0x00,0x00,0x00];
+
+const WEEKDAY_KANJI = [KANJI_SUN, KANJI_MON, KANJI_TUE, KANJI_WED, KANJI_THU, KANJI_FRI, KANJI_SAT];
+const WEATHER_KANJI = [KANJI_SUNNY, KANJI_CLOUD, KANJI_RAINY, KANJI_SPRING, KANJI_SUMMER, KANJI_AUTUMN, KANJI_WINTER];
+
+function scaleFromHeight(boxHeight, glyphHeight) {
+  const s = Math.floor(boxHeight / glyphHeight);
+  return Math.max(1, s);
+}
+
+// ============================================================
+// Low-level pixel writes
+// ============================================================
+function fillRectPx(x, y, w, h) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x * SCALE, y * SCALE, w * SCALE, h * SCALE);
+}
+
+function drawPixelPx(x, y) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+}
+
+function switchToFrame(i) {
+  if (animationPlaying) stopAnimation();
+  if (i < 0 || i >= frames.length) return;
+  currentFrameIndex = i;
+  pixels = frames[i].pixels;
+  render();
+  renderTimeline();
+}
+
+function addFrame() {
+  if (frames.length >= AD_MAX_FRAMES) {
+    alert(`Frame limit reached (${AD_MAX_FRAMES} frames). Delete some frames first.`);
+    return;
+  }
+  frames.push({ durationMs: defaultFrameMs, pixels: new Uint8Array(W * H) });
+  switchToFrame(frames.length - 1);
+  renderTimeline();
+  rebuildProps();
+}
+
+function duplicateFrame() {
+  if (frames.length >= AD_MAX_FRAMES) {
+    alert(`Frame limit reached (${AD_MAX_FRAMES} frames). Delete some frames first.`);
+    return;
+  }
+  const cur = frames[currentFrameIndex];
+  const copy = { durationMs: cur.durationMs, pixels: new Uint8Array(cur.pixels) };
+  frames.splice(currentFrameIndex + 1, 0, copy);
+  switchToFrame(currentFrameIndex + 1);
+  renderTimeline();
+  rebuildProps();
+}
+
+function deleteFrame() {
+  if (frames.length <= 1) return;
+  frames.splice(currentFrameIndex, 1);
+  if (currentFrameIndex >= frames.length) currentFrameIndex = frames.length - 1;
+  switchToFrame(currentFrameIndex);
+  renderTimeline();
+  rebuildProps();
+}
+
+function playAnimation() {
+  if (animationPlaying) { stopAnimation(); return; }
+  animationPlaying = true;
+  animationPlayStart = performance.now();
+  document.getElementById('btnPlayAnim').textContent = '■ STOP';
+  animationPlayHandle = requestAnimationFrame(animationLoop);
+}
+
+function stopAnimation() {
+  animationPlaying = false;
+  if (animationPlayHandle) {
+    cancelAnimationFrame(animationPlayHandle);
+    animationPlayHandle = null;
+  }
+  document.getElementById('btnPlayAnim').textContent = '▶ PLAY';
+  render();
+}
+
+function animationLoop() {
+  if (!animationPlaying) return;
+  const elapsed = performance.now() - animationPlayStart;
+  const totalMs = frames.reduce((a, f) => a + f.durationMs, 0);
+  if (totalMs <= 0) { stopAnimation(); return; }
+  const t = elapsed % totalMs;
+  let cumulative = 0;
+  let shownFrame = 0;
+  for (let i = 0; i < frames.length; i++) {
+    cumulative += frames[i].durationMs;
+    if (t < cumulative) { shownFrame = i; break; }
+  }
+  drawPreviewFrame(shownFrame);
+  animationPlayHandle = requestAnimationFrame(animationLoop);
+}
+
+function drawPreviewFrame(i) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const px = frames[i].pixels;
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (px[y * W + x]) {
+        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+      }
+    }
+  }
+}
+
+function renderTimeline() {
+  const wrap = document.getElementById('timelineFrames');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  for (let i = 0; i < frames.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'timeline-thumb' + (i === currentFrameIndex ? ' selected' : '');
+
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const cctx = c.getContext('2d');
+    const img = cctx.createImageData(W, H);
+    const px = frames[i].pixels;
+    for (let p = 0; p < W * H; p++) {
+      const on = px[p];
+      img.data[p * 4 + 0] = on ? 255 : 0;
+      img.data[p * 4 + 1] = on ? 255 : 0;
+      img.data[p * 4 + 2] = on ? 255 : 0;
+      img.data[p * 4 + 3] = 255;
+    }
+    cctx.putImageData(img, 0, 0);
+    div.appendChild(c);
+
+    const label = document.createElement('div');
+    label.className = 'thumb-label';
+    label.textContent = i;
+    div.appendChild(label);
+
+    div.onclick = () => {
+      switchToFrame(i);
+      renderTimeline();
+      rebuildProps();
+    };
+
+    wrap.appendChild(div);
+  }
+
+  const info = document.getElementById('timelineInfo');
+  if (info) {
+    const perLoopMs = frames.reduce((a, f) => a + f.durationMs, 0);
+    const totalPlayMs = perLoopMs * loopCount;
+    const over = totalPlayMs > 30000;
+    info.textContent =
+      `${frames.length} frame${frames.length === 1 ? '' : 's'} · ` +
+      `${perLoopMs}ms/loop × ${loopCount} = ${(totalPlayMs / 1000).toFixed(2)}s` +
+      (over ? ' (over 30s!)' : '');
+    info.style.color = over ? '#c66' : '#888';
+  }
+}
+
+// ============================================================
+// 7-segment renderer
+// ============================================================
+function draw7SegDigit(x, y, w, h, thick, d) {
+  if (d < 0 || d > 9) return;
+  const mask = SEG_MAP[d];
+  const midY = y + Math.floor(h / 2);
+  let upperLen = Math.floor(h / 2) - thick - 1;
+  if (upperLen < 0) upperLen = 0;
+  const lowerLen = upperLen;
+  const hSeg = (yy) => fillRectPx(x, yy, w, thick);
+  const vSeg = (xx, yy, len) => { if (len > 0) fillRectPx(xx, yy, thick, len); };
+  if (mask & (1 << 0)) hSeg(y);
+  if (mask & (1 << 6)) hSeg(midY - Math.floor(thick / 2));
+  if (mask & (1 << 3)) hSeg(y + h - thick);
+  if (mask & (1 << 5)) vSeg(x, y + thick, upperLen);
+  if (mask & (1 << 1)) vSeg(x + w - thick, y + thick, upperLen);
+  if (mask & (1 << 4)) vSeg(x, midY + Math.floor(thick / 2), lowerLen);
+  if (mask & (1 << 2)) vSeg(x + w - thick, midY + Math.floor(thick / 2), lowerLen);
+}
+
+// ============================================================
+// Bitmap glyph renderer
+// ============================================================
+function drawMicroHexDigit(x, y, digit, scale) {
+  if (digit < 0 || digit > 9) return;
+  const cols = MHEX_GLYPHS[digit];
+  drawGlyphColumns(x, y, cols, MHEX_WIDTH, MHEX_HEIGHT, scale);
+}
+
+function drawGlyphColumns(x, y, cols, w, h, scale) {
+  for (let cx = 0; cx < w; cx++) {
+    const col = cols[cx];
+    let flipped = 0;
+    for (let b = 0; b < h; b++) {
+      if (col & (1 << b)) flipped |= (1 << (h - 1 - b));
+    }
+    for (let row = 0; row < h; row++) {
+      if (flipped & (1 << row)) {
+        fillRectPx(x + cx * scale, y + row * scale, scale, scale);
+      }
+    }
+  }
+}
+
+function drawKanjiBitmap(x, y, bitmap, scale) {
+  if (scale < 1) scale = 1;
+  for (let cy = 0; cy < 16; cy++) {
+    for (let cx = 0; cx < 16; cx++) {
+      const bitIndex = cy * 16 + cx;
+      const byteIdx = bitIndex >> 3;
+      const bitPos = 7 - (bitIndex & 7);
+      const b = bitmap[byteIdx];
+      if (b & (1 << bitPos)) {
+        fillRectPx(x + cx * scale, y + cy * scale, scale, scale);
+      }
+    }
+  }
+}
+
+function scaleForBox(boxW, boxH, charW, charH, charCount) {
+  const scaleH = Math.floor(boxH / charH);
+  return Math.max(1, scaleH);
+}
+
+function drawGLCDFontChar(x, y, code, scale) {
+  if (code < 0 || code > 255) code = '?'.charCodeAt(0);
+  const base = code * 5;
+  for (let cx = 0; cx < 5; cx++) {
+    const col = GLCDFONT[base + cx];
+    for (let row = 0; row < 8; row++) {
+      if (col & (1 << row)) {
+        fillRectPx(x + cx * scale, y + row * scale, scale, scale);
+      }
+    }
+  }
+}
+
+function drawTextElement(el) {
+  const rot = el.rotation || 0;
+  const content = el.content || 'Hello';
+  const s = scaleFromHeight(el.h, 8);
+  if (rot === 90 || rot === 270) {
+    let yy = el.y;
+    for (const ch of content) {
+      drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+      yy += 8 * s;
+    }
+  } else {
+    let xx = el.x;
+    for (const ch of content) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+  }
+}
+
+function drawBackgroundElement(el) {
+  if (!currentBackgroundFrames || currentBackgroundFrames.length === 0) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120, 120, 120, 0.4)';
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(el.x * SCALE + 0.5, el.y * SCALE + 0.5, el.w * SCALE, el.h * SCALE);
+    ctx.fillStyle = 'rgba(120, 120, 120, 0.5)';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('no background loaded', (el.x + el.w / 2) * SCALE, (el.y + el.h / 2) * SCALE);
+    ctx.restore();
+    return;
+  }
+  const px = currentBackgroundFrames[0];
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < el.h && y < H; y++) {
+    const srcY = y;
+    if (srcY >= H) break;
+    const dstY = el.y + y;
+    if (dstY < 0 || dstY >= H) continue;
+    for (let x = 0; x < el.w && x < W; x++) {
+      const srcX = x;
+      if (srcX >= W) break;
+      const dstX = el.x + x;
+      if (dstX < 0 || dstX >= W) continue;
+      if (px[srcY * W + srcX]) {
+        ctx.fillRect(dstX * SCALE, dstY * SCALE, SCALE, SCALE);
+      }
+    }
+  }
+}
+
+// ============================================================
+// FACE renderer
+// ============================================================
+function renderFace() {
+  drawGrid();
+  for (const el of elements) drawElement(el);
+  if (selectedId !== null) {
+    const el = elements.find(e => e.id === selectedId);
+    if (el) drawSelectionOutline(el);
+  }
+  if (effects.scanline) drawScanline();
+  if (effects.corners)  drawCornerBrackets();
+  if (effects.status)   drawStatusBar();
+}
+
+const HANDLE_SIZE = 8;
+const HANDLE_COLOR = '#3af';
+
+function drawSelectionOutline(el) {
+  const x = el.x * SCALE;
+  const y = el.y * SCALE;
+  const w = el.w * SCALE;
+  const h = el.h * SCALE;
+  ctx.save();
+  ctx.strokeStyle = HANDLE_COLOR;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  const corners = [
+    [x,     y    ],
+    [x + w, y    ],
+    [x,     y + h],
+    [x + w, y + h],
+  ];
+  ctx.fillStyle = HANDLE_COLOR;
+  for (const [cx, cy] of corners) {
+    ctx.fillRect(cx - HANDLE_SIZE / 2, cy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+  }
+  ctx.restore();
+}
+
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 8) {
+    ctx.beginPath();
+    ctx.moveTo(x * SCALE + 0.5, 0);
+    ctx.lineTo(x * SCALE + 0.5, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 8) {
+    ctx.beginPath();
+    ctx.moveTo(0, y * SCALE + 0.5);
+    ctx.lineTo(canvas.width, y * SCALE + 0.5);
+    ctx.stroke();
+  }
+}
+
+function drawScanline() { fillRectPx(0, scanY, W, 1); }
+
+function drawCornerBrackets() {
+  fillRectPx(0, 0, 8, 1);
+  fillRectPx(0, 0, 1, 6);
+  fillRectPx(W - 8, 0, 8, 1);
+  fillRectPx(W - 1, 0, 1, 6);
+  fillRectPx(0, H - 1, 8, 1);
+  fillRectPx(0, H - 6, 1, 6);
+  fillRectPx(W - 8, H - 1, 8, 1);
+  fillRectPx(W - 1, H - 6, 1, 6);
+}
+
+function drawStatusBar() {
+  drawTextSmall(0, 0, 'BAT');
+  for (let i = 0; i < 3; i++) fillRectPx(20 + i * 4, 0, 2, 5);
+  drawTextSmall(0, 6, 'SIG');
+  for (let i = 0; i < 2; i++) fillRectPx(20 + i * 4, 6, 2, 5);
+}
+
+function drawTextSmall(x, y, str) {
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '5px monospace';
+  ctx.textBaseline = 'top';
+  ctx.fillText(str, x * SCALE, y * SCALE);
+  ctx.restore();
+}
+
+function drawWeekdayElement(el, now) {
+  const style = el.weekdayStyle || 'kanji';
+  const s = Math.max(1, Math.floor(el.h / 8));
+  if (style === 'kanji') {
+    const kanjiScale = Math.max(1, Math.floor(el.h / 16));
+    const dow = now.getDay();
+    drawKanjiBitmap(el.x, el.y, WEEKDAY_KANJI[dow], kanjiScale);
+  } else {
+    const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const label = DAYS[now.getDay()];
+    const charW = 6 * s;
+    let xx = el.x;
+    for (const ch of label) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += charW;
+    }
+  }
+}
+function drawWeatherElement(el) {
+  const s = Math.max(1, Math.floor(el.h / 16));
+  const weatherIndex = 1;
+  drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
+}
+
+function drawElement(el) {
+  const now = new Date();
+  switch (el.type) {
+    case 'time':     drawTimeElement(el, now);    break;
+    case 'seconds':  drawSecondsElement(el, now); break;
+    case 'date':     drawDateElement(el, now);    break;
+    case 'weekday':  drawWeekdayElement(el, now); break;
+    case 'weather':  drawWeatherElement(el);      break;
+    case 'temp':     drawTempElement(el);         break;
+    case 'text':     drawTextElement(el);         break;
+    case 'bar':      drawBarElement(el);          break;
+    case 'background': drawBackgroundElement(el); break;
+    default:         break;
+  }
+}
+
+function drawBarElement(el) {
+  const now = new Date();
+  let value = 0;
+  switch (el.source) {
+    case 'time.hourProgress':
+      value = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+      break;
+    case 'time.dayProgress':
+      value = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+      break;
+    case 'weather.humidity':
+      value = 0.65;
+      break;
+    case 'battery.percent':
+      value = 0.73;
+      break;
+    default:
+      value = 0.5;
+  }
+  if (value < 0) value = 0;
+  if (value > 1) value = 1;
+
+  const vertical = (el.rotation === 90 || el.rotation === 270);
+  const style = el.barStyle || 'solid';
+
+  if (el.barOutline) {
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(el.x * SCALE + 0.5, el.y * SCALE + 0.5, el.w * SCALE - 1, el.h * SCALE - 1);
+    ctx.restore();
+  }
+
+  const inset = el.barOutline ? 1 : 0;
+  const bx = el.x + inset;
+  const by = el.y + inset;
+  const bw = el.w - inset * 2;
+  const bh = el.h - inset * 2;
+  if (bw <= 0 || bh <= 0) return;
+
+  if (style === 'solid') {
+    if (vertical) {
+      const fillH = Math.floor(bh * value);
+      if (fillH > 0) fillRectPx(bx, by + bh - fillH, bw, fillH);
+    } else {
+      const fillW = Math.floor(bw * value);
+      if (fillW > 0) fillRectPx(bx, by, fillW, bh);
+    }
+  } else if (style === 'segmented') {
+    const segCount = Math.max(2, el.segments || 10);
+    const gap = 1;
+    const totalGaps = (segCount - 1) * gap;
+    const litCount = Math.round(segCount * value);
+    if (vertical) {
+      const segH = Math.floor((bh - totalGaps) / segCount);
+      if (segH < 1) return;
+      for (let i = 0; i < segCount; i++) {
+        const segY = by + bh - (i + 1) * segH - i * gap;
+        if (i < litCount) fillRectPx(bx, segY, bw, segH);
+      }
+    } else {
+      const segW = Math.floor((bw - totalGaps) / segCount);
+      if (segW < 1) return;
+      for (let i = 0; i < segCount; i++) {
+        const segX = bx + i * (segW + gap);
+        if (i < litCount) fillRectPx(segX, by, segW, bh);
+      }
+    }
+  } else if (style === 'dotted') {
+    if (vertical) {
+      const fillH = Math.floor(bh * value);
+      for (let py = by + bh - fillH; py < by + bh; py++)
+        for (let px = bx; px < bx + bw; px++)
+          if (((px + py) & 1) === 0) fillRectPx(px, py, 1, 1);
+    } else {
+      const fillW = Math.floor(bw * value);
+      for (let py = by; py < by + bh; py++)
+        for (let px = bx; px < bx + fillW; px++)
+          if (((px + py) & 1) === 0) fillRectPx(px, py, 1, 1);
+    }
+  }
+}
+
+function drawTimeElement(el, now) {
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const str = hh + mm;
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
+  const s = scaleFromHeight(el.h, 8);
+
+  if (el.style === '7seg') {
+    if (vertical) {
+      const digitW = Math.floor((el.w - 3) / 4);
+      const h = el.h;
+      const thick = Math.max(1, Math.round(Math.min(digitW, h) / 6));
+      const digits = str.split('').map(Number);
+      for (let i = 0; i < 4; i++) {
+        draw7SegDigit(el.x + i * (digitW + 1), el.y, digitW, h, thick, digits[i]);
+      }
+    } else {
+      const rowH = Math.floor(el.h / 4);
+      const thick = Math.max(1, Math.round(rowH / 6));
+      const digits = str.split('').map(Number);
+      let yy = el.y;
+      for (let i = 0; i < 4; i++) {
+        draw7SegDigit(el.x, yy, el.w, rowH - 2, thick, digits[i]);
+        yy += rowH;
+      }
+    }
+  } else if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of str) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of str) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+  } else {
+    const glyphW = (MHEX_WIDTH + 1) * s;
+    const glyphH = (MHEX_HEIGHT + 1) * s;
+    if (vertical) {
+      let yy = el.y;
+      for (const c of str.split('').map(Number)) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+    } else {
+      let xx = el.x;
+      for (const c of str.split('').map(Number)) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+    }
+  }
+}
+
+function drawSecondsElement(el, now) {
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
+  const s = scaleFromHeight(el.h, 8);
+
+  if (el.style === '7seg') {
+    if (vertical) {
+      const digitH = Math.floor((el.h - 1) / 2);
+      const w = el.w;
+      const thick = Math.max(1, Math.round(Math.min(w, digitH) / 6));
+      draw7SegDigit(el.x, el.y, w, digitH, thick, Number(ss[0]));
+      draw7SegDigit(el.x, el.y + digitH + 1, w, digitH, thick, Number(ss[1]));
+    } else {
+      const digitW = Math.floor((el.w - 2) / 2);
+      const h = el.h;
+      const thick = Math.max(1, Math.round(Math.min(digitW, h) / 6));
+      const y = el.y + Math.floor((el.h - h) / 2);
+      draw7SegDigit(el.x, y, digitW, h, thick, Number(ss[0]));
+      draw7SegDigit(el.x + digitW + 2, y, digitW, h, thick, Number(ss[1]));
+    }
+  } else if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of ss) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of ss) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+  } else {
+    const glyphW = (MHEX_WIDTH + 1) * s;
+    const glyphH = (MHEX_HEIGHT + 1) * s;
+    if (vertical) {
+      let yy = el.y;
+      for (const c of ss.split('').map(Number)) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+    } else {
+      let xx = el.x;
+      for (const c of ss.split('').map(Number)) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+    }
+  }
+}
+function drawDateElement(el, now) {
+  const rot = el.rotation || 0;
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const s = scaleFromHeight(el.h, 8);
+
+  let str = '';
+  switch (el.format || 'MMDD') {
+    case 'DDMM': str = dd + mm; break;
+    case 'MM':   str = mm;      break;
+    case 'DD':   str = dd;      break;
+    case 'MMDD':
+    default:     str = mm + dd; break;
+  }
+
+  const vertical = (rot === 90 || rot === 270);
+
+  if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of str) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of str) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+    return;
+  }
+
+  const digits = str.split('').map(Number);
+  const glyphW = (MHEX_WIDTH + 1) * s;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+  if (vertical) {
+    let yy = el.y;
+    for (const c of digits) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+  } else {
+    let xx = el.x;
+    for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+  }
+}
+
+function drawTempElement(el) {
+  const rot = el.rotation || 0;
+  const temp = 21;
+  const str = String(temp);
+  const s = scaleFromHeight(el.h, 8);
+  const vertical = (rot === 90 || rot === 270);
+
+  if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of str) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of str) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+    return;
+  }
+
+  const digits = str.split('').map(Number);
+  const glyphW = (MHEX_WIDTH + 1) * s;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+  if (vertical) {
+    let yy = el.y;
+    for (const c of digits) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+  } else {
+    let xx = el.x;
+    for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+  }
+}
+
+function drawPlaceholder(x, y, w, h, label) {
+  ctx.save();
+  ctx.strokeStyle = '#f80';
+  ctx.setLineDash([2, 2]);
+  ctx.strokeRect(x * SCALE + 0.5, y * SCALE + 0.5, w * SCALE, h * SCALE);
+  ctx.fillStyle = '#f80';
+  ctx.font = `${Math.floor(h * SCALE * 0.5)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, (x + w / 2) * SCALE, (y + h / 2) * SCALE);
+  ctx.restore();
+}
+
+// ============================================================
+// Main render dispatcher
+// ============================================================
+function render() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (currentMode === 'anim') {
+    renderAnim();
+    updateAnimStatus();
+  } else {
+    renderFace();
+    updateFaceStatus();
+  }
+}
+
+function renderAnim() {
+  ctx.fillStyle = '#ffffff';
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (pixels[idx(x, y)]) ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+    }
+  }
+  if (shapeActive) {
+    ctx.fillStyle = '#ffffff';
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (previewPixels[idx(x, y)]) {
+          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+        }
+      }
+    }
+  }
+  drawGrid();
+}
+
+function updateAnimStatus() {
+  let count = 0;
+  for (let i = 0; i < pixels.length; i++) if (pixels[i]) count++;
+  document.getElementById('status').textContent =
+    `${W}×${H} • ${count} px on • zoom ${SCALE}×`;
+}
+
+function updateFaceStatus() {
+  document.getElementById('status').textContent =
+    `${W}×${H} • ${elements.length} element${elements.length===1?'':'s'} • face mode`;
+}
+
+// ============================================================
+// Placement helpers
+// ============================================================
+function overlapsAny(x, y, w, h) {
+  for (const el of elements) {
+    if (x < el.x + el.w && x + w > el.x &&
+        y < el.y + el.h && y + h > el.y) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function findFreeSpot(w, h) {
+  const step = 4;
+  for (let y = 0; y <= H - h; y += step) {
+    for (let x = 0; x <= W - w; x += step) {
+      if (!overlapsAny(x, y, w, h)) return { x, y };
+    }
+  }
+  return {
+    x: Math.max(0, Math.floor((W - w) / 2)),
+    y: Math.max(0, Math.floor((H - h) / 2)),
+  };
+}
+
+function addElement(type) {
+  const defaults = {
+    time: { w: 32, h: 56, style: '7seg', thick: 3, scale: 1 },
+    seconds: { w: 20, h: 10, style: '7seg' },
+    date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
+    weekday: { w: 16, h: 16 },
+    weather: { w: 16, h: 16 },
+    temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
+    bar: { w: 4, h: 48, source: 'time.hourProgress', barStyle: 'solid', segments: 10, barOutline: true },
+    text: { w: 32, h: 16, content: 'Hello', scale: 1 },
+    background: { w: 32, h: 128 },
+  };
+  const def = defaults[type];
+  if (!def) return;
+  const { w, h, ...props } = def;
+
+  if (type === 'background') {
+    const existingIdx = elements.findIndex(e => e.type === 'background');
+    if (existingIdx >= 0) elements.splice(existingIdx, 1);
+    const el = { id: nextId++, type, x: 0, y: 0, w, h, ...props };
+    elements.unshift(el);
+    selectedId = el.id;
+    rebuildProps();
+    render();
+    return;
+  }
+
+  const spot = findFreeSpot(w, h);
+  const el = { id: nextId++, type, x: spot.x, y: spot.y, w, h, ...props };
+  elements.push(el);
+  selectedId = el.id;
+  rebuildProps();
+  render();
+}
+
+// ============================================================
+// Palette & properties rebuild
+// ============================================================
+function rebuildPalette() {
+  const body = document.getElementById('paletteBody');
+  if (currentMode === 'anim') {
+    body.innerHTML = `
+      <h2 style="font-size:12px;margin-top:0">Tools</h2>
+      <div id="toolGrid">
+        <button data-tool="pencil"     title="Pencil">✏</button>
+        <button data-tool="eraser"     title="Eraser">🧽</button>
+        <button data-tool="line"       title="Line">╱</button>
+        <button data-tool="rect"       title="Rectangle">▢</button>
+        <button data-tool="rectFill"   title="Filled rectangle">▣</button>
+        <button data-tool="circle"     title="Circle">○</button>
+        <button data-tool="circleFill" title="Filled circle">●</button>
+        <button data-tool="fill"       title="Fill">🪣</button>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:10px">Brush</div>
+      <div id="brushSizes">
+        <button data-brush="1">1</button>
+        <button data-brush="2">2</button>
+        <button data-brush="3">3</button>
+        <button data-brush="4">4</button>
+      </div>
+      <h2 style="font-size:12px;margin-top:14px">Actions</h2>
+      <button id="btnClear">Clear</button>
+      <button id="btnInvert">Invert</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnDemo">Load demo pattern</button>
+      <h2 style="font-size:12px;margin-top:14px">Import</h2>
+      <button id="btnShowImport">Import GIF / video…</button>
+      <div id="importPanel" style="display:none;margin-top:8px"></div>
+    `;
+    wireAnimTools();
+    wireImportPanel();
+  } else {
+    body.innerHTML = `
+      <h2 style="font-size:12px;margin-top:0">Add Element</h2>
+      <button data-add="time">Time</button>
+      <button data-add="seconds">Seconds</button>
+      <button data-add="date">Date</button>
+      <button data-add="weekday">Weekday</button>
+      <button data-add="weather">Weather</button>
+      <button data-add="temp">Temp</button>
+      <button data-add="bar">Bar</button>
+      <button data-add="text">Text</button>
+      <button data-add="background">Background</button>
+    `;
+    body.querySelectorAll('[data-add]').forEach(btn => {
+      btn.onclick = () => addElement(btn.dataset.add);
+    });
+  }
+}
+
+function rebuildProps() {
+  const body = document.getElementById('propsBody');
+  const fx   = document.getElementById('effectsBox');
+
+  if (currentMode === 'face') {
+    fx.style.display = '';
+    if (selectedId === null) {
+      body.innerHTML = '<div id="propsEmpty">Click an element to select</div>';
+      return;
+    }
+    const el = elements.find(e => e.id === selectedId);
+    if (!el) {
+      selectedId = null;
+      body.innerHTML = '<div id="propsEmpty">Click an element to select</div>';
+      return;
+    }
+
+    const dateFields = el.type === 'date' ? `
+      <div class="prop-row">
+        <label>Format</label>
+        <select id="propFormat">
+          <option value="MMDD" ${el.format==='MMDD'?'selected':''}>MMDD (0918)</option>
+          <option value="DDMM" ${el.format==='DDMM'?'selected':''}>DDMM (1809)</option>
+          <option value="MM"   ${el.format==='MM'?'selected':''}>MM (09)</option>
+          <option value="DD"   ${el.format==='DD'?'selected':''}>DD (18)</option>
+        </select>
+      </div>
+    ` : '';
+    const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar'].includes(el.type) ? `
+      <div class="prop-row">
+        <label>Rotation</label>
+        <select id="propRotation">
+          <option value="0"   ${(el.rotation||0)===0  ?'selected':''}>0°</option>
+          <option value="90"  ${(el.rotation||0)===90 ?'selected':''}>90°</option>
+          <option value="180" ${(el.rotation||0)===180?'selected':''}>180°</option>
+          <option value="270" ${(el.rotation||0)===270?'selected':''}>270°</option>
+        </select>
+      </div>
+    ` : '';
+    const textFields = el.type === 'text' ? `
+      <div class="prop-row">
+        <label>Content</label>
+        <input type="text" id="propContent" value="${el.content || ''}" style="width:140px;text-align:left">
+      </div>
+    ` : '';
+    const styleFields = ['time', 'seconds', 'date', 'temp'].includes(el.type) ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propStyle">
+          ${el.type === 'time' || el.type === 'seconds' ? `
+            <option value="7seg"     ${el.style==='7seg'    ?'selected':''}>7-seg</option>
+          ` : ''}
+          <option value="microhex" ${el.style==='microhex'?'selected':''}>Microhex</option>
+          <option value="text"     ${el.style==='text'    ?'selected':''}>Text (5x7)</option>
+        </select>
+      </div>
+    ` : '';
+    const barFields = el.type === 'bar' ? `
+      <div class="prop-row">
+        <label>Source</label>
+        <select id="propBarSource">
+          <option value="time.hourProgress" ${el.source==='time.hourProgress'?'selected':''}>Hour progress</option>
+          <option value="time.dayProgress"  ${el.source==='time.dayProgress' ?'selected':''}>Day progress</option>
+          <option value="weather.humidity"  ${el.source==='weather.humidity' ?'selected':''}>Humidity</option>
+          <option value="battery.percent"   ${el.source==='battery.percent'  ?'selected':''}>Battery</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propBarStyle">
+          <option value="solid"     ${el.barStyle==='solid'    ?'selected':''}>Solid</option>
+          <option value="segmented" ${el.barStyle==='segmented'?'selected':''}>Segmented</option>
+          <option value="dotted"    ${el.barStyle==='dotted'   ?'selected':''}>Dotted</option>
+        </select>
+      </div>
+      ${el.barStyle === 'segmented' ? `
+        <div class="prop-row">
+          <label>Segments</label>
+          <input type="number" id="propBarSegments" value="${el.segments || 10}" min="2" max="40">
+        </div>
+      ` : ''}
+      <div class="prop-row">
+        <label>Outline</label>
+        <input type="checkbox" id="propBarOutline" ${el.barOutline ? 'checked' : ''}>
+      </div>
+    ` : '';
+    const weekdayFields = el.type === 'weekday' ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propWeekdayStyle">
+          <option value="kanji"   ${(el.weekdayStyle||'kanji')==='kanji'  ?'selected':''}>Kanji</option>
+          <option value="english" ${(el.weekdayStyle||'kanji')==='english'?'selected':''}>English</option>
+        </select>
+      </div>
+    ` : '';
+
+    body.innerHTML = `
+      <div style="font-size:12px;color:#aaa;margin-bottom:8px">
+        <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
+        ${el.style ? `<span style="color:#888"> · ${el.style}</span>` : ''}
+      </div>
+      <div class="prop-row"><label>X</label>
+        <input type="number" id="propX" value="${el.x}" min="${el.type === 'background' ? -W : 0}" max="${W-1}"></div>
+      <div class="prop-row"><label>Y</label>
+        <input type="number" id="propY" value="${el.y}" min="${el.type === 'background' ? -H : 0}" max="${H-1}"></div>
+      <div class="prop-row"><label>W</label>
+        <input type="number" id="propW" value="${el.w}" min="1" max="${W}"></div>
+      <div class="prop-row"><label>H</label>
+        <input type="number" id="propH" value="${el.h}" min="1" max="${H}"></div>
+      ${el.thick !== undefined ? `<div class="prop-row"><label>Thick</label>
+        <input type="number" id="propThick" value="${el.thick}" min="1" max="10"></div>` : ''}
+      ${['time', 'seconds', 'date', 'temp', 'text'].includes(el.type) ? `<div class="prop-row"><label>Scale</label>
+        <input type="number" id="propScale" value="${el.scale ?? 1}" min="1" max="6"></div>` : ''}
+      ${dateFields}
+      ${rotateFields}
+      ${textFields}
+      ${styleFields}
+      ${weekdayFields}
+      ${barFields}
+
+      ${el.type === 'background' ? `
+        <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+            Presets
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button id="bgPresetFill"   style="flex:1;margin:0;padding:6px 4px;font-size:11px">Fill</button>
+            <button id="bgPresetCenter" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Center</button>
+            <button id="bgPresetTop"    style="flex:1;margin:0;padding:6px 4px;font-size:11px">Top</button>
+            <button id="bgPresetBottom" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Bottom</button>
+          </div>
+        </div>
+      ` : ''}
+
+      <button id="propDelete" style="
+        margin-top:16px;
+        background:#4a2020;
+        border-color:#833;
+        color:#fbb;
+      ">Delete Element</button>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #2a2a2a">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+          Face Background
+        </div>
+        <div id="bgStatus" style="font-size:12px;color:#aaa;margin-bottom:6px">
+          ${currentBackgroundFrames ? `${currentBackgroundFrames.length} frame${currentBackgroundFrames.length === 1 ? '' : 's'} loaded` : 'None'}
+        </div>
+        <button id="btnClearBg" style="background:#2a2a2a;border-color:#444" ${currentBackgroundFrames ? '' : 'disabled'}>Remove background</button>
+      </div>
+
+      <div style="font-size:11px;color:#666;margin-top:12px">
+        Drag body to move · drag corners to resize
+      </div>
+    `;
+
+    const bind = (id, key) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.oninput = () => {
+        const v = parseInt(input.value, 10);
+        if (isNaN(v)) return;
+        el[key] = v;
+        if (el.type === 'background') {
+          el.w = Math.max(1, el.w);
+          el.h = Math.max(1, el.h);
+        } else {
+          el.x = Math.max(0, Math.min(W - el.w, el.x));
+          el.y = Math.max(0, Math.min(H - el.h, el.y));
+          el.w = Math.max(1, Math.min(W, el.w));
+          el.h = Math.max(1, Math.min(H, el.h));
+        }
+        render();
+      };
+    };
+    bind('propX', 'x');
+    bind('propY', 'y');
+    bind('propW', 'w');
+    bind('propH', 'h');
+    if (el.thick !== undefined) bind('propThick', 'thick');
+    const scaleInput = document.getElementById('propScale');
+    if (scaleInput) {
+      scaleInput.oninput = () => {
+        const v = parseInt(scaleInput.value, 10);
+        if (isNaN(v)) return;
+        el.scale = v;
+        render();
+      };
+    }
+
+    const fmt = document.getElementById('propFormat');
+    if (fmt) {
+      fmt.onchange = () => { el.format = fmt.value; render(); };
+    }
+
+    const rot = document.getElementById('propRotation');
+    if (rot) {
+      rot.onchange = () => {
+        const newRot = parseInt(rot.value, 10);
+        const oldRot = el.rotation || 0;
+        const isVerticalNew = (newRot === 90 || newRot === 270);
+        const isVerticalOld = (oldRot === 90 || oldRot === 270);
+        if (isVerticalNew !== isVerticalOld) {
+          const t = el.w; el.w = el.h; el.h = t;
+          el.x = Math.max(0, Math.min(W - el.w, el.x));
+          el.y = Math.max(0, Math.min(H - el.h, el.y));
+        }
+        el.rotation = newRot;
+        rebuildProps();
+        render();
+      };
+    }
+
+    const styleSel = document.getElementById('propStyle');
+    if (styleSel) {
+      styleSel.onchange = () => {
+        el.style = styleSel.value;
+        rebuildProps();
+        render();
+      };
+    }
+    const content = document.getElementById('propContent');
+    if (content) {
+      content.oninput = () => { el.content = content.value; render(); };
+    }
+
+    const barSource = document.getElementById('propBarSource');
+    if (barSource) {
+      barSource.onchange = () => { el.source = barSource.value; render(); };
+    }
+
+    const barStyle = document.getElementById('propBarStyle');
+    if (barStyle) {
+      barStyle.onchange = () => {
+        el.barStyle = barStyle.value;
+        rebuildProps();
+        render();
+      };
+    }
+
+    const barSegments = document.getElementById('propBarSegments');
+    if (barSegments) {
+      barSegments.oninput = () => {
+        const v = parseInt(barSegments.value, 10);
+        if (isNaN(v) || v < 2) return;
+        el.segments = v;
+        render();
+      };
+    }
+
+    const barOutline = document.getElementById('propBarOutline');
+    if (barOutline) {
+      barOutline.onchange = () => { el.barOutline = barOutline.checked; render(); };
+    }
+
+    const weekdayStyle = document.getElementById('propWeekdayStyle');
+    if (weekdayStyle) {
+      weekdayStyle.onchange = () => { el.weekdayStyle = weekdayStyle.value; render(); };
+    }
+
+    const del = document.getElementById('propDelete');
+    if (del) {
+      del.onclick = () => {
+        const idx = elements.findIndex(e => e.id === el.id);
+        if (idx < 0) return;
+        if (!confirm(`Delete the ${el.type} element?`)) return;
+        elements.splice(idx, 1);
+        selectedId = null;
+        rebuildProps();
+        render();
+      };
+    }
+
+    if (el.type === 'background') {
+      const setPreset = (x, y, w, h) => {
+        el.x = x; el.y = y; el.w = w; el.h = h;
+        rebuildProps();
+        render();
+      };
+      const pFill   = document.getElementById('bgPresetFill');
+      const pCenter = document.getElementById('bgPresetCenter');
+      const pTop    = document.getElementById('bgPresetTop');
+      const pBottom = document.getElementById('bgPresetBottom');
+      if (pFill)   pFill.onclick   = () => setPreset(0, 0, 32, 128);
+      if (pCenter) pCenter.onclick = () => setPreset(0, 32, 32, 64);
+      if (pTop)    pTop.onclick    = () => setPreset(0, 0, 32, 64);
+      if (pBottom) pBottom.onclick = () => setPreset(0, 64, 32, 64);
+    }
+
+    const btnClearBg = document.getElementById('btnClearBg');
+    if (btnClearBg) {
+      btnClearBg.onclick = async () => {
+        if (!currentBackgroundFrames) return;
+        if (!confirm('Remove the background from the watch and the designer?')) return;
+        currentBackgroundFrames = null;
+        try {
+          await sendRawPayload(JSON.stringify({ kind: 'backgroundClear', v: 1 }));
+        } catch (e) {
+          console.error(e);
+        }
+        rebuildProps();
+        render();
+      };
+    }
+  } else {
+    fx.style.display = 'none';
+    const uniformMs = frames[0].durationMs || 125;
+    const frameCount = frames.length;
+    const oneLoopMs = frameCount * uniformMs;
+    const maxLoopsByCap = Math.max(1, Math.floor(30000 / oneLoopMs));
+
+    body.innerHTML = `
+      <div style="font-size:12px;color:#aaa;margin-bottom:8px">
+        <strong style="color:#fff">Frame ${currentFrameIndex + 1} of ${frameCount}</strong>
+      </div>
+      <div class="prop-row">
+        <label>Name</label>
+        <input type="text" id="propAnimName" value="${window._animName || 'wake'}" style="width:100px;text-align:left">
+      </div>
+      <div class="prop-row">
+        <label>Frame ms</label>
+        <input type="number" id="propFrameMs" value="${uniformMs}" min="20" max="2000" step="5">
+      </div>
+      <div class="prop-row">
+        <label>Loops</label>
+        <input type="number" id="propLoopCount" value="${loopCount}" min="1" max="${maxLoopsByCap}">
+      </div>
+      <div class="prop-row">
+        <label>Trigger</label>
+        <select id="propTrigger">
+          <option value="onWake"      ${importTrigger==='onWake'?'selected':''}>On Wake</option>
+          <option value="beforeSleep" ${importTrigger==='beforeSleep'?'selected':''}>Before Sleep</option>
+          <option value="onHour"      ${importTrigger==='onHour'?'selected':''}>Hourly</option>
+          <option value="onTap"       ${importTrigger==='onTap'?'selected':''}>Tap</option>
+          <option value="scheduled"   ${importTrigger==='scheduled'?'selected':''}>Scheduled (manual)</option>
+        </select>
+      </div>
+      <div id="propAnimSummary" style="font-size:11px;color:#888;margin-top:10px">
+        ${frameCount} frame${frameCount === 1 ? '' : 's'} × ${uniformMs}ms × ${loopCount} loop${loopCount === 1 ? '' : 's'}
+        = <strong style="color:#ccc">${(oneLoopMs * loopCount / 1000).toFixed(2)}s</strong> total
+        <br>Max ${maxLoopsByCap} loops (30s cap)
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:12px">
+        All frames share one duration (uniform timing).
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:6px">
+        Max ${AD_MAX_FRAMES} frames.
+      </div>
+      <button id="btnDeleteAnim" style="margin-top:14px;background:#4a2020;border-color:#833;color:#fbb">Delete from Watch</button>
+    `;
+
+    const refreshSummary = () => {
+      const msVal = frames[0].durationMs || 125;
+      const cnt = frames.length;
+      const oneLoop = cnt * msVal;
+      const maxLoops = Math.max(1, Math.floor(30000 / oneLoop));
+      const summary = document.getElementById('propAnimSummary');
+      if (summary) {
+        summary.innerHTML = `
+          ${cnt} frame${cnt === 1 ? '' : 's'} × ${msVal}ms × ${loopCount} loop${loopCount === 1 ? '' : 's'}
+          = <strong style="color:#ccc">${(oneLoop * loopCount / 1000).toFixed(2)}s</strong> total
+          <br>Max ${maxLoops} loops (30s cap)
+        `;
+      }
+      const loopsInput = document.getElementById('propLoopCount');
+      if (loopsInput) loopsInput.max = maxLoops;
+      if (loopCount > maxLoops) {
+        loopCount = maxLoops;
+        if (loopsInput) loopsInput.value = maxLoops;
+      }
+    };
+
+    const ms = document.getElementById('propFrameMs');
+    if (ms) {
+      ms.oninput = () => {
+        const v = parseInt(ms.value, 10);
+        if (isNaN(v) || v < 20 || v > 2000) return;
+        for (const f of frames) f.durationMs = v;
+        renderTimeline();
+        refreshSummary();
+      };
+    }
+
+    const loops = document.getElementById('propLoopCount');
+    if (loops) {
+      loops.oninput = () => {
+        const v = parseInt(loops.value, 10);
+        if (isNaN(v) || v < 1) return;
+        const msVal = frames[0].durationMs || 125;
+        const maxLoops = Math.max(1, Math.floor(30000 / (frames.length * msVal)));
+        loopCount = Math.min(v, maxLoops);
+        if (loopCount !== v) loops.value = loopCount;
+        refreshSummary();
+      };
+    }
+
+    const nameInput = document.getElementById('propAnimName');
+    if (nameInput) {
+      nameInput.oninput = () => { window._animName = nameInput.value.trim() || 'untitled'; };
+    }
+    const trigInput = document.getElementById('propTrigger');
+    if (trigInput) {
+      trigInput.onchange = () => { importTrigger = trigInput.value; };
+    }
+
+    const delAnim = document.getElementById('btnDeleteAnim');
+    if (delAnim) {
+      delAnim.onclick = async () => {
+        const name = window._animName || 'wake';
+        if (!confirm(`Delete animation "${name}" from watch?`)) return;
+        try {
+          await sendRawPayload(JSON.stringify({ kind: 'animDelete', v: 1, name }));
+          connStatus.textContent = `Deleted ${name}`;
+        } catch (e) {
+          connStatus.textContent = 'Delete failed: ' + e.message;
+        }
+      };
+    }
+  }
+}
+
+// ============================================================
+// Animation tools
+// ============================================================
+function wireAnimTools() {
+  document.querySelectorAll('#toolGrid button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tool === currentTool);
+    btn.onclick = () => {
+      currentTool = btn.dataset.tool;
+      document.querySelectorAll('#toolGrid button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tool === currentTool);
+      });
+    };
+  });
+  document.querySelectorAll('#brushSizes button').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.brush, 10) === brushSize);
+    btn.onclick = () => {
+      brushSize = parseInt(btn.dataset.brush, 10);
+      document.querySelectorAll('#brushSizes button').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.brush, 10) === brushSize);
+      });
+    };
+  });
+  const btnClear  = document.getElementById('btnClear');
+  const btnInvert = document.getElementById('btnInvert');
+  const btnUndo   = document.getElementById('btnUndo');
+  const btnDemo   = document.getElementById('btnDemo');
+  const btnAddFrame = document.getElementById('btnAddFrame');
+  const btnDupFrame = document.getElementById('btnDupFrame');
+  const btnDelFrame = document.getElementById('btnDelFrame');
+  const btnPlay = document.getElementById('btnPlayAnim');
+  if (btnPlay) btnPlay.onclick = () => {
+    if (animationPlaying) stopAnimation();
+    else playAnimation();
+  };
+  if (btnAddFrame) btnAddFrame.onclick = addFrame;
+  if (btnDupFrame) btnDupFrame.onclick = duplicateFrame;
+  if (btnDelFrame) btnDelFrame.onclick = deleteFrame;
+
+  if (btnClear)  btnClear.onclick  = () => { pushUndo(); pixels.fill(0); render(); };
+  if (btnInvert) btnInvert.onclick = () => { pushUndo(); for (let i=0;i<pixels.length;i++) pixels[i]^=1; render(); };
+  if (btnUndo)   btnUndo.onclick   = () => {
+    if (!undoStack.length) return;
+    const restored = undoStack.pop();
+    frames[currentFrameIndex].pixels = restored;
+    pixels = restored;
+    render();
+  };
+  if (btnDemo)   btnDemo.onclick   = () => {
+    pushUndo(); pixels.fill(0);
+    for (let x=0;x<W;x++){pixels[idx(x,0)]=1;pixels[idx(x,H-1)]=1;}
+    for (let y=0;y<H;y++){pixels[idx(0,y)]=1;pixels[idx(W-1,y)]=1;}
+    render();
+  };
+}
+
+// ============================================================
+// Effects checkboxes
+// ============================================================
+function wireEffects() {
+  const map = {
+    fxScanline: 'scanline',
+    fxGlitch:   'glitch',
+    fxJitter:   'jitter',
+    fxCorners:  'corners',
+    fxStatus:   'status',
+  };
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.checked = effects[key];
+    el.onchange = () => {
+      effects[key] = el.checked;
+      render();
+    };
+  }
+}
+
+// ============================================================
+// Mode switching
+// ============================================================
+function setMode(mode) {
+  if (mode !== 'anim' && animationPlaying) stopAnimation();
+  currentMode = mode;
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  canvas.classList.toggle('face-mode', mode === 'face');
+  document.getElementById('timeline').style.display = (mode === 'anim') ? '' : 'none';
+  if (mode === 'anim') renderTimeline();
+  rebuildPalette();
+  rebuildProps();
+  render();
+}
+
+document.querySelectorAll('.tabs button').forEach(btn => {
+  btn.onclick = () => setMode(btn.dataset.mode);
+});
+
+// ============================================================
+// Animation drawing input handlers
+// ============================================================
+let mouseDown = false;
+let paintValue = 1;
+let lastCell = null;
+
+function cellFromEvent(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / SCALE);
+  const y = Math.floor((e.clientY - r.top)  / SCALE);
+  if (x < 0 || x >= W || y < 0 || y >= H) return null;
+  return { x, y };
+}
+
+function paintCell(x, y, val) {
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = idx(x, y);
+  if (pixels[i] === val) return;
+  pixels[i] = val;
+  ctx.fillStyle = val ? '#ffffff' : '#000';
+  ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+}
+
+function paintBrush(cx, cy, val) {
+  const half = Math.floor(brushSize / 2);
+  for (let dy = -half; dy < brushSize - half; dy++) {
+    for (let dx = -half; dx < brushSize - half; dx++) {
+      paintCell(cx + dx, cy + dy, val);
+    }
+  }
+  updateAnimStatus();
+}
+
+function paint(cell) {
+  if (!cell) return;
+  paintBrush(cell.x, cell.y, paintValue);
+}
+
+function plotBrushToBuffer(buf, cx, cy, val) {
+  const half = Math.floor(brushSize / 2);
+  for (let dy = -half; dy < brushSize - half; dy++) {
+    for (let dx = -half; dx < brushSize - half; dx++) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if (x < 0 || x >= W || y < 0 || y >= H) continue;
+      buf[idx(x, y)] = val;
+    }
+  }
+}
+
+function drawLineToBuffer(buf, x0, y0, x1, y1, val) {
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    plotBrushToBuffer(buf, x0, y0, val);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+
+function drawRectToBuffer(buf, x0, y0, x1, y1, val, filled) {
+  if (x0 > x1) { const t = x0; x0 = x1; x1 = t; }
+  if (y0 > y1) { const t = y0; y0 = y1; y1 = t; }
+  if (filled) {
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++)
+        plotBrushToBuffer(buf, x, y, val);
+  } else {
+    for (let x = x0; x <= x1; x++) {
+      plotBrushToBuffer(buf, x, y0, val);
+      plotBrushToBuffer(buf, x, y1, val);
+    }
+    for (let y = y0; y <= y1; y++) {
+      plotBrushToBuffer(buf, x0, y, val);
+      plotBrushToBuffer(buf, x1, y, val);
+    }
+  }
+}
+
+function pushUndo() {
+  undoStack.push(new Uint8Array(pixels));
+  if (undoStack.length > 50) undoStack.shift();
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'anim') return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  mouseDown = true;
+  pushUndo();
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  if (currentTool === 'eraser') paintValue = 0;
+  else                          paintValue = 1;
+
+  if (currentTool === 'pencil' || currentTool === 'eraser') {
+    lastCell = null;
+    paintBrush(cell.x, cell.y, paintValue);
+  } else if (currentTool === 'line') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
+    previewPixels.fill(0);
+    render();
+  } else if (currentTool === 'rect' || currentTool === 'rectFill') {
+    shapeStart = { x: cell.x, y: cell.y };
+    shapeEnd   = { x: cell.x, y: cell.y };
+    shapeActive = true;
+    previewPixels.fill(0);
+    render();
+  }
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'anim' || !mouseDown) return;
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  if (currentTool === 'pencil' || currentTool === 'eraser') {
+    if (lastCell && (cell.x !== lastCell.x || cell.y !== lastCell.y)) {
+      lineTo(lastCell, cell);
+    } else {
+      paint(cell);
+    }
+    lastCell = cell;
+  } else if (currentTool === 'line' && shapeActive) {
+    shapeEnd = { x: cell.x, y: cell.y };
+    previewPixels.fill(0);
+    drawLineToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1);
+    render();
+  } else if ((currentTool === 'rect' || currentTool === 'rectFill') && shapeActive) {
+    shapeEnd = { x: cell.x, y: cell.y };
+    previewPixels.fill(0);
+    drawRectToBuffer(previewPixels, shapeStart.x, shapeStart.y, shapeEnd.x, shapeEnd.y, 1, currentTool === 'rectFill');
+    render();
+  }
+});
+
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'anim') { mouseDown = false; return; }
+  if (!mouseDown) return;
+  mouseDown = false;
+  lastCell = null;
+  if ((currentTool === 'line' || currentTool === 'rect' || currentTool === 'rectFill') && shapeActive) {
+    for (let i = 0; i < previewPixels.length; i++) {
+      if (previewPixels[i]) pixels[i] = 1;
+    }
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+    renderTimeline();
+  }
+});
+
+canvas.addEventListener('pointerleave', e => {
+  if (!e.isPrimary) return;
+  if (!mouseDown) return;
+  mouseDown = false;
+  lastCell = null;
+  if (shapeActive) {
+    previewPixels.fill(0);
+    shapeActive = false;
+    shapeStart = null;
+    shapeEnd = null;
+    render();
+  }
+});
+
+function lineTo(a, b) {
+  let x0 = a.x, y0 = a.y;
+  const x1 = b.x, y1 = b.y;
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    paint({ x: x0, y: y0 });
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+
+// ============================================================
+// FACE MODE INTERACTION
+// ============================================================
+let dragState = null;
+
+function elementAtPoint(px, py) {
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const el = elements[i];
+    if (px >= el.x && px < el.x + el.w &&
+        py >= el.y && py < el.y + el.h) {
+      return el;
+    }
+  }
+  return null;
+}
+
+function canvasToPixel(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: Math.floor((clientX - r.left) / SCALE),
+    y: Math.floor((clientY - r.top)  / SCALE),
+  };
+}
+
+function handleAtPoint(clientX, clientY) {
+  if (selectedId === null) return null;
+  const el = elements.find(e => e.id === selectedId);
+  if (!el) return null;
+  const r = canvas.getBoundingClientRect();
+  const sx = clientX - r.left;
+  const sy = clientY - r.top;
+  const half = HANDLE_SIZE / 2 + 2;
+  const corners = {
+    TL: [el.x * SCALE,            el.y * SCALE],
+    TR: [(el.x + el.w) * SCALE,   el.y * SCALE],
+    BL: [el.x * SCALE,            (el.y + el.h) * SCALE],
+    BR: [(el.x + el.w) * SCALE,   (el.y + el.h) * SCALE],
+  };
+  for (const [name, [cx, cy]] of Object.entries(corners)) {
+    if (Math.abs(sx - cx) <= half && Math.abs(sy - cy) <= half) return name;
+  }
+  return null;
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'face') return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  const handle = handleAtPoint(e.clientX, e.clientY);
+  if (handle) {
+    const el = elements.find(el => el.id === selectedId);
+    dragState = {
+      mode: 'resize',
+      handle,
+      el,
+      startX: el.x,
+      startY: el.y,
+      startW: el.w,
+      startH: el.h,
+      startPx: canvasToPixel(e.clientX, e.clientY),
+    };
+    return;
+  }
+  const p = canvasToPixel(e.clientX, e.clientY);
+  const hit = elementAtPoint(p.x, p.y);
+  if (hit) {
+    selectedId = hit.id;
+    dragState = {
+      mode: 'move',
+      el: hit,
+      offsetX: p.x - hit.x,
+      offsetY: p.y - hit.y,
+    };
+  } else {
+    selectedId = null;
+    dragState = null;
+  }
+  rebuildProps();
+  render();
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'face' || !dragState) return;
+  const p = canvasToPixel(e.clientX, e.clientY);
+  if (dragState.mode === 'move') {
+    const el = dragState.el;
+    let nx = p.x - dragState.offsetX;
+    let ny = p.y - dragState.offsetY;
+    nx = Math.max(0, Math.min(W - el.w, nx));
+    ny = Math.max(0, Math.min(H - el.h, ny));
+    el.x = nx;
+    el.y = ny;
+  } else if (dragState.mode === 'resize') {
+    const el = dragState.el;
+    const start = dragState.startPx;
+    const dx = p.x - start.x;
+    const dy = p.y - start.y;
+    let newX = dragState.startX;
+    let newY = dragState.startY;
+    let newW = dragState.startW;
+    let newH = dragState.startH;
+    switch (dragState.handle) {
+      case 'TL':
+        newX = dragState.startX + dx;
+        newY = dragState.startY + dy;
+        newW = dragState.startW - dx;
+        newH = dragState.startH - dy;
+        break;
+      case 'TR':
+        newY = dragState.startY + dy;
+        newW = dragState.startW + dx;
+        newH = dragState.startH - dy;
+        break;
+      case 'BL':
+        newX = dragState.startX + dx;
+        newW = dragState.startW - dx;
+        newH = dragState.startH + dy;
+        break;
+      case 'BR':
+        newW = dragState.startW + dx;
+        newH = dragState.startH + dy;
+        break;
+    }
+    const MIN = 4;
+    const squareTypes = new Set(['weekday', 'weather']);
+    if (squareTypes.has(el.type)) {
+      const size = Math.max(MIN, Math.round((newW + newH) / 2));
+      newW = size;
+      newH = size;
+      if (dragState.handle === 'TL' || dragState.handle === 'BL') {
+        newX = dragState.startX + dragState.startW - size;
+      }
+      if (dragState.handle === 'TL' || dragState.handle === 'TR') {
+        newY = dragState.startY + dragState.startH - size;
+      }
+    }
+    if (newW < MIN) newW = MIN;
+    if (newH < MIN) newH = MIN;
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
+    if (newX + newW > W) newW = W - newX;
+    if (newY + newH > H) newH = H - newY;
+    el.x = newX;
+    el.y = newY;
+    el.w = newW;
+    el.h = newH;
+  }
+  render();
+});
+
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'face') return;
+  if (dragState) {
+    dragState = null;
+    rebuildProps();
+  }
+});
+
+canvas.addEventListener('pointerleave', e => {
+  if (!e.isPrimary) return;
+  if (currentMode !== 'face') return;
+  if (dragState) {
+    dragState = null;
+    rebuildProps();
+  }
+});
+
+// ============================================================
+// BLE
+// ============================================================
+const SERVICE  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR  = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+let bleDevice = null;
+let bleServer = null;
+let bleRxChar = null;
+let bleTxChar = null;
+let bleConnected = false;
+
+const btnConnect = document.getElementById('btnConnect');
+const btnSend    = document.getElementById('btnSend');
+const connStatus = document.getElementById('connStatus');
+
+function setConnUI(state, msg) {
+  connStatus.classList.remove('connected', 'error');
+  connStatus.textContent = msg;
+  if (state === 'disconnected') {
+    btnConnect.textContent = 'Connect to Watch';
+    btnConnect.disabled = false;
+    btnSend.disabled = true;
+    bleConnected = false;
+  } else if (state === 'connecting') {
+    btnConnect.textContent = 'Connecting…';
+    btnConnect.disabled = true;
+    btnSend.disabled = true;
+    bleConnected = false;
+  } else if (state === 'connected') {
+    btnConnect.textContent = 'Disconnect';
+    btnConnect.disabled = false;
+    btnSend.disabled = false;
+    bleConnected = true;
+    connStatus.classList.add('connected');
+  } else if (state === 'error') {
+    btnConnect.textContent = 'Connect to Watch';
+    btnConnect.disabled = false;
+    btnSend.disabled = true;
+    bleConnected = false;
+    connStatus.classList.add('error');
+  }
+}
+
+// ---- Msg ID assignment for ack correlation ----
+let nextMsgId = 1;
+function allocMsgId() {
+  const id = nextMsgId;
+  nextMsgId++;
+  if (nextMsgId > 255) nextMsgId = 1;
+  return id;
+}
+
+async function onTxNotify(e) {
+  const dv = e.target.value;
+  if (dv.byteLength < 1) return;
+  const msgId = dv.getUint8(0);
+  let text = '';
+  try {
+    text = new TextDecoder().decode(new Uint8Array(dv.buffer, dv.byteOffset + 1));
+  } catch (err) {
+    console.warn('TX decode failed', err);
+    return;
+  }
+
+  // Unsolicited events have msgId = 0
+  if (msgId === 0) {
+    try {
+      const ev = JSON.parse(text);
+      console.log('[event]', ev);
+      if (ev.kind === 'hello') {
+        connStatus.textContent = `Connected: watch fw=${ev.fw || '?'}`;
+      }
+    } catch (_) {
+      console.log('[event raw]', text);
+    }
+    return;
+  }
+
+  // Acks
+  let ack = null;
+  try { ack = JSON.parse(text); } catch (_) {}
+  console.log(`[ack ${msgId}]`, ack || text);
+  if (ack && ack.ok === false) {
+    connStatus.textContent = `Watch rejected: ${ack.err || 'unknown'}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  }
+}
+
+async function doConnect() {
+  if (!navigator.bluetooth) {
+    setConnUI('error', 'Web Bluetooth not supported in this browser');
+    return;
+  }
+  try {
+    setConnUI('connecting', 'Requesting device…');
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [SERVICE] }],
+      optionalServices: [SERVICE]
+    });
+
+    bleDevice.addEventListener('gattserverdisconnected', () => {
+      bleServer = null;
+      bleRxChar = null;
+      bleTxChar = null;
+      setConnUI('disconnected', 'Disconnected');
+    });
+
+    setConnUI('connecting', 'Connecting…');
+    bleServer = await bleDevice.gatt.connect();
+
+    setConnUI('connecting', 'Finding service…');
+    const service = await bleServer.getPrimaryService(SERVICE);
+
+    setConnUI('connecting', 'Finding characteristics…');
+    bleRxChar = await service.getCharacteristic(RX_CHAR);
+    bleTxChar = await service.getCharacteristic(TX_CHAR);
+
+    // Subscribe to TX notifications
+    try {
+      await bleTxChar.startNotifications();
+      bleTxChar.addEventListener('characteristicvaluechanged', onTxNotify);
+      console.log('TX notifications enabled');
+    } catch (err) {
+      console.warn('TX notifications failed:', err);
+    }
+
+    setConnUI('connected', `Connected: ${bleDevice.name || 'watch'}`);
+
+    // Auto-push time, then optionally weather, then current face
+    setTimeout(() => autoPushOnConnect().catch(err => console.warn('autoPush:', err)), 200);
+  } catch (e) {
+    console.error(e);
+    setConnUI('error', `Error: ${e.message}`);
+  }
+}
+
+async function autoPushOnConnect() {
+  // 1. Time
+  try {
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync',
+      v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+  } catch (e) {
+    console.warn('timesync failed:', e);
+  }
+
+  // 2. Weather placeholder (optional — uncomment + fill in real values if you want)
+  // try {
+  //   await sendRawPayload(JSON.stringify({
+  //     kind: 'weather', v: 1, temp: 18.5, humidity: 62, main: 'Clouds'
+  //   }));
+  // } catch (e) { console.warn('weather failed:', e); }
+
+  // 3. Face
+  try {
+    if (currentMode === 'face') {
+      // don't stomp on whatever the user is doing in anim mode
+    }
+    await sendRawPayload(buildFaceConfigJson());
+    console.log('face pushed');
+  } catch (e) {
+    console.warn('face push failed:', e);
+  }
+}
+
+function doDisconnect() {
+  try {
+    if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+  } catch (_) {}
+  setConnUI('disconnected', 'Disconnected');
+}
+
+btnConnect.onclick = () => {
+  if (bleConnected) doDisconnect();
+  else doConnect();
+};
+
+// ============================================================
+// Build outgoing JSON
+// ============================================================
+const AD_W          = 32;
+const AD_H          = 128;
+const AD_OFFSET_Y   = 0;
+const AD_MAX_FRAMES = 40;
+
+function buildAnimJson() {
+  const frameCount = frames.length;
+  if (frameCount > AD_MAX_FRAMES) {
+    throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
+  }
+
+  const frameMs = frames[0].durationMs || 125;
+  const totalMs = frameCount * frameMs * loopCount;
+  if (totalMs > 30000) {
+    throw new Error(`Total play time ${(totalMs/1000).toFixed(1)}s exceeds 30s cap`);
+  }
+
+  const bytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = bytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = frames[f].pixels;
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      const srcY = y + AD_OFFSET_Y;
+      for (let x = 0; x < AD_W; x++) {
+        if (src[srcY * W + x]) {
+          const byteIndex = base + y * bytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, all.subarray(i, Math.min(i + CHUNK, all.length)));
+  }
+  const b64 = btoa(binary);
+
+  const name = (window._animName || 'wake').replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 18) || 'anim';
+
+  return JSON.stringify({
+    kind: 'animation',
+    v: 2,
+    name: name,
+    trigger: importTrigger,
+    w: AD_W,
+    h: AD_H,
+    offsetY: AD_OFFSET_Y,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    loopCount: loopCount,
+    format: 'bitpacked-row-lsb',
+    data: b64
+  });
+}
+
+function buildFaceConfigJson() {
+  const outElements = elements.map(e => {
+    const copy = { ...e };
+    if (e.type === 'weekday') {
+      copy.style = (e.weekdayStyle === 'english') ? 'text' : '7seg';
+    }
+    return copy;
+  });
+  return JSON.stringify({
+    kind: 'face',
+    v: 1,
+    name: 'untitled',
+    effects: effects,
+    elements: outElements
+  });
+}
+
+function buildPayload() {
+  return currentMode === 'anim' ? buildAnimJson() : buildFaceConfigJson();
+}
+
+// ============================================================
+// Send to watch
+// ============================================================
+const CHUNK_SIZE = 180;
+
+async function sendRawPayload(json) {
+  if (!bleConnected || !bleRxChar) throw new Error('Not connected');
+
+  const payload = new TextEncoder().encode(json);
+  if (payload.length > 0xFFFE) throw new Error('Payload too large (>64 KB)');
+
+  const msgId = allocMsgId();
+  const totalLen = payload.length + 1;   // +1 for msgId
+  const frame = new Uint8Array(2 + totalLen);
+  frame[0] = totalLen & 0xFF;
+  frame[1] = (totalLen >> 8) & 0xFF;
+  frame[2] = msgId;
+  frame.set(payload, 3);
+
+  let sent = 0;
+  while (sent < frame.length) {
+    const slice = frame.slice(sent, sent + CHUNK_SIZE);
+    if (bleRxChar.writeValueWithoutResponse) {
+      await bleRxChar.writeValueWithoutResponse(slice);
+    } else {
+      await bleRxChar.writeValue(slice);
+    }
+    sent += slice.length;
+    connStatus.textContent = `Sending… ${sent}/${frame.length}`;
+    await new Promise(r => setTimeout(r, 3));
+  }
+  connStatus.classList.add('connected');
+  connStatus.classList.remove('error');
+}
+
+async function sendToWatch() {
+  const json = buildPayload();
+  await sendRawPayload(json);
+  connStatus.textContent = `Sent ${json.length} bytes`;
+}
+
+btnSend.onclick = async () => {
+  try {
+    btnSend.disabled = true;
+    connStatus.classList.remove('error');
+    await sendToWatch();
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    setConnUI('connected', `Send error: ${e.message}`);
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSend.disabled = false;
+  }
+};
+
+// ============================================================
+// Boot
+// ============================================================
+wireEffects();
+setMode('face');
+renderTimeline();
+
+setInterval(() => {
+  scanY = (scanY + 1) % H;
+  if (currentMode === 'face') render();
+}, 250);
+</script>
+
+<script>
+/* ============================================================
+   IMPORT — GIF / video → 1-bit animation frames
+   ============================================================ */
+
+const OUT_W = 32;
+const OUT_H = 128;
+const AD_OFFSET_IMPORT = 0;
+
+let importSourceKind = null;
+let importGifFrames = [];
+let importGifW = 0, importGifH = 0;
+let importGifTotalMs = 0;
+let importVideoURL = null;
+let importVideo = null;
+let importConvertedFrames = [];
+let importCancelRequested = false;
+let importLastSettings = null;
+
+async function importDecodeGifNative(file) {
+  const decoder = new ImageDecoder({
+    data: await file.arrayBuffer(),
+    type: 'image/gif'
+  });
+  await decoder.completed;
+  await decoder.tracks.ready;
+
+  let track = decoder.tracks.selectedTrack;
+  let attempts = 0;
+  while (!track && attempts < 20) {
+    await new Promise(r => setTimeout(r, 20));
+    track = decoder.tracks.selectedTrack;
+    attempts++;
+  }
+  if (!track) throw new Error('No selected track on decoded GIF');
+
+  let frameCount = track.frameCount;
+  if (!frameCount) {
+    await decoder.decode({ frameIndex: 0 });
+    frameCount = track.frameCount;
+  }
+  if (!frameCount) throw new Error('GIF reported 0 frames');
+
+  const frames = [];
+  for (let i = 0; i < frameCount; i++) {
+    const { image } = await decoder.decode({ frameIndex: i });
+    const canvas = document.createElement('canvas');
+    canvas.width = image.displayWidth;
+    canvas.height = image.displayHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const delayMs = Math.max(20, Math.round((image.duration || 100000) / 1000));
+    frames.push({
+      rgba: new Uint8ClampedArray(data),
+      width: canvas.width,
+      height: canvas.height,
+      delayMs,
+    });
+  }
+  return { width: frames[0].width, height: frames[0].height, frames };
+}
+
+function importHasNativeGifDecoder() {
+  return typeof window.ImageDecoder !== 'undefined';
+}
+
+(function(global) {
+  'use strict';
+
+  function lzwDecode(minCodeSize, data) {
+    const MAX_CODE = 4096;
+    const clearCode = 1 << minCodeSize;
+    const endCode = clearCode + 1;
+    let codeSize = minCodeSize + 1;
+    let nextCode = endCode + 1;
+
+    let dictionary = [];
+    function resetDictionary() {
+      dictionary = new Array(MAX_CODE);
+      for (let i = 0; i < clearCode; i++) dictionary[i] = [i];
+      dictionary[clearCode] = [];
+      dictionary[endCode] = null;
+      codeSize = minCodeSize + 1;
+      nextCode = endCode + 1;
+    }
+    resetDictionary();
+
+    const output = [];
+    let bitBuffer = 0;
+    let bitCount = 0;
+    let bytePos = 0;
+    let prev = null;
+
+    function readCode() {
+      while (bitCount < codeSize) {
+        if (bytePos >= data.length) return endCode;
+        bitBuffer |= data[bytePos++] << bitCount;
+        bitCount += 8;
+      }
+      const code = bitBuffer & ((1 << codeSize) - 1);
+      bitBuffer >>= codeSize;
+      bitCount -= codeSize;
+      return code;
+    }
+
+    while (true) {
+      const code = readCode();
+      if (code === clearCode) { resetDictionary(); prev = null; continue; }
+      if (code === endCode) break;
+
+      let entry;
+      if (code < nextCode && dictionary[code] !== undefined && dictionary[code] !== null) {
+        entry = dictionary[code];
+      } else if (code === nextCode && prev !== null) {
+        entry = prev.concat(prev[0]);
+      } else break;
+
+      for (let i = 0; i < entry.length; i++) output.push(entry[i]);
+
+      if (prev !== null) {
+        if (nextCode < MAX_CODE) {
+          dictionary[nextCode++] = prev.concat(entry[0]);
+          if (nextCode === (1 << codeSize) && codeSize < 12) codeSize++;
+        }
+      }
+      prev = entry;
+    }
+    return output;
+  }
+
+  function parseGIF(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    let pos = 0;
+    const read = () => bytes[pos++];
+    const readU16 = () => { const v = bytes[pos] | (bytes[pos + 1] << 8); pos += 2; return v; };
+    const readBytes = (n) => { const o = bytes.slice(pos, pos + n); pos += n; return o; };
+
+    const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2]);
+    if (sig !== 'GIF') throw new Error('Not a GIF file');
+    pos = 6;
+
+    const width = readU16();
+    const height = readU16();
+    const packed = read();
+    read(); read();
+
+    let globalColorTable = null;
+    if (packed & 0x80) {
+      const size = 2 << (packed & 0x07);
+      globalColorTable = new Array(size);
+      for (let i = 0; i < size; i++) globalColorTable[i] = [read(), read(), read()];
+    }
+
+    const rawFrames = [];
+    let pending = { delay: 10, transparent: -1, disposal: 0 };
+
+    while (pos < bytes.length) {
+      const b = read();
+      if (b === 0x3B) break;
+
+      if (b === 0x21) {
+        const label = read();
+        if (label === 0xF9) {
+          const blockSize = read();
+          const flags = read();
+          const delay = readU16();
+          const transIdx = read();
+          read();
+          pending.delay = (delay || 10) * 10;
+          pending.transparent = (flags & 0x01) ? transIdx : -1;
+          pending.disposal = (flags >> 2) & 0x07;
+        } else {
+          let sz = read();
+          while (sz !== 0) { readBytes(sz); sz = read(); }
+        }
+      } else if (b === 0x2C) {
+        const left = readU16();
+        const top = readU16();
+        const fw = readU16();
+        const fh = readU16();
+        const fPacked = read();
+
+        let localColorTable = null;
+        if (fPacked & 0x80) {
+          const size = 2 << (fPacked & 0x07);
+          localColorTable = new Array(size);
+          for (let i = 0; i < size; i++) localColorTable[i] = [read(), read(), read()];
+        }
+        const interlaced = !!(fPacked & 0x40);
+        const minCodeSize = read();
+
+        const chunks = [];
+        let sz = read();
+        while (sz !== 0) { chunks.push(readBytes(sz)); sz = read(); }
+        let total = 0;
+        for (const c of chunks) total += c.length;
+        const lzwData = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) { lzwData.set(c, off); off += c.length; }
+
+        const colorTable = localColorTable || globalColorTable;
+        if (!colorTable) throw new Error('No color table available');
+
+        const indices = lzwDecode(minCodeSize, lzwData);
+
+        const orderedIndices = new Uint8Array(fw * fh);
+        if (interlaced) {
+          const rowOrder = [];
+          for (let y = 0; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 4; y < fh; y += 8) rowOrder.push(y);
+          for (let y = 2; y < fh; y += 4) rowOrder.push(y);
+          for (let y = 1; y < fh; y += 2) rowOrder.push(y);
+          let srcIdx = 0;
+          for (let i = 0; i < fh; i++) {
+            const dstY = rowOrder[i];
+            for (let x = 0; x < fw; x++) {
+              orderedIndices[dstY * fw + x] = indices[srcIdx++] || 0;
+            }
+          }
+        } else {
+          for (let i = 0; i < fw * fh; i++) orderedIndices[i] = indices[i] || 0;
+        }
+
+        rawFrames.push({
+          dims: { left, top, width: fw, height: fh },
+          indices: orderedIndices,
+          colorTable,
+          transparent: pending.transparent,
+          delay: pending.delay,
+          disposalType: pending.disposal,
+        });
+        pending = { delay: 10, transparent: -1, disposal: 0 };
+      } else pos++;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const frames = [];
+
+    for (let fi = 0; fi < rawFrames.length; fi++) {
+      const f = rawFrames[fi];
+      if (fi > 0) {
+        const prevFrame = rawFrames[fi - 1];
+        if (prevFrame.disposalType === 2) {
+          ctx.clearRect(prevFrame.dims.left, prevFrame.dims.top,
+                        prevFrame.dims.width, prevFrame.dims.height);
+        }
+      }
+      const patchData = ctx.createImageData(f.dims.width, f.dims.height);
+      const p = f.indices;
+      const ct = f.colorTable;
+      const trans = f.transparent;
+      for (let i = 0; i < p.length; i++) {
+        const ci = p[i];
+        if (ci === trans || !ct[ci]) {
+          patchData.data[i * 4 + 3] = 0;
+        } else {
+          patchData.data[i * 4 + 0] = ct[ci][0];
+          patchData.data[i * 4 + 1] = ct[ci][1];
+          patchData.data[i * 4 + 2] = ct[ci][2];
+          patchData.data[i * 4 + 3] = 255;
+        }
+      }
+      const tmp = document.createElement('canvas');
+      tmp.width = f.dims.width;
+      tmp.height = f.dims.height;
+      tmp.getContext('2d').putImageData(patchData, 0, 0);
+      ctx.drawImage(tmp, f.dims.left, f.dims.top);
+
+      const snapshot = ctx.getImageData(0, 0, width, height);
+      frames.push({
+        rgba: new Uint8ClampedArray(snapshot.data),
+        width, height,
+        delayMs: f.delay,
+      });
+    }
+
+    return { width, height, frames };
+  }
+  global.importGifuct = { parseGIF };
+})(window);
+
+function importComputeSrcRegion(srcW, srcH, s) {
+  const zoom = Math.max(0.1, s.zoom || 1);
+  const cropXpct = (s.cropX ?? 50) / 100;
+  const cropYpct = (s.cropY ?? 50) / 100;
+  const coverScale = Math.max(OUT_W / srcW, OUT_H / srcH);
+  const scale = coverScale * zoom;
+  const viewW = OUT_W / scale;
+  const viewH = OUT_H / scale;
+  let cx, cy;
+  if (srcW > viewW) cx = (srcW - viewW) * cropXpct;
+  else cx = (srcW - viewW) / 2;
+  if (srcH > viewH) cy = (srcH - viewH) * cropYpct;
+  else cy = (srcH - viewH) / 2;
+  return { sx: cx, sy: cy, sw: viewW, sh: viewH };
+}
+
+function importAreaDownsample(srcData, srcW, srcH, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const pixelW = sw / OUT_W;
+  const pixelH = sh / OUT_H;
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const y0 = sy + oy * pixelH;
+    const y1 = y0 + pixelH;
+    const iy0 = Math.max(0, Math.floor(y0));
+    const iy1 = Math.min(srcH, Math.ceil(y1));
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const x0 = sx + ox * pixelW;
+      const x1 = x0 + pixelW;
+      const ix0 = Math.max(0, Math.floor(x0));
+      const ix1 = Math.min(srcW, Math.ceil(x1));
+      let sumR = 0, sumG = 0, sumB = 0, sumW = 0;
+      for (let y = iy0; y < iy1; y++) {
+        const wy = Math.min(y1, y + 1) - Math.max(y0, y);
+        if (wy <= 0) continue;
+        for (let x = ix0; x < ix1; x++) {
+          const wx = Math.min(x1, x + 1) - Math.max(x0, x);
+          if (wx <= 0) continue;
+          const w = wx * wy;
+          const i = (y * srcW + x) * 4;
+          const a = srcData[i + 3] / 255;
+          sumR += srcData[i + 0] * w * a;
+          sumG += srcData[i + 1] * w * a;
+          sumB += srcData[i + 2] * w * a;
+          sumW += w * a;
+        }
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (sumW > 0) {
+        out[oi + 0] = sumR / sumW;
+        out[oi + 1] = sumG / sumW;
+        out[oi + 2] = sumB / sumW;
+      }
+    }
+  }
+  return out;
+}
+
+function importLanczosKernel(x, a) {
+  if (x === 0) return 1;
+  const ax = Math.abs(x);
+  if (ax >= a) return 0;
+  const pix = Math.PI * x;
+  return (a * Math.sin(pix) * Math.sin(pix / a)) / (pix * pix);
+}
+
+function importLanczosDownsample(srcData, srcW, srcH, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = new Float32Array(OUT_W * OUT_H * 3);
+  const A = 3;
+  const scaleX = sw / OUT_W;
+  const scaleY = sh / OUT_H;
+
+  const colWeights = [];
+  for (let ox = 0; ox < OUT_W; ox++) {
+    const center = sx + (ox + 0.5) * scaleX - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleX));
+    const i1 = Math.ceil(center + A * Math.max(1, scaleX));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = importLanczosKernel((i - center) / Math.max(1, scaleX), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    colWeights.push({ i0, weights });
+  }
+
+  const rowWeights = [];
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const center = sy + (oy + 0.5) * scaleY - 0.5;
+    const i0 = Math.floor(center - A * Math.max(1, scaleY));
+    const i1 = Math.ceil(center + A * Math.max(1, scaleY));
+    const weights = [];
+    let wsum = 0;
+    for (let i = i0; i <= i1; i++) {
+      const w = importLanczosKernel((i - center) / Math.max(1, scaleY), A);
+      weights.push(w);
+      wsum += w;
+    }
+    for (let k = 0; k < weights.length; k++) weights[k] /= wsum;
+    rowWeights.push({ i0, weights });
+  }
+
+  for (let oy = 0; oy < OUT_H; oy++) {
+    const { i0: ry0, weights: rw } = rowWeights[oy];
+    const tempRow = new Float32Array(srcW * 3);
+    for (let i = 0; i < rw.length; i++) {
+      const y = ry0 + i;
+      if (y < 0 || y >= srcH) continue;
+      const w = rw[i];
+      if (w === 0) continue;
+      const rowBase = y * srcW * 4;
+      for (let x = 0; x < srcW; x++) {
+        const si = rowBase + x * 4;
+        const a = srcData[si + 3] / 255;
+        tempRow[x * 3 + 0] += srcData[si + 0] * w * a;
+        tempRow[x * 3 + 1] += srcData[si + 1] * w * a;
+        tempRow[x * 3 + 2] += srcData[si + 2] * w * a;
+      }
+    }
+
+    for (let ox = 0; ox < OUT_W; ox++) {
+      const { i0: cx0, weights: cw } = colWeights[ox];
+      let r = 0, g = 0, b = 0, wsum = 0;
+      for (let i = 0; i < cw.length; i++) {
+        const x = cx0 + i;
+        if (x < 0 || x >= srcW) continue;
+        const w = cw[i];
+        if (w === 0) continue;
+        r += tempRow[x * 3 + 0] * w;
+        g += tempRow[x * 3 + 1] * w;
+        b += tempRow[x * 3 + 2] * w;
+        wsum += w;
+      }
+      const oi = (oy * OUT_W + ox) * 3;
+      if (wsum > 0) {
+        out[oi + 0] = r / wsum;
+        out[oi + 1] = g / wsum;
+        out[oi + 2] = b / wsum;
+      }
+    }
+  }
+  return out;
+}
+
+function importBilinearDownsample(src, srcW, srcH, srcIsRgbaArray, s) {
+  const { sx, sy, sw, sh } = importComputeSrcRegion(srcW, srcH, s);
+  const out = document.createElement('canvas');
+  out.width = OUT_W;
+  out.height = OUT_H;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.fillStyle = '#000';
+  octx.fillRect(0, 0, OUT_W, OUT_H);
+
+  let sourceEl;
+  if (srcIsRgbaArray) {
+    const tmp = document.createElement('canvas');
+    tmp.width = srcW; tmp.height = srcH;
+    tmp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(src), srcW, srcH), 0, 0);
+    sourceEl = tmp;
+  } else {
+    sourceEl = src;
+  }
+
+  octx.drawImage(sourceEl, sx, sy, sw, sh, 0, 0, OUT_W, OUT_H);
+
+  const img = octx.getImageData(0, 0, OUT_W, OUT_H);
+  const rgb = new Float32Array(OUT_W * OUT_H * 3);
+  for (let i = 0; i < OUT_W * OUT_H; i++) {
+    rgb[i * 3 + 0] = img.data[i * 4 + 0];
+    rgb[i * 3 + 1] = img.data[i * 4 + 1];
+    rgb[i * 3 + 2] = img.data[i * 4 + 2];
+  }
+  return rgb;
+}
+
+function importSrgbToLinear(v) {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function importRgbToGrayLinear(rgb, invert) {
+  const n = OUT_W * OUT_H;
+  const gray = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const lr = importSrgbToLinear(rgb[i*3]);
+    const lg = importSrgbToLinear(rgb[i*3+1]);
+    const lb = importSrgbToLinear(rgb[i*3+2]);
+    let v = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+    if (invert) v = 1 - v;
+    gray[i] = v;
+  }
+  return gray;
+}
+
+function importApplyGamma(gray, gamma) {
+  if (Math.abs(gamma - 1.0) < 0.01) return;
+  const inv = 1 / gamma;
+  for (let i = 0; i < gray.length; i++) {
+    gray[i] = Math.pow(Math.max(0, Math.min(1, gray[i])), inv);
+  }
+}
+
+function importContrastStretch(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  const lowTarget  = total * 0.02;
+  const highTarget = total * 0.98;
+  let acc = 0, lo = 0, hi = 255;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= lowTarget) { lo = i; break; }
+  }
+  acc = 0;
+  for (let i = 0; i < 256; i++) {
+    acc += bins[i];
+    if (acc >= highTarget) { hi = i; break; }
+  }
+  if (hi <= lo) return;
+  const loV = lo / 255;
+  const hiV = hi / 255;
+  const range = hiV - loV;
+  for (let i = 0; i < gray.length; i++) {
+    let v = (gray[i] - loV) / range;
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+function importGaussianBlur3(gray, w, h) {
+  const kernel = [0.27901, 0.44198, 0.27901];
+  const tmp = new Float32Array(w * h);
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const xx = x + k;
+        if (xx < 0 || xx >= w) continue;
+        sum += gray[y * w + xx] * kernel[k + 1];
+      }
+      tmp[y * w + x] = sum;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) {
+        const yy = y + k;
+        if (yy < 0 || yy >= h) continue;
+        sum += tmp[yy * w + x] * kernel[k + 1];
+      }
+      out[y * w + x] = sum;
+    }
+  }
+  return out;
+}
+
+function importUnsharpMask(gray, w, h, amount) {
+  if (amount <= 0) return;
+  const blurred = importGaussianBlur3(gray, w, h);
+  for (let i = 0; i < gray.length; i++) {
+    let v = gray[i] + amount * (gray[i] - blurred[i]);
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    gray[i] = v;
+  }
+}
+
+function importOtsuThreshold(gray) {
+  const bins = new Uint32Array(256);
+  for (let i = 0; i < gray.length; i++) {
+    const b = Math.max(0, Math.min(255, Math.round(gray[i] * 255)));
+    bins[b]++;
+  }
+  const total = gray.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * bins[i];
+  let sumB = 0, wB = 0, maxVar = 0, best = 128;
+  for (let i = 0; i < 256; i++) {
+    wB += bins[i];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += i * bins[i];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maxVar) { maxVar = between; best = i; }
+  }
+  return best;
+}
+
+const IMP_BAYER4 = [
+  [ 0, 8, 2,10],
+  [12, 4,14, 6],
+  [ 3,11, 1, 9],
+  [15, 7,13, 5],
+].map(row => row.map(v => v / 16));
+
+const IMP_BAYER8 = (() => {
+  const b = [];
+  for (let y = 0; y < 8; y++) {
+    b.push([]);
+    for (let x = 0; x < 8; x++) {
+      const m4 = IMP_BAYER4[y % 4][x % 4];
+      const quad = (Math.floor(y/4) * 2 + Math.floor(x/4));
+      b[y].push((m4 * 4 + quad) / 16);
+    }
+  }
+  return b;
+})();
+
+function importThresholdValue(v, x, y, thresh, ditherMode) {
+  switch (ditherMode) {
+    case 'bayer4': {
+      const t = thresh + (IMP_BAYER4[y & 3][x & 3] - 0.5) * 128;
+      return v > t ? 255 : 0;
+    }
+    case 'bayer8': {
+      const t = thresh + (IMP_BAYER8[y & 7][x & 7] - 0.5) * 128;
+      return v > t ? 255 : 0;
+    }
+    default:
+      return v > thresh ? 255 : 0;
+  }
+}
+
+function importGrayToByte(gray) {
+  const out = new Float32Array(gray.length);
+  for (let i = 0; i < gray.length; i++) out[i] = gray[i] * 255;
+  return out;
+}
+
+function importDitherFS(gray255, w, h, thresh) {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = gray255[i];
+      const nv = old > thresh ? 255 : 0;
+      out[i] = nv;
+      const err = old - nv;
+      if (x + 1 < w) gray255[i + 1]       += err * 7/16;
+      if (y + 1 < h) {
+        if (x > 0)     gray255[i + w - 1] += err * 3/16;
+                       gray255[i + w]     += err * 5/16;
+        if (x + 1 < w) gray255[i + w + 1] += err * 1/16;
+      }
+    }
+  }
+  return out;
+}
+
+function importDitherAtkinson(gray255, w, h, thresh) {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = gray255[i];
+      const nv = old > thresh ? 255 : 0;
+      out[i] = nv;
+      const err = (old - nv) / 8;
+      const push = (xx, yy) => {
+        if (xx >= 0 && xx < w && yy >= 0 && yy < h) gray255[yy * w + xx] += err;
+      };
+      push(x + 1, y); push(x + 2, y);
+      push(x - 1, y + 1); push(x, y + 1); push(x + 1, y + 1);
+      push(x, y + 2);
+    }
+  }
+  return out;
+}
+
+function importProcessFrame(src, srcW, srcH, srcIsRgbaArray, settings) {
+  const s = settings;
+  let rgb;
+  let srcData = null;
+  if (s.downsample === 'lanczos' || s.downsample === 'area') {
+    if (srcIsRgbaArray) {
+      srcData = src;
+    } else {
+      const c = src.getContext('2d', { willReadFrequently: true });
+      srcData = c.getImageData(0, 0, srcW, srcH).data;
+    }
+  }
+
+  if (s.downsample === 'lanczos') {
+    rgb = importLanczosDownsample(srcData, srcW, srcH, s);
+  } else if (s.downsample === 'area') {
+    rgb = importAreaDownsample(srcData, srcW, srcH, s);
+  } else {
+    rgb = importBilinearDownsample(src, srcW, srcH, srcIsRgbaArray, s);
+  }
+
+  const gray = importRgbToGrayLinear(rgb, s.invert);
+  if (s.contrastStretch) importContrastStretch(gray);
+  importApplyGamma(gray, s.gamma);
+  if (s.sharpen > 0) importUnsharpMask(gray, OUT_W, OUT_H, s.sharpen);
+
+  let threshByte = s.threshold;
+  if (s.autoThresh) threshByte = importOtsuThreshold(gray);
+
+  const gray255 = importGrayToByte(gray);
+  let bitmap;
+  if (s.dither === 'fs') bitmap = importDitherFS(gray255, OUT_W, OUT_H, threshByte);
+  else if (s.dither === 'atkinson') bitmap = importDitherAtkinson(gray255, OUT_W, OUT_H, threshByte);
+  else {
+    bitmap = new Uint8Array(OUT_W * OUT_H);
+    for (let y = 0; y < OUT_H; y++) {
+      for (let x = 0; x < OUT_W; x++) {
+        const i = y * OUT_W + x;
+        bitmap[i] = importThresholdValue(gray255[i], x, y, threshByte, s.dither);
+      }
+    }
+  }
+
+  return bitmap;
+}
+
+function importWrapToFullCanvas(bitmap96) {
+  const out = new Uint8Array(W * H);
+  for (let y = 0; y < OUT_H; y++) {
+    const srcRow = y * OUT_W;
+    const dstRow = (y + AD_OFFSET_IMPORT) * W;
+    for (let x = 0; x < OUT_W; x++) {
+      out[dstRow + x] = bitmap96[srcRow + x];
+    }
+  }
+  return out;
+}
+
+function importReadSettings() {
+  const getNum = (id, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseFloat(el.value);
+    return isNaN(v) ? fallback : v;
+  };
+  const getInt = (id, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseInt(el.value, 10);
+    return isNaN(v) ? fallback : v;
+  };
+  const getChecked = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
+  const getSelect = (id, fallback) => {
+    const el = document.getElementById(id);
+    return el ? el.value : fallback;
+  };
+
+  return {
+    start: getNum('impStart', 0),
+    length: Math.min(getNum('impLength', 2), 10),
+    fps: Math.min(getInt('impFPS', 8), 12),
+    zoom: Math.max(0.2, getNum('impZoom', 1)),
+    cropX: getInt('impCropX', 50),
+    cropY: getInt('impCropY', 50),
+    contrastStretch: getChecked('impStretch'),
+    gamma: getNum('impGamma', 1.0),
+    sharpen: getNum('impSharpen', 0.5),
+    autoThresh: getChecked('impAutoThresh'),
+    threshold: getInt('impThreshold', 128),
+    dither: getSelect('impDither', 'fs'),
+    downsample: getSelect('impDownsample', 'lanczos'),
+    invert: getChecked('impInvert'),
+  };
+}
+
+function wireImportPanel() {
+  const btn = document.getElementById('btnShowImport');
+  if (btn) {
+    btn.onclick = () => {
+      const panel = document.getElementById('importPanel');
+      if (!panel) return;
+      if (panel.style.display === 'none') {
+        panel.style.display = '';
+        importBuildPanelUI();
+      } else {
+        panel.style.display = 'none';
+      }
+    };
+  }
+}
+
+function importBuildPanelUI() {
+  const panel = document.getElementById('importPanel');
+  if (!panel) return;
+
+  panel.innerHTML = `
+    <input type="file" id="importFile" accept="video/*,image/gif">
+    <div id="importSourceInfo" style="font-size:11px;color:#666">No file loaded</div>
+
+    <div class="import-row"><label>Name</label>
+      <input type="text" id="impName" value="${window._animName || 'wake'}"></div>
+
+    <div class="import-row"><label>Trigger</label>
+      <select id="impTrigger">
+        <option value="onWake"      ${importTrigger==='onWake'?'selected':''}>On Wake</option>
+        <option value="beforeSleep" ${importTrigger==='beforeSleep'?'selected':''}>Before Sleep</option>
+        <option value="onHour"      ${importTrigger==='onHour'?'selected':''}>Hourly</option>
+        <option value="onTap"       ${importTrigger==='onTap'?'selected':''}>Tap</option>
+        <option value="scheduled"   ${importTrigger==='scheduled'?'selected':''}>Scheduled (manual)</option>
+      </select>
+    </div>
+
+    <h3>Framing</h3>
+    <div class="import-row"><label>Start (s)</label>
+      <input type="number" id="impStart" value="0" step="0.1" min="0"></div>
+    <div class="import-row"><label>Length (s)</label>
+      <input type="number" id="impLength" value="2" step="0.5" min="0.5" max="10"></div>
+    <div class="import-row"><label>FPS</label>
+      <input type="number" id="impFPS" value="8" min="1" max="12"></div>
+    <div class="import-row"><label>Zoom</label>
+      <input type="range" id="impZoom" min="0.2" max="4" step="0.05" value="1"></div>
+    <div class="import-row"><label>Crop X</label>
+      <input type="range" id="impCropX" min="0" max="100" value="50"></div>
+    <div class="import-row"><label>Crop Y</label>
+      <input type="range" id="impCropY" min="0" max="100" value="50"></div>
+
+    <h3>Tone</h3>
+    <div class="import-row"><label>Stretch</label>
+      <input type="checkbox" id="impStretch" checked></div>
+    <div class="import-row"><label>Gamma</label>
+      <input type="range" id="impGamma" min="0.4" max="2.5" step="0.05" value="1"></div>
+    <div class="import-row"><label>Sharpen</label>
+      <input type="range" id="impSharpen" min="0" max="2" step="0.05" value="0.5"></div>
+    <div class="import-row"><label>Auto thr</label>
+      <input type="checkbox" id="impAutoThresh"></div>
+    <div class="import-row"><label>Threshold</label>
+      <input type="range" id="impThreshold" min="0" max="255" value="128"></div>
+
+    <h3>Output</h3>
+    <div class="import-row"><label>Downsample</label>
+      <select id="impDownsample">
+        <option value="lanczos" selected>Lanczos 3</option>
+        <option value="area">Area avg</option>
+        <option value="bilinear">Bilinear</option>
+      </select>
+    </div>
+    <div class="import-row"><label>Dither</label>
+      <select id="impDither">
+        <option value="none">None</option>
+        <option value="bayer4">Bayer 4x4</option>
+        <option value="bayer8">Bayer 8x8</option>
+        <option value="fs" selected>Floyd–Steinberg</option>
+        <option value="atkinson">Atkinson</option>
+      </select>
+    </div>
+
+    <h3>Preview</h3>
+    <div id="importFilmstrip"></div>
+    <div id="importStatus">Choose a file to begin.</div>
+    <div id="importButtons">
+      <button id="btnImportConvert">Convert</button>
+      <button id="btnImportCancel" style="display:none">Cancel</button>
+      <button id="btnImportReplace" style="display:none;background:#2a4a2a;border-color:#4a6a4a;color:#cfc">Replace timeline</button>
+      <button id="btnImportBackground" style="display:none;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Use as background</button>
+    </div>
+  `;
+
+  document.getElementById('importFile').onchange = importOnFileChosen;
+  document.getElementById('btnImportConvert').onclick = importRunConvert;
+  document.getElementById('btnImportCancel').onclick = importCancel;
+  document.getElementById('btnImportReplace').onclick = importCommit;
+  document.getElementById('btnImportBackground').onclick = importUseAsBackground;
+
+  const trig = document.getElementById('impTrigger');
+  if (trig) {
+    trig.value = importTrigger;
+    trig.onchange = () => { importTrigger = trig.value; };
+  }
+
+  const nameEl = document.getElementById('impName');
+  if (nameEl) {
+    nameEl.oninput = () => { window._animName = nameEl.value.trim() || 'untitled'; };
+  }
+
+  const liveIds = [
+    'impStart', 'impLength', 'impFPS',
+    'impZoom', 'impCropX', 'impCropY',
+    'impStretch', 'impGamma', 'impSharpen',
+    'impAutoThresh', 'impThreshold',
+    'impDownsample', 'impDither', 'impInvert',
+  ];
+  for (const id of liveIds) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.addEventListener('input', importDebouncedConvert);
+    if (el.tagName === 'SELECT') {
+      el.addEventListener('change', importDebouncedConvert);
+    }
+  }
+}
+
+let importDebounceTimer = null;
+function importDebouncedConvert() {
+  if (!importSourceKind) return;
+  if (importDebounceTimer) clearTimeout(importDebounceTimer);
+  importDebounceTimer = setTimeout(() => {
+    importDebounceTimer = null;
+    importRunConvert();
+  }, 150);
+}
+
+async function importOnFileChosen(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const info = document.getElementById('importSourceInfo');
+  const status = document.getElementById('importStatus');
+  const strip = document.getElementById('importFilmstrip');
+  strip.innerHTML = '';
+  importConvertedFrames = [];
+  importGifFrames = [];
+  importSourceKind = null;
+  document.getElementById('btnImportReplace').style.display = 'none';
+  document.getElementById('btnImportBackground').style.display = 'none';
+
+  const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+
+  if (isGif) {
+    status.textContent = 'Decoding GIF…';
+    try {
+      let parsed, decoderUsed = 'native';
+      if (importHasNativeGifDecoder()) {
+        try {
+          parsed = await importDecodeGifNative(file);
+        } catch (err) {
+          console.warn('Native GIF decode failed:', err);
+          decoderUsed = 'fallback';
+          parsed = null;
+        }
+      } else {
+        decoderUsed = 'fallback';
+      }
+      if (!parsed) {
+        const buf = await file.arrayBuffer();
+        parsed = importGifuct.parseGIF(buf);
+      }
+      importGifW = parsed.width;
+      importGifH = parsed.height;
+      importGifFrames = parsed.frames.map(f => ({
+        rgba: f.rgba,
+        width: f.width || importGifW,
+        height: f.height || importGifH,
+        delayMs: f.delayMs,
+      }));
+      importGifTotalMs = importGifFrames.reduce((a, f) => a + f.delayMs, 0);
+      importSourceKind = 'gif';
+      info.textContent = `${importGifW}×${importGifH} · ${importGifFrames.length} frames · ${(importGifTotalMs/1000).toFixed(2)}s${decoderUsed === 'fallback' ? ' (fallback)' : ''}`;
+      status.textContent = 'GIF loaded. Adjust settings, then hit Convert.';
+      document.getElementById('impLength').value = Math.min(10, importGifTotalMs / 1000).toFixed(1);
+    } catch (err) {
+      console.error(err);
+      status.textContent = 'GIF decode failed: ' + err.message;
+    }
+    return;
+  }
+
+  if (importVideoURL) URL.revokeObjectURL(importVideoURL);
+  importVideoURL = URL.createObjectURL(file);
+
+  if (!importVideo) {
+    importVideo = document.createElement('video');
+    importVideo.muted = true;
+    importVideo.playsInline = true;
+    importVideo.preload = 'auto';
+  }
+  importVideo.src = importVideoURL;
+
+  status.textContent = 'Loading video…';
+  importVideo.onloadedmetadata = () => {
+    importSourceKind = 'video';
+    info.textContent = `${importVideo.videoWidth}×${importVideo.videoHeight} · ${importVideo.duration.toFixed(2)}s`;
+    status.textContent = 'Video loaded. Adjust settings, then hit Convert.';
+    document.getElementById('impLength').value = Math.min(10, importVideo.duration).toFixed(1);
+  };
+}
+
+function importSetBusy(busy, msg) {
+  importCancelRequested = false;
+  const convert = document.getElementById('btnImportConvert');
+  const cancel = document.getElementById('btnImportCancel');
+  const replace = document.getElementById('btnImportReplace');
+  const status = document.getElementById('importStatus');
+  if (busy) {
+    convert.disabled = true;
+    cancel.style.display = '';
+    replace.style.display = 'none';
+    if (msg) status.textContent = msg;
+  } else {
+    convert.disabled = false;
+    cancel.style.display = 'none';
+  }
+}
+
+function importCancel() {
+  importCancelRequested = true;
+  document.getElementById('importStatus').textContent = 'Cancelling…';
+}
+
+function importExtractVideoFrame(t) {
+  return new Promise((resolve) => {
+    const onSeeked = () => {
+      importVideo.removeEventListener('seeked', onSeeked);
+      const tmp = document.createElement('canvas');
+      tmp.width = importVideo.videoWidth;
+      tmp.height = importVideo.videoHeight;
+      tmp.getContext('2d').drawImage(importVideo, 0, 0);
+      resolve(tmp);
+    };
+    importVideo.addEventListener('seeked', onSeeked);
+    importVideo.currentTime = t;
+  });
+}
+
+async function importRunConvert() {
+  if (!importSourceKind) {
+    document.getElementById('importStatus').textContent = 'Load a file first.';
+    return;
+  }
+
+  const settings = importReadSettings();
+  importLastSettings = settings;
+
+  const frameCount = Math.round(settings.length * settings.fps);
+  const dt = 1 / settings.fps;
+  const strip = document.getElementById('importFilmstrip');
+  const status = document.getElementById('importStatus');
+
+  if (frameCount > AD_MAX_FRAMES) {
+    status.textContent = `Too many frames: ${frameCount} (max ${AD_MAX_FRAMES}). Reduce length or FPS.`;
+    return;
+  }
+
+  const isLiveReconvert = importConvertedFrames.length > 0;
+  importConvertedFrames = [];
+  importSetBusy(true, isLiveReconvert ? 'Updating…' : `Processing 0 / ${frameCount}…`);
+  await new Promise(r => setTimeout(r, 0));
+
+  const newThumbs = [];
+
+  try {
+    if (importSourceKind === 'gif') {
+      const t0 = settings.start * 1000;
+      const t1 = Math.min((settings.start + settings.length) * 1000, importGifTotalMs);
+      for (let i = 0; i < frameCount; i++) {
+        if (importCancelRequested) break;
+        const tMs = t0 + i * (dt * 1000);
+        if (tMs > t1) break;
+        let acc = 0, idx = 0;
+        for (let j = 0; j < importGifFrames.length; j++) {
+          acc += importGifFrames[j].delayMs;
+          if (acc > tMs) { idx = j; break; }
+          idx = j;
+        }
+        const gf = importGifFrames[idx];
+        const bitmap96 = importProcessFrame(gf.rgba, gf.width, gf.height, true, settings);
+        const full = importWrapToFullCanvas(bitmap96);
+        importConvertedFrames.push({ pixels: full });
+        newThumbs.push(full);
+        if (!isLiveReconvert) status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        await new Promise(r => setTimeout(r, 0));
+      }
+    } else {
+      for (let i = 0; i < frameCount; i++) {
+        if (importCancelRequested) break;
+        const t = settings.start + i * dt;
+        if (t > importVideo.duration) break;
+        if (!isLiveReconvert) status.textContent = `Processing ${i + 1} / ${frameCount}…`;
+        const src = await importExtractVideoFrame(t);
+        const bitmap96 = importProcessFrame(src, src.width, src.height, false, settings);
+        const full = importWrapToFullCanvas(bitmap96);
+        importConvertedFrames.push({ pixels: full });
+        newThumbs.push(full);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Convert failed: ' + err.message;
+    importSetBusy(false);
+    return;
+  }
+
+  importSetBusy(false);
+
+  if (importCancelRequested) {
+    status.textContent = 'Cancelled.';
+    document.getElementById('btnImportReplace').style.display = 'none';
+    return;
+  }
+
+  if (importConvertedFrames.length === 0) {
+    status.textContent = 'No frames were converted.';
+    return;
+  }
+
+  strip.innerHTML = '';
+  for (const px of newThumbs) importDrawThumb(strip, px);
+
+  const totalMs = importConvertedFrames.length * (1000 / settings.fps);
+  status.textContent = `Ready: ${importConvertedFrames.length} frames · ${(totalMs/1000).toFixed(2)}s at ${settings.fps}fps`;
+
+  if (isLiveReconvert && frames.length === importConvertedFrames.length) {
+    const frameMs = Math.round(1000 / settings.fps);
+    for (let i = 0; i < frames.length; i++) {
+      frames[i].pixels = new Uint8Array(importConvertedFrames[i].pixels);
+      frames[i].durationMs = frameMs;
+    }
+    pixels = frames[Math.min(currentFrameIndex, frames.length - 1)].pixels;
+    render();
+    renderTimeline();
+    status.textContent += ' · applied to timeline';
+  } else {
+    document.getElementById('btnImportReplace').style.display = '';
+    document.getElementById('btnImportBackground').style.display = '';
+  }
+}
+
+function importDrawThumb(strip, fullPixels) {
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const cctx = c.getContext('2d');
+  const img = cctx.createImageData(W, H);
+  for (let p = 0; p < W * H; p++) {
+    const on = fullPixels[p];
+    img.data[p * 4 + 0] = on ? 255 : 0;
+    img.data[p * 4 + 1] = on ? 255 : 0;
+    img.data[p * 4 + 2] = on ? 255 : 0;
+    img.data[p * 4 + 3] = 255;
+  }
+  cctx.putImageData(img, 0, 0);
+  strip.appendChild(c);
+}
+
+function importCommit() {
+  if (!importConvertedFrames.length) return;
+  const s = importLastSettings;
+  const frameMs = Math.round(1000 / (s ? s.fps : 8));
+
+  if (frames.length > 0) {
+    const ok = confirm(
+      `Replace current ${frames.length} frame${frames.length === 1 ? '' : 's'} ` +
+      `with ${importConvertedFrames.length} imported frame${importConvertedFrames.length === 1 ? '' : 's'}?`
+    );
+    if (!ok) return;
+  }
+
+  frames = importConvertedFrames.map(f => ({
+    durationMs: frameMs,
+    pixels: new Uint8Array(f.pixels),
+  }));
+  currentFrameIndex = 0;
+  pixels = frames[0].pixels;
+  loopCount = 1;
+
+  renderTimeline();
+  rebuildProps();
+  render();
+
+  const status = document.getElementById('importStatus');
+  if (status) {
+    status.textContent = `Applied: ${frames.length} frames are now in the timeline.`;
+  }
+  document.getElementById('btnImportReplace').style.display = '';
+  document.getElementById('btnImportBackground').style.display = '';
+}
+
+async function importUseAsBackground() {
+  if (!importConvertedFrames.length) return;
+  const s = importLastSettings;
+  const frameMs = Math.round(1000 / (s ? s.fps : 8));
+  const frameCount = importConvertedFrames.length;
+
+  if (frameCount > 30) {
+    document.getElementById('importStatus').textContent =
+      `Too many frames for a background: ${frameCount} (max 30). Reduce length or FPS.`;
+    return;
+  }
+
+  const bytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = bytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = importConvertedFrames[f].pixels;
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      for (let x = 0; x < AD_W; x++) {
+        if (src[y * W + x]) {
+          const byteIndex = base + y * bytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, all.subarray(i, Math.min(i + CHUNK, all.length)));
+  }
+  const b64 = btoa(binary);
+
+  const payload = JSON.stringify({
+    kind: 'background',
+    v: 1,
+    w: AD_W,
+    h: AD_H,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    format: 'bitpacked-row-lsb',
+    data: b64,
+  });
+
+  const status = document.getElementById('importStatus');
+  status.textContent = `Sending background (${frameCount} frames)…`;
+
+  try {
+    await sendRawPayload(payload);
+    status.textContent = `Background sent.`;
+    currentBackgroundFrames = importConvertedFrames.map(f => new Uint8Array(f.pixels));
+    currentBackgroundFrameMs = frameMs;
+
+    if (!elements.some(e => e.type === 'background')) {
+      elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
+    }
+    render();
+    rebuildProps();
+  } catch (e) {
+    console.error(e);
+    status.textContent = 'Background send failed: ' + e.message;
+  }
+}
+</script>
+
+<script>
+/* ============================================================
+   LIBRARY — save/load faces, backgrounds, animations to localStorage
+   ============================================================ */
+
+const LIB_INDEX_KEY = 'watchlib:index';
+
+function libB64FromBytes(bytes) {
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+  }
+  return btoa(binary);
+}
+function libBytesFromB64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function libGetIndex() {
+  try {
+    const s = localStorage.getItem(LIB_INDEX_KEY);
+    if (!s) return { faces: [], backgrounds: [], animations: [] };
+    const o = JSON.parse(s);
+    return {
+      faces: Array.isArray(o.faces) ? o.faces : [],
+      backgrounds: Array.isArray(o.backgrounds) ? o.backgrounds : [],
+      animations: Array.isArray(o.animations) ? o.animations : [],
+    };
+  } catch (_) {
+    return { faces: [], backgrounds: [], animations: [] };
+  }
+}
+function libSetIndex(idx) {
+  localStorage.setItem(LIB_INDEX_KEY, JSON.stringify(idx));
+}
+
+function libKey(kind, name) {
+  return `watchlib:${kind}:${name}`;
+}
+
+function libList(kind) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  return idx[key] || [];
+}
+function libAdd(kind, name) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  if (!idx[key].includes(name)) idx[key].push(name);
+  libSetIndex(idx);
+}
+function libRemove(kind, name) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  idx[key] = idx[key].filter(n => n !== name);
+  libSetIndex(idx);
+  localStorage.removeItem(libKey(kind, name));
+}
+
+function libSaveItem(kind, name, obj) {
+  try {
+    localStorage.setItem(libKey(kind, name), JSON.stringify(obj));
+    libAdd(kind, name);
+    return true;
+  } catch (e) {
+    console.error('library save failed', e);
+    alert('Could not save: ' + e.message);
+    return false;
+  }
+}
+function libLoadItem(kind, name) {
+  try {
+    const s = localStorage.getItem(libKey(kind, name));
+    if (!s) return null;
+    return JSON.parse(s);
+  } catch (_) { return null; }
+}
+function libSerializeCurrentAnimation() {
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    frameMs: frames[0] ? frames[0].durationMs : 125,
+    frameCount: frames.length,
+    loopCount: loopCount,
+    trigger: importTrigger,
+    animName: window._animName || 'untitled',
+    frames: frames.map(f => libB64FromBytes(f.pixels)),
+  };
+}
+function libApplyAnimation(obj) {
+  if (!obj || !Array.isArray(obj.frames)) return;
+  frames = obj.frames.map(b64 => ({
+    durationMs: obj.frameMs || 125,
+    pixels: libBytesFromB64(b64),
+  }));
+  currentFrameIndex = 0;
+  pixels = frames[0].pixels;
+  if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
+  if (obj.trigger) importTrigger = obj.trigger;
+  if (obj.animName) window._animName = obj.animName;
+  renderTimeline();
+  rebuildProps();
+  render();
+}
+
+function libSerializeCurrentFace() {
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    elements: elements.map(e => ({ ...e })),
+    effects: { ...effects },
+  };
+}
+function libSerializeCurrentBackground() {
+  if (!currentBackgroundFrames || currentBackgroundFrames.length === 0) return null;
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    frameMs: currentBackgroundFrameMs,
+    frameCount: currentBackgroundFrames.length,
+    loopCount: loopCount,
+    frames: currentBackgroundFrames.map(px => libB64FromBytes(px)),
+  };
+}
+
+function libApplyFace(obj) {
+  if (!obj || !Array.isArray(obj.elements)) return;
+  elements = obj.elements.map(e => ({ ...e }));
+  let maxId = 0;
+  for (const e of elements) if (e.id > maxId) maxId = e.id;
+  nextId = maxId + 1;
+  Object.assign(effects, obj.effects || {});
+  selectedId = null;
+  const fxMap = {
+    fxScanline: 'scanline', fxGlitch: 'glitch', fxJitter: 'jitter',
+    fxCorners: 'corners', fxStatus: 'status',
+  };
+  for (const [id, key] of Object.entries(fxMap)) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!effects[key];
+  }
+  rebuildProps();
+  render();
+}
+
+function libApplyBackground(obj) {
+  if (!obj || !Array.isArray(obj.frames)) return;
+  currentBackgroundFrames = obj.frames.map(b64 => libBytesFromB64(b64));
+  currentBackgroundFrameMs = obj.frameMs || 100;
+  render();
+  rebuildProps();
+}
+
+let libCurrentTab = 'face';
+
+function libRefreshList() {
+  const listEl = document.getElementById('libraryList');
+  if (!listEl) return;
+  const names = libList(libCurrentTab);
+  listEl.innerHTML = '';
+
+  if (names.length === 0) {
+    const empty = document.createElement('div');
+    empty.id = 'libraryEmpty';
+    empty.textContent = `No saved ${libCurrentTab === 'face' ? 'faces' : (libCurrentTab === 'bg' ? 'backgrounds' : 'animations')} yet.`;
+    listEl.appendChild(empty);
+    return;
+  }
+
+  for (const name of names) {
+    const item = libLoadItem(libCurrentTab, name);
+    const meta = item
+      ? `${item.frameCount ? item.frameCount + ' frames · ' : ''}${item.saved ? new Date(item.saved).toLocaleDateString() : ''}`
+      : '';
+
+    const row = document.createElement('div');
+    row.className = 'library-item';
+    row.innerHTML = `
+      <div class="library-item-name"></div>
+      <div class="library-item-meta"></div>
+      <button class="lib-load">Load</button>
+      <button class="lib-rename">Rename</button>
+      <button class="lib-export">Export</button>
+      <button class="lib-delete danger">Delete</button>
+    `;
+    row.querySelector('.library-item-name').textContent = name;
+    row.querySelector('.library-item-meta').textContent = meta;
+
+    row.querySelector('.lib-load').onclick = () => {
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) { alert('Item not found'); return; }
+      if (libCurrentTab === 'face') libApplyFace(obj);
+      else if (libCurrentTab === 'bg') libApplyBackground(obj);
+      else libApplyAnimation(obj);
+      libClose();
+    };
+
+    row.querySelector('.lib-rename').onclick = () => {
+      const newName = prompt('New name:', name);
+      if (!newName || newName === name) return;
+      if (libList(libCurrentTab).includes(newName)) {
+        alert('A ' + libCurrentTab + ' with that name already exists');
+        return;
+      }
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) return;
+      obj.name = newName;
+      libSaveItem(libCurrentTab, newName, obj);
+      libRemove(libCurrentTab, name);
+      libRefreshList();
+    };
+
+    row.querySelector('.lib-export').onclick = () => {
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) return;
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `watchlib-${libCurrentTab}-${name}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    row.querySelector('.lib-delete').onclick = () => {
+      if (!confirm(`Delete "${name}"?`)) return;
+      libRemove(libCurrentTab, name);
+      libRefreshList();
+    };
+
+    listEl.appendChild(row);
+  }
+}
+
+function libSaveCurrent() {
+  const defaultName = `${libCurrentTab === 'face' ? 'Face' : (libCurrentTab === 'bg' ? 'Background' : 'Animation')} ${new Date().toLocaleDateString()}`;
+  const name = prompt('Save as:', defaultName);
+  if (!name) return;
+  if (libList(libCurrentTab).includes(name)) {
+    if (!confirm(`"${name}" already exists. Overwrite?`)) return;
+  }
+  let obj;
+  if (libCurrentTab === 'face') obj = libSerializeCurrentFace();
+  else if (libCurrentTab === 'bg') obj = libSerializeCurrentBackground();
+  else obj = libSerializeCurrentAnimation();
+  if (!obj) { alert('Nothing to save'); return; }
+  obj.name = name;
+  if (libSaveItem(libCurrentTab, name, obj)) libRefreshList();
+}
+
+function libImportFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const obj = JSON.parse(reader.result);
+        let name = obj.name || file.name.replace(/\.json$/i, '');
+        if (libList(libCurrentTab).includes(name)) {
+          name = prompt('Name conflict — enter a new name:', name + ' (2)');
+          if (!name) return;
+        }
+        obj.name = name;
+        if (libSaveItem(libCurrentTab, name, obj)) libRefreshList();
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function libOpen() {
+  const overlay = document.getElementById('libraryOverlay');
+  if (overlay) overlay.classList.add('open');
+  libRefreshList();
+}
+function libClose() {
+  const overlay = document.getElementById('libraryOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function wireLibrary() {
+  const btnLib = document.getElementById('btnLibrary');
+  const btnClose = document.getElementById('libraryClose');
+  const overlay = document.getElementById('libraryOverlay');
+  if (btnLib) btnLib.onclick = libOpen;
+  if (btnClose) btnClose.onclick = libClose;
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) libClose();
+    });
+  }
+  document.querySelectorAll('#libraryTabs button').forEach(b => {
+    b.onclick = () => {
+      libCurrentTab = b.dataset.tab;
+      document.querySelectorAll('#libraryTabs button').forEach(x => {
+        x.classList.toggle('active', x.dataset.tab === libCurrentTab);
+      });
+      libRefreshList();
+    };
+  });
+  const btnSave = document.getElementById('librarySaveCurrent');
+  const btnImport = document.getElementById('libraryImport');
+  if (btnSave) btnSave.onclick = libSaveCurrent;
+  if (btnImport) btnImport.onclick = libImportFile;
+}
+
+window.addEventListener('DOMContentLoaded', wireLibrary);
+if (document.readyState !== 'loading') wireLibrary();
+</script>
+<div id="libraryOverlay">
+  <div id="libraryPanel">
+    <div id="libraryHeader">
+      <h2>Library</h2>
+      <button id="libraryClose">×</button>
+    </div>
+    <div id="libraryTabs">
+      <button data-tab="face" class="active">Faces</button>
+      <button data-tab="bg">Backgrounds</button>
+      <button data-tab="anim">Animations</button>
+    </div>
+    <div id="libraryBody">
+      <div id="libraryActions">
+        <button id="librarySaveCurrent">Save current as…</button>
+        <button id="libraryImport" class="secondary">Import…</button>
+      </div>
+      <div id="libraryList"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
