@@ -4088,7 +4088,57 @@ function libBytesFromB64(b64) {
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
+async function sendCurrentBackgroundToWatch() {
+  if (!currentBackgroundFrames || currentBackgroundFrames.length === 0) {
+    throw new Error('No background loaded');
+  }
+  if (!bleConnected || !bleRxChar) {
+    throw new Error('Not connected');
+  }
 
+  const frameCount = currentBackgroundFrames.length;
+  const frameMs = currentBackgroundFrameMs;
+  const frameBytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = frameBytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = currentBackgroundFrames[f];
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      for (let x = 0; x < AD_W; x++) {
+        if (src[y * W + x]) {
+          const byteIndex = base + y * frameBytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(
+      null, all.subarray(i, Math.min(i + CHUNK, all.length))
+    );
+  }
+  const b64 = btoa(binary);
+
+  const payload = JSON.stringify({
+    kind: 'background',
+    v: 1,
+    w: AD_W,
+    h: AD_H,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    loopCount: loopCount,
+    format: 'bitpacked-row-lsb',
+    data: b64,
+  });
+
+  await sendRawPayload(payload);
+}
 function libGetIndex() {
   try {
     const s = localStorage.getItem(LIB_INDEX_KEY);
@@ -4208,12 +4258,27 @@ function libApplyFace(obj) {
   render();
 }
 
-function libApplyBackground(obj) {
+async function libApplyBackground(obj) {
   if (!obj || !Array.isArray(obj.frames)) return;
   currentBackgroundFrames = obj.frames.map(b64 => libBytesFromB64(b64));
   currentBackgroundFrameMs = obj.frameMs || 100;
+  if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
   render();
   rebuildProps();
+
+  // If connected, push the loaded bitmap to the watch now, so a
+  // subsequent face send has a matching background on the device.
+  if (bleConnected && bleRxChar) {
+    const status = document.getElementById('importStatus');
+    if (status) status.textContent = 'Sending loaded background to watch…';
+    try {
+      await sendCurrentBackgroundToWatch();
+      if (status) status.textContent = 'Background sent to watch.';
+    } catch (e) {
+      console.error(e);
+      if (status) status.textContent = 'Background send failed: ' + e.message;
+    }
+  }
 }
 
 function libApplyAnimation(obj) {
