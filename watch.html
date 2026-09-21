@@ -304,16 +304,154 @@
     background: #2a2a2a;
     border-color: #444;
   }
+ /* -------- Library modal -------- */
+#libraryOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+#libraryOverlay.open {
+  display: flex;
+}
+#libraryPanel {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  width: min(560px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#libraryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #333;
+}
+#libraryHeader h2 {
+  margin: 0;
+  font-size: 15px;
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+#libraryClose {
+  width: auto;
+  margin: 0;
+  padding: 4px 12px;
+  background: #333;
+  border: 1px solid #555;
+  font-size: 16px;
+  line-height: 1;
+}
+#libraryTabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+}
+#libraryTabs button {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px;
+  color: #888;
+  font-size: 13px;
+}
+#libraryTabs button.active {
+  color: #fff;
+  border-bottom-color: #3af;
+  background: #252525;
+}
+#libraryBody {
+  padding: 14px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+#libraryActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+#libraryActions button {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #2a3a5a;
+  border-color: #4a6a8a;
+  color: #cce;
+}
+#libraryActions button.secondary {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #ccc;
+}
+#libraryList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.library-item-name {
+  flex: 1;
+  color: #e0e0e0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-item-meta {
+  color: #666;
+  font-size: 11px;
+}
+.library-item button {
+  width: auto;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #333;
+  border: 1px solid #555;
+}
+.library-item button.danger {
+  background: #3a1e1e;
+  border-color: #633;
+  color: #fbb;
+}
+#libraryEmpty {
+  text-align: center;
+  color: #555;
+  padding: 40px 0;
+  font-size: 13px;
+}
 </style>
 <script src="glcdfont.js"></script>
 </head>
 <body>
 
 <header>
-  <div class="tabs">
+    <div class="tabs">
     <button data-mode="face" class="active">Watch Face</button>
     <button data-mode="anim">Animation</button>
   </div>
+  <button id="btnLibrary" style="width:auto;margin-left:12px;padding:8px 14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Library</button>
   <div class="conn">
     <button id="btnConnect">Connect to Watch</button>
     <button id="btnSend" disabled>Send to Watch</button>
@@ -3928,5 +4066,356 @@ async function sendRawPayload(json) {
   }
 }
 </script>
+<script>
+/* ============================================================
+   LIBRARY — save/load faces, backgrounds, animations to localStorage
+   ============================================================ */
+
+const LIB_INDEX_KEY = 'watchlib:index';
+
+// ---------- helpers ----------
+function libB64FromBytes(bytes) {
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+  }
+  return btoa(binary);
+}
+function libBytesFromB64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function libGetIndex() {
+  try {
+    const s = localStorage.getItem(LIB_INDEX_KEY);
+    if (!s) return { faces: [], backgrounds: [], animations: [] };
+    const o = JSON.parse(s);
+    return {
+      faces: Array.isArray(o.faces) ? o.faces : [],
+      backgrounds: Array.isArray(o.backgrounds) ? o.backgrounds : [],
+      animations: Array.isArray(o.animations) ? o.animations : [],
+    };
+  } catch (_) {
+    return { faces: [], backgrounds: [], animations: [] };
+  }
+}
+function libSetIndex(idx) {
+  localStorage.setItem(LIB_INDEX_KEY, JSON.stringify(idx));
+}
+
+function libKey(kind, name) {
+  return `watchlib:${kind}:${name}`;
+}
+
+function libList(kind) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  return idx[key] || [];
+}
+function libAdd(kind, name) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  if (!idx[key].includes(name)) idx[key].push(name);
+  libSetIndex(idx);
+}
+function libRemove(kind, name) {
+  const idx = libGetIndex();
+  const key = kind === 'face' ? 'faces' : (kind === 'bg' ? 'backgrounds' : 'animations');
+  idx[key] = idx[key].filter(n => n !== name);
+  libSetIndex(idx);
+  localStorage.removeItem(libKey(kind, name));
+}
+
+function libSaveItem(kind, name, obj) {
+  try {
+    localStorage.setItem(libKey(kind, name), JSON.stringify(obj));
+    libAdd(kind, name);
+    return true;
+  } catch (e) {
+    console.error('library save failed', e);
+    alert('Could not save: ' + e.message);
+    return false;
+  }
+}
+function libLoadItem(kind, name) {
+  try {
+    const s = localStorage.getItem(libKey(kind, name));
+    if (!s) return null;
+    return JSON.parse(s);
+  } catch (_) { return null; }
+}
+
+// ---------- serialize current state ----------
+
+function libSerializeCurrentFace() {
+  return {
+    v: 1,
+    name: '',  // filled by caller
+    saved: new Date().toISOString(),
+    elements: elements.map(e => ({ ...e })),
+    effects: { ...effects },
+  };
+}
+function libSerializeCurrentBackground() {
+  if (!currentBackgroundFrames || currentBackgroundFrames.length === 0) return null;
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    frameMs: currentBackgroundFrameMs,
+    frameCount: currentBackgroundFrames.length,
+    loopCount: loopCount,   // shared UI value
+    frames: currentBackgroundFrames.map(px => libB64FromBytes(px)),
+  };
+}
+function libSerializeCurrentAnimation() {
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    frameMs: frames[0] ? frames[0].durationMs : 125,
+    frameCount: frames.length,
+    loopCount: loopCount,
+    frames: frames.map(f => libB64FromBytes(f.pixels)),
+  };
+}
+
+// ---------- deserialize into live state ----------
+
+function libApplyFace(obj) {
+  if (!obj || !Array.isArray(obj.elements)) return;
+  elements = obj.elements.map(e => ({ ...e }));
+  // renumber ids to keep them unique
+  let maxId = 0;
+  for (const e of elements) if (e.id > maxId) maxId = e.id;
+  nextId = maxId + 1;
+  Object.assign(effects, obj.effects || {});
+  selectedId = null;
+  // Refresh any UI that shows effects
+  const fxMap = {
+    fxScanline: 'scanline', fxGlitch: 'glitch', fxJitter: 'jitter',
+    fxCorners: 'corners', fxStatus: 'status', fxAd: 'ad',
+  };
+  for (const [id, key] of Object.entries(fxMap)) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!effects[key];
+  }
+  rebuildProps();
+  render();
+}
+
+function libApplyBackground(obj) {
+  if (!obj || !Array.isArray(obj.frames)) return;
+  currentBackgroundFrames = obj.frames.map(b64 => libBytesFromB64(b64));
+  currentBackgroundFrameMs = obj.frameMs || 100;
+  render();
+  rebuildProps();
+}
+
+function libApplyAnimation(obj) {
+  if (!obj || !Array.isArray(obj.frames)) return;
+  frames = obj.frames.map(b64 => ({
+    durationMs: obj.frameMs || 125,
+    pixels: libBytesFromB64(b64),
+  }));
+  currentFrameIndex = 0;
+  pixels = frames[0].pixels;
+  if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
+  renderTimeline();
+  rebuildProps();
+  render();
+}
+
+// ---------- UI ----------
+
+let libCurrentTab = 'face';
+
+function libRefreshList() {
+  const listEl = document.getElementById('libraryList');
+  if (!listEl) return;
+  const names = libList(libCurrentTab);
+  listEl.innerHTML = '';
+
+  if (names.length === 0) {
+    const empty = document.createElement('div');
+    empty.id = 'libraryEmpty';
+    empty.textContent = `No saved ${libCurrentTab === 'face' ? 'faces' : (libCurrentTab === 'bg' ? 'backgrounds' : 'animations')} yet.`;
+    listEl.appendChild(empty);
+    return;
+  }
+
+  for (const name of names) {
+    const item = libLoadItem(libCurrentTab, name);
+    const meta = item
+      ? `${item.frameCount ? item.frameCount + ' frames · ' : ''}${item.saved ? new Date(item.saved).toLocaleDateString() : ''}`
+      : '';
+
+    const row = document.createElement('div');
+    row.className = 'library-item';
+    row.innerHTML = `
+      <div class="library-item-name"></div>
+      <div class="library-item-meta"></div>
+      <button class="lib-load">Load</button>
+      <button class="lib-rename">Rename</button>
+      <button class="lib-export">Export</button>
+      <button class="lib-delete danger">Delete</button>
+    `;
+    row.querySelector('.library-item-name').textContent = name;
+    row.querySelector('.library-item-meta').textContent = meta;
+
+    row.querySelector('.lib-load').onclick = () => {
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) { alert('Item not found'); return; }
+      if (libCurrentTab === 'face') libApplyFace(obj);
+      else if (libCurrentTab === 'bg') libApplyBackground(obj);
+      else libApplyAnimation(obj);
+      libClose();
+    };
+
+    row.querySelector('.lib-rename').onclick = () => {
+      const newName = prompt('New name:', name);
+      if (!newName || newName === name) return;
+      if (libList(libCurrentTab).includes(newName)) {
+        alert('A ' + libCurrentTab + ' with that name already exists');
+        return;
+      }
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) return;
+      obj.name = newName;
+      libSaveItem(libCurrentTab, newName, obj);
+      libRemove(libCurrentTab, name);
+      libRefreshList();
+    };
+
+    row.querySelector('.lib-export').onclick = () => {
+      const obj = libLoadItem(libCurrentTab, name);
+      if (!obj) return;
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `watchlib-${libCurrentTab}-${name}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    row.querySelector('.lib-delete').onclick = () => {
+      if (!confirm(`Delete "${name}"?`)) return;
+      libRemove(libCurrentTab, name);
+      libRefreshList();
+    };
+
+    listEl.appendChild(row);
+  }
+}
+
+function libSaveCurrent() {
+  const defaultName = `${libCurrentTab === 'face' ? 'Face' : (libCurrentTab === 'bg' ? 'Background' : 'Animation')} ${new Date().toLocaleDateString()}`;
+  const name = prompt('Save as:', defaultName);
+  if (!name) return;
+  if (libList(libCurrentTab).includes(name)) {
+    if (!confirm(`"${name}" already exists. Overwrite?`)) return;
+  }
+  let obj;
+  if (libCurrentTab === 'face') obj = libSerializeCurrentFace();
+  else if (libCurrentTab === 'bg') obj = libSerializeCurrentBackground();
+  else obj = libSerializeCurrentAnimation();
+  if (!obj) { alert('Nothing to save'); return; }
+  obj.name = name;
+  if (libSaveItem(libCurrentTab, name, obj)) libRefreshList();
+}
+
+function libImportFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const obj = JSON.parse(reader.result);
+        let name = obj.name || file.name.replace(/\.json$/i, '');
+        if (libList(libCurrentTab).includes(name)) {
+          name = prompt('Name conflict — enter a new name:', name + ' (2)');
+          if (!name) return;
+        }
+        obj.name = name;
+        if (libSaveItem(libCurrentTab, name, obj)) libRefreshList();
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function libOpen() {
+  const overlay = document.getElementById('libraryOverlay');
+  if (overlay) overlay.classList.add('open');
+  libRefreshList();
+}
+function libClose() {
+  const overlay = document.getElementById('libraryOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function wireLibrary() {
+  const btnLib = document.getElementById('btnLibrary');
+  const btnClose = document.getElementById('libraryClose');
+  const overlay = document.getElementById('libraryOverlay');
+  if (btnLib) btnLib.onclick = libOpen;
+  if (btnClose) btnClose.onclick = libClose;
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) libClose();
+    });
+  }
+  document.querySelectorAll('#libraryTabs button').forEach(b => {
+    b.onclick = () => {
+      libCurrentTab = b.dataset.tab;
+      document.querySelectorAll('#libraryTabs button').forEach(x => {
+        x.classList.toggle('active', x.dataset.tab === libCurrentTab);
+      });
+      libRefreshList();
+    };
+  });
+  const btnSave = document.getElementById('librarySaveCurrent');
+  const btnImport = document.getElementById('libraryImport');
+  if (btnSave) btnSave.onclick = libSaveCurrent;
+  if (btnImport) btnImport.onclick = libImportFile;
+}
+
+// Hook in when DOM is ready
+window.addEventListener('DOMContentLoaded', wireLibrary);
+// If DOM is already loaded (script is at end of body), wire immediately
+if (document.readyState !== 'loading') wireLibrary();
+</script>
+<div id="libraryOverlay">
+  <div id="libraryPanel">
+    <div id="libraryHeader">
+      <h2>Library</h2>
+      <button id="libraryClose">×</button>
+    </div>
+    <div id="libraryTabs">
+      <button data-tab="face" class="active">Faces</button>
+      <button data-tab="bg">Backgrounds</button>
+      <button data-tab="anim">Animations</button>
+    </div>
+    <div id="libraryBody">
+      <div id="libraryActions">
+        <button id="librarySaveCurrent">Save current as…</button>
+        <button id="libraryImport" class="secondary">Import…</button>
+      </div>
+      <div id="libraryList"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
