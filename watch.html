@@ -535,6 +535,7 @@ let animationPlayHandle = null;
 let loopCount = 1;   // applies to whatever animation is sent next
 let currentBackgroundFrames = null;   // array of Uint8Array(32*128)
 let currentBackgroundFrameMs = 100;
+let importTrigger = 'ad';
 
 // `pixels` is an alias for the current frame's pixel buffer.
 // All existing drawing code operates on this and works unchanged.
@@ -2620,10 +2621,13 @@ function buildAnimJson() {
   }
   const b64 = btoa(binary);
 
-    return JSON.stringify({
+  const trigger = (typeof importTrigger !== 'undefined' ? importTrigger : 'ad');
+
+  return JSON.stringify({
     kind: 'animation',
-    v: 1,
+    v: 2,
     name: 'untitled',
+    trigger: trigger,
     w: AD_W,
     h: AD_H,
     offsetY: AD_OFFSET_Y,
@@ -3549,6 +3553,7 @@ function wireImportPanel() {
 }
 
 function importBuildPanelUI() {
+
   const panel = document.getElementById('importPanel');
   if (!panel) return;
 
@@ -3599,8 +3604,14 @@ function importBuildPanelUI() {
         <option value="atkinson">Atkinson</option>
       </select>
     </div>
-    <div class="import-row"><label>Invert</label>
-      <input type="checkbox" id="impInvert"></div>
+        <div class="import-row"><label>Trigger</label>
+      <select id="impTrigger">
+        <option value="ad" selected>Ad (scheduled)</option>
+        <option value="onWake">On Wake</option>
+        <option value="beforeSleep">Before Sleep</option>
+        <option value="timer">Timer</option>
+      </select>
+    </div>
 
     <h3>Preview</h3>
     <div id="importFilmstrip"></div>
@@ -3618,6 +3629,12 @@ function importBuildPanelUI() {
   document.getElementById('btnImportCancel').onclick = importCancel;
   document.getElementById('btnImportReplace').onclick = importCommit;
   document.getElementById('btnImportBackground').onclick = importUseAsBackground;
+
+   const trig = document.getElementById('impTrigger');
+  if (trig) {
+    trig.value = importTrigger;
+    trig.onchange = () => { importTrigger = trig.value; };
+  }
 
   // Live re-convert when framing/tone/output controls change.
   // Debounced so dragging a slider doesn't spam the converter.
@@ -4198,6 +4215,32 @@ function libLoadItem(kind, name) {
     return JSON.parse(s);
   } catch (_) { return null; }
 }
+function libSerializeCurrentAnimation() {
+  return {
+    v: 1,
+    name: '',
+    saved: new Date().toISOString(),
+    frameMs: frames[0] ? frames[0].durationMs : 125,
+    frameCount: frames.length,
+    loopCount: loopCount,
+    trigger: (typeof importTrigger !== 'undefined' ? importTrigger : 'ad'),   // NEW
+    frames: frames.map(f => libB64FromBytes(f.pixels)),
+  };
+}
+function libApplyAnimation(obj) {
+  if (!obj || !Array.isArray(obj.frames)) return;
+  frames = obj.frames.map(b64 => ({
+    durationMs: obj.frameMs || 125,
+    pixels: libBytesFromB64(b64),
+  }));
+  currentFrameIndex = 0;
+  pixels = frames[0].pixels;
+  if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
+  if (obj.trigger && typeof importTrigger !== 'undefined') importTrigger = obj.trigger;
+  renderTimeline();
+  rebuildProps();
+  render();
+}
 
 // ---------- serialize current state ----------
 
@@ -4222,17 +4265,7 @@ function libSerializeCurrentBackground() {
     frames: currentBackgroundFrames.map(px => libB64FromBytes(px)),
   };
 }
-function libSerializeCurrentAnimation() {
-  return {
-    v: 1,
-    name: '',
-    saved: new Date().toISOString(),
-    frameMs: frames[0] ? frames[0].durationMs : 125,
-    frameCount: frames.length,
-    loopCount: loopCount,
-    frames: frames.map(f => libB64FromBytes(f.pixels)),
-  };
-}
+
 
 // ---------- deserialize into live state ----------
 
@@ -4279,20 +4312,6 @@ async function libApplyBackground(obj) {
       if (status) status.textContent = 'Background send failed: ' + e.message;
     }
   }
-}
-
-function libApplyAnimation(obj) {
-  if (!obj || !Array.isArray(obj.frames)) return;
-  frames = obj.frames.map(b64 => ({
-    durationMs: obj.frameMs || 125,
-    pixels: libBytesFromB64(b64),
-  }));
-  currentFrameIndex = 0;
-  pixels = frames[0].pixels;
-  if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
-  renderTimeline();
-  rebuildProps();
-  render();
 }
 
 // ---------- UI ----------
