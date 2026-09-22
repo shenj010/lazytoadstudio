@@ -435,8 +435,9 @@
     <button data-mode="anim">Animation</button>
   </div>
   <button id="btnLibrary" style="width:auto;margin-left:12px;padding:8px 14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Library</button>
-  <div class="conn">
+   <div class="conn">
     <button id="btnConnect">Connect to Watch</button>
+    <button id="btnSync" disabled>Sync Time+Weather</button>
     <button id="btnSend" disabled>Send to Watch</button>
     <span id="connStatus">Not connected</span>
   </div>
@@ -2322,6 +2323,7 @@ let bleConnected = false;
 
 const btnConnect = document.getElementById('btnConnect');
 const btnSend    = document.getElementById('btnSend');
+const btnSync    = document.getElementById('btnSync'); 
 const connStatus = document.getElementById('connStatus');
 
 function setConnUI(state, msg) {
@@ -2330,22 +2332,26 @@ function setConnUI(state, msg) {
   if (state === 'disconnected') {
     btnConnect.textContent = 'Connect to Watch';
     btnConnect.disabled = false;
+    btnSync.disabled = true;          // ← add
     btnSend.disabled = true;
     bleConnected = false;
   } else if (state === 'connecting') {
     btnConnect.textContent = 'Connecting…';
     btnConnect.disabled = true;
+    btnSync.disabled = true;          // ← add
     btnSend.disabled = true;
     bleConnected = false;
   } else if (state === 'connected') {
     btnConnect.textContent = 'Disconnect';
     btnConnect.disabled = false;
+    btnSync.disabled = false;         // ← add
     btnSend.disabled = false;
     bleConnected = true;
     connStatus.classList.add('connected');
   } else if (state === 'error') {
     btnConnect.textContent = 'Connect to Watch';
     btnConnect.disabled = false;
+    btnSync.disabled = true;          // ← add
     btnSend.disabled = true;
     bleConnected = false;
     connStatus.classList.add('error');
@@ -2361,6 +2367,124 @@ function allocMsgId() {
   return id;
 }
 
+// ---- Timers (time + weather periodic pushes) ----
+let timePushInterval = null;
+let weatherPushInterval = null;
+
+// ---- OpenWeatherMap key: replace before enabling startWeatherPush() ----
+const OWM_KEY = '6f73faabb57afa19d29caf98b2110ef5';
+
+async function fetchBrowserWeather() {
+  const url =
+    `https://api.openweathermap.org/data/2.5/weather` +
+    `?q=Nishinomiya,JP&appid=${OWM_KEY}&units=metric`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('weather fetch ' + r.status);
+  const j = await r.json();
+  return {
+    temp: j.main.temp,
+    humidity: j.main.humidity,
+    main: j.weather[0].main,
+  };
+}
+
+async function pushWeather() {
+  if (!bleConnected || !bleRxChar) return;
+  try {
+    const w = await fetchBrowserWeather();
+    await sendRawPayload(JSON.stringify({
+      kind: 'weather', v: 1,
+      temp: w.temp, humidity: w.humidity, main: w.main,
+    }));
+    console.log('weather pushed');
+  } catch (e) {
+    console.warn('weather push failed:', e);
+  }
+}
+
+function startWeatherPush() {
+  if (weatherPushInterval) return;
+  weatherPushInterval = setInterval(pushWeather, 30 * 60 * 1000);
+  pushWeather();   // immediate first push
+}
+
+function stopWeatherPush() {
+  if (weatherPushInterval) {
+    clearInterval(weatherPushInterval);
+    weatherPushInterval = null;
+  }
+}
+
+function startTimePush() {
+  if (timePushInterval) return;
+  timePushInterval = setInterval(async () => {
+    if (!bleConnected || !bleRxChar) return;
+    try {
+      const now = new Date();
+      await sendRawPayload(JSON.stringify({
+        kind: 'timesync', v: 1,
+        epoch: Math.floor(now.getTime() / 1000),
+        tzOffsetSec: -now.getTimezoneOffset() * 60,
+      }));
+    } catch (e) {
+      console.warn('time push failed:', e);
+    }
+  }, 60 * 60 * 1000);   // hourly
+}
+
+function stopTimePush() {
+  if (timePushInterval) {
+    clearInterval(timePushInterval);
+    timePushInterval = null;
+  }
+}
+
+async function sendToWatch() {
+  // Sync time first so the new face renders against the correct clock
+  try {
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+  } catch (e) {
+    console.warn('timesync pre-send failed:', e);
+  }
+
+  const json = buildPayload();
+  await sendRawPayload(json);
+  connStatus.textContent = `Sent ${json.length} bytes`;
+}
+
+// ---- Auto push on connect: time, then optionally weather, then face ----
+async function autoPushOnConnect() {
+  // 1. Time
+  try {
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync',
+      v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+  } catch (e) {
+    console.warn('timesync failed:', e);
+  }
+
+  await pushWeather();
+
+  // 3. Face
+  try {
+    await sendRawPayload(buildFaceConfigJson());
+    console.log('face pushed');
+  } catch (e) {
+    console.warn('face push failed:', e);
+  }
+}
+
+// ---- TX notification handler (acks + unsolicited events) ----
 async function onTxNotify(e) {
   const dv = e.target.value;
   if (dv.byteLength < 1) return;
@@ -2398,6 +2522,7 @@ async function onTxNotify(e) {
   }
 }
 
+// ---- Connect / disconnect ----
 async function doConnect() {
   if (!navigator.bluetooth) {
     setConnUI('error', 'Web Bluetooth not supported in this browser');
@@ -2414,6 +2539,8 @@ async function doConnect() {
       bleServer = null;
       bleRxChar = null;
       bleTxChar = null;
+      stopTimePush();
+      stopWeatherPush();
       setConnUI('disconnected', 'Disconnected');
     });
 
@@ -2438,49 +2565,21 @@ async function doConnect() {
 
     setConnUI('connected', `Connected: ${bleDevice.name || 'watch'}`);
 
-    // Auto-push time, then optionally weather, then current face
-    setTimeout(() => autoPushOnConnect().catch(err => console.warn('autoPush:', err)), 200);
+    // Give the BLE stack a moment to settle, then push time + face
+    setTimeout(() => autoPushOnConnect().catch(err => console.warn('autoPush:', err)), 800);
+
+    // Periodic pushes while connected
+    startTimePush();
+    // startWeatherPush();   // uncomment once OWM_KEY is set
   } catch (e) {
     console.error(e);
     setConnUI('error', `Error: ${e.message}`);
   }
 }
 
-async function autoPushOnConnect() {
-  // 1. Time
-  try {
-    const now = new Date();
-    await sendRawPayload(JSON.stringify({
-      kind: 'timesync',
-      v: 1,
-      epoch: Math.floor(now.getTime() / 1000),
-      tzOffsetSec: -now.getTimezoneOffset() * 60,
-    }));
-    console.log('timesync sent');
-  } catch (e) {
-    console.warn('timesync failed:', e);
-  }
-
-  // 2. Weather placeholder (optional — uncomment + fill in real values if you want)
-  // try {
-  //   await sendRawPayload(JSON.stringify({
-  //     kind: 'weather', v: 1, temp: 18.5, humidity: 62, main: 'Clouds'
-  //   }));
-  // } catch (e) { console.warn('weather failed:', e); }
-
-  // 3. Face
-  try {
-    if (currentMode === 'face') {
-      // don't stomp on whatever the user is doing in anim mode
-    }
-    await sendRawPayload(buildFaceConfigJson());
-    console.log('face pushed');
-  } catch (e) {
-    console.warn('face push failed:', e);
-  }
-}
-
 function doDisconnect() {
+  stopTimePush();
+  stopWeatherPush();
   try {
     if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
   } catch (_) {}
@@ -2631,6 +2730,34 @@ btnSend.onclick = async () => {
     connStatus.classList.add('error');
   } finally {
     btnSend.disabled = false;
+  }
+};
+
+btnSync.onclick = async () => {
+  try {
+    btnSync.disabled = true;
+    connStatus.classList.remove('error');
+
+    // Time
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+
+    await pushWeather();
+
+    connStatus.textContent = 'Synced time' + (weatherPushInterval ? ' + weather' : '');
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = `Sync error: ${e.message}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSync.disabled = false;
   }
 };
 
