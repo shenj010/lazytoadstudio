@@ -2602,7 +2602,9 @@ const AD_MAX_FRAMES = 40;
 function buildAnimJson() {
   const frameCount = frames.length;
   if (frameCount > AD_MAX_FRAMES) {
-    throw new Error(`Too many frames: ${frameCount} (max ${AD_MAX_FRAMES})`);
+    throw new Error(
+      `Timeline has ${frameCount} frames — delete ${frameCount - AD_MAX_FRAMES} to send (max ${AD_MAX_FRAMES}).`
+    );
   }
 
   const frameMs = frames[0].durationMs || 125;
@@ -3915,14 +3917,6 @@ function importCommit() {
   const s = importLastSettings;
   const frameMs = Math.round(1000 / (s ? s.fps : 8));
 
-  if (frames.length > 0) {
-    const ok = confirm(
-      `Replace current ${frames.length} frame${frames.length === 1 ? '' : 's'} ` +
-      `with ${importConvertedFrames.length} imported frame${importConvertedFrames.length === 1 ? '' : 's'}?`
-    );
-    if (!ok) return;
-  }
-
   frames = importConvertedFrames.map(f => ({
     durationMs: frameMs,
     pixels: new Uint8Array(f.pixels),
@@ -3937,8 +3931,13 @@ function importCommit() {
 
   const status = document.getElementById('importStatus');
   if (status) {
-    status.textContent = `Applied: ${frames.length} frames are now in the timeline.`;
+    status.textContent =
+      `Loaded ${frames.length} frames into the timeline. ` +
+      (frames.length > AD_MAX_FRAMES
+        ? `Delete ${frames.length - AD_MAX_FRAMES} to get under ${AD_MAX_FRAMES} before sending.`
+        : `Ready to send.`);
   }
+
   document.getElementById('btnImportReplace').style.display = '';
   document.getElementById('btnImportBackground').style.display = '';
 }
