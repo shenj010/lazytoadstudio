@@ -2782,6 +2782,7 @@ setInterval(() => {
 const OUT_W = 32;
 const OUT_H = 128;
 const AD_OFFSET_IMPORT = 0;
+const IMPORT_MAX_FRAMES = 200;
 
 let importSourceKind = null;
 let importGifFrames = [];
@@ -3802,10 +3803,10 @@ async function importRunConvert() {
   const strip = document.getElementById('importFilmstrip');
   const status = document.getElementById('importStatus');
 
-  if (frameCount > AD_MAX_FRAMES) {
-    status.textContent = `Too many frames: ${frameCount} (max ${AD_MAX_FRAMES}). Reduce length or FPS.`;
-    return;
-  }
+  if (frameCount > IMPORT_MAX_FRAMES) {
+  status.textContent = `Too many frames: ${frameCount} (max ${IMPORT_MAX_FRAMES}). Reduce length or FPS.`;
+  return;
+}
 
   const isLiveReconvert = importConvertedFrames.length > 0;
   importConvertedFrames = [];
