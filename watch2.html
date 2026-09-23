@@ -1300,17 +1300,7 @@ function drawTempElement(el) {
 
 function drawTimezoneElement(el) {
   const tz = TZ_TABLE[activeTzIndex];
-
-  // style 'text' → code + offset (e.g. TOK+9)
-  // style 'microhex' → code only (e.g. TOK)
-  let str;
-  if (el.style === 'microhex') {
-    str = tz.code;
-  } else {
-    if (tz.offset === 0)      str = tz.code;
-    else if (tz.offset > 0)   str = `${tz.code}+${tz.offset}`;
-    else                      str = `${tz.code}${tz.offset}`;
-  }
+  const str = tz.code;   // ← just the code, always
 
   const rot = el.rotation || 0;
   const vertical = (rot === 90 || rot === 270);
