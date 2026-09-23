@@ -3242,86 +3242,81 @@ function saveSchedState() {
 }
 
 async function sendToWatch() {
-  if (currentMode === 'anim') {
-    const json = buildAnimJson();
-    await sendRawPayload(json, 'animation');
-    connStatus.textContent = `Sent animation (${json.length} bytes)`;
-    return;
-  }
-
-  // ---- Face mode: compact occupied slots into 0..N-1 ----
-  // A slot is "occupied" iff it has >= 1 element.
-  const occupied = [];
-  for (let i = 0; i < MAX_PAGES; i++) {
-    const pg = pages[i];
-    const hasEls = pg.elements && pg.elements.length > 0;
-    pg.used = hasEls;
-    if (hasEls) occupied.push(i);
-  }
-
-  // 1. Tell the watch to wipe all pages.
   try {
+    if (currentMode === 'anim') {
+      const json = buildAnimJson();
+      await sendRawPayload(json, 'animation');
+      connStatus.textContent = `Sent animation (${json.length} bytes)`;
+      return;
+    }
+
+    // ---- Face mode: compact occupied slots into 0..N-1 ----
+    const occupied = [];
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const pg = pages[i];
+      const hasEls = pg.elements && pg.elements.length > 0;
+      pg.used = hasEls;
+      if (hasEls) occupied.push(i);
+    }
+
+    // 1. Wipe all pages on the watch.
     await sendRawPayload(
       JSON.stringify({ kind: 'faceReset', v: 1 }),
       'faceReset'
     );
-  } catch (e) {
-    connStatus.textContent = 'faceReset failed: ' + e.message;
-    connStatus.classList.add('error');
-    return;
-  }
 
-  // 2. If nothing to send, we're done — watch is clean.
-  if (occupied.length === 0) {
+    // 2. Nothing occupied → watch is clean, built-in clock active.
+    if (occupied.length === 0) {
+      dirtyPages.clear();
+      rebuildPalette();
+      connStatus.textContent =
+        'No occupied pages — watch cleared, builtin clock active';
+      return;
+    }
+
+    // 3. Push each occupied slot, renumbered sequentially.
+    let sent = 0;
+    const failures = [];
+    for (let dst = 0; dst < occupied.length; dst++) {
+      const src = occupied[dst];
+      const json = buildFaceConfigJsonForPage(src, dst);
+      try {
+        await sendRawPayload(json, `face:src${src}->dst${dst}`);
+        sent++;
+        connStatus.textContent =
+          `Sent slot ${src + 1} as watch page ${dst + 1} (${sent}/${occupied.length})`;
+      } catch (e) {
+        failures.push(src);
+        console.warn(`slot ${src} push failed:`, e);
+      }
+    }
+
+    // 4. Finalize pageCount on the watch.
+    const finalCount = sent > 0 ? sent : 1;
+    try {
+      await sendRawPayload(
+        JSON.stringify({ kind: 'setPageCount', v: 1, count: finalCount }),
+        'setPageCount'
+      );
+    } catch (e) {
+      console.warn('setPageCount failed:', e);
+    }
+
+    // 5. Clear local dirty flags.
     dirtyPages.clear();
     rebuildPalette();
-    connStatus.textContent =
-      'No occupied pages — watch cleared, builtin clock active';
-    return;
-  }
 
-  // 3. Push each occupied slot, renumbered sequentially.
-  let sent = 0;
-  const failures = [];
-  for (let dst = 0; dst < occupied.length; dst++) {
-    const src = occupied[dst];
-    const json = buildFaceConfigJsonForPage(src, dst);
-    try {
-      await sendRawPayload(json, `face:src${src}->dst${dst}`);
-      sent++;
+    if (failures.length === 0) {
       connStatus.textContent =
-        `Sent slot ${src + 1} as watch page ${dst + 1} (${sent}/${occupied.length})`;
-    } catch (e) {
-      failures.push(src);
-      console.warn(`slot ${src} push failed:`, e);
+        `Sent ${sent} page${sent === 1 ? '' : 's'} · watch has ${finalCount}`;
+      connStatus.classList.add('connected');
+    } else {
+      connStatus.textContent =
+        `Sent ${sent}, failed slots: ${failures.map(i => i + 1).join(', ')}`;
+      connStatus.classList.add('error');
     }
-  }
 
-  // 4. Finalize pageCount on the watch.
-  const finalCount = sent > 0 ? sent : 1;
-  try {
-    await sendRawPayload(
-      JSON.stringify({ kind: 'setPageCount', v: 1, count: finalCount }),
-      'setPageCount'
-    );
   } catch (e) {
-    console.warn('setPageCount failed:', e);
-  }
-
-  // 5. Clear local dirty flags — we just pushed everything occupied.
-  dirtyPages.clear();
-  rebuildPalette();
-
-  if (failures.length === 0) {
-    connStatus.textContent =
-      `Sent ${sent} page${sent === 1 ? '' : 's'} · watch has ${finalCount}`;
-    connStatus.classList.add('connected');
-  } else {
-    connStatus.textContent =
-      `Sent ${sent}, failed slots: ${failures.map(i => i + 1).join(', ')}`;
-    connStatus.classList.add('error');
-
-   } catch (e) {
     console.error('sendToWatch threw:', e);
     connStatus.textContent = 'sendToWatch error: ' + e.message;
     connStatus.classList.add('error');
