@@ -1054,6 +1054,97 @@ function drawWeatherElement(el) {
   drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
 }
 
+const TINY_DIGITS_HTML = [
+  [0b11111, 0b10001, 0b11111],   // 0
+  [0b00100, 0b11111, 0b00000],   // 1
+  [0b11101, 0b10101, 0b10111],   // 2
+  [0b10101, 0b10101, 0b11111],   // 3
+  [0b00111, 0b00100, 0b11111],   // 4
+  [0b10111, 0b10101, 0b11101],   // 5
+  [0b11111, 0b10101, 0b11101],   // 6
+  [0b00001, 0b00001, 0b11111],   // 7
+  [0b11111, 0b10101, 0b11111],   // 8
+  [0b10111, 0b10101, 0b11111],   // 9
+];
+
+// 3x5 letter font — only what the diagnostic chunks need
+const TINY_LETTERS = {
+  'A': [0b11111, 0b10101, 0b11111],
+  'B': [0b11111, 0b10101, 0b11111],
+  'C': [0b11111, 0b10001, 0b11111],
+  'D': [0b11111, 0b10001, 0b11111],
+  'E': [0b11111, 0b10101, 0b10101],
+  'F': [0b11111, 0b10100, 0b10100],
+  'G': [0b11111, 0b10001, 0b11011],
+  'H': [0b10101, 0b11111, 0b10101],
+  'I': [0b11111, 0b00100, 0b11111],
+  'J': [0b00011, 0b00001, 0b11111],
+  'K': [0b10101, 0b11110, 0b10101],
+  'L': [0b10000, 0b10000, 0b11111],
+  'M': [0b11111, 0b01010, 0b11111],
+  'N': [0b11111, 0b01000, 0b11111],
+  'O': [0b11111, 0b10001, 0b11111],
+  'P': [0b11111, 0b10100, 0b11100],
+  'Q': [0b11111, 0b10011, 0b11111],
+  'R': [0b11111, 0b10110, 0b11101],
+  'S': [0b10111, 0b10101, 0b11101],
+  'T': [0b11111, 0b00100, 0b00100],
+  'U': [0b11111, 0b00001, 0b11111],
+  'V': [0b11110, 0b00001, 0b11110],
+  'W': [0b11111, 0b01000, 0b11111],
+  'X': [0b10101, 0b01110, 0b10101],
+  'Y': [0b10100, 0b01111, 0b10100],
+  'Z': [0b11101, 0b00100, 0b10111],
+};
+
+function drawTinyGlyph(x, y, ch) {
+  const chW = 4;
+  if (ch >= '0' && ch <= '9') {
+    const d = ch.charCodeAt(0) - 48;
+    for (let cx = 0; cx < 3; cx++) {
+      const col = TINY_DIGITS_HTML[d][cx];
+      for (let ry = 0; ry < 5; ry++) {
+        if (col & (1 << ry)) fillRectPx(x + cx, y + ry, 1, 1);
+      }
+    }
+  } else if (TINY_LETTERS[ch]) {
+    for (let cx = 0; cx < 3; cx++) {
+      const col = TINY_LETTERS[ch][cx];
+      for (let ry = 0; ry < 5; ry++) {
+        if (col & (1 << ry)) fillRectPx(x + cx, y + ry, 1, 1);
+      }
+    }
+  } else if (ch === ':') {
+    fillRectPx(x + 1, y + 1, 1, 1);
+    fillRectPx(x + 1, y + 3, 1, 1);
+  } else if (ch === '.') {
+    fillRectPx(x + 1, y + 4, 1, 1);
+  } else if (ch === '+') {
+    fillRectPx(x, y + 2, 3, 1);
+    fillRectPx(x + 1, y + 1, 1, 3);
+  } else if (ch === '-') {
+    fillRectPx(x, y + 2, 3, 1);
+  } else if (ch === '/') {
+    fillRectPx(x + 2, y + 0, 1, 1);
+    fillRectPx(x + 1, y + 2, 1, 1);
+    fillRectPx(x + 0, y + 4, 1, 1);
+  } else if (ch === '_') {
+    fillRectPx(x, y + 4, 3, 1);
+  }
+}
+
+function drawTinyStringPx(x, y, str) {
+  let xx = x;
+  for (let i = 0; i < str.length; i++) {
+    drawTinyGlyph(xx, y, str[i].toUpperCase());
+    xx += 4;
+  }
+}
+
+function tinyStringWidthPx(str) {
+  return str.length * 4 - 1;
+}
+
 function drawElement(el) {
   const now = tzNow();
   switch (el.type) {
@@ -1068,7 +1159,348 @@ function drawElement(el) {
     case 'bar':      drawBarElement(el);          break;
     case 'background': drawBackgroundElement(el); break;
     case 'timezone': drawTimezoneElement(el); break;
+    case 'diagTime':   drawDiagTimeElement(el);   break;
+    case 'diagEnv':    drawDiagEnvElement(el);    break;
+    case 'diagSys':    drawDiagSysElement(el);    break;
+    case 'diagMaster': drawDiagMasterElement(el); break;
+    case 'pulse':      drawPulseElement(el);      break;
     default:         break;
+  }
+}
+
+ function drawDiagRowPx(x, y, w, label, value, bullet) {
+  const yTop = y - 2;
+  let labelX = x;
+
+  if (bullet) {
+    // "»" chevron: three diagonal pixels
+    fillRectPx(x,     yTop + 1, 1, 1);
+    fillRectPx(x + 1, yTop + 2, 1, 2);
+    fillRectPx(x + 2, yTop + 3, 1, 1);
+    fillRectPx(x + 2, yTop + 2, 1, 1);
+    labelX = x + 4;
+  }
+
+  drawTinyStringPx(labelX, yTop, label);
+
+  const valueW = tinyStringWidthPx(value);
+  const valueX = x + w - valueW;
+  if (valueX > labelX + tinyStringWidthPx(label) + 2) {
+    drawTinyStringPx(valueX, yTop, value);
+  }
+}
+
+function drawDiagDividerPx(x, y, w) {
+  fillRectPx(x, y, w, 1);
+  const q1 = x + Math.floor(w / 4);
+  const q3 = x + Math.floor((w * 3) / 4);
+  fillRectPx(q1, y - 1, 1, 3);
+  fillRectPx(q3, y - 1, 1, 3);
+}
+
+function parseEnabledFields(content, allKeys, defaultOn) {
+  if (!content || content.length === 0) {
+    const out = {};
+    for (const k of allKeys) out[k] = defaultOn;
+    return out;
+  }
+  const out = {};
+  for (const k of allKeys) out[k] = false;
+  for (const c of content) {
+    if (allKeys.includes(c)) out[c] = true;
+  }
+  return out;
+}
+
+function drawDiagTimeElement(el) {
+  const now = tzNow();
+  const fields = parseEnabledFields(el.content, ['T','D','W','Z'], true);
+
+  const rowH = 8;
+  const padTop = 2, padBottom = 2;
+  const yStart = el.y + padTop;
+  const availH = el.h - padTop - padBottom;
+  const maxRows = Math.floor(availH / rowH);
+  if (maxRows < 1) return;
+
+  let rowIdx = 0;
+  const nextY = () => {
+    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+    rowIdx++;
+    return ry;
+  };
+  const pad2 = n => String(n).padStart(2, '0');
+
+  if (fields.T && rowIdx < maxRows) {
+    const s = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+    drawDiagRowPx(el.x, nextY(), el.w, 'TIME', s, true);
+  }
+  if (fields.D && rowIdx < maxRows) {
+    const s = `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`;
+    drawDiagRowPx(el.x, nextY(), el.w, 'DATE', s, true);
+  }
+  if (fields.W && rowIdx < maxRows) {
+    const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    drawDiagRowPx(el.x, nextY(), el.w, 'DAY', DOW[now.getDay()], true);
+  }
+  if (fields.Z && rowIdx < maxRows) {
+    const tz = TZ_TABLE[activeTzIndex];
+    drawDiagRowPx(el.x, nextY(), el.w, 'TZ', tz.code, true);
+  }
+
+  if (rowIdx > 0 && rowIdx < maxRows) {
+    const divY = yStart + rowIdx * rowH;
+    if (divY < el.y + el.h - 4) {
+      drawDiagDividerPx(el.x, divY, el.w);
+    }
+  }
+  if (Math.floor(Date.now() / 1000) % 2 === 0) {
+    fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
+  }
+}
+
+function drawDiagEnvElement(el) {
+  const fields = parseEnabledFields(el.content, ['T','W','H'], true);
+
+  const rowH = 8;
+  const padTop = 2, padBottom = 2;
+  const yStart = el.y + padTop;
+  const availH = el.h - padTop - padBottom;
+  const maxRows = Math.floor(availH / rowH);
+  if (maxRows < 1) return;
+
+  let rowIdx = 0;
+  const nextY = () => {
+    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+    rowIdx++;
+    return ry;
+  };
+
+  // Fake data for the designer preview
+  const tempC = 12.4;
+  const wxCode = 'CLD';
+  const humPct = 78;
+
+  if (fields.T && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'TEMP', tempC.toFixed(1) + 'C', true);
+  }
+  if (fields.W && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'WX', wxCode, true);
+  }
+  if (fields.H && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'HUM', humPct + '%', true);
+  }
+
+  if (rowIdx > 0 && rowIdx < maxRows) {
+    const divY = yStart + rowIdx * rowH;
+    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+  }
+  if (Math.floor(Date.now() / 1000) % 2 === 0) {
+    fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
+  }
+}
+
+function drawDiagSysElement(el) {
+  const fields = parseEnabledFields(el.content, ['B','S','C','P'], true);
+
+  const rowH = 8;
+  const padTop = 2, padBottom = 2;
+  const yStart = el.y + padTop;
+  const availH = el.h - padTop - padBottom;
+  const maxRows = Math.floor(availH / rowH);
+  if (maxRows < 1) return;
+
+  let rowIdx = 0;
+  const nextY = () => {
+    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+    rowIdx++;
+    return ry;
+  };
+
+  const batPct = 73;
+  const status = 'NRM';
+  const counter = Math.floor(Date.now() / 1000) % 10000;
+
+  if (fields.B && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'BAT', String(batPct).padStart(3, '0'), true);
+  }
+  if (fields.S && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'STAT', status, true);
+  }
+  if (fields.C && rowIdx < maxRows) {
+    drawDiagRowPx(el.x, nextY(), el.w, 'CNT', String(counter).padStart(4, '0'), true);
+  }
+  if (fields.P && rowIdx < maxRows) {
+    const yp = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+    fillRectPx(el.x + 4, yp - 1, 2, 2);
+    rowIdx++;
+  }
+
+  if (rowIdx > 0 && rowIdx < maxRows) {
+    const divY = yStart + rowIdx * rowH;
+    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+  }
+}
+
+function drawDiagMasterElement(el) {
+  // Just calls the three sub-renderers stacked with their own offsets.
+  // Simpler: build one flat list of rows and render sequentially.
+  const fields = parseEnabledFields(el.content, ['T','D','W','Z','P','X','H','B'], true);
+  const now = tzNow();
+
+  const rowH = 8;
+  const padTop = 2, padBottom = 2;
+  const yStart = el.y + padTop;
+  const availH = el.h - padTop - padBottom;
+  const maxRows = Math.floor(availH / rowH);
+  if (maxRows < 1) return;
+
+  let rowIdx = 0;
+  const nextY = () => {
+    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+    rowIdx++;
+    return ry;
+  };
+  const pad2 = n => String(n).padStart(2, '0');
+
+  const rows = [];
+  if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
+  if (fields.D) rows.push(['DATE', `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`]);
+  if (fields.W) rows.push(['DAY',  ['SUN','MON','TUE','WED','THU','FRI','SAT'][now.getDay()]]);
+  if (fields.Z) rows.push(['TZ',   TZ_TABLE[activeTzIndex].code]);
+  if (fields.P) rows.push(['TEMP', '12.4C']);
+  if (fields.X) rows.push(['WX',   'CLD']);
+  if (fields.H) rows.push(['HUM',  '78%']);
+  if (fields.B) rows.push(['BAT',  '073']);
+
+  for (const [label, value] of rows) {
+    if (rowIdx >= maxRows) break;
+    drawDiagRowPx(el.x, nextY(), el.w, label, value, true);
+  }
+
+  if (rowIdx > 0 && rowIdx < maxRows) {
+    const divY = yStart + rowIdx * rowH;
+    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+  }
+  if (Math.floor(Date.now() / 1000) % 2 === 0) {
+    fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
+  }
+}
+
+function pulseComputeLit(el, now) {
+  const src = el.source || 'seconds';
+  const ms = Date.now();
+
+  switch (src) {
+    case 'seconds':       return (Math.floor(ms / 1000) & 1) === 1;
+    case 'second_parity': return (Math.floor(ms / 1000) % 2) === 0;
+    case 'minute':        return now.getSeconds() < 1;
+    case 'hour':          return now.getMinutes() === 0 && now.getSeconds() < 1;
+    case 'hour_progress': return ((now.getMinutes() * 60 + now.getSeconds()) / 3600) > 0.5;
+    case 'day_progress':  return ((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400) > 0.5;
+    case 'battery.charging': return true;      // designer preview: "on"
+    case 'battery.low':      return false;     // designer preview: "off"
+    case 'battery.percent':  return true;      // for bar-fill styles
+    case 'ble.connected':    return true;      // designer preview
+    case 'ble.advertising':  return false;
+    case 'time.synced':      return true;
+    case 'weather.valid':    return true;
+    case 'weather.is_day':   return now.getHours() >= 6 && now.getHours() < 18;
+    case 'system.uptime':    return true;
+    case 'system.activity':  return false;
+    case 'system.error':     return false;
+    case 'static':           return true;
+    case 'random':           return (ms % 2000) < 1000;
+    case 'sine':             return Math.sin(ms / 500) > 0;
+    case 'synth':            return (ms % 700) < 350;
+    default:                 return (Math.floor(ms / 1000) & 1) === 1;
+  }
+}
+
+function pulseComputeFraction(el, now) {
+  // For bar/wave styles that need a 0..1 value
+  const src = el.source || 'seconds';
+  switch (src) {
+    case 'seconds':          return (now.getSeconds() + now.getMilliseconds() / 1000) / 60;
+    case 'hour_progress':    return (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+    case 'day_progress':     return (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+    case 'battery.percent':  return 0.73;
+    case 'weather.humidity': return 0.78;
+    default:                 return pulseComputeLit(el, now) ? 1 : 0;
+  }
+}
+
+function drawPulseElement(el) {
+  const now = tzNow();
+  const style = el.style || 'dot';
+  const lit = pulseComputeLit(el, now);
+  const frac = pulseComputeFraction(el, now);
+
+  const x = el.x, y = el.y, w = el.w, h = el.h;
+
+  switch (style) {
+    case 'dot': {
+      const size = Math.max(1, Math.min(4, Math.floor(Math.min(w, h))));
+      const px = x + Math.floor((w - size) / 2);
+      const py = y + Math.floor((h - size) / 2);
+      if (lit) fillRectPx(px, py, size, size);
+      else     ctx.strokeStyle = '#ffffff', ctx.strokeRect(px * SCALE + 0.5, py * SCALE + 0.5, size * SCALE - 1, size * SCALE - 1);
+      break;
+    }
+
+    case 'bar': {
+      const fillW = Math.floor(w * frac);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x * SCALE + 0.5, y * SCALE + 0.5, w * SCALE - 1, h * SCALE - 1);
+      if (fillW > 0) fillRectPx(x + 1, y + 1, fillW, h - 2);
+      break;
+    }
+
+    case 'chevron': {
+      // Rotate through 4 positions
+      const phase = Math.floor(Date.now() / 400) % 4;
+      const cx = x + Math.floor(w / 2);
+      const cy = y + Math.floor(h / 2);
+      const seq = [[-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1]];
+      const [dx, dy] = seq[phase];
+      fillRectPx(cx - 1 + dx, cy - 1 + dy, 2, 2);
+      break;
+    }
+
+    case 'dash': {
+      if (lit) fillRectPx(x, y + Math.floor(h / 2), w, 1);
+      break;
+    }
+
+    case 'counter': {
+      const n = Math.floor(Date.now() / 1000) % 10000;
+      const s = String(n).padStart(4, '0');
+      drawTinyStringPx(x, y + Math.floor((h - 5) / 2), s);
+      break;
+    }
+
+    case 'wave': {
+      const cx = x;
+      const cy = y + Math.floor(h / 2);
+      for (let i = 0; i < w; i++) {
+        const v = (Math.sin((Date.now() / 300) + i * 0.5) + 1) / 2;
+        const barH = Math.max(1, Math.floor(v * (h - 2)));
+        fillRectPx(cx + i, cy - Math.floor(barH / 2), 1, barH);
+      }
+      break;
+    }
+
+    case 'bars': {
+      const n = Math.max(2, Math.min(5, w >> 1));
+      const bw = Math.floor(w / n);
+      for (let i = 0; i < n; i++) {
+        const v = (Math.sin((Date.now() / 200) + i * 1.3) + 1) / 2;
+        const barH = Math.max(1, Math.floor(v * (h - 2)));
+        fillRectPx(x + i * bw, y + h - barH, bw - 1, barH);
+      }
+      break;
+    }
   }
 }
 
@@ -1554,6 +1986,11 @@ function addElement(type) {
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
     background: { w: 32, h: 128 },
     timezone: { w: 14, h: 8, style: 'text', scale: 1 },
+    diagTime:   DIAG_CHUNKS.diagTime.defaults,
+    diagEnv:    DIAG_CHUNKS.diagEnv.defaults,
+    diagSys:    DIAG_CHUNKS.diagSys.defaults,
+    diagMaster: DIAG_CHUNKS.diagMaster.defaults,
+    pulse:      { w: 6, h: 6, style: 'dot', source: 'seconds' },
   };
   const def = defaults[type];
   if (!def) return;
@@ -1669,6 +2106,11 @@ function rebuildPalette() {
       <button data-add="text">Text</button>
       <button data-add="background">Background</button>
       <button data-add="timezone">Timezone</button>
+      <button data-add="diagTime">Diag: Time</button>
+      <button data-add="diagEnv">Diag: Env</button>
+      <button data-add="diagSys">Diag: Sys</button>
+      <button data-add="diagMaster">Diag: Master</button>
+      <button data-add="pulse">Pulse</button>
     `;
        renderPageRow();
     body.querySelectorAll('[data-add]').forEach(btn => {
@@ -1770,6 +2212,35 @@ function rebuildProps() {
         <select id="propWeekdayStyle">
           <option value="kanji"   ${(el.weekdayStyle||'kanji')==='kanji'  ?'selected':''}>Kanji</option>
           <option value="english" ${(el.weekdayStyle||'kanji')==='english'?'selected':''}>English</option>
+        </select>
+      </div>
+    ` : '';
+     const diagChunk = DIAG_CHUNKS[el.type];
+       const diagFields = diagChunk ? (() => {
+         const enabled = parseEnabledFields(el.content, diagChunk.fields.map(f => f.key), true);
+         return diagChunk.fields.map(f => `
+           <div class="prop-row">
+             <label>${f.label}</label>
+             <input type="checkbox" data-diagkey="${f.key}" ${enabled[f.key] ? 'checked' : ''}>
+           </div>
+         `).join('');
+       })() : '';
+
+       const pulseFields = el.type === 'pulse' ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propPulseStyle">
+          ${PULSE_STYLES.map(s =>
+            `<option value="${s}" ${el.style===s?'selected':''}>${s}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Source</label>
+        <select id="propPulseSource">
+          ${PULSE_SOURCES.map(s =>
+            `<option value="${s}" ${el.source===s?'selected':''}>${s}</option>`
+          ).join('')}
         </select>
       </div>
     ` : '';
@@ -1891,6 +2362,26 @@ function rebuildProps() {
         render();
       };
     }
+
+      if (diagChunk) {
+    document.querySelectorAll('[data-diagkey]').forEach(cb => {
+      cb.onchange = () => {
+        const keys = [];
+        document.querySelectorAll('[data-diagkey]').forEach(x => {
+          if (x.checked) keys.push(x.dataset.diagkey);
+        });
+        el.content = keys.join(',');
+        render();
+      };
+    });
+  }
+  
+  if (el.type === 'pulse') {
+    const styleSel = document.getElementById('propPulseStyle');
+    if (styleSel) styleSel.onchange = () => { el.style = styleSel.value; render(); };
+    const srcSel = document.getElementById('propPulseSource');
+    if (srcSel) srcSel.onchange = () => { el.source = srcSel.value; render(); };
+  }
 
     const styleSel = document.getElementById('propStyle');
     if (styleSel) {
@@ -2101,6 +2592,64 @@ function rebuildProps() {
     }
   }
 }
+
+// Pulse styles
+const PULSE_STYLES = ['dot', 'bar', 'chevron', 'dash', 'counter', 'wave', 'bars'];
+
+// Pulse sources
+const PULSE_SOURCES = [
+  'seconds', 'second_parity', 'minute', 'hour',
+  'hour_progress', 'day_progress',
+  'battery.percent', 'battery.charging', 'battery.low',
+  'ble.connected', 'ble.advertising',
+  'time.synced', 'weather.valid',
+  'weather.humidity', 'weather.temp', 'weather.is_day',
+  'system.uptime', 'system.activity', 'system.error',
+  'static', 'random', 'sine', 'synth'
+];
+
+// Diagnostic chunk types
+const DIAG_CHUNKS = {
+  diagTime: {
+    fields: [
+      { key: 'T', label: 'Time',     default: true },
+      { key: 'D', label: 'Date',     default: true },
+      { key: 'W', label: 'Weekday',  default: true },
+      { key: 'Z', label: 'Timezone', default: true },
+    ],
+    defaults: { w: 32, h: 40, content: 'T,D,W,Z' },
+  },
+  diagEnv: {
+    fields: [
+      { key: 'T', label: 'Temp',     default: true },
+      { key: 'W', label: 'Weather',  default: true },
+      { key: 'H', label: 'Humidity', default: true },
+    ],
+    defaults: { w: 32, h: 30, content: 'T,W,H' },
+  },
+  diagSys: {
+    fields: [
+      { key: 'B', label: 'Battery',  default: true },
+      { key: 'S', label: 'Status',   default: true },
+      { key: 'C', label: 'Counter',  default: true },
+      { key: 'P', label: 'Pulse',    default: true },
+    ],
+    defaults: { w: 32, h: 40, content: 'B,S,C,P' },
+  },
+  diagMaster: {
+    fields: [
+      { key: 'T', label: 'Time',     default: true },
+      { key: 'D', label: 'Date',     default: true },
+      { key: 'W', label: 'Weekday',  default: true },
+      { key: 'Z', label: 'Timezone', default: true },
+      { key: 'P', label: 'Temp',     default: true },
+      { key: 'X', label: 'Weather',  default: true },
+      { key: 'H', label: 'Humidity', default: true },
+      { key: 'B', label: 'Battery',  default: true },
+    ],
+    defaults: { w: 32, h: 80, content: 'T,D,W,Z,P,X,H,B' },
+  },
+};
 
 // ============================================================
 // Animation tools
