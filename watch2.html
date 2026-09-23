@@ -2795,15 +2795,23 @@ async function sendRawPayload(json, label = 'payload') {
 
 let schedState = {
   enabled: true,
-  mode: 0,          // 0 = random, 1 = fixed times
-  times: [],        // {h, m, days, enabled}
+  mode: 0,              // 0 = random interval, 1 = fixed times
+  times: [],            // for fixed mode: {h, m, days, enabled}
+  random: {             // for random mode
+    minMin: 15,
+    meanMin: 30,
+    maxMin: 90,
+    cooldownSec: 45,
+    windowStart: '00:00',
+    windowEnd: '23:59',
+  },
 };
 
 function buildSchedUI() {
   const panel = document.getElementById('schedPanel');
   if (!panel) return;
 
-  const renderRows = () => {
+  const renderTimeRows = () => {
     let rows = '';
     for (let i = 0; i < schedState.times.length; i++) {
       const t = schedState.times[i];
@@ -2831,6 +2839,179 @@ function buildSchedUI() {
     }
     return rows;
   };
+
+  const r = schedState.random;
+  const randomBlock = `
+    <div class="import-row"><label>Min interval (min)</label>
+      <input type="number" id="schedMinMin" value="${r.minMin}" min="1" max="1440"></div>
+    <div class="import-row"><label>Mean interval (min)</label>
+      <input type="number" id="schedMeanMin" value="${r.meanMin}" min="1" max="1440"></div>
+    <div class="import-row"><label>Max interval (min)</label>
+      <input type="number" id="schedMaxMin" value="${r.maxMin}" min="1" max="1440"></div>
+    <div class="import-row"><label>Post cooldown (s)</label>
+      <input type="number" id="schedCooldown" value="${r.cooldownSec}" min="0" max="3600"></div>
+    <div class="import-row"><label>Window start</label>
+      <input type="time" id="schedWindowStart" value="${r.windowStart}"></div>
+    <div class="import-row"><label>Window end</label>
+      <input type="time" id="schedWindowEnd" value="${r.windowEnd}"></div>
+  `;
+
+  const fixedBlock = `
+    <h3>Times</h3>
+    <div id="schedRows">${renderTimeRows()}</div>
+    <button id="btnAddSchedTime" style="margin-top:4px;font-size:12px">+ Add time</button>
+  `;
+
+  panel.innerHTML = `
+    <div class="import-row"><label>Enabled</label>
+      <input type="checkbox" id="schedEn" ${schedState.enabled ? 'checked' : ''}></div>
+    <div class="import-row"><label>Mode</label>
+      <select id="schedMode">
+        <option value="0" ${schedState.mode===0?'selected':''}>Random interval</option>
+        <option value="1" ${schedState.mode===1?'selected':''}>Fixed times</option>
+      </select></div>
+    <div id="schedModeBody">
+      ${schedState.mode === 0 ? randomBlock : fixedBlock}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button id="btnSendSched" style="flex:1;padding:6px;font-size:12px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Send to Watch</button>
+    </div>
+    <div id="schedStatus" style="font-size:11px;color:#888;margin-top:6px"></div>
+  `;
+
+  // --- top-level controls ---
+  document.getElementById('schedEn').onchange = (e) => {
+    schedState.enabled = e.target.checked;
+    saveSchedState();
+  };
+  document.getElementById('schedMode').onchange = (e) => {
+    schedState.mode = parseInt(e.target.value, 10);
+    saveSchedState();
+    buildSchedUI();          // re-render so the body swaps
+  };
+
+  // --- random-interval fields ---
+  const bindRandom = (id, key, min, max) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.oninput = () => {
+      let v = parseInt(el.value, 10);
+      if (isNaN(v)) return;
+      if (min !== undefined && v < min) v = min;
+      if (max !== undefined && v > max) v = max;
+      schedState.random[key] = v;
+      saveSchedState();
+    };
+  };
+  bindRandom('schedMinMin',   'minMin',      1, 1440);
+  bindRandom('schedMeanMin',  'meanMin',     1, 1440);
+  bindRandom('schedMaxMin',   'maxMin',      1, 1440);
+  bindRandom('schedCooldown', 'cooldownSec', 0, 3600);
+
+  const ws = document.getElementById('schedWindowStart');
+  const we = document.getElementById('schedWindowEnd');
+  if (ws) ws.oninput = () => { schedState.random.windowStart = ws.value; saveSchedState(); };
+  if (we) we.oninput = () => { schedState.random.windowEnd   = we.value; saveSchedState(); };
+
+  // --- fixed-times rows ---
+  const addBtn = document.getElementById('btnAddSchedTime');
+  if (addBtn) {
+    addBtn.onclick = () => {
+      schedState.times.push({ h: 12, m: 0, days: 127, enabled: true });
+      saveSchedState();
+      buildSchedUI();
+    };
+  }
+  panel.querySelectorAll('[data-sched-h]').forEach(el => {
+    el.oninput = () => {
+      const i = parseInt(el.dataset.schedH, 10);
+      schedState.times[i].h = Math.max(0, Math.min(23, parseInt(el.value, 10) || 0));
+      saveSchedState();
+    };
+  });
+  panel.querySelectorAll('[data-sched-m]').forEach(el => {
+    el.oninput = () => {
+      const i = parseInt(el.dataset.schedM, 10);
+      schedState.times[i].m = Math.max(0, Math.min(59, parseInt(el.value, 10) || 0));
+      saveSchedState();
+    };
+  });
+  panel.querySelectorAll('[data-sched-en]').forEach(el => {
+    el.onchange = () => {
+      const i = parseInt(el.dataset.schedEn, 10);
+      schedState.times[i].enabled = el.checked;
+      saveSchedState();
+    };
+  });
+  panel.querySelectorAll('[data-sched-days]').forEach(el => {
+    el.onchange = () => {
+      const i = parseInt(el.dataset.schedDays, 10);
+      schedState.times[i].days = parseInt(el.value, 10) || 127;
+      saveSchedState();
+    };
+  });
+  panel.querySelectorAll('[data-sched-del]').forEach(el => {
+    el.onclick = () => {
+      const i = parseInt(el.dataset.schedDel, 10);
+      schedState.times.splice(i, 1);
+      saveSchedState();
+      buildSchedUI();
+    };
+  });
+
+  // --- send ---
+  document.getElementById('btnSendSched').onclick = async () => {
+    const status = document.getElementById('schedStatus');
+
+    try {
+      if (schedState.mode === 0) {
+        // ----- Random-interval mode -> sends adConfig -----
+        const r = schedState.random;
+
+        const [wsH, wsM] = (r.windowStart || '00:00').split(':').map(Number);
+        const [weH, weM] = (r.windowEnd   || '23:59').split(':').map(Number);
+
+        if (r.minMin > r.meanMin) throw new Error('min > mean');
+        if (r.maxMin < r.meanMin) throw new Error('max < mean');
+
+        const payload = JSON.stringify({
+          kind: 'adConfig',
+          v: 1,
+          enabled: schedState.enabled,
+          meanIntervalMin: r.meanMin,
+          minIntervalMin:  r.minMin,
+          maxIntervalMin:  r.maxMin,
+          postCooldownSec: r.cooldownSec,
+          windowStartH: wsH,
+          windowStartM: wsM,
+          windowEndH: weH,
+          windowEndM: weM,
+        });
+
+        status.textContent = 'Sending ad config…';
+        await sendRawPayload(payload, 'adConfig');
+        status.textContent =
+          `Sent: random ${r.minMin}–${r.maxMin} min (mean ${r.meanMin})`;
+
+      } else {
+        // ----- Fixed-times mode -> sends schedConfig -----
+        const payload = JSON.stringify({
+          kind: 'schedConfig',
+          v: 1,
+          enabled: schedState.enabled,
+          mode: 1,
+          times: schedState.times,
+        });
+
+        status.textContent = 'Sending schedule…';
+        await sendRawPayload(payload, 'schedConfig');
+        status.textContent = `Sent: ${schedState.times.length} fixed time(s)`;
+      }
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  };
+}
  function wireAdSettingsPanel() {
   const btn = document.getElementById('btnShowAdSettings');
   if (!btn) return;
@@ -3011,6 +3192,9 @@ function loadSchedState() {
     if (typeof o.enabled === 'boolean') schedState.enabled = o.enabled;
     if (typeof o.mode === 'number')     schedState.mode    = o.mode;
     if (Array.isArray(o.times))         schedState.times   = o.times;
+    if (o.random && typeof o.random === 'object') {
+      Object.assign(schedState.random, o.random);
+    }
   } catch (_) {}
 }
 function saveSchedState() {
