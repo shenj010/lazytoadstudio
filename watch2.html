@@ -540,9 +540,17 @@ let elements = [
   { id: 4, type: 'weather',                     x: 16, y: 88,  w: 16, h: 16 },
   { id: 5, type: 'temp',    style: 'microhex', scale: 2, x: 0, y: 108, w: 26, h: 16 },
 ];
-let selectedId = null;
-let nextId = 6;
+const MAX_PAGES = 4;
+let pages = [
+  { used: true,  elements: [ ...default face elements... ] },
+  { used: false, elements: [] },
+  { used: false, elements: [] },
+  { used: false, elements: [] },
+];
+let currentPageIndex = 0;
 
+// Alias so all existing code that references `elements` keeps working
+let elements = pages[0].elements;
 let effects = {
   scanline: false,
   glitch: false,
@@ -1448,6 +1456,26 @@ function addElement(type) {
   render();
 }
 
+function renderPageRow() {
+  const row = document.getElementById('pageRow');
+  if (!row) return;
+  row.innerHTML = '';
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = String(i + 1);
+    btn.style.cssText = `
+      flex:1;margin:0;padding:6px 0;font-size:13px;
+      background:${i === currentPageIndex ? '#3a3a3a' : 'transparent'};
+      color:${i === currentPageIndex ? '#fff' : '#888'};
+      border:1px solid ${i === currentPageIndex ? '#666' : '#444'};
+      border-radius:4px;cursor:pointer;
+    `;
+    if (!pages[i].used) btn.style.opacity = '0.5';
+    btn.onclick = () => setPageIndex(i);
+    row.appendChild(btn);
+  }
+}
+
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -1508,11 +1536,16 @@ function rebuildPalette() {
       <button data-add="background">Background</button>
       <button data-add="timezone">Timezone</button>
     `;
+       renderPageRow();
+    body.querySelectorAll('[data-add]').forEach(btn => {
+      btn.onclick = () => addElement(btn.dataset.add);
+    });
     body.querySelectorAll('[data-add]').forEach(btn => {
       btn.onclick = () => addElement(btn.dataset.add);
     });
   }
 }
+ 
 
 function rebuildProps() {
   const body = document.getElementById('propsBody');
@@ -2255,6 +2288,15 @@ function lineTo(a, b) {
   }
 }
 
+function setPageIndex(i) {
+  if (i < 0 || i >= MAX_PAGES) return;
+  currentPageIndex = i;
+  elements = pages[i].elements;
+  selectedId = null;
+  rebuildPalette();   // re-renders the page row with new highlight
+  rebuildProps();
+  render();
+}
 // ============================================================
 // FACE MODE INTERACTION
 // ============================================================
