@@ -1104,14 +1104,14 @@ function drawTinyGlyph(x, y, ch) {
     for (let cx = 0; cx < 3; cx++) {
       const col = TINY_DIGITS_HTML[d][cx];
       for (let ry = 0; ry < 5; ry++) {
-        if (col & (1 << ry)) fillRectPx(x + cx, y + ry, 1, 1);
+        if (col & (1 << (4 - ry))) fillRectPx(x + cx, y + ry, 1, 1);
       }
     }
   } else if (TINY_LETTERS[ch]) {
     for (let cx = 0; cx < 3; cx++) {
       const col = TINY_LETTERS[ch][cx];
       for (let ry = 0; ry < 5; ry++) {
-        if (col & (1 << ry)) fillRectPx(x + cx, y + ry, 1, 1);
+        if (col & (1 << (4 - ry))) fillRectPx(x + cx, y + ry, 1, 1);
       }
     }
   } else if (ch === ':') {
