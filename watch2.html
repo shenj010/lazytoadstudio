@@ -549,6 +549,9 @@ let pages = [
   { used: false, elements: [] },
 ];
 let currentPageIndex = 0;
+// WARNING: `elements` MUST stay aliased to pages[currentPageIndex].elements.
+// Never reassign it to a new array — always mutate in place. Loaders that
+// replace page content must do `page.elements.length = 0; page.elements.push(...)`.
 let elements = pages[0].elements;
 
 let selectedId = null;
@@ -1458,18 +1461,22 @@ function addElement(type) {
     if (existingIdx >= 0) elements.splice(existingIdx, 1);
     const el = { id: nextId++, type, x: 0, y: 0, w, h, ...props };
     elements.unshift(el);
+    pages[currentPageIndex].used = true;
     selectedId = el.id;
     rebuildProps();
     render();
+    renderPageRow(); 
     return;
   }
 
   const spot = findFreeSpot(w, h);
   const el = { id: nextId++, type, x: spot.x, y: spot.y, w, h, ...props };
   elements.push(el);
+  pages[currentPageIndex].used = elements.length > 0;
   selectedId = el.id;
   rebuildProps();
   render();
+  renderPageRow();   
 }
 
 function renderPageRow() {
@@ -1480,21 +1487,23 @@ function renderPageRow() {
     const btn = document.createElement('button');
     const dirty  = dirtyPages.has(i);
     const active = (i === currentPageIndex);
+    const filled = pages[i].elements && pages[i].elements.length > 0;
 
-    btn.textContent = String(i + 1) + (dirty ? ' •' : '');
+    // ● = has content, • = has content AND unsent changes
+    const marker = filled ? (dirty ? ' •' : ' ●') : '';
+    btn.textContent = String(i + 1) + marker;
+
     btn.style.cssText = `
       flex:1;margin:0;padding:6px 0;font-size:13px;
       background:${active ? '#3a3a3a' : 'transparent'};
-      color:${active ? '#fff' : (dirty ? '#fc6' : '#888')};
+      color:${active ? '#fff' : (filled ? (dirty ? '#fc6' : '#8c8') : '#555')};
       border:1px solid ${active ? '#666' : '#444'};
       border-radius:4px;cursor:pointer;
     `;
-    if (!pages[i].used) btn.style.opacity = '0.5';
     btn.onclick = () => setPageIndex(i);
     row.appendChild(btn);
   }
 }
-
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -1833,6 +1842,8 @@ function rebuildProps() {
         if (idx < 0) return;
         if (!confirm(`Delete the ${el.type} element?`)) return;
         elements.splice(idx, 1);
+        pages[currentPageIndex].used = elements.length > 0;
+        renderPageRow();
         selectedId = null;
         rebuildProps();
         render();
@@ -2625,13 +2636,15 @@ async function syncPagesFromWatch() {
     return;
   }
 
-  for (const p of state.pages) {
-    if (p.used) pages[p.index].used = true;
-    // Only clear dirty for pages we haven't edited locally
-    if (p.valid && !dirtyPages.has(p.index)) {
-      dirtyPages.delete(p.index);
-    }
+ for (const p of state.pages) {
+  const localHas =
+    pages[p.index].elements && pages[p.index].elements.length > 0;
+  if (p.used) pages[p.index].used = true;
+  else if (!localHas) pages[p.index].used = false;
+  if (p.valid && !dirtyPages.has(p.index)) {
+    dirtyPages.delete(p.index);
   }
+}
   if (typeof state.currentPage === 'number' &&
       state.currentPage !== currentPageIndex) {
     currentPageIndex = state.currentPage;
@@ -2684,14 +2697,18 @@ async function autoPushOnConnect() {
 
   await pushWeather();
 
-  // 3. Face
+  // 2. Face layout (compacted)
   try {
-    await sendRawPayload(buildFaceConfigJson());
-    console.log('face pushed');
+    if (currentMode === 'face') {
+      await sendToWatch();
+      console.log('face pushed');
+    }
   } catch (e) {
     console.warn('face push failed:', e);
   }
-   try {
+
+  // 3. Sync watch state back
+  try {
     await syncPagesFromWatch();
   } catch (e) {
     console.warn('page sync failed:', e);
@@ -2894,7 +2911,7 @@ function buildAnimJson() {
    });
   }
  
-function buildFaceConfigJsonForPage(pageIndex) {
+function buildFaceConfigJsonForPage(pageIndex, dstIndex = pageIndex) {
   const pageElements = pages[pageIndex].elements;
   const outElements = pageElements.map(e => {
     const copy = { ...e };
@@ -2906,8 +2923,9 @@ function buildFaceConfigJsonForPage(pageIndex) {
   return JSON.stringify({
     kind: 'face',
     v: 1,
-    page: pageIndex,
-    name: `page${pageIndex}`,
+    page: dstIndex,
+    srcPage: pageIndex,
+    name: `page${dstIndex}`,
     effects: effects,
     elements: outElements
   });
@@ -3225,111 +3243,85 @@ function saveSchedState() {
 
 async function sendToWatch() {
   if (currentMode === 'anim') {
-    const json = buildPayload();
+    const json = buildAnimJson();
     await sendRawPayload(json, 'animation');
     connStatus.textContent = `Sent animation (${json.length} bytes)`;
     return;
   }
 
-  // Face mode: push every dirty page, then the page count.
-  const pagesToSend = [...dirtyPages].sort((a, b) => a - b);
-  if (pagesToSend.length === 0) {
-    connStatus.textContent = 'No page changes to send';
+  // ---- Face mode: compact occupied slots into 0..N-1 ----
+  // A slot is "occupied" iff it has >= 1 element.
+  const occupied = [];
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const pg = pages[i];
+    const hasEls = pg.elements && pg.elements.length > 0;
+    pg.used = hasEls;
+    if (hasEls) occupied.push(i);
+  }
+
+  // 1. Tell the watch to wipe all pages.
+  try {
+    await sendRawPayload(
+      JSON.stringify({ kind: 'faceReset', v: 1 }),
+      'faceReset'
+    );
+  } catch (e) {
+    connStatus.textContent = 'faceReset failed: ' + e.message;
+    connStatus.classList.add('error');
     return;
   }
 
-  // Push face ops FIRST, so firmware can auto-grow pageCount before
-  // setPageCount arrives. Then setPageCount is authoritative.
+  // 2. If nothing to send, we're done — watch is clean.
+  if (occupied.length === 0) {
+    dirtyPages.clear();
+    rebuildPalette();
+    connStatus.textContent =
+      'No occupied pages — watch cleared, builtin clock active';
+    return;
+  }
+
+  // 3. Push each occupied slot, renumbered sequentially.
   let sent = 0;
   const failures = [];
-  for (const idx of pagesToSend) {
+  for (let dst = 0; dst < occupied.length; dst++) {
+    const src = occupied[dst];
+    const json = buildFaceConfigJsonForPage(src, dst);
     try {
-      await sendRawPayload(
-        buildFaceConfigJsonForPage(idx),
-        `face:p${idx}`
-      );
+      await sendRawPayload(json, `face:src${src}->dst${dst}`);
       sent++;
       connStatus.textContent =
-        `Sent page ${idx + 1} (${sent}/${pagesToSend.length})`;
+        `Sent slot ${src + 1} as watch page ${dst + 1} (${sent}/${occupied.length})`;
     } catch (e) {
-      failures.push(idx);
-      console.warn(`page ${idx} push failed:`, e);
+      failures.push(src);
+      console.warn(`slot ${src} push failed:`, e);
     }
   }
 
-  // Compute max used page for setPageCount
-  const maxUsedPage = pages.reduce(
-    (max, p, i) => p.used ? Math.max(max, i) : max, 0
-  ) + 1;
-
+  // 4. Finalize pageCount on the watch.
+  const finalCount = sent > 0 ? sent : 1;
   try {
     await sendRawPayload(
-      JSON.stringify({ kind: 'setPageCount', v: 1, count: maxUsedPage }),
+      JSON.stringify({ kind: 'setPageCount', v: 1, count: finalCount }),
       'setPageCount'
     );
   } catch (e) {
     console.warn('setPageCount failed:', e);
   }
 
-  // Clear dirty flags for the pages we successfully sent
-  for (const idx of pagesToSend) {
-    if (!failures.includes(idx)) dirtyPages.delete(idx);
-  }
+  // 5. Clear local dirty flags — we just pushed everything occupied.
+  dirtyPages.clear();
   rebuildPalette();
 
   if (failures.length === 0) {
     connStatus.textContent =
-      `Sent ${sent} page${sent === 1 ? '' : 's'}`;
+      `Sent ${sent} page${sent === 1 ? '' : 's'} · watch has ${finalCount}`;
     connStatus.classList.add('connected');
   } else {
     connStatus.textContent =
-      `Sent ${sent}, failed: ${failures.map(i => i + 1).join(', ')}`;
+      `Sent ${sent}, failed slots: ${failures.map(i => i + 1).join(', ')}`;
     connStatus.classList.add('error');
   }
 }
-
-btnSend.onclick = async () => {
-  try {
-    btnSend.disabled = true;
-    connStatus.classList.remove('error');
-    await sendToWatch();
-    connStatus.classList.add('connected');
-  } catch (e) {
-    console.error(e);
-    setConnUI('connected', `Send error: ${e.message}`);
-    connStatus.classList.remove('connected');
-    connStatus.classList.add('error');
-  } finally {
-    btnSend.disabled = false;
-  }
-};
-
-btnSync.onclick = async () => {
-  try {
-    btnSync.disabled = true;
-    connStatus.classList.remove('error');
-
-    const now = new Date();
-    await sendRawPayload(JSON.stringify({
-      kind: 'timesync', v: 1,
-      epoch: Math.floor(now.getTime() / 1000),
-      tzOffsetSec: -now.getTimezoneOffset() * 60,
-    }));
-    console.log('timesync sent');
-
-    await pushWeather();
-
-    connStatus.textContent = 'Synced time';
-    connStatus.classList.add('connected');
-  } catch (e) {
-    console.error(e);
-    connStatus.textContent = `Sync error: ${e.message}`;
-    connStatus.classList.remove('connected');
-    connStatus.classList.add('error');
-  } finally {
-    btnSync.disabled = false;
-  }
-};
 
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
@@ -4705,12 +4697,24 @@ function libSerializeCurrentBackground() {
 
 function libApplyFace(obj) {
   if (!obj || !Array.isArray(obj.elements)) return;
-  elements = obj.elements.map(e => ({ ...e }));
+
+  const page = pages[currentPageIndex];
+
+  // Mutate the page's array IN PLACE so `elements` stays aliased to it.
+  // Never reassign `elements` here — see the warning at its declaration.
+  page.elements.length = 0;
+  for (const e of obj.elements) page.elements.push({ ...e });
+
+  // Re-assert the alias in case something upstream broke it.
+  elements = page.elements;
+
   let maxId = 0;
   for (const e of elements) if (e.id > maxId) maxId = e.id;
   nextId = maxId + 1;
+
   Object.assign(effects, obj.effects || {});
   selectedId = null;
+
   const fxMap = {
     fxScanline: 'scanline', fxGlitch: 'glitch', fxJitter: 'jitter',
     fxCorners: 'corners', fxStatus: 'status',
@@ -4719,6 +4723,11 @@ function libApplyFace(obj) {
     const el = document.getElementById(id);
     if (el) el.checked = !!effects[key];
   }
+
+  page.used = page.elements.length > 0;
+  dirtyPages.add(currentPageIndex);
+
+  rebuildPalette();
   rebuildProps();
   render();
 }
