@@ -3288,6 +3288,49 @@ async function sendToWatch() {
   }
 }
 
+btnSend.onclick = async () => {
+  try {
+    btnSend.disabled = true;
+    connStatus.classList.remove('error');
+    await sendToWatch();
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    setConnUI('connected', `Send error: ${e.message}`);
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSend.disabled = false;
+  }
+};
+
+btnSync.onclick = async () => {
+  try {
+    btnSync.disabled = true;
+    connStatus.classList.remove('error');
+
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+
+    await pushWeather();
+
+    connStatus.textContent = 'Synced time';
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = `Sync error: ${e.message}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSync.disabled = false;
+  }
+};
+
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
   currentPageIndex = i;
@@ -3316,11 +3359,7 @@ wireEffects();
 loadSchedState();
 setMode('face');
 renderTimeline();
-
-setInterval(() => {
-  scanY = (scanY + 1) % H;
-  if (currentMode === 'face') render();
-}, 250);
+ 
 </script>
 
 <script>
