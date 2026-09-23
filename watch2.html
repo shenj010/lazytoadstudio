@@ -1416,9 +1416,13 @@ function rebuildPalette() {
       <h2 style="font-size:12px;margin-top:14px">Scheduling</h2>
       <button id="btnShowSched">Scheduled times…</button>
       <div id="schedPanel" style="display:none;margin-top:8px"></div>
+      <h2 style="font-size:12px;margin-top:14px">Ad Intervals</h2>
+      <button id="btnShowAdSettings">Ad scheduling…</button>
+      <div id="adSettingsPanel" style="display:none;margin-top:8px"></div>
     `;
     wireAnimTools();
     wireImportPanel();
+    wireAdSettingsPanel();
   } else {
     body.innerHTML = `
       <h2 style="font-size:12px;margin-top:0">Add Element</h2>
@@ -2827,6 +2831,92 @@ function buildSchedUI() {
     }
     return rows;
   };
+ function wireAdSettingsPanel() {
+  const btn = document.getElementById('btnShowAdSettings');
+  if (!btn) return;
+  btn.onclick = () => {
+    const panel = document.getElementById('adSettingsPanel');
+    if (!panel) return;
+    if (panel.style.display === 'none') {
+      panel.style.display = '';
+      buildAdSettingsUI();
+    } else {
+      panel.style.display = 'none';
+    }
+  };
+}
+
+function buildAdSettingsUI() {
+  const panel = document.getElementById('adSettingsPanel');
+  if (!panel) return;
+
+  panel.innerHTML = `
+    <div class="import-row"><label>Enabled</label>
+      <input type="checkbox" id="adEnabled" checked></div>
+    <div class="import-row"><label>Min interval (min)</label>
+      <input type="number" id="adMinInterval" value="15" min="1" max="1440"></div>
+    <div class="import-row"><label>Mean interval (min)</label>
+      <input type="number" id="adMeanInterval" value="30" min="1" max="1440"></div>
+    <div class="import-row"><label>Max interval (min)</label>
+      <input type="number" id="adMaxInterval" value="90" min="1" max="1440"></div>
+    <div class="import-row"><label>Post cooldown (s)</label>
+      <input type="number" id="adCooldown" value="45" min="0" max="3600"></div>
+    <div class="import-row"><label>Window start</label>
+      <input type="time" id="adWindowStart" value="00:00"></div>
+    <div class="import-row"><label>Window end</label>
+      <input type="time" id="adWindowEnd" value="23:59"></div>
+    <div id="adSettingsStatus" style="font-size:11px;color:#888;margin-top:6px">Not sent yet.</div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button id="btnSendAdSettings" style="flex:1;margin:0;padding:6px;font-size:12px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Send to Watch</button>
+    </div>
+  `;
+
+  document.getElementById('btnSendAdSettings').onclick = sendAdSettings;
+}
+
+async function sendAdSettings() {
+  const status = document.getElementById('adSettingsStatus');
+  const startVal = document.getElementById('adWindowStart').value || '00:00';
+  const endVal   = document.getElementById('adWindowEnd').value   || '23:59';
+  const [wsH, wsM] = startVal.split(':').map(Number);
+  const [weH, weM] = endVal.split(':').map(Number);
+
+  const mean = parseInt(document.getElementById('adMeanInterval').value, 10);
+  const min  = parseInt(document.getElementById('adMinInterval').value,  10);
+  const max  = parseInt(document.getElementById('adMaxInterval').value,  10);
+  const cool = parseInt(document.getElementById('adCooldown').value,     10);
+  const enabled = document.getElementById('adEnabled').checked;
+
+  if (isNaN(mean) || isNaN(min) || isNaN(max) || isNaN(cool) ||
+      mean < 1 || min < 1 || max < 1 || cool < 0) {
+    status.textContent = 'Error: intervals must be ≥ 1 min, cooldown ≥ 0 s';
+    return;
+  }
+  if (min > mean) { status.textContent = 'Error: min > mean'; return; }
+  if (max < mean) { status.textContent = 'Error: max < mean'; return; }
+
+  const payload = JSON.stringify({
+    kind: 'adConfig',
+    v: 1,
+    enabled,
+    meanIntervalMin: mean,
+    minIntervalMin:  min,
+    maxIntervalMin:  max,
+    postCooldownSec: cool,
+    windowStartH: wsH,
+    windowStartM: wsM,
+    windowEndH: weH,
+    windowEndM: weM,
+  });
+
+  status.textContent = 'Sending…';
+  try {
+    await sendRawPayload(payload, 'adConfig');
+    status.textContent = `Sent (min=${min}, mean=${mean}, max=${max} min)`;
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
 
   panel.innerHTML = `
     <div class="import-row"><label>Enabled</label>
