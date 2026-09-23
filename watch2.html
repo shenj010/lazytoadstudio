@@ -1383,9 +1383,6 @@ function render() {
     renderAnim();
     updateAnimStatus();
   } else {
-    if (!suppressDirtyMark && typeof dirtyPages !== 'undefined') {
-      dirtyPages.add(currentPageIndex);
-    }
     renderFace();
     updateFaceStatus();
   }
@@ -1511,10 +1508,16 @@ function renderPageRow() {
       border:1px solid ${active ? '#666' : '#444'};
       border-radius:4px;cursor:pointer;
     `;
-    if (!pages[i].used) btn.style.opacity = '0.5';
+    if (pages[i].elements.length === 0) btn.style.opacity = '0.5';
     btn.onclick = () => setPageIndex(i);
     row.appendChild(btn);
   }
+}
+
+function markCurrentPageDirty() {
+  dirtyPages.add(currentPageIndex);
+  pages[currentPageIndex].used = true;
+  rebuildPalette();
 }
 
 // ============================================================
@@ -4687,12 +4690,23 @@ function libSerializeCurrentBackground() {
 
 function libApplyFace(obj) {
   if (!obj || !Array.isArray(obj.elements)) return;
-  elements = obj.elements.map(e => ({ ...e }));
+
+  const loaded = obj.elements.map(e => ({ ...e }));
   let maxId = 0;
-  for (const e of elements) if (e.id > maxId) maxId = e.id;
+  for (const e of loaded) if (e.id > maxId) maxId = e.id;
   nextId = maxId + 1;
+
+  // Write through to the current page
+  elements = loaded;
+  pages[currentPageIndex].elements = loaded;
+  pages[currentPageIndex].used = true;
+
+  // Mark dirty so Send pushes it
+  dirtyPages.add(currentPageIndex);
+
   Object.assign(effects, obj.effects || {});
   selectedId = null;
+
   const fxMap = {
     fxScanline: 'scanline', fxGlitch: 'glitch', fxJitter: 'jitter',
     fxCorners: 'corners', fxStatus: 'status',
@@ -4701,6 +4715,7 @@ function libApplyFace(obj) {
     const el = document.getElementById(id);
     if (el) el.checked = !!effects[key];
   }
+  rebuildPalette();
   rebuildProps();
   render();
 }
