@@ -1119,11 +1119,11 @@ function drawTinyGlyph(x, y, ch) {
 
   // bitmap[cx] holds column cx (0..2), bit ry = row ry (0..4).
   // Rotated mapping: logical (x + ry, y + cx).
-  for (let cx = 0; cx < 3; cx++) {
+ for (let cx = 0; cx < 3; cx++) {
     const col = bitmap[cx];
     for (let ry = 0; ry < 5; ry++) {
       if (col & (1 << ry)) {
-        fillRectPx(x + ry, y + cx, 1, 1);
+        fillRectPx(x + (4 - ry), y + (2 - cx), 1, 1);
       }
     }
   }
