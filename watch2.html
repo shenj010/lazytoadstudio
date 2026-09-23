@@ -1098,38 +1098,41 @@ const TINY_LETTERS = {
 };
 
 function drawTinyGlyph(x, y, ch) {
-  const chW = 4;
-  if (ch >= '0' && ch <= '9') {
-    const d = ch.charCodeAt(0) - 48;
-    for (let cx = 0; cx < 3; cx++) {
-      const col = TINY_DIGITS_HTML[d][cx];
-      for (let ry = 0; ry < 5; ry++) {
-        if (col & (1 << (4 - ry))) fillRectPx(x + cx, y + ry, 1, 1);
+  // Draws a 3x5 glyph ROTATED 90° CCW in logical space, so it
+  // appears upright on the physical panel (which is at rotation 3).
+  //
+  // Bitmap is authored with bit 0 = top row of the *upright* glyph.
+  // After rotation, "upright top" is at logical +X and "upright left"
+  // is at logical +Y (because the display flips one axis).
+
+  const bitmap = (() => {
+    if (ch >= '0' && ch <= '9') {
+      return TINY_DIGITS_HTML[ch.charCodeAt(0) - 48];
+    }
+    if (TINY_LETTERS[ch]) return TINY_LETTERS[ch];
+    // Symbol fallbacks
+    if (ch === ':') return [0b00000, 0b01010, 0b00000];
+    if (ch === '.') return [0b00000, 0b00000, 0b00100];
+    if (ch === '-') return [0b00000, 0b11111, 0b00000];
+    if (ch === '+') return [0b00100, 0b01110, 0b00100];
+    if (ch === '/') return [0b00001, 0b00100, 0b10000];
+    if (ch === '_') return [0b00000, 0b00000, 0b11111];
+    return [0b11111, 0b11111, 0b11111];   // unknown = filled block
+  })();
+
+  // Draw rotated. For each bitmap column cx (0..2) and row ry (0..4):
+  //   original upright pixel at (cx, ry)
+  //   rotated to logical (x + ry, y + cx) and mirrored on X
+  // This makes the glyph appear UPRIGHT on the physical panel.
+  for (let cx = 0; cx < 3; cx++) {
+    const col = bitmap[cx];
+    for (let ry = 0; ry < 5; ry++) {
+      if (col & (1 << ry)) {
+        const dx = ry;
+        const dy = (2 - cx);
+        fillRectPx(x + dx, y + dy, 1, 1);
       }
     }
-  } else if (TINY_LETTERS[ch]) {
-    for (let cx = 0; cx < 3; cx++) {
-      const col = TINY_LETTERS[ch][cx];
-      for (let ry = 0; ry < 5; ry++) {
-        if (col & (1 << (4 - ry))) fillRectPx(x + cx, y + ry, 1, 1);
-      }
-    }
-  } else if (ch === ':') {
-    fillRectPx(x + 1, y + 1, 1, 1);
-    fillRectPx(x + 1, y + 3, 1, 1);
-  } else if (ch === '.') {
-    fillRectPx(x + 1, y + 4, 1, 1);
-  } else if (ch === '+') {
-    fillRectPx(x, y + 2, 3, 1);
-    fillRectPx(x + 1, y + 1, 1, 3);
-  } else if (ch === '-') {
-    fillRectPx(x, y + 2, 3, 1);
-  } else if (ch === '/') {
-    fillRectPx(x + 2, y + 0, 1, 1);
-    fillRectPx(x + 1, y + 2, 1, 1);
-    fillRectPx(x + 0, y + 4, 1, 1);
-  } else if (ch === '_') {
-    fillRectPx(x, y + 4, 3, 1);
   }
 }
 
