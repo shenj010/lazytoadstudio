@@ -3324,60 +3324,7 @@ async function sendToWatch() {
   }
 }
 
-  const populated = getPopulatedPages();
-  if (populated.length === 0) {
-    connStatus.textContent = 'No populated pages to send';
-    return;
-  }
 
-  // Disable the button during send to prevent overlapping sends
-  btnSend.disabled = true;
-  let sent = 0;
-  const failures = [];
-
-  for (let wIdx = 0; wIdx < populated.length; wIdx++) {
-    const hIdx = populated[wIdx];
-    const json = buildFaceConfigJsonForPage(hIdx, wIdx);
-    try {
-      await sendRawPayload(json, `face:h${hIdx}=>w${wIdx}`);
-      sent++;
-      connStatus.textContent =
-        `Sent page ${hIdx + 1} → watch ${wIdx + 1} (${sent}/${populated.length})`;
-    } catch (e) {
-      failures.push(hIdx);
-      console.warn(`page h${hIdx}=>w${wIdx} push failed:`, e);
-    }
-  }
-
-  // Set count = number of populated pages
-  try {
-    await sendRawPayload(
-      JSON.stringify({ kind: 'setPageCount', v: 1, count: populated.length }),
-      'setPageCount'
-    );
-  } catch (e) {
-    console.warn('setPageCount failed:', e);
-  }
-
-  // Clear dirty flags
-  for (const hIdx of populated) {
-    if (!failures.includes(hIdx)) dirtyPages.delete(hIdx);
-  }
-  rebuildPalette();
-
-  if (failures.length === 0) {
-    connStatus.textContent = `Sent ${sent} page${sent === 1 ? '' : 's'}`;
-    connStatus.classList.add('connected');
-    connStatus.classList.remove('error');
-  } else {
-    connStatus.textContent =
-      `Sent ${sent}, failed: ${failures.map(i => i + 1).join(', ')}`;
-    connStatus.classList.add('error');
-  }
-
-  // ALWAYS re-enable the button
-  btnSend.disabled = false;
-}
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
 
