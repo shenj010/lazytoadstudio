@@ -807,28 +807,6 @@ function renderTimeline() {
   }
 }
 
- // Returns the list of HTML page indices that are populated, in order.
-// The watch's page N corresponds to populatedPages[N].
-function getPopulatedPages() {
-  const out = [];
-  for (let i = 0; i < MAX_PAGES; i++) {
-    if (pages[i].elements.length > 0) out.push(i);
-  }
-  return out;
-}
-
-// Given an HTML page index, return the watch index it will map to,
-// or -1 if the page is unpopulated (won't exist on the watch).
-function htmlPageToWatchIndex(htmlIdx) {
-  const populated = getPopulatedPages();
-  return populated.indexOf(htmlIdx);   // -1 if not present
-}
-
-// Given a watch index, return the HTML page index.
-function watchIndexToHtmlPage(watchIdx) {
-  const populated = getPopulatedPages();
-  return watchIdx >= 0 && watchIdx < populated.length ? populated[watchIdx] : -1;
-}
 // ============================================================
 // 7-segment renderer
 // ============================================================
@@ -2643,25 +2621,26 @@ async function syncPagesFromWatch() {
     return;
   }
   if (!state || !Array.isArray(state.pages)) {
-    console.warn('syncPagesFromWatch: no pages[] in state');
+    console.warn('syncPagesFromWatch: no pages[] in state (firmware not updated?)');
     return;
   }
 
-  // Reverse-map the watch's current page index to an HTML page index.
-  // The HTML already knows which pages are populated, so the nth
-  // populated page on the HTML side corresponds to watch page n.
-  if (typeof state.currentPage === 'number') {
-    const hIdx = watchIndexToHtmlPage(state.currentPage);
-    if (hIdx >= 0 && hIdx !== currentPageIndex) {
-      currentPageIndex = hIdx;
-      elements = pages[hIdx].elements;
+  for (const p of state.pages) {
+    if (p.used) pages[p.index].used = true;
+    // Only clear dirty for pages we haven't edited locally
+    if (p.valid && !dirtyPages.has(p.index)) {
+      dirtyPages.delete(p.index);
     }
   }
-
+  if (typeof state.currentPage === 'number' &&
+      state.currentPage !== currentPageIndex) {
+    currentPageIndex = state.currentPage;
+    elements = pages[currentPageIndex].elements;
+  }
   rebuildPalette();
   rebuildProps();
   render();
-  console.log('Pages synced from watch:', state.pages, 'watch current:', state.currentPage);
+  console.log('Pages synced from watch:', state.pages);
 }
 function startTimePush() {
   if (timePushInterval) return;
@@ -2915,8 +2894,8 @@ function buildAnimJson() {
    });
   }
  
-function buildFaceConfigJsonForPage(htmlPageIndex, watchPageIndex) {
-  const pageElements = pages[htmlPageIndex].elements;
+function buildFaceConfigJsonForPage(pageIndex) {
+  const pageElements = pages[pageIndex].elements;
   const outElements = pageElements.map(e => {
     const copy = { ...e };
     if (e.type === 'weekday') {
@@ -2927,16 +2906,15 @@ function buildFaceConfigJsonForPage(htmlPageIndex, watchPageIndex) {
   return JSON.stringify({
     kind: 'face',
     v: 1,
-    page: watchPageIndex,               // ← watch index
-    name: `h${htmlPageIndex}`,
+    page: pageIndex,
+    name: `page${pageIndex}`,
     effects: effects,
     elements: outElements
   });
 }
 
 function buildFaceConfigJson() {
-  const wIdx = htmlPageToWatchIndex(currentPageIndex);
-  return buildFaceConfigJsonForPage(currentPageIndex, wIdx >= 0 ? wIdx : 0);
+  return buildFaceConfigJsonForPage(currentPageIndex);
 }
 
 function buildTzSelect() {
@@ -3253,48 +3231,55 @@ async function sendToWatch() {
     return;
   }
 
-  const populated = getPopulatedPages();
-  if (populated.length === 0) {
-    connStatus.textContent = 'No populated pages to send';
+  // Face mode: push every dirty page, then the page count.
+  const pagesToSend = [...dirtyPages].sort((a, b) => a - b);
+  if (pagesToSend.length === 0) {
+    connStatus.textContent = 'No page changes to send';
     return;
   }
 
+  // Push face ops FIRST, so firmware can auto-grow pageCount before
+  // setPageCount arrives. Then setPageCount is authoritative.
   let sent = 0;
   const failures = [];
-
-  // Push each populated page under its *compact* watch index.
-  for (let wIdx = 0; wIdx < populated.length; wIdx++) {
-    const hIdx = populated[wIdx];
-    const json = buildFaceConfigJsonForPage(hIdx, wIdx);
+  for (const idx of pagesToSend) {
     try {
-      await sendRawPayload(json, `face:h${hIdx}=>w${wIdx}`);
+      await sendRawPayload(
+        buildFaceConfigJsonForPage(idx),
+        `face:p${idx}`
+      );
       sent++;
       connStatus.textContent =
-        `Sent page ${hIdx + 1} → watch ${wIdx + 1} (${sent}/${populated.length})`;
+        `Sent page ${idx + 1} (${sent}/${pagesToSend.length})`;
     } catch (e) {
-      failures.push(hIdx);
-      console.warn(`page h${hIdx}=>w${wIdx} push failed:`, e);
+      failures.push(idx);
+      console.warn(`page ${idx} push failed:`, e);
     }
   }
 
-  // Set count = number of populated pages.
+  // Compute max used page for setPageCount
+  const maxPopulated = pages.reduce(
+  (max, p, i) => p.elements.length > 0 ? Math.max(max, i) : max, 0
+) + 1;
+
   try {
     await sendRawPayload(
-      JSON.stringify({ kind: 'setPageCount', v: 1, count: populated.length }),
+      JSON.stringify({ kind: 'setPageCount', v: 1, count: maxUsedPage }),
       'setPageCount'
     );
   } catch (e) {
     console.warn('setPageCount failed:', e);
   }
 
-  // Clear dirty flags.
-  for (const hIdx of populated) {
-    if (!failures.includes(hIdx)) dirtyPages.delete(hIdx);
+  // Clear dirty flags for the pages we successfully sent
+  for (const idx of pagesToSend) {
+    if (!failures.includes(idx)) dirtyPages.delete(idx);
   }
   rebuildPalette();
 
   if (failures.length === 0) {
-    connStatus.textContent = `Sent ${sent} page${sent === 1 ? '' : 's'}`;
+    connStatus.textContent =
+      `Sent ${sent} page${sent === 1 ? '' : 's'}`;
     connStatus.classList.add('connected');
   } else {
     connStatus.textContent =
@@ -3303,11 +3288,51 @@ async function sendToWatch() {
   }
 }
 
+btnSend.onclick = async () => {
+  try {
+    btnSend.disabled = true;
+    connStatus.classList.remove('error');
+    await sendToWatch();
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    setConnUI('connected', `Send error: ${e.message}`);
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSend.disabled = false;
+  }
+};
+
+btnSync.onclick = async () => {
+  try {
+    btnSync.disabled = true;
+    connStatus.classList.remove('error');
+
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+
+    await pushWeather();
+
+    connStatus.textContent = 'Synced time';
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = `Sync error: ${e.message}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSync.disabled = false;
+  }
+};
+
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
-
-  pages[currentPageIndex].elements = elements;   // write-back
-
   currentPageIndex = i;
   elements = pages[i].elements;
   selectedId = null;
@@ -3315,18 +3340,11 @@ async function setPageIndex(i) {
   rebuildProps();
   render();
 
-  const wIdx = htmlPageToWatchIndex(i);
-  if (wIdx < 0) {
-    // Not populated; the watch doesn't know about this page yet.
-    connStatus.textContent = `Editing page ${i + 1} (not on watch until Send)`;
-    return;
-  }
-
   if (bleConnected && bleRxChar) {
     try {
       await sendRawPayload(
-        JSON.stringify({ kind: 'setPage', v: 1, index: wIdx }),
-        `setPage:h${i}=>w${wIdx}`
+        JSON.stringify({ kind: 'setPage', v: 1, index: i }),
+        `setPage:${i}`
       );
       connStatus.textContent = `Watch → page ${i + 1}`;
     } catch (e) {
