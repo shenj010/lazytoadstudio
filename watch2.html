@@ -3258,9 +3258,9 @@ async function sendToWatch() {
   }
 
   // Compute max used page for setPageCount
-  const maxPopulated = pages.reduce(
-  (max, p, i) => p.elements.length > 0 ? Math.max(max, i) : max, 0
-) + 1;
+  const maxUsedPage = pages.reduce(
+    (max, p, i) => p.used ? Math.max(max, i) : max, 0
+  ) + 1;
 
   try {
     await sendRawPayload(
