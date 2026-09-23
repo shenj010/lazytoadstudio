@@ -1098,50 +1098,52 @@ const TINY_LETTERS = {
 };
 
 function drawTinyGlyph(x, y, ch) {
-  // Draws a 3x5 glyph ROTATED 90° CCW in logical space, so it
-  // appears upright on the physical panel (which is at rotation 3).
-  //
-  // Bitmap is authored with bit 0 = top row of the *upright* glyph.
-  // After rotation, "upright top" is at logical +X and "upright left"
-  // is at logical +Y (because the display flips one axis).
+  // Draws one 3x5 glyph rotated 90° so it reads upright on the
+  // physical panel. In logical space the glyph occupies:
+  //   5 pixels along X (its physical height)
+  //   3 pixels along Y (its physical width)
+  // (x, y) = logical top-left of the glyph's bounding box.
 
   const bitmap = (() => {
-    if (ch >= '0' && ch <= '9') {
-      return TINY_DIGITS_HTML[ch.charCodeAt(0) - 48];
-    }
+    if (ch >= '0' && ch <= '9') return TINY_DIGITS_HTML[ch.charCodeAt(0) - 48];
     if (TINY_LETTERS[ch]) return TINY_LETTERS[ch];
-    // Symbol fallbacks
     if (ch === ':') return [0b00000, 0b01010, 0b00000];
     if (ch === '.') return [0b00000, 0b00000, 0b00100];
     if (ch === '-') return [0b00000, 0b11111, 0b00000];
     if (ch === '+') return [0b00100, 0b01110, 0b00100];
     if (ch === '/') return [0b00001, 0b00100, 0b10000];
     if (ch === '_') return [0b00000, 0b00000, 0b11111];
-    return [0b11111, 0b11111, 0b11111];   // unknown = filled block
+    if (ch === ' ') return [0, 0, 0];
+    return [0b11111, 0b11111, 0b11111];
   })();
 
-  // Draw rotated. For each bitmap column cx (0..2) and row ry (0..4):
-  //   original upright pixel at (cx, ry)
-  //   rotated to logical (x + ry, y + cx) and mirrored on X
-  // This makes the glyph appear UPRIGHT on the physical panel.
+  // bitmap[cx] holds column cx (0..2), bit ry = row ry (0..4).
+  // Rotated mapping: logical (x + ry, y + cx).
   for (let cx = 0; cx < 3; cx++) {
     const col = bitmap[cx];
     for (let ry = 0; ry < 5; ry++) {
       if (col & (1 << ry)) {
-        const dx = ry;
-        const dy = (2 - cx);
-        fillRectPx(x + dx, y + dy, 1, 1);
+        fillRectPx(x + ry, y + cx, 1, 1);
       }
     }
   }
 }
 
+// Draw a string that reads left-to-right on the physical panel.
+// In logical space it runs along +Y.
+// Returns the length consumed along logical-Y.
 function drawTinyStringPx(x, y, str) {
-  let xx = x;
+  let yy = y;
   for (let i = 0; i < str.length; i++) {
-    drawTinyGlyph(xx, y, str[i].toUpperCase());
-    xx += 4;
+    drawTinyGlyph(x, yy, str[i].toUpperCase());
+    yy += 4;   // 3 glyph + 1 gap
   }
+  return yy - y;
+}
+
+function tinyStringWidthPx(str) {
+  // Length of the string along logical-Y
+  return str.length * 4 - 1;
 }
 
 function tinyStringWidthPx(str) {
@@ -1171,34 +1173,40 @@ function drawElement(el) {
   }
 }
 
- function drawDiagRowPx(x, y, w, label, value, bullet) {
-  const yTop = y - 2;
-  let labelX = x;
+// Draw one diag row.
+// x = logical X of the row's top edge (this is physical TOP of the row)
+// y = logical Y where the row's text starts (physical LEFT)
+// h = logical Y length of the row (physical width available)
+// bullet = draw the "»" prefix
+function drawDiagRowPx(x, y, h, label, value, bullet) {
+  let cursorY = y;
 
   if (bullet) {
-    // "»" chevron: three diagonal pixels
-    fillRectPx(x,     yTop + 1, 1, 1);
-    fillRectPx(x + 1, yTop + 2, 1, 2);
-    fillRectPx(x + 2, yTop + 3, 1, 1);
-    fillRectPx(x + 2, yTop + 2, 1, 1);
-    labelX = x + 4;
+    // "»" chevron pointing along +Y
+    fillRectPx(x + 2, cursorY + 0, 1, 1);
+    fillRectPx(x + 1, cursorY + 1, 1, 1);
+    fillRectPx(x + 2, cursorY + 1, 1, 1);
+    fillRectPx(x + 3, cursorY + 1, 1, 1);
+    fillRectPx(x + 2, cursorY + 2, 1, 1);
+    cursorY += 4;
   }
 
-  drawTinyStringPx(labelX, yTop, label);
+  drawTinyStringPx(x, cursorY, label);
+  cursorY += tinyStringWidthPx(label) + 2;
 
-  const valueW = tinyStringWidthPx(value);
-  const valueX = x + w - valueW;
-  if (valueX > labelX + tinyStringWidthPx(label) + 2) {
-    drawTinyStringPx(valueX, yTop, value);
+  const valueLen = tinyStringWidthPx(value);
+  const valueStartY = y + h - valueLen;
+  if (valueStartY > cursorY) {
+    drawTinyStringPx(x, valueStartY, value);
   }
 }
 
-function drawDiagDividerPx(x, y, w) {
-  fillRectPx(x, y, w, 1);
-  const q1 = x + Math.floor(w / 4);
-  const q3 = x + Math.floor((w * 3) / 4);
-  fillRectPx(q1, y - 1, 1, 3);
-  fillRectPx(q3, y - 1, 1, 3);
+function drawDiagDividerPx(x, y, h) {
+  fillRectPx(x, y, 1, h);
+  const q1 = y + Math.floor(h / 4);
+  const q3 = y + Math.floor((h * 3) / 4);
+  fillRectPx(x - 1, q1, 3, 1);
+  fillRectPx(x - 1, q3, 3, 1);
 }
 
 function parseEnabledFields(content, allKeys, defaultOn) {
@@ -1221,43 +1229,47 @@ function drawDiagTimeElement(el) {
 
   const rowH = 8;
   const padTop = 2, padBottom = 2;
-  const yStart = el.y + padTop;
-  const availH = el.h - padTop - padBottom;
-  const maxRows = Math.floor(availH / rowH);
+  const xStart = el.x + padTop;
+  const availW = el.w - padTop - padBottom;
+  const maxRows = Math.floor(availW / rowH);
   if (maxRows < 1) return;
 
   let rowIdx = 0;
-  const nextY = () => {
-    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+  const nextX = () => {
+    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
     rowIdx++;
-    return ry;
+    return rx;
   };
   const pad2 = n => String(n).padStart(2, '0');
 
+  const rowLen = el.h - 4;
+  const yStart = el.y + 2;
+
   if (fields.T && rowIdx < maxRows) {
     const s = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-    drawDiagRowPx(el.x, nextY(), el.w, 'TIME', s, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'TIME', s, true);
   }
   if (fields.D && rowIdx < maxRows) {
     const s = `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`;
-    drawDiagRowPx(el.x, nextY(), el.w, 'DATE', s, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'DATE', s, true);
   }
   if (fields.W && rowIdx < maxRows) {
     const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    drawDiagRowPx(el.x, nextY(), el.w, 'DAY', DOW[now.getDay()], true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'DAY', DOW[now.getDay()], true);
   }
   if (fields.Z && rowIdx < maxRows) {
     const tz = TZ_TABLE[activeTzIndex];
-    drawDiagRowPx(el.x, nextY(), el.w, 'TZ', tz.code, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'TZ', tz.code, true);
   }
 
   if (rowIdx > 0 && rowIdx < maxRows) {
-    const divY = yStart + rowIdx * rowH;
-    if (divY < el.y + el.h - 4) {
-      drawDiagDividerPx(el.x, divY, el.w);
+    const divX = xStart + rowIdx * rowH;
+    if (divX < el.x + el.w - 4) {
+      drawDiagDividerPx(divX, yStart, rowLen);
     }
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
+    // Pulse indicator at physical bottom-right of the box.
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
   }
 }
@@ -1267,104 +1279,101 @@ function drawDiagEnvElement(el) {
 
   const rowH = 8;
   const padTop = 2, padBottom = 2;
-  const yStart = el.y + padTop;
-  const availH = el.h - padTop - padBottom;
-  const maxRows = Math.floor(availH / rowH);
+  const xStart = el.x + padTop;
+  const availW = el.w - padTop - padBottom;
+  const maxRows = Math.floor(availW / rowH);
   if (maxRows < 1) return;
 
   let rowIdx = 0;
-  const nextY = () => {
-    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+  const nextX = () => {
+    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
     rowIdx++;
-    return ry;
+    return rx;
   };
 
-  // Fake data for the designer preview
-  const tempC = 12.4;
-  const wxCode = 'CLD';
-  const humPct = 78;
+  const rowLen = el.h - 4;
+  const yStart = el.y + 2;
 
   if (fields.T && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'TEMP', tempC.toFixed(1) + 'C', true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'TEMP', '12.4C', true);
   }
   if (fields.W && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'WX', wxCode, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'WX', 'CLD', true);
   }
   if (fields.H && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'HUM', humPct + '%', true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'HUM', '78%', true);
   }
 
   if (rowIdx > 0 && rowIdx < maxRows) {
-    const divY = yStart + rowIdx * rowH;
-    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+    const divX = xStart + rowIdx * rowH;
+    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
   }
 }
-
 function drawDiagSysElement(el) {
   const fields = parseEnabledFields(el.content, ['B','S','C','P'], true);
 
   const rowH = 8;
   const padTop = 2, padBottom = 2;
-  const yStart = el.y + padTop;
-  const availH = el.h - padTop - padBottom;
-  const maxRows = Math.floor(availH / rowH);
+  const xStart = el.x + padTop;
+  const availW = el.w - padTop - padBottom;
+  const maxRows = Math.floor(availW / rowH);
   if (maxRows < 1) return;
 
   let rowIdx = 0;
-  const nextY = () => {
-    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+  const nextX = () => {
+    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
     rowIdx++;
-    return ry;
+    return rx;
   };
 
-  const batPct = 73;
-  const status = 'NRM';
+  const rowLen = el.h - 4;
+  const yStart = el.y + 2;
+
   const counter = Math.floor(Date.now() / 1000) % 10000;
 
   if (fields.B && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'BAT', String(batPct).padStart(3, '0'), true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'BAT', '073', true);
   }
   if (fields.S && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'STAT', status, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'STAT', 'NRM', true);
   }
   if (fields.C && rowIdx < maxRows) {
-    drawDiagRowPx(el.x, nextY(), el.w, 'CNT', String(counter).padStart(4, '0'), true);
+    drawDiagRowPx(nextX(), yStart, rowLen, 'CNT', String(counter).padStart(4, '0'), true);
   }
   if (fields.P && rowIdx < maxRows) {
-    const yp = yStart + rowIdx * rowH + Math.floor(rowH / 2);
-    fillRectPx(el.x + 4, yp - 1, 2, 2);
+    const yp = yStart;
+    fillRectPx(nextX() + 1, yp, 2, 2);
     rowIdx++;
   }
 
   if (rowIdx > 0 && rowIdx < maxRows) {
-    const divY = yStart + rowIdx * rowH;
-    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+    const divX = xStart + rowIdx * rowH;
+    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
   }
 }
-
 function drawDiagMasterElement(el) {
-  // Just calls the three sub-renderers stacked with their own offsets.
-  // Simpler: build one flat list of rows and render sequentially.
   const fields = parseEnabledFields(el.content, ['T','D','W','Z','P','X','H','B'], true);
   const now = tzNow();
 
   const rowH = 8;
   const padTop = 2, padBottom = 2;
-  const yStart = el.y + padTop;
-  const availH = el.h - padTop - padBottom;
-  const maxRows = Math.floor(availH / rowH);
+  const xStart = el.x + padTop;
+  const availW = el.w - padTop - padBottom;
+  const maxRows = Math.floor(availW / rowH);
   if (maxRows < 1) return;
 
   let rowIdx = 0;
-  const nextY = () => {
-    const ry = yStart + rowIdx * rowH + Math.floor(rowH / 2);
+  const nextX = () => {
+    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
     rowIdx++;
-    return ry;
+    return rx;
   };
   const pad2 = n => String(n).padStart(2, '0');
+  const rowLen = el.h - 4;
+  const yStart = el.y + 2;
 
   const rows = [];
   if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
@@ -1378,12 +1387,12 @@ function drawDiagMasterElement(el) {
 
   for (const [label, value] of rows) {
     if (rowIdx >= maxRows) break;
-    drawDiagRowPx(el.x, nextY(), el.w, label, value, true);
+    drawDiagRowPx(nextX(), yStart, rowLen, label, value, true);
   }
 
   if (rowIdx > 0 && rowIdx < maxRows) {
-    const divY = yStart + rowIdx * rowH;
-    if (divY < el.y + el.h - 4) drawDiagDividerPx(el.x, divY, el.w);
+    const divX = xStart + rowIdx * rowH;
+    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
