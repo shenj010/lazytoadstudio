@@ -1751,10 +1751,6 @@ function rebuildProps() {
         <strong style="color:#fff">Frame ${currentFrameIndex + 1} of ${frameCount}</strong>
       </div>
       <div class="prop-row">
-        <label>Name</label>
-        <input type="text" id="propAnimName" value="${window._animName || 'wake'}" style="width:100px;text-align:left">
-      </div>
-      <div class="prop-row">
         <label>Frame ms</label>
         <input type="number" id="propFrameMs" value="${uniformMs}" min="20" max="2000" step="5">
       </div>
@@ -1830,11 +1826,6 @@ function rebuildProps() {
         refreshSummary();
       };
     }
-
-    const nameInput = document.getElementById('propAnimName');
-    if (nameInput) {
-      nameInput.oninput = () => { window._animName = nameInput.value.trim() || 'untitled'; };
-    }
     const trigInput = document.getElementById('propTrigger');
     if (trigInput) {
       trigInput.onchange = () => { importTrigger = trigInput.value; };
@@ -1843,7 +1834,16 @@ function rebuildProps() {
     const delAnim = document.getElementById('btnDeleteAnim');
     if (delAnim) {
       delAnim.onclick = async () => {
-        const name = window._animName || 'wake';
+        const trigEl = document.getElementById('propTrigger');
+        const trigger = trigEl?.value || 'onWake';
+        const nameMap = {
+          'onWake':      'wake',
+          'beforeSleep': 'beforesleep',
+          'onHour':      'hourly',
+          'onTap':       'tap',
+          'scheduled':   'scheduled',
+        };
+        const name = nameMap[trigger] || 'anim';
         if (!confirm(`Delete animation "${name}" from watch?`)) return;
         try {
           await sendRawPayload(JSON.stringify({ kind: 'animDelete', v: 1, name }));
@@ -2643,10 +2643,18 @@ function buildAnimJson() {
     );
   }
 
-  // Read the name from the input, not the cached global
-  const nameEl = document.getElementById('propAnimName');
-  const rawName = (nameEl?.value || window._animName || 'wake').trim();
-  const name = rawName.replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 18) || 'wake';
+  const trigEl = document.getElementById('propTrigger');
+  const trigger = trigEl?.value || 'onWake';
+  
+  // Map the friendly dropdown value to a filename-safe name
+  const nameMap = {
+    'onWake':      'wake',
+    'beforeSleep': 'beforesleep',
+    'onHour':      'hourly',
+    'onTap':       'tap',
+    'scheduled':   'scheduled',
+  };
+  const name = nameMap[trigger] || 'anim';
 
   const frameMs = frames[0].durationMs || 125;
   const totalMs = frameCount * frameMs * loopCount;
@@ -2682,22 +2690,21 @@ function buildAnimJson() {
 
   // (no second const name here — delete the old line)
 
-  return JSON.stringify({
-    kind: 'animation',
-    v: 2,
-    name: name,
-    trigger: importTrigger,
-    w: AD_W,
-    h: AD_H,
-    offsetY: AD_OFFSET_Y,
-    frameMs: frameMs,
-    frameCount: frameCount,
-    loopCount: loopCount,
-    format: 'bitpacked-row-lsb',
-    data: b64
-  });
-}
-
+ return JSON.stringify({
+   kind: 'animation',
+   v: 2,
+   name: name,
+   trigger: trigger,
+   w: AD_W,
+   h: AD_H,
+   offsetY: AD_OFFSET_Y,
+   frameMs: frameMs,
+   frameCount: frameCount,
+   loopCount: loopCount,
+   format: 'bitpacked-row-lsb',
+   data: b64
+ });
+ 
 function buildFaceConfigJson() {
   const outElements = elements.map(e => {
     const copy = { ...e };
@@ -3617,19 +3624,6 @@ function importBuildPanelUI() {
     <input type="file" id="importFile" accept="video/*,image/gif">
     <div id="importSourceInfo" style="font-size:11px;color:#666">No file loaded</div>
 
-    <div class="import-row"><label>Name</label>
-      <input type="text" id="impName" value="${window._animName || 'wake'}"></div>
-
-    <div class="import-row"><label>Trigger</label>
-      <select id="impTrigger">
-        <option value="onWake"      ${importTrigger==='onWake'?'selected':''}>On Wake</option>
-        <option value="beforeSleep" ${importTrigger==='beforeSleep'?'selected':''}>Before Sleep</option>
-        <option value="onHour"      ${importTrigger==='onHour'?'selected':''}>Hourly</option>
-        <option value="onTap"       ${importTrigger==='onTap'?'selected':''}>Tap</option>
-        <option value="scheduled"   ${importTrigger==='scheduled'?'selected':''}>Scheduled (manual)</option>
-      </select>
-    </div>
-
     <h3>Framing</h3>
     <div class="import-row"><label>Start (s)</label>
       <input type="number" id="impStart" value="0" step="0.1" min="0"></div>
@@ -3690,17 +3684,6 @@ function importBuildPanelUI() {
   document.getElementById('btnImportCancel').onclick = importCancel;
   document.getElementById('btnImportReplace').onclick = importCommit;
   document.getElementById('btnImportBackground').onclick = importUseAsBackground;
-
-  const trig = document.getElementById('impTrigger');
-  if (trig) {
-    trig.value = importTrigger;
-    trig.onchange = () => { importTrigger = trig.value; };
-  }
-
-  const nameEl = document.getElementById('impName');
-  if (nameEl) {
-    nameEl.oninput = () => { window._animName = nameEl.value.trim() || 'untitled'; };
-  }
 
   const liveIds = [
     'impStart', 'impLength', 'impFPS',
@@ -4151,7 +4134,6 @@ function libSerializeCurrentAnimation() {
     frameCount: frames.length,
     loopCount: loopCount,
     trigger: importTrigger,
-    animName: window._animName || 'untitled',
     frames: frames.map(f => libB64FromBytes(f.pixels)),
   };
 }
@@ -4165,7 +4147,6 @@ function libApplyAnimation(obj) {
   pixels = frames[0].pixels;
   if (typeof obj.loopCount === 'number') loopCount = obj.loopCount;
   if (obj.trigger) importTrigger = obj.trigger;
-  if (obj.animName) window._animName = obj.animName;
   renderTimeline();
   rebuildProps();
   render();
