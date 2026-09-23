@@ -3360,6 +3360,52 @@ async function setPageIndex(i) {
     }
   }
 }
+
+// ============================================================
+// Button wiring
+// ============================================================
+btnSend.onclick = async () => {
+  try {
+    btnSend.disabled = true;
+    connStatus.classList.remove('error');
+    await sendToWatch();
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error('Send error:', e);
+    connStatus.textContent = 'Send error: ' + e.message;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSend.disabled = false;
+  }
+};
+
+btnSync.onclick = async () => {
+  try {
+    btnSync.disabled = true;
+    connStatus.classList.remove('error');
+
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+
+    await pushWeather();
+
+    connStatus.textContent = 'Synced time';
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = `Sync error: ${e.message}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSync.disabled = false;
+  }
+};
 // ============================================================
 // Boot
 // ============================================================
