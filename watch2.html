@@ -533,24 +533,24 @@ function idx(x, y) { return y * W + x; }
 // ============================================================
 // FACE STATE
 // ============================================================
-let elements = [
-  { id: 1, type: 'time',    style: '7seg',     x: 0,  y: 2,   w: 32, h: 56, thick: 3 },
-  { id: 2, type: 'date',    style: 'microhex', format: 'MMDD', scale: 2, x: 0, y: 64, w: 26, h: 16 },
-  { id: 3, type: 'weekday',                     x: 0,  y: 88,  w: 16, h: 16 },
-  { id: 4, type: 'weather',                     x: 16, y: 88,  w: 16, h: 16 },
-  { id: 5, type: 'temp',    style: 'microhex', scale: 2, x: 0, y: 108, w: 26, h: 16 },
-];
 const MAX_PAGES = 4;
 let pages = [
-  { used: true,  elements: [ ...default face elements... ] },
+  { used: true, elements: [
+    { id: 1, type: 'time',    style: '7seg',     x: 0,  y: 2,   w: 32, h: 56, thick: 3 },
+    { id: 2, type: 'date',    style: 'microhex', format: 'MMDD', scale: 2, x: 0, y: 64, w: 26, h: 16 },
+    { id: 3, type: 'weekday',                     x: 0,  y: 88,  w: 16, h: 16 },
+    { id: 4, type: 'weather',                     x: 16, y: 88,  w: 16, h: 16 },
+    { id: 5, type: 'temp',    style: 'microhex', scale: 2, x: 0, y: 108, w: 26, h: 16 },
+  ] },
   { used: false, elements: [] },
   { used: false, elements: [] },
   { used: false, elements: [] },
 ];
 let currentPageIndex = 0;
-
-// Alias so all existing code that references `elements` keeps working
 let elements = pages[0].elements;
+
+let selectedId = null;
+let nextId = 6;
 let effects = {
   scanline: false,
   glitch: false,
@@ -1523,7 +1523,9 @@ function rebuildPalette() {
     wireAnimTools();
     wireImportPanel();
   } else {
-    body.innerHTML = `
+     body.innerHTML = `
+      <h2 style="font-size:12px;margin-top:0">Page</h2>
+      <div id="pageRow" style="display:flex;gap:4px;margin-bottom:12px"></div>
       <h2 style="font-size:12px;margin-top:0">Add Element</h2>
       <button data-add="time">Time</button>
       <button data-add="seconds">Seconds</button>
@@ -1537,9 +1539,6 @@ function rebuildPalette() {
       <button data-add="timezone">Timezone</button>
     `;
        renderPageRow();
-    body.querySelectorAll('[data-add]').forEach(btn => {
-      btn.onclick = () => addElement(btn.dataset.add);
-    });
     body.querySelectorAll('[data-add]').forEach(btn => {
       btn.onclick = () => addElement(btn.dataset.add);
     });
