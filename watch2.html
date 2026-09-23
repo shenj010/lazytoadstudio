@@ -1341,7 +1341,7 @@ function drawTinyNumber(x, y, value, rightAlign) {
     for (let cx = 0; cx < 3; cx++) {
       const col = TINY_DIGITS[d][cx];
       for (let ry = 0; ry < 5; ry++) {
-        if (col & (1 << (4 - ry))) {
+        if (col & (1 << ry)) {
           fillRectPx(x0 + i * chW + cx, yTop + ry, 1, 1);
         }
       }
