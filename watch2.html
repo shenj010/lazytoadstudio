@@ -1015,7 +1015,6 @@ function drawTextSmall(x, y, str) {
 }
 
 function drawWeekdayElement(el, now) {
-  const now = tzNow();
   const style = el.weekdayStyle || 'kanji';
   const s = Math.max(1, Math.floor(el.h / 8));
   if (style === 'kanji') {
@@ -1034,7 +1033,6 @@ function drawWeekdayElement(el, now) {
   }
 }
 function drawWeatherElement(el) {
-  const now = tzNow();
   const s = Math.max(1, Math.floor(el.h / 16));
   const weatherIndex = 1;
   drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
@@ -1059,7 +1057,6 @@ function drawElement(el) {
 
 function drawBarElement(el) {
   const now = tzNow();
-  const now = new Date();
   let value = 0;
   switch (el.source) {
     case 'time.hourProgress':
@@ -1504,7 +1501,6 @@ function rebuildPalette() {
       <h2 style="font-size:12px;margin-top:14px">Scheduling</h2>
       <button id="btnShowSched">Scheduled times…</button>
       <div id="schedPanel" style="display:none;margin-top:8px"></div>
-      <button id="btnGetState">Get watch state</button>
     `;
     wireAnimTools();
     wireImportPanel();
