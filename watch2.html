@@ -2321,6 +2321,9 @@ let bleRxChar = null;
 let bleTxChar = null;
 let bleConnected = false;
 
+const pendingAcks = new Map();  // msgId -> { resolve, reject, timer, label }
+const ACK_TIMEOUT_MS = 4000;
+
 const btnConnect = document.getElementById('btnConnect');
 const btnSend    = document.getElementById('btnSend');
 const btnSync    = document.getElementById('btnSync'); 
@@ -2511,16 +2514,23 @@ async function onTxNotify(e) {
     return;
   }
 
-  // Acks
   let ack = null;
   try { ack = JSON.parse(text); } catch (_) {}
   console.log(`[ack ${msgId}]`, ack || text);
-  if (ack && ack.ok === false) {
-    connStatus.textContent = `Watch rejected: ${ack.err || 'unknown'}`;
-    connStatus.classList.remove('connected');
-    connStatus.classList.add('error');
+  
+  const pending = pendingAcks.get(msgId);
+  if (pending) {
+    clearTimeout(pending.timer);
+    pendingAcks.delete(msgId);
+    if (ack && ack.ok === false) {
+      pending.reject(new Error(ack.err || 'rejected'));
+    } else {
+      pending.resolve(ack || { ok: true });
+    }
+  } else {
+    console.warn(`[ack ${msgId}] no pending entry`);
   }
-}
+ }
 
 // ---- Connect / disconnect ----
 async function doConnect() {
@@ -2535,14 +2545,17 @@ async function doConnect() {
       optionalServices: [SERVICE]
     });
 
-    bleDevice.addEventListener('gattserverdisconnected', () => {
-      bleServer = null;
-      bleRxChar = null;
-      bleTxChar = null;
-      stopTimePush();
-      stopWeatherPush();
-      setConnUI('disconnected', 'Disconnected');
-    });
+   bleDevice.addEventListener('gattserverdisconnected', () => {
+     bleServer = null;
+     bleRxChar = null;
+     bleTxChar = null;
+     for (const [id, p] of pendingAcks) {
+       clearTimeout(p.timer);
+       p.reject(new Error('disconnected'));
+     }
+     pendingAcks.clear();
+     setConnUI('disconnected', 'Disconnected');
+   });
 
     setConnUI('connecting', 'Connecting…');
     bleServer = await bleDevice.gatt.connect();
@@ -2683,19 +2696,28 @@ function buildPayload() {
 // ============================================================
 const CHUNK_SIZE = 180;
 
-async function sendRawPayload(json) {
+async function sendRawPayload(json, label = 'payload') {
   if (!bleConnected || !bleRxChar) throw new Error('Not connected');
 
   const payload = new TextEncoder().encode(json);
   if (payload.length > 0xFFFE) throw new Error('Payload too large (>64 KB)');
 
   const msgId = allocMsgId();
-  const totalLen = payload.length + 1;   // +1 for msgId
+  const totalLen = payload.length + 1;
   const frame = new Uint8Array(2 + totalLen);
   frame[0] = totalLen & 0xFF;
   frame[1] = (totalLen >> 8) & 0xFF;
   frame[2] = msgId;
   frame.set(payload, 3);
+
+  // Register pending ack BEFORE sending
+  const ackPromise = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pendingAcks.delete(msgId);
+      reject(new Error(`ack timeout for ${label} (msgId=${msgId})`));
+    }, ACK_TIMEOUT_MS);
+    pendingAcks.set(msgId, { resolve, reject, timer, label });
+  });
 
   let sent = 0;
   while (sent < frame.length) {
@@ -2709,8 +2731,8 @@ async function sendRawPayload(json) {
     connStatus.textContent = `Sending… ${sent}/${frame.length}`;
     await new Promise(r => setTimeout(r, 3));
   }
-  connStatus.classList.add('connected');
-  connStatus.classList.remove('error');
+
+  return ackPromise;
 }
 
 async function sendToWatch() {
