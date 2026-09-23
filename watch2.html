@@ -438,6 +438,7 @@
    <div class="conn">
     <button id="btnConnect">Connect to Watch</button>
     <button id="btnSync" disabled>Sync Time+Weather</button>
+    <button id="btnGetState" disabled>Get State</button>
     <button id="btnSend" disabled>Send to Watch</button>
     <span id="connStatus">Not connected</span>
   </div>
@@ -1416,6 +1417,7 @@ function rebuildPalette() {
       <h2 style="font-size:12px;margin-top:14px">Scheduling</h2>
       <button id="btnShowSched">Scheduled times…</button>
       <div id="schedPanel" style="display:none;margin-top:8px"></div>
+      <button id="btnGetState">Get watch state</button>
     `;
     wireAnimTools();
     wireImportPanel();
@@ -2368,34 +2370,39 @@ const ACK_TIMEOUT_MS = 4000;
 const btnConnect = document.getElementById('btnConnect');
 const btnSend    = document.getElementById('btnSend');
 const btnSync    = document.getElementById('btnSync'); 
+const btnGetState = document.getElementById('btnGetState');
 const connStatus = document.getElementById('connStatus');
 
 function setConnUI(state, msg) {
   connStatus.classList.remove('connected', 'error');
   connStatus.textContent = msg;
-  if (state === 'disconnected') {
+    if (state === 'disconnected') {
     btnConnect.textContent = 'Connect to Watch';
     btnConnect.disabled = false;
-    btnSync.disabled = true;          // ← add
+    btnSync.disabled = true;
+    btnGetState.disabled = true;      // ← add
     btnSend.disabled = true;
     bleConnected = false;
   } else if (state === 'connecting') {
     btnConnect.textContent = 'Connecting…';
     btnConnect.disabled = true;
-    btnSync.disabled = true;          // ← add
+    btnSync.disabled = true;
+    btnGetState.disabled = true;      // ← add
     btnSend.disabled = true;
     bleConnected = false;
   } else if (state === 'connected') {
     btnConnect.textContent = 'Disconnect';
     btnConnect.disabled = false;
-    btnSync.disabled = false;         // ← add
+    btnSync.disabled = false;
+    btnGetState.disabled = false;     // ← add
     btnSend.disabled = false;
     bleConnected = true;
     connStatus.classList.add('connected');
   } else if (state === 'error') {
     btnConnect.textContent = 'Connect to Watch';
     btnConnect.disabled = false;
-    btnSync.disabled = true;          // ← add
+    btnSync.disabled = true;
+    btnGetState.disabled = true;      // ← add
     btnSend.disabled = true;
     bleConnected = false;
     connStatus.classList.add('error');
@@ -2445,7 +2452,28 @@ async function pushWeather() {
     console.warn('weather push failed:', e);
   }
 }
+ 
+// ============================================================
+// getState — fetch the watch's current state
+// ============================================================
+async function getState() {
+  const resp = await sendRawPayload(
+    JSON.stringify({ kind: 'getState', v: 1 }),
+    'getState'
+  );
+  return resp;
+}
 
+document.getElementById('btnGetState').onclick = async () => {
+  try {
+    const s = await getState();
+    console.log('=== Watch state ===', s);
+    connStatus.textContent = 'State fetched (see console)';
+  } catch (e) {
+    connStatus.textContent = 'getState failed: ' + e.message;
+  }
+};
+ 
 function startWeatherPush() {
   if (weatherPushInterval) return;
   weatherPushInterval = setInterval(pushWeather, 30 * 60 * 1000);
