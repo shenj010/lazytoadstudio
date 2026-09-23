@@ -1413,6 +1413,9 @@ function rebuildPalette() {
         <button data-trigger="onHour"      style="margin:0;padding:6px 0;font-size:11px">Hourly</button>
         <button data-trigger="scheduled"   style="margin:0;padding:6px 0;font-size:11px">Scheduled</button>
       </div>
+      <h2 style="font-size:12px;margin-top:14px">Scheduling</h2>
+      <button id="btnShowSched">Scheduled times…</button>
+      <div id="schedPanel" style="display:none;margin-top:8px"></div>
     `;
     wireAnimTools();
     wireImportPanel();
@@ -1530,6 +1533,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
+   
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -1893,6 +1897,20 @@ function wireAnimTools() {
     }
   };
 });
+
+ const btnSched = document.getElementById('btnShowSched');
+if (btnSched) {
+  btnSched.onclick = () => {
+    const panel = document.getElementById('schedPanel');
+    if (!panel) return;
+    if (panel.style.display === 'none') {
+      panel.style.display = '';
+      buildSchedUI();
+    } else {
+      panel.style.display = 'none';
+    }
+  };
+}
  
   const btnClear  = document.getElementById('btnClear');
   const btnInvert = document.getElementById('btnInvert');
@@ -2771,6 +2789,146 @@ async function sendRawPayload(json, label = 'payload') {
   return ackPromise;
 }
 
+let schedState = {
+  enabled: true,
+  mode: 0,          // 0 = random, 1 = fixed times
+  times: [],        // {h, m, days, enabled}
+};
+
+function buildSchedUI() {
+  const panel = document.getElementById('schedPanel');
+  if (!panel) return;
+
+  const renderRows = () => {
+    let rows = '';
+    for (let i = 0; i < schedState.times.length; i++) {
+      const t = schedState.times[i];
+      rows += `
+        <div class="import-row" style="gap:4px">
+          <input type="checkbox" data-sched-en="${i}" ${t.enabled ? 'checked' : ''}>
+          <input type="number" min="0" max="23" value="${t.h}" data-sched-h="${i}" style="width:40px">
+          <span>:</span>
+          <input type="number" min="0" max="59" value="${t.m}" data-sched-m="${i}" style="width:40px">
+          <select data-sched-days="${i}" style="flex:1">
+            <option value="127" ${t.days===127?'selected':''}>Every day</option>
+            <option value="62"  ${t.days===62 ?'selected':''}>Mon–Fri</option>
+            <option value="65"  ${t.days===65 ?'selected':''}>Weekends</option>
+            <option value="1"   ${t.days===1  ?'selected':''}>Sunday</option>
+            <option value="2"   ${t.days===2  ?'selected':''}>Monday</option>
+            <option value="4"   ${t.days===4  ?'selected':''}>Tuesday</option>
+            <option value="8"   ${t.days===8  ?'selected':''}>Wednesday</option>
+            <option value="16"  ${t.days===16 ?'selected':''}>Thursday</option>
+            <option value="32"  ${t.days===32 ?'selected':''}>Friday</option>
+            <option value="64"  ${t.days===64 ?'selected':''}>Saturday</option>
+          </select>
+          <button data-sched-del="${i}" style="width:30px;margin:0;padding:4px">×</button>
+        </div>
+      `;
+    }
+    return rows;
+  };
+
+  panel.innerHTML = `
+    <div class="import-row"><label>Enabled</label>
+      <input type="checkbox" id="schedEn" ${schedState.enabled ? 'checked' : ''}></div>
+    <div class="import-row"><label>Mode</label>
+      <select id="schedMode">
+        <option value="0" ${schedState.mode===0?'selected':''}>Random interval</option>
+        <option value="1" ${schedState.mode===1?'selected':''}>Fixed times</option>
+      </select></div>
+    <h3>Times</h3>
+    <div id="schedRows">${renderRows()}</div>
+    <button id="btnAddSchedTime" style="margin-top:4px;font-size:12px">+ Add time</button>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button id="btnSendSched" style="flex:1;padding:6px;font-size:12px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Send to Watch</button>
+    </div>
+    <div id="schedStatus" style="font-size:11px;color:#888;margin-top:6px"></div>
+  `;
+
+    document.getElementById('schedEn').onchange = (e) => {
+    schedState.enabled = e.target.checked;
+    saveSchedState();                                   // ← add
+  };
+  document.getElementById('schedMode').onchange = (e) => {
+    schedState.mode = parseInt(e.target.value, 10);
+    saveSchedState();                                   // ← add
+  };
+  document.getElementById('btnAddSchedTime').onclick = () => {
+    schedState.times.push({ h: 12, m: 0, days: 127, enabled: true });
+    saveSchedState();                                   // ← add
+    buildSchedUI();
+  };
+  panel.querySelectorAll('[data-sched-h]').forEach(el => {
+    el.oninput = () => {
+      const i = parseInt(el.dataset.schedH, 10);
+      schedState.times[i].h = Math.max(0, Math.min(23, parseInt(el.value, 10) || 0));
+      saveSchedState();                                 // ← add
+    };
+  });
+  panel.querySelectorAll('[data-sched-m]').forEach(el => {
+    el.oninput = () => {
+      const i = parseInt(el.dataset.schedM, 10);
+      schedState.times[i].m = Math.max(0, Math.min(59, parseInt(el.value, 10) || 0));
+      saveSchedState();                                 // ← add
+    };
+  });
+  panel.querySelectorAll('[data-sched-en]').forEach(el => {
+    el.onchange = () => {
+      const i = parseInt(el.dataset.schedEn, 10);
+      schedState.times[i].enabled = el.checked;
+      saveSchedState();                                 // ← add
+    };
+  });
+  panel.querySelectorAll('[data-sched-days]').forEach(el => {
+    el.onchange = () => {
+      const i = parseInt(el.dataset.schedDays, 10);
+      schedState.times[i].days = parseInt(el.value, 10) || 127;
+      saveSchedState();                                 // ← add
+    };
+  });
+  panel.querySelectorAll('[data-sched-del]').forEach(el => {
+    el.onclick = () => {
+      const i = parseInt(el.dataset.schedDel, 10);
+      schedState.times.splice(i, 1);
+      saveSchedState();                                 // ← add
+      buildSchedUI();
+    };
+  });
+  document.getElementById('btnSendSched').onclick = async () => {
+    const payload = JSON.stringify({
+      kind: 'schedConfig',
+      v: 1,
+      enabled: schedState.enabled,
+      mode: schedState.mode,
+      times: schedState.times,
+    });
+    const status = document.getElementById('schedStatus');
+    status.textContent = 'Sending…';
+    try {
+      await sendRawPayload(payload, 'schedConfig');
+      status.textContent = `Sent (${schedState.times.length} times)`;
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  };
+}
+
+function loadSchedState() {
+  try {
+    const s = localStorage.getItem('watchlib:sched');
+    if (!s) return;
+    const o = JSON.parse(s);
+    if (typeof o.enabled === 'boolean') schedState.enabled = o.enabled;
+    if (typeof o.mode === 'number')     schedState.mode    = o.mode;
+    if (Array.isArray(o.times))         schedState.times   = o.times;
+  } catch (_) {}
+}
+function saveSchedState() {
+  try {
+    localStorage.setItem('watchlib:sched', JSON.stringify(schedState));
+  } catch (_) {}
+}
+
 async function sendToWatch() {
   const json = buildPayload();
   await sendRawPayload(json);
@@ -2825,6 +2983,7 @@ btnSync.onclick = async () => {
 // Boot
 // ============================================================
 wireEffects();
+loadSchedState();
 setMode('face');
 renderTimeline();
 
