@@ -3251,6 +3251,7 @@ async function sendToWatch() {
     }
 
     // ---- Face mode: compact occupied slots into 0..N-1 ----
+    // A slot is "occupied" iff it has >= 1 element.
     const occupied = [];
     for (let i = 0; i < MAX_PAGES; i++) {
       const pg = pages[i];
@@ -3259,13 +3260,13 @@ async function sendToWatch() {
       if (hasEls) occupied.push(i);
     }
 
-    // 1. Wipe all pages on the watch.
+    // 1. Tell the watch to wipe all pages.
     await sendRawPayload(
       JSON.stringify({ kind: 'faceReset', v: 1 }),
       'faceReset'
     );
 
-    // 2. Nothing occupied → watch is clean, built-in clock active.
+    // 2. If nothing to send, we're done — watch is clean.
     if (occupied.length === 0) {
       dirtyPages.clear();
       rebuildPalette();
@@ -3302,7 +3303,7 @@ async function sendToWatch() {
       console.warn('setPageCount failed:', e);
     }
 
-    // 5. Clear local dirty flags.
+    // 5. Clear local dirty flags — we just pushed everything occupied.
     dirtyPages.clear();
     rebuildPalette();
 
@@ -3323,7 +3324,6 @@ async function sendToWatch() {
     throw e;
   }
 }
-
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
   currentPageIndex = i;
