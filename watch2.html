@@ -3338,9 +3338,12 @@ async function setPageIndex(i) {
         JSON.stringify({ kind: 'setPage', v: 1, index: i }),
         `setPage:${i}`
       );
-      connStatus.textContent = `Watch → page ${i + 1}`;
+      connStatus.textContent = `Editing slot ${i + 1}`;
     } catch (e) {
+      // Real failures only — network / ack timeout / reject
       connStatus.textContent = `setPage failed: ${e.message}`;
+      connStatus.classList.remove('connected');
+      connStatus.classList.add('error');
     }
   }
 }
