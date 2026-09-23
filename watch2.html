@@ -528,6 +528,8 @@ let shapeStart = null;
 let shapeEnd = null;
 let shapeActive = false;
 
+let dirtyPages = new Set([0]);
+
 function idx(x, y) { return y * W + x; }
 
 // ============================================================
@@ -1350,6 +1352,8 @@ function drawPlaceholder(x, y, w, h, label) {
 // ============================================================
 // Main render dispatcher
 // ============================================================
+let suppressDirtyMark = false;
+
 function render() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1357,11 +1361,23 @@ function render() {
     renderAnim();
     updateAnimStatus();
   } else {
+    if (!suppressDirtyMark && typeof dirtyPages !== 'undefined') {
+      dirtyPages.add(currentPageIndex);
+    }
     renderFace();
     updateFaceStatus();
   }
 }
 
+setInterval(() => {
+  scanY = (scanY + 1) % H;
+  if (currentMode === 'face') {
+    suppressDirtyMark = true;
+    render();
+    suppressDirtyMark = false;
+  }
+}, 250);
+ 
 function renderAnim() {
   ctx.fillStyle = '#ffffff';
   for (let y = 0; y < H; y++) {
@@ -1462,12 +1478,15 @@ function renderPageRow() {
   row.innerHTML = '';
   for (let i = 0; i < MAX_PAGES; i++) {
     const btn = document.createElement('button');
-    btn.textContent = String(i + 1);
+    const dirty  = dirtyPages.has(i);
+    const active = (i === currentPageIndex);
+
+    btn.textContent = String(i + 1) + (dirty ? ' •' : '');
     btn.style.cssText = `
       flex:1;margin:0;padding:6px 0;font-size:13px;
-      background:${i === currentPageIndex ? '#3a3a3a' : 'transparent'};
-      color:${i === currentPageIndex ? '#fff' : '#888'};
-      border:1px solid ${i === currentPageIndex ? '#666' : '#444'};
+      background:${active ? '#3a3a3a' : 'transparent'};
+      color:${active ? '#fff' : (dirty ? '#fc6' : '#888')};
+      border:1px solid ${active ? '#666' : '#444'};
       border-radius:4px;cursor:pointer;
     `;
     if (!pages[i].used) btn.style.opacity = '0.5';
@@ -2287,15 +2306,6 @@ function lineTo(a, b) {
   }
 }
 
-function setPageIndex(i) {
-  if (i < 0 || i >= MAX_PAGES) return;
-  currentPageIndex = i;
-  elements = pages[i].elements;
-  selectedId = null;
-  rebuildPalette();   // re-renders the page row with new highlight
-  rebuildProps();
-  render();
-}
 // ============================================================
 // FACE MODE INTERACTION
 // ============================================================
@@ -2601,7 +2611,37 @@ function stopWeatherPush() {
     weatherPushInterval = null;
   }
 }
+async function syncPagesFromWatch() {
+  if (!bleConnected) return;
+  let state;
+  try {
+    state = await getState();
+  } catch (e) {
+    console.warn('syncPagesFromWatch: getState failed', e);
+    return;
+  }
+  if (!state || !Array.isArray(state.pages)) {
+    console.warn('syncPagesFromWatch: no pages[] in state (firmware not updated?)');
+    return;
+  }
 
+  for (const p of state.pages) {
+    if (p.used) pages[p.index].used = true;
+    // Only clear dirty for pages we haven't edited locally
+    if (p.valid && !dirtyPages.has(p.index)) {
+      dirtyPages.delete(p.index);
+    }
+  }
+  if (typeof state.currentPage === 'number' &&
+      state.currentPage !== currentPageIndex) {
+    currentPageIndex = state.currentPage;
+    elements = pages[currentPageIndex].elements;
+  }
+  rebuildPalette();
+  rebuildProps();
+  render();
+  console.log('Pages synced from watch:', state.pages);
+}
 function startTimePush() {
   if (timePushInterval) return;
   timePushInterval = setInterval(async () => {
@@ -2624,24 +2664,6 @@ function stopTimePush() {
     clearInterval(timePushInterval);
     timePushInterval = null;
   }
-}
-
-async function sendToWatch() {
-  // Sync time first so the new face renders against the correct clock
-  try {
-    const now = new Date();
-    await sendRawPayload(JSON.stringify({
-      kind: 'timesync', v: 1,
-      epoch: Math.floor(now.getTime() / 1000),
-      tzOffsetSec: -now.getTimezoneOffset() * 60,
-    }));
-  } catch (e) {
-    console.warn('timesync pre-send failed:', e);
-  }
-
-  const json = buildPayload();
-  await sendRawPayload(json);
-  connStatus.textContent = `Sent ${json.length} bytes`;
 }
 
 // ---- Auto push on connect: time, then optionally weather, then face ----
@@ -2668,6 +2690,11 @@ async function autoPushOnConnect() {
     console.log('face pushed');
   } catch (e) {
     console.warn('face push failed:', e);
+  }
+   try {
+    await syncPagesFromWatch();
+  } catch (e) {
+    console.warn('page sync failed:', e);
   }
 }
 
@@ -2867,8 +2894,9 @@ function buildAnimJson() {
    });
   }
  
-function buildFaceConfigJson() {
-  const outElements = elements.map(e => {
+function buildFaceConfigJsonForPage(pageIndex) {
+  const pageElements = pages[pageIndex].elements;
+  const outElements = pageElements.map(e => {
     const copy = { ...e };
     if (e.type === 'weekday') {
       copy.style = (e.weekdayStyle === 'english') ? 'text' : '7seg';
@@ -2878,14 +2906,15 @@ function buildFaceConfigJson() {
   return JSON.stringify({
     kind: 'face',
     v: 1,
-    name: 'untitled',
+    page: pageIndex,
+    name: `page${pageIndex}`,
     effects: effects,
     elements: outElements
   });
 }
 
-function buildPayload() {
-  return currentMode === 'anim' ? buildAnimJson() : buildFaceConfigJson();
+function buildFaceConfigJson() {
+  return buildFaceConfigJsonForPage(currentPageIndex);
 }
 
 function buildTzSelect() {
@@ -3195,55 +3224,91 @@ function saveSchedState() {
 }
 
 async function sendToWatch() {
-  const json = buildPayload();
-  await sendRawPayload(json);
-  connStatus.textContent = `Sent ${json.length} bytes`;
+  if (currentMode === 'anim') {
+    const json = buildPayload();
+    await sendRawPayload(json, 'animation');
+    connStatus.textContent = `Sent animation (${json.length} bytes)`;
+    return;
+  }
+
+  // Face mode: push every dirty page, then the page count.
+  const pagesToSend = [...dirtyPages].sort((a, b) => a - b);
+  if (pagesToSend.length === 0) {
+    connStatus.textContent = 'No page changes to send';
+    return;
+  }
+
+  // Push face ops FIRST, so firmware can auto-grow pageCount before
+  // setPageCount arrives. Then setPageCount is authoritative.
+  let sent = 0;
+  const failures = [];
+  for (const idx of pagesToSend) {
+    try {
+      await sendRawPayload(
+        buildFaceConfigJsonForPage(idx),
+        `face:p${idx}`
+      );
+      sent++;
+      connStatus.textContent =
+        `Sent page ${idx + 1} (${sent}/${pagesToSend.length})`;
+    } catch (e) {
+      failures.push(idx);
+      console.warn(`page ${idx} push failed:`, e);
+    }
+  }
+
+  // Compute max used page for setPageCount
+  const maxUsedPage = pages.reduce(
+    (max, p, i) => p.used ? Math.max(max, i) : max, 0
+  ) + 1;
+
+  try {
+    await sendRawPayload(
+      JSON.stringify({ kind: 'setPageCount', v: 1, count: maxUsedPage }),
+      'setPageCount'
+    );
+  } catch (e) {
+    console.warn('setPageCount failed:', e);
+  }
+
+  // Clear dirty flags for the pages we successfully sent
+  for (const idx of pagesToSend) {
+    if (!failures.includes(idx)) dirtyPages.delete(idx);
+  }
+  rebuildPalette();
+
+  if (failures.length === 0) {
+    connStatus.textContent =
+      `Sent ${sent} page${sent === 1 ? '' : 's'}`;
+    connStatus.classList.add('connected');
+  } else {
+    connStatus.textContent =
+      `Sent ${sent}, failed: ${failures.map(i => i + 1).join(', ')}`;
+    connStatus.classList.add('error');
+  }
 }
 
-btnSend.onclick = async () => {
-  try {
-    btnSend.disabled = true;
-    connStatus.classList.remove('error');
-    await sendToWatch();
-    connStatus.classList.add('connected');
-  } catch (e) {
-    console.error(e);
-    setConnUI('connected', `Send error: ${e.message}`);
-    connStatus.classList.remove('connected');
-    connStatus.classList.add('error');
-  } finally {
-    btnSend.disabled = false;
+async function setPageIndex(i) {
+  if (i < 0 || i >= MAX_PAGES) return;
+  currentPageIndex = i;
+  elements = pages[i].elements;
+  selectedId = null;
+  rebuildPalette();
+  rebuildProps();
+  render();
+
+  if (bleConnected && bleRxChar) {
+    try {
+      await sendRawPayload(
+        JSON.stringify({ kind: 'setPage', v: 1, index: i }),
+        `setPage:${i}`
+      );
+      connStatus.textContent = `Watch → page ${i + 1}`;
+    } catch (e) {
+      connStatus.textContent = `setPage failed: ${e.message}`;
+    }
   }
-};
-
-btnSync.onclick = async () => {
-  try {
-    btnSync.disabled = true;
-    connStatus.classList.remove('error');
-
-    // Time
-    const now = new Date();
-    await sendRawPayload(JSON.stringify({
-      kind: 'timesync', v: 1,
-      epoch: Math.floor(now.getTime() / 1000),
-      tzOffsetSec: -now.getTimezoneOffset() * 60,
-    }));
-    console.log('timesync sent');
-
-    await pushWeather();
-
-    connStatus.textContent = 'Synced time' + (weatherPushInterval ? ' + weather' : '');
-    connStatus.classList.add('connected');
-  } catch (e) {
-    console.error(e);
-    connStatus.textContent = `Sync error: ${e.message}`;
-    connStatus.classList.remove('connected');
-    connStatus.classList.add('error');
-  } finally {
-    btnSync.disabled = false;
-  }
-};
-
+}
 // ============================================================
 // Boot
 // ============================================================
