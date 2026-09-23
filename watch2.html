@@ -3334,14 +3334,26 @@ async function setPageIndex(i) {
   render();
 
   if (bleConnected && bleRxChar) {
+    // Only tell the watch if this slot actually maps to a live watch page.
+    // After compaction, watch page N corresponds to the Nth occupied slot.
+    const occupiedBefore = pages
+      .slice(0, i + 1)
+      .filter(p => p.elements && p.elements.length > 0).length;
+
+    const localHasContent = pages[i].elements && pages[i].elements.length > 0;
+    if (!localHasContent) {
+      connStatus.textContent = `Editing empty slot ${i + 1} (watch unchanged)`;
+      return;
+    }
+
+    const watchIndex = occupiedBefore - 1;
     try {
       await sendRawPayload(
-        JSON.stringify({ kind: 'setPage', v: 1, index: i }),
-        `setPage:${i}`
+        JSON.stringify({ kind: 'setPage', v: 1, index: watchIndex }),
+        `setPage:${watchIndex}`
       );
-      connStatus.textContent = `Editing slot ${i + 1}`;
+      connStatus.textContent = `Editing slot ${i + 1} (watch page ${watchIndex + 1})`;
     } catch (e) {
-      // Real failures only — network / ack timeout / reject
       connStatus.textContent = `setPage failed: ${e.message}`;
       connStatus.classList.remove('connected');
       connStatus.classList.add('error');
