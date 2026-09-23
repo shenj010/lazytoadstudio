@@ -2643,7 +2643,7 @@ function buildAnimJson() {
     );
   }
 
-// Read the name from the input, not the cached global
+  // Read the name from the input, not the cached global
   const nameEl = document.getElementById('propAnimName');
   const rawName = (nameEl?.value || window._animName || 'wake').trim();
   const name = rawName.replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 18) || 'wake';
@@ -2680,7 +2680,7 @@ function buildAnimJson() {
   }
   const b64 = btoa(binary);
 
-  const name = (window._animName || 'wake').replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 18) || 'anim';
+  // (no second const name here — delete the old line)
 
   return JSON.stringify({
     kind: 'animation',
