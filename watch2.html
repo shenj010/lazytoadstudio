@@ -1406,6 +1406,14 @@ function rebuildPalette() {
       <h2 style="font-size:12px;margin-top:14px">Import</h2>
       <button id="btnShowImport">Import GIF / video…</button>
       <div id="importPanel" style="display:none;margin-top:8px"></div>
+      <h2 style="font-size:12px;margin-top:14px">Triggers</h2>
+      <h2 style="font-size:12px;margin-top:14px">Triggers</h2>
+      <div id="triggerGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
+        <button data-trigger="wake"        style="margin:0;padding:6px 0;font-size:11px">Wake</button>
+        <button data-trigger="beforeSleep" style="margin:0;padding:6px 0;font-size:11px">Before Sleep</button>
+        <button data-trigger="hourly"      style="margin:0;padding:6px 0;font-size:11px">Hourly</button>
+        <button data-trigger="scheduled"   style="margin:0;padding:6px 0;font-size:11px">Scheduled</button>
+      </div>
     `;
     wireAnimTools();
     wireImportPanel();
@@ -1871,6 +1879,22 @@ function wireAnimTools() {
       });
     };
   });
+
+  document.querySelectorAll('#triggerGrid button').forEach(btn => {
+  btn.onclick = async () => {
+    const trig = btn.dataset.trigger;
+    try {
+      await sendRawPayload(
+        JSON.stringify({ kind: 'fire', v: 1, trigger: trig }),
+        `fire:${trig}`
+      );
+      connStatus.textContent = `Fired: ${trig}`;
+    } catch (e) {
+      connStatus.textContent = `Fire failed: ${e.message}`;
+    }
+  };
+});
+ 
   const btnClear  = document.getElementById('btnClear');
   const btnInvert = document.getElementById('btnInvert');
   const btnUndo   = document.getElementById('btnUndo');
