@@ -1058,6 +1058,7 @@ function drawElement(el) {
   const now = tzNow();
   switch (el.type) {
     case 'time':     drawTimeElement(el);    break;
+    case 'rotary':   drawRotaryTimeElement(el); break;
     case 'seconds':  drawSecondsElement(el, now); break;
     case 'date':     drawDateElement(el, now);    break;
     case 'weekday':  drawWeekdayElement(el, now); break;
@@ -1314,6 +1315,67 @@ function drawTempElement(el) {
   }
 }
 
+function drawRotaryTimeElement(el) {
+  const now = tzNow();
+  const hours   = now.getHours() % 12;
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+
+  let hourProgress   = (hours + minutes / 60) / 12;
+  let minuteProgress = (minutes + seconds / 60) / 60;
+  if (hourProgress   < 0) hourProgress   = 0;
+  if (hourProgress   > 1) hourProgress   = 1;
+  if (minuteProgress < 0) minuteProgress = 0;
+  if (minuteProgress > 1) minuteProgress = 1;
+
+  const gap = 1;
+  let barW = Math.floor((el.w - gap) / 2);
+  if (barW < 2) barW = 2;
+  const barH = el.h;
+  if (barH < 4) return;
+
+  const x0 = el.x;
+  const x1 = el.x + barW + gap;
+
+  // ---- HOUR BAR (left in logical canvas) ----
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x0 * SCALE + 0.5, el.y * SCALE + 0.5,
+                 barW * SCALE - 1, barH * SCALE - 1);
+
+  const fillH0 = Math.floor((barH - 2) * hourProgress);
+  if (fillH0 > 0) {
+    fillRectPx(x0 + 1, el.y + barH - 1 - fillH0, barW - 2, fillH0);
+  }
+
+  for (let i = 0; i <= 6; i++) {
+    const ty = el.y + Math.floor((i * (barH - 1)) / 6);
+    const major = (i === 0 || i === 3 || i === 6);
+    const tickLen = major ? 3 : 2;
+    if (x0 - tickLen >= 0) {
+      fillRectPx(x0 - tickLen, ty, tickLen, 1);
+    }
+  }
+
+  // ---- MINUTE BAR (right in logical canvas) ----
+  ctx.strokeRect(x1 * SCALE + 0.5, el.y * SCALE + 0.5,
+                 barW * SCALE - 1, barH * SCALE - 1);
+
+  const fillH1 = Math.floor((barH - 2) * minuteProgress);
+  if (fillH1 > 0) {
+    fillRectPx(x1 + 1, el.y + barH - 1 - fillH1, barW - 2, fillH1);
+  }
+
+  for (let i = 0; i <= 6; i++) {
+    const ty = el.y + Math.floor((i * (barH - 1)) / 6);
+    const major = (i === 0 || i === 3 || i === 6);
+    const tickLen = major ? 3 : 2;
+    if (x1 - tickLen >= 0) {
+      fillRectPx(x1 - tickLen, ty, tickLen, 1);
+    }
+  }
+}
+
 function drawTimezoneElement(el) {
   const tz = TZ_TABLE[activeTzIndex];
   const str = tz.code;   // ← just the code, always
@@ -1443,8 +1505,9 @@ function findFreeSpot(w, h) {
 }
 
 function addElement(type) {
-  const defaults = {
+    const defaults = {
     time: { w: 32, h: 56, style: '7seg', thick: 3, scale: 1 },
+    rotary: { w: 32, h: 24 },
     seconds: { w: 20, h: 10, style: '7seg' },
     date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
     weekday: { w: 16, h: 16 },
@@ -1554,11 +1617,12 @@ function rebuildPalette() {
     wireAnimTools();
     wireImportPanel();
   } else {
-     body.innerHTML = `
+         body.innerHTML = `
       <h2 style="font-size:12px;margin-top:0">Page</h2>
       <div id="pageRow" style="display:flex;gap:4px;margin-bottom:12px"></div>
       <h2 style="font-size:12px;margin-top:0">Add Element</h2>
       <button data-add="time">Time</button>
+      <button data-add="rotary">Rotary Time</button>
       <button data-add="seconds">Seconds</button>
       <button data-add="date">Date</button>
       <button data-add="weekday">Weekday</button>
@@ -1605,7 +1669,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-    const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar'].includes(el.type) ? `
+     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
