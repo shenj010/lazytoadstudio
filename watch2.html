@@ -1098,10 +1098,12 @@ const TINY_LETTERS = {
 };
 
 function drawTinyGlyph(x, y, ch) {
-  // Draws one 3x5 glyph rotated 90° so it reads upright on the
-  // physical panel. In logical space the glyph occupies:
-  //   5 pixels along X (its physical height)
-  //   3 pixels along Y (its physical width)
+  // Draws one 3x5 glyph so it reads upright on the physical panel.
+  // The glyph's row axis maps to logical X (physical down),
+  // the glyph's column axis maps to logical Y (physical right).
+  // In logical space the glyph occupies:
+  //   3 pixels along X (its physical height)
+  //   5 pixels along Y (its physical width)
   // (x, y) = logical top-left of the glyph's bounding box.
 
   const bitmap = (() => {
@@ -1117,14 +1119,11 @@ function drawTinyGlyph(x, y, ch) {
     return [0b11111, 0b11111, 0b11111];
   })();
 
-  // bitmap[cx] holds column cx (0..2), bit ry = row ry (0..4).
-  // Rotated mapping: logical (x + ry, y + cx).
- for (let cx = 0; cx < 3; cx++) {
-    const col = bitmap[cx];
-    for (let ry = 0; ry < 5; ry++) {
-      if (col & (1 << ry)) {
-        fillRectPx(x + (4 - ry), y + (2 - cx), 1, 1);
-      }
+  // bitmap[r] holds row r (0..2), bit c = column c (0..4), bit 0 = left.
+  for (let r = 0; r < 3; r++) {
+    const row = bitmap[r];
+    for (let c = 0; c < 5; c++) {
+      if (row & (1 << c)) fillRectPx(x + r, y + c, 1, 1);
     }
   }
 }
@@ -1136,18 +1135,13 @@ function drawTinyStringPx(x, y, str) {
   let yy = y;
   for (let i = 0; i < str.length; i++) {
     drawTinyGlyph(x, yy, str[i].toUpperCase());
-    yy += 4;   // 3 glyph + 1 gap
+    yy += 6;   // 5 glyph + 1 gap
   }
   return yy - y;
 }
 
 function tinyStringWidthPx(str) {
-  // Length of the string along logical-Y
-  return str.length * 4 - 1;
-}
-
-function tinyStringWidthPx(str) {
-  return str.length * 4 - 1;
+  return str.length * 6 - 1;
 }
 
 function drawElement(el) {
