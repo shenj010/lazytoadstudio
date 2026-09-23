@@ -3320,6 +3320,12 @@ async function sendToWatch() {
     connStatus.textContent =
       `Sent ${sent}, failed slots: ${failures.map(i => i + 1).join(', ')}`;
     connStatus.classList.add('error');
+
+   } catch (e) {
+    console.error('sendToWatch threw:', e);
+    connStatus.textContent = 'sendToWatch error: ' + e.message;
+    connStatus.classList.add('error');
+    throw e;
   }
 }
 
