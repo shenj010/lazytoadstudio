@@ -435,7 +435,8 @@
     <button data-mode="anim">Animation</button>
   </div>
   <button id="btnLibrary" style="width:auto;margin-left:12px;padding:8px 14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Library</button>
-   <div class="conn">
+    <div class="conn">
+    <select id="tzSelect" style="padding:6px 10px;background:#333;color:#e0e0e0;border:1px solid #555;border-radius:4px;font-size:13px"></select>
     <button id="btnConnect">Connect to Watch</button>
     <button id="btnSync" disabled>Sync Time+Weather</button>
     <button id="btnGetState" disabled>Get State</button>
@@ -551,6 +552,48 @@ let effects = {
 };
 
 let scanY = 0;
+
+const TZ_TABLE = [
+  { code: 'LON', label: 'London',      offset:   0 },
+  { code: 'PAR', label: 'Paris',       offset:   1 },
+  { code: 'CAI', label: 'Cairo',       offset:   2 },
+  { code: 'MOW', label: 'Moscow',      offset:   3 },
+  { code: 'DXB', label: 'Dubai',       offset:   4 },
+  { code: 'KHI', label: 'Karachi',     offset:   5 },
+  { code: 'DAC', label: 'Dhaka',       offset:   6 },
+  { code: 'BKK', label: 'Bangkok',     offset:   7 },
+  { code: 'SHA', label: 'Shanghai',    offset:   8 },
+  { code: 'TOK', label: 'Tokyo',       offset:   9 },
+  { code: 'SYD', label: 'Sydney',      offset:  10 },
+  { code: 'NOU', label: 'Noumea',      offset:  11 },
+  { code: 'AKL', label: 'Auckland',    offset:  12 },
+  { code: 'HNL', label: 'Honolulu',    offset: -10 },
+  { code: 'LAX', label: 'Los Angeles', offset:  -8 },
+  { code: 'DEN', label: 'Denver',      offset:  -7 },
+  { code: 'CHI', label: 'Chicago',     offset:  -6 },
+  { code: 'NYC', label: 'New York',    offset:  -5 },
+  { code: 'SAO', label: 'Sao Paulo',   offset:  -3 },
+  { code: 'UTC', label: 'UTC',         offset:   0 },
+];
+
+let activeTzIndex = 9;   // default Tokyo
+
+function tzCode()   { return TZ_TABLE[activeTzIndex].code; }
+function tzOffset() { return TZ_TABLE[activeTzIndex].offset; }
+
+function applyTimezoneLocally(idx) {
+  activeTzIndex = Math.max(0, Math.min(TZ_TABLE.length - 1, idx));
+  try { localStorage.setItem('watchlib:tz', String(activeTzIndex)); } catch (_) {}
+  render();
+}
+
+function loadStoredTimezone() {
+  try {
+    const s = localStorage.getItem('watchlib:tz');
+    if (s !== null) activeTzIndex = parseInt(s, 10) || 0;
+    if (activeTzIndex < 0 || activeTzIndex >= TZ_TABLE.length) activeTzIndex = 9;
+  } catch (_) {}
+}
 
 // ============================================================
 // Fonts
@@ -972,6 +1015,7 @@ function drawTextSmall(x, y, str) {
 }
 
 function drawWeekdayElement(el, now) {
+  const now = tzNow();
   const style = el.weekdayStyle || 'kanji';
   const s = Math.max(1, Math.floor(el.h / 8));
   if (style === 'kanji') {
@@ -990,15 +1034,16 @@ function drawWeekdayElement(el, now) {
   }
 }
 function drawWeatherElement(el) {
+  const now = tzNow();
   const s = Math.max(1, Math.floor(el.h / 16));
   const weatherIndex = 1;
   drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
 }
 
 function drawElement(el) {
-  const now = new Date();
+  const now = tzNow();
   switch (el.type) {
-    case 'time':     drawTimeElement(el, now);    break;
+    case 'time':     drawTimeElement(el);    break;
     case 'seconds':  drawSecondsElement(el, now); break;
     case 'date':     drawDateElement(el, now);    break;
     case 'weekday':  drawWeekdayElement(el, now); break;
@@ -1007,11 +1052,13 @@ function drawElement(el) {
     case 'text':     drawTextElement(el);         break;
     case 'bar':      drawBarElement(el);          break;
     case 'background': drawBackgroundElement(el); break;
+    case 'timezone': drawTimezoneElement(el); break;
     default:         break;
   }
 }
 
 function drawBarElement(el) {
+  const now = tzNow();
   const now = new Date();
   let value = 0;
   switch (el.source) {
@@ -1094,7 +1141,8 @@ function drawBarElement(el) {
   }
 }
 
-function drawTimeElement(el, now) {
+function drawTimeElement(el) {
+  const now = tzNow();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
   const str = hh + mm;
@@ -1253,6 +1301,44 @@ function drawTempElement(el) {
   }
 }
 
+function drawTimezoneElement(el) {
+  const tz = TZ_TABLE[activeTzIndex];
+
+  // style 'text' → code + offset (e.g. TOK+9)
+  // style 'microhex' → code only (e.g. TOK)
+  let str;
+  if (el.style === 'microhex') {
+    str = tz.code;
+  } else {
+    if (tz.offset === 0)      str = tz.code;
+    else if (tz.offset > 0)   str = `${tz.code}+${tz.offset}`;
+    else                      str = `${tz.code}${tz.offset}`;
+  }
+
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
+  const s = scaleFromHeight(el.h, 8);
+
+  if (vertical) {
+    let yy = el.y;
+    for (const ch of str) {
+      drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s);
+      yy += 8 * s;
+    }
+  } else {
+    let xx = el.x;
+    for (const ch of str) {
+      drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s);
+      xx += 6 * s;
+    }
+  }
+}
+
+function tzNow() {
+  // current UTC time plus active offset
+  const utc = Date.now() + (new Date().getTimezoneOffset() * 60000);
+  return new Date(utc + (tzOffset() * 3600000));
+}
 function drawPlaceholder(x, y, w, h, label) {
   ctx.save();
   ctx.strokeStyle = '#f80';
@@ -1350,6 +1436,7 @@ function addElement(type) {
     bar: { w: 4, h: 48, source: 'time.hourProgress', barStyle: 'solid', segments: 10, barOutline: true },
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
     background: { w: 32, h: 128 },
+    timezone: { w: 14, h: 8, style: 'text', scale: 1 },
   };
   const def = defaults[type];
   if (!def) return;
@@ -1433,6 +1520,7 @@ function rebuildPalette() {
       <button data-add="bar">Bar</button>
       <button data-add="text">Text</button>
       <button data-add="background">Background</button>
+      <button data-add="timezone">Timezone</button>
     `;
     body.querySelectorAll('[data-add]').forEach(btn => {
       btn.onclick = () => addElement(btn.dataset.add);
@@ -2771,6 +2859,28 @@ function buildFaceConfigJson() {
 
 function buildPayload() {
   return currentMode === 'anim' ? buildAnimJson() : buildFaceConfigJson();
+}
+
+function buildTzSelect() {
+  const sel = document.getElementById('tzSelect');
+  if (!sel) return;
+  sel.innerHTML = TZ_TABLE.map((t, i) => {
+    const off = t.offset >= 0 ? `+${t.offset}` : `${t.offset}`;
+    return `<option value="${i}">${t.code} (UTC${off})</option>`;
+  }).join('');
+  sel.value = String(activeTzIndex);
+  sel.onchange = async () => {
+    const idx = parseInt(sel.value, 10);
+    applyTimezoneLocally(idx);
+    if (bleConnected) {
+      try {
+        await sendRawPayload(JSON.stringify({ kind: 'timezone', v: 1, index: idx }));
+        connStatus.textContent = `TZ set: ${tzCode()}`;
+      } catch (e) {
+        connStatus.textContent = 'TZ send failed: ' + e.message;
+      }
+    }
+  };
 }
 
 // ============================================================
