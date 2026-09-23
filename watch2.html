@@ -2894,19 +2894,8 @@ function buildAnimJson() {
    });
   }
  
-// Returns sorted list of HTML page indices that have at least one element.
-function getPopulatedPages() {
-  const out = [];
-  for (let i = 0; i < MAX_PAGES; i++) {
-    if (pages[i].elements && pages[i].elements.length > 0) out.push(i);
-  }
-  return out;
-}
-
-// Build a face payload for an HTML page, but tag it with the
-// *watch* page index (its position among populated pages).
-function buildFaceConfigJsonForPage(htmlPageIndex, watchPageIndex) {
-  const pageElements = pages[htmlPageIndex].elements;
+function buildFaceConfigJsonForPage(pageIndex) {
+  const pageElements = pages[pageIndex].elements;
   const outElements = pageElements.map(e => {
     const copy = { ...e };
     if (e.type === 'weekday') {
@@ -2917,8 +2906,8 @@ function buildFaceConfigJsonForPage(htmlPageIndex, watchPageIndex) {
   return JSON.stringify({
     kind: 'face',
     v: 1,
-    page: watchPageIndex,                 // ← watch index
-    name: `h${htmlPageIndex}`,
+    page: pageIndex,
+    name: `page${pageIndex}`,
     effects: effects,
     elements: outElements
   });
@@ -3236,68 +3225,111 @@ function saveSchedState() {
 
 async function sendToWatch() {
   if (currentMode === 'anim') {
-    const json = buildAnimJson();          // ← fixed (was buildPayload)
+    const json = buildPayload();
     await sendRawPayload(json, 'animation');
     connStatus.textContent = `Sent animation (${json.length} bytes)`;
     return;
   }
 
-  const populated = getPopulatedPages();
+  // Face mode: push every dirty page, then the page count.
+  const pagesToSend = [...dirtyPages].sort((a, b) => a - b);
+  if (pagesToSend.length === 0) {
+    connStatus.textContent = 'No page changes to send';
+    return;
+  }
 
-  // Always push setPageCount, even if 0 pages — so the watch collapses
-  // down to nothing if you deleted everything.
+  // Push face ops FIRST, so firmware can auto-grow pageCount before
+  // setPageCount arrives. Then setPageCount is authoritative.
   let sent = 0;
   const failures = [];
-
-  for (let wIdx = 0; wIdx < populated.length; wIdx++) {
-    const hIdx = populated[wIdx];
-    const json = buildFaceConfigJsonForPage(hIdx, wIdx);
+  for (const idx of pagesToSend) {
     try {
-      await sendRawPayload(json, `face:h${hIdx}=>w${wIdx}`);
+      await sendRawPayload(
+        buildFaceConfigJsonForPage(idx),
+        `face:p${idx}`
+      );
       sent++;
       connStatus.textContent =
-        `Sent page ${hIdx + 1} → watch ${wIdx + 1} (${sent}/${populated.length})`;
+        `Sent page ${idx + 1} (${sent}/${pagesToSend.length})`;
     } catch (e) {
-      failures.push(hIdx);
-      console.warn(`page h${hIdx}=>w${wIdx} push failed:`, e);
+      failures.push(idx);
+      console.warn(`page ${idx} push failed:`, e);
     }
   }
 
-  // Tell the watch how many pages to cycle through.
-  // This is what makes it skip the blank ones.
+  // Compute max used page for setPageCount
+  const maxUsedPage = pages.reduce(
+    (max, p, i) => p.used ? Math.max(max, i) : max, 0
+  ) + 1;
+
   try {
     await sendRawPayload(
-      JSON.stringify({ kind: 'setPageCount', v: 1, count: populated.length }),
+      JSON.stringify({ kind: 'setPageCount', v: 1, count: maxUsedPage }),
       'setPageCount'
     );
   } catch (e) {
     console.warn('setPageCount failed:', e);
   }
 
-  // Clear dirty flags for pages we successfully sent
-  for (const hIdx of populated) {
-    if (!failures.includes(hIdx)) dirtyPages.delete(hIdx);
-  }
-
-  // Also clear dirty for pages that are now empty (they no longer exist
-  // on the watch, so the "•" indicator should go away)
-  for (let i = 0; i < MAX_PAGES; i++) {
-    if (!populated.includes(i)) dirtyPages.delete(i);
+  // Clear dirty flags for the pages we successfully sent
+  for (const idx of pagesToSend) {
+    if (!failures.includes(idx)) dirtyPages.delete(idx);
   }
   rebuildPalette();
 
   if (failures.length === 0) {
     connStatus.textContent =
-      `Sent ${sent} page${sent === 1 ? '' : 's'}` +
-      (sent === 0 ? ' (none populated — watch will have no faces)' : '');
+      `Sent ${sent} page${sent === 1 ? '' : 's'}`;
     connStatus.classList.add('connected');
-    connStatus.classList.remove('error');
   } else {
     connStatus.textContent =
       `Sent ${sent}, failed: ${failures.map(i => i + 1).join(', ')}`;
     connStatus.classList.add('error');
   }
 }
+
+btnSend.onclick = async () => {
+  try {
+    btnSend.disabled = true;
+    connStatus.classList.remove('error');
+    await sendToWatch();
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    setConnUI('connected', `Send error: ${e.message}`);
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSend.disabled = false;
+  }
+};
+
+btnSync.onclick = async () => {
+  try {
+    btnSync.disabled = true;
+    connStatus.classList.remove('error');
+
+    const now = new Date();
+    await sendRawPayload(JSON.stringify({
+      kind: 'timesync', v: 1,
+      epoch: Math.floor(now.getTime() / 1000),
+      tzOffsetSec: -now.getTimezoneOffset() * 60,
+    }));
+    console.log('timesync sent');
+
+    await pushWeather();
+
+    connStatus.textContent = 'Synced time';
+    connStatus.classList.add('connected');
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = `Sync error: ${e.message}`;
+    connStatus.classList.remove('connected');
+    connStatus.classList.add('error');
+  } finally {
+    btnSync.disabled = false;
+  }
+};
 
 async function setPageIndex(i) {
   if (i < 0 || i >= MAX_PAGES) return;
@@ -3308,26 +3340,16 @@ async function setPageIndex(i) {
   rebuildProps();
   render();
 
-  // Compute the watch index for this HTML page (or -1 if not populated)
-  const populated = getPopulatedPages();
-  const wIdx = populated.indexOf(i);
-
-  if (!bleConnected || !bleRxChar) return;
-
-  if (wIdx < 0) {
-    connStatus.textContent =
-      `Editing page ${i + 1} (not on watch until you Send)`;
-    return;
-  }
-
-  try {
-    await sendRawPayload(
-      JSON.stringify({ kind: 'setPage', v: 1, index: wIdx }),
-      `setPage:h${i}=>w${wIdx}`
-    );
-    connStatus.textContent = `Watch → page ${i + 1}`;
-  } catch (e) {
-    connStatus.textContent = `setPage failed: ${e.message}`;
+  if (bleConnected && bleRxChar) {
+    try {
+      await sendRawPayload(
+        JSON.stringify({ kind: 'setPage', v: 1, index: i }),
+        `setPage:${i}`
+      );
+      connStatus.textContent = `Watch → page ${i + 1}`;
+    } catch (e) {
+      connStatus.textContent = `setPage failed: ${e.message}`;
+    }
   }
 }
 // ============================================================
