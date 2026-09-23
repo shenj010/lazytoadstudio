@@ -519,6 +519,9 @@ let currentBackgroundFrames = null;
 let currentBackgroundFrameMs = 100;
 let importTrigger = 'onWake';
 
+let importStaticImageEl = null;
+let importStaticImageURL = null;
+
 let pixels = frames[0].pixels;
 let undoStack = [];
 let currentTool = 'pencil';
@@ -4204,7 +4207,7 @@ function importBuildPanelUI() {
   if (!panel) return;
 
   panel.innerHTML = `
-    <input type="file" id="importFile" accept="video/*,image/gif">
+    <input type="file" id="importFile" accept="video/*,image/gif,image/png,image/jpeg,image/webp,image/bmp">
     <div id="importSourceInfo" style="font-size:11px;color:#666">No file loaded</div>
 
     <h3>Framing</h3>
@@ -4296,6 +4299,12 @@ function importDebouncedConvert() {
 }
 
 async function importOnFileChosen(e) {
+
+    if (importStaticImageURL) {
+    URL.revokeObjectURL(importStaticImageURL);
+    importStaticImageURL = null;
+    importStaticImageEl = null;
+  }
   const file = e.target.files[0];
   if (!file) return;
 
@@ -4310,7 +4319,33 @@ async function importOnFileChosen(e) {
   document.getElementById('btnImportBackground').style.display = 'none';
 
   const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+  const isStaticImage =
+    file.type.startsWith('image/') && !isGif;
 
+  // ---------- STATIC IMAGE (PNG/JPG/WebP/BMP) ----------
+  if (isStaticImage) {
+    status.textContent = 'Loading image…';
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      importSourceKind = 'image';
+      importStaticImageEl = img;
+      importStaticImageURL = url;
+      info.textContent = `${img.naturalWidth}×${img.naturalHeight} · 1 frame`;
+      status.textContent = 'Image loaded. Adjust settings, then hit Convert.';
+      // Length doesn't apply; gray it out conceptually by setting to 0
+      document.getElementById('impLength').value = '0';
+      document.getElementById('impFPS').value = '1';
+      // Trigger an immediate convert so the preview shows something
+      importRunConvert();
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      status.textContent = 'Image decode failed.';
+    };
+    img.src = url;
+    return;
+  }
   if (isGif) {
     status.textContent = 'Decoding GIF…';
     try {
@@ -4415,6 +4450,39 @@ async function importRunConvert() {
 
   const settings = importReadSettings();
   importLastSettings = settings;
+
+  const strip = document.getElementById('importFilmstrip');
+  const status = document.getElementById('importStatus');
+
+  // ---------- STATIC IMAGE: always 1 frame, ignore FPS/length ----------
+  if (importSourceKind === 'image') {
+    importConvertedFrames = [];
+    status.textContent = 'Processing image…';
+    await new Promise(r => setTimeout(r, 0));
+
+    try {
+      const bitmap96 = importProcessFrame(
+        importStaticImageEl,
+        importStaticImageEl.naturalWidth,
+        importStaticImageEl.naturalHeight,
+        false,           // not an RGBA array; it's an <img>
+        settings
+      );
+      const full = importWrapToFullCanvas(bitmap96);
+      importConvertedFrames.push({ pixels: full });
+
+      strip.innerHTML = '';
+      importDrawThumb(strip, full);
+
+      status.textContent = 'Ready: 1 frame.';
+      document.getElementById('btnImportReplace').style.display = '';
+      document.getElementById('btnImportBackground').style.display = '';
+    } catch (err) {
+      console.error(err);
+      status.textContent = 'Convert failed: ' + err.message;
+    }
+    return;
+  }
 
   const frameCount = Math.round(settings.length * settings.fps);
   const dt = 1 / settings.fps;
