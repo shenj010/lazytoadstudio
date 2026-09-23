@@ -1315,6 +1315,40 @@ function drawTempElement(el) {
   }
 }
 
+const TINY_DIGITS = [
+  [0b11111, 0b10001, 0b11111],   // 0
+  [0b00000, 0b11111, 0b00000],   // 1
+  [0b11101, 0b10101, 0b10111],   // 2
+  [0b10101, 0b10101, 0b11111],   // 3
+  [0b00111, 0b00100, 0b11111],   // 4
+  [0b10111, 0b10101, 0b11101],   // 5
+  [0b11111, 0b10101, 0b11101],   // 6
+  [0b00001, 0b00001, 0b11111],   // 7
+  [0b11111, 0b10101, 0b11111],   // 8
+  [0b10111, 0b10101, 0b11111],   // 9
+];
+
+function drawTinyNumber(x, y, value, rightAlign) {
+  const str = String(value).slice(0, 2);
+  const chW = 4;
+  const totalW = str.length * chW - 1;
+  const x0 = rightAlign ? (x + 7 - totalW) : x;
+  const yTop = y - 2;
+
+  for (let i = 0; i < str.length; i++) {
+    const d = str.charCodeAt(i) - 48;
+    if (d < 0 || d > 9) continue;
+    for (let cx = 0; cx < 3; cx++) {
+      const col = TINY_DIGITS[d][cx];
+      for (let ry = 0; ry < 5; ry++) {
+        if (col & (1 << (4 - ry))) {
+          fillRectPx(x0 + i * chW + cx, yTop + ry, 1, 1);
+        }
+      }
+    }
+  }
+}
+
 function drawRotaryTimeElement(el) {
   const now = tzNow();
   const hours   = now.getHours() % 12;
@@ -1323,59 +1357,62 @@ function drawRotaryTimeElement(el) {
 
   let hourProgress   = (hours + minutes / 60) / 12;
   let minuteProgress = (minutes + seconds / 60) / 60;
-  if (hourProgress   < 0) hourProgress   = 0;
-  if (hourProgress   > 1) hourProgress   = 1;
-  if (minuteProgress < 0) minuteProgress = 0;
-  if (minuteProgress > 1) minuteProgress = 1;
+  hourProgress   = Math.max(0, Math.min(1, hourProgress));
+  minuteProgress = Math.max(0, Math.min(1, minuteProgress));
 
-  const gap = 1;
-  let barW = Math.floor((el.w - gap) / 2);
-  if (barW < 2) barW = 2;
-  const barH = el.h;
-  if (barH < 4) return;
+  const hourLabelX  = el.x;
+  const hourBarX    = el.x + 7;
+  const hourTickX0  = el.x + 4;
+  const hourTickLen = 3;
 
-  const x0 = el.x;
-  const x1 = el.x + barW + gap;
+  const minBarX     = el.x + 15;
+  const minTickX0   = el.x + 21;
+  const minTickLen  = 3;
+  const minLabelX   = el.x + 24;
 
-  // ---- HOUR BAR (left in logical canvas) ----
+  const barW  = 6;
+  const barY0 = el.y;
+  const barY1 = el.y + el.h;
+  const barH  = el.h;
+
+  if (barH < 12) return;
+
+  // Hour bar
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x0 * SCALE + 0.5, el.y * SCALE + 0.5,
+  ctx.strokeRect(hourBarX * SCALE + 0.5, barY0 * SCALE + 0.5,
                  barW * SCALE - 1, barH * SCALE - 1);
-
-  const fillH0 = Math.floor((barH - 2) * hourProgress);
-  if (fillH0 > 0) {
-    fillRectPx(x0 + 1, el.y + barH - 1 - fillH0, barW - 2, fillH0);
+  const hourFillH = Math.floor((barH - 2) * hourProgress);
+  if (hourFillH > 0) {
+    fillRectPx(hourBarX + 1, barY1 - 1 - hourFillH, barW - 2, hourFillH);
   }
 
-  for (let i = 0; i <= 6; i++) {
-    const ty = el.y + Math.floor((i * (barH - 1)) / 6);
-    const major = (i === 0 || i === 3 || i === 6);
-    const tickLen = major ? 3 : 2;
-    if (x0 - tickLen >= 0) {
-      fillRectPx(x0 - tickLen, ty, tickLen, 1);
-    }
-  }
-
-  // ---- MINUTE BAR (right in logical canvas) ----
-  ctx.strokeRect(x1 * SCALE + 0.5, el.y * SCALE + 0.5,
+  // Minute bar
+  ctx.strokeRect(minBarX * SCALE + 0.5, barY0 * SCALE + 0.5,
                  barW * SCALE - 1, barH * SCALE - 1);
-
-  const fillH1 = Math.floor((barH - 2) * minuteProgress);
-  if (fillH1 > 0) {
-    fillRectPx(x1 + 1, el.y + barH - 1 - fillH1, barW - 2, fillH1);
+  const minFillH = Math.floor((barH - 2) * minuteProgress);
+  if (minFillH > 0) {
+    fillRectPx(minBarX + 1, barY1 - 1 - minFillH, barW - 2, minFillH);
   }
 
-  for (let i = 0; i <= 6; i++) {
-    const ty = el.y + Math.floor((i * (barH - 1)) / 6);
-    const major = (i === 0 || i === 3 || i === 6);
-    const tickLen = major ? 3 : 2;
-    if (x1 - tickLen >= 0) {
-      fillRectPx(x1 - tickLen, ty, tickLen, 1);
-    }
+  // Hour ticks + labels
+  for (let h = 0; h <= 12; h += 4) {
+    let tickY = barY1 - Math.floor((h * barH) / 12);
+    if (tickY < barY0) tickY = barY0;
+    if (tickY >= barY1) tickY = barY1 - 1;
+    fillRectPx(hourTickX0, tickY, hourTickLen, 1);
+    drawTinyNumber(hourLabelX, tickY, h, true);
+  }
+
+  // Minute ticks + labels
+  for (let m = 0; m <= 60; m += 5) {
+    let tickY = barY1 - Math.floor((m * barH) / 60);
+    if (tickY < barY0) tickY = barY0;
+    if (tickY >= barY1) tickY = barY1 - 1;
+    fillRectPx(minTickX0, tickY, minTickLen, 1);
+    drawTinyNumber(minLabelX, tickY, m, false);
   }
 }
-
 function drawTimezoneElement(el) {
   const tz = TZ_TABLE[activeTzIndex];
   const str = tz.code;   // ← just the code, always
