@@ -3251,7 +3251,7 @@ function saveSchedState() {
 async function sendToWatch() {
   if (currentMode === 'anim') {
     try {
-      const json = buildPayload();
+      const json = buildAnimJson();   // ← FIXED: was buildPayload()
       await sendRawPayload(json, 'animation');
       connStatus.textContent = `Sent animation (${json.length} bytes)`;
       connStatus.classList.remove('error');
@@ -3262,6 +3262,67 @@ async function sendToWatch() {
     }
     return;
   }
+
+  const populated = getPopulatedPages();
+  if (populated.length === 0) {
+    connStatus.textContent = 'No populated pages to send';
+    return;
+  }
+
+  btnSend.disabled = true;
+  try {
+    let sent = 0;
+    const failures = [];
+
+    for (let wIdx = 0; wIdx < populated.length; wIdx++) {
+      const hIdx = populated[wIdx];
+      let json;
+      try {
+        json = buildFaceConfigJsonForPage(hIdx, wIdx);
+      } catch (buildErr) {
+        console.warn(`build failed for h${hIdx}=>w${wIdx}:`, buildErr);
+        failures.push(hIdx);
+        continue;
+      }
+      try {
+        await sendRawPayload(json, `face:h${hIdx}=>w${wIdx}`);
+        sent++;
+        connStatus.textContent =
+          `Sent page ${hIdx + 1} → watch ${wIdx + 1} (${sent}/${populated.length})`;
+      } catch (e) {
+        failures.push(hIdx);
+        console.warn(`page h${hIdx}=>w${wIdx} push failed:`, e);
+      }
+    }
+
+    try {
+      await sendRawPayload(
+        JSON.stringify({ kind: 'setPageCount', v: 1, count: populated.length }),
+        'setPageCount'
+      );
+    } catch (e) {
+      console.warn('setPageCount failed:', e);
+    }
+
+    for (const hIdx of populated) {
+      if (!failures.includes(hIdx)) dirtyPages.delete(hIdx);
+    }
+    rebuildPalette();
+
+    if (failures.length === 0) {
+      connStatus.textContent = `Sent ${sent} page${sent === 1 ? '' : 's'}`;
+      connStatus.classList.add('connected');
+      connStatus.classList.remove('error');
+    } else {
+      connStatus.textContent =
+        `Sent ${sent}, failed: ${failures.map(i => i + 1).join(', ')}`;
+      connStatus.classList.add('error');
+    }
+  } finally {
+    // ALWAYS re-enable, no matter what happened
+    btnSend.disabled = false;
+  }
+}
 
   const populated = getPopulatedPages();
   if (populated.length === 0) {
