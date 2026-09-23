@@ -1538,7 +1538,7 @@ function rebuildPalette() {
       <button id="btnUndo">Undo</button>
       <button id="btnDemo">Load demo pattern</button>
       <h2 style="font-size:12px;margin-top:14px">Import</h2>
-      <button id="btnShowImport">Import GIF / video…</button>
+      <button id="btnShowImport">Import GIF / video / image…</button>
       <div id="importPanel" style="display:none;margin-top:8px"></div>
       <h2 style="font-size:12px;margin-top:14px">Triggers</h2>
       <div id="triggerGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
@@ -4328,17 +4328,22 @@ async function importOnFileChosen(e) {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      importSourceKind = 'image';
-      importStaticImageEl = img;
-      importStaticImageURL = url;
-      info.textContent = `${img.naturalWidth}×${img.naturalHeight} · 1 frame`;
-      status.textContent = 'Image loaded. Adjust settings, then hit Convert.';
-      // Length doesn't apply; gray it out conceptually by setting to 0
-      document.getElementById('impLength').value = '0';
-      document.getElementById('impFPS').value = '1';
-      // Trigger an immediate convert so the preview shows something
-      importRunConvert();
-    };
+    // Draw into a canvas so all three downsample paths work uniformly
+    // (lanczos/area need getContext; bilinear needs drawImage).
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+  
+    importSourceKind = 'image';
+    importStaticImageEl = c;              // ← the canvas, not the img
+    importStaticImageURL = url;
+    info.textContent = `${c.width}×${c.height} · 1 frame`;
+    status.textContent = 'Image loaded. Adjust settings, then hit Convert.';
+    document.getElementById('impLength').value = '0';
+    document.getElementById('impFPS').value = '1';
+    importRunConvert();
+  };
     img.onerror = () => {
       URL.revokeObjectURL(url);
       status.textContent = 'Image decode failed.';
@@ -4461,11 +4466,11 @@ async function importRunConvert() {
     await new Promise(r => setTimeout(r, 0));
 
     try {
-      const bitmap96 = importProcessFrame(
+            const bitmap96 = importProcessFrame(
         importStaticImageEl,
-        importStaticImageEl.naturalWidth,
-        importStaticImageEl.naturalHeight,
-        false,           // not an RGBA array; it's an <img>
+        importStaticImageEl.width,
+        importStaticImageEl.height,
+        false,           // canvas is not an RGBA Uint8 array
         settings
       );
       const full = importWrapToFullCanvas(bitmap96);
@@ -4486,9 +4491,6 @@ async function importRunConvert() {
 
   const frameCount = Math.round(settings.length * settings.fps);
   const dt = 1 / settings.fps;
-  const strip = document.getElementById('importFilmstrip');
-  const status = document.getElementById('importStatus');
-
   if (frameCount > IMPORT_MAX_FRAMES) {
   status.textContent = `Too many frames: ${frameCount} (max ${IMPORT_MAX_FRAMES}). Reduce length or FPS.`;
   return;
