@@ -3463,8 +3463,8 @@ if (stMs) stMs.oninput = () => {
         render();
       };
     }
-     if (selectedId !== null) window.mobileShowProps?.();
-      } else {
+      if (selectedId !== null) window.mobileShowProps?.();
+  } else {
     fx.style.display = 'none';
     const uniformMs = frames[0].durationMs || 125;
     const frameCount = frames.length;
@@ -3504,17 +3504,13 @@ if (stMs) stMs.oninput = () => {
       <div style="font-size:11px;color:#666;margin-top:6px">
         Max ${AD_MAX_FRAMES} frames.
       </div>
-      <div style="font-size:11px;color:#666;margin-top:12px">
-  Max ${AD_MAX_FRAMES} frames.
-      </div>
-      <button id="btnSetAsBackground" style="margin-top:14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">
+
+      <button id="btnSetAsBackground" style="margin-top:14px;background:transparent;border-color:var(--cyan-dim);color:var(--cyan)">
         Set as Background
       </button>
-      <button id="btnDeleteAnim" style="margin-top:8px;background:#4a2020;border-color:#833;color:#fbb">
+      <button id="btnDeleteAnim" style="margin-top:8px;background:transparent;border-color:var(--red-dim);color:var(--red)">
         Delete from Watch
       </button>
-      `;
-      <button id="btnDeleteAnim" style="margin-top:14px;background:transparent;border-color:var(--red-dim);color:var(--red)">Delete from Watch</button>
     `;
 
     const refreshSummary = () => {
@@ -3566,6 +3562,11 @@ if (stMs) stMs.oninput = () => {
       trigInput.onchange = () => { importTrigger = trigInput.value; };
     }
 
+    const setBgBtn = document.getElementById('btnSetAsBackground');
+    if (setBgBtn) {
+      setBgBtn.onclick = () => setCurrentAnimationAsBackground();
+    }
+
     const delAnim = document.getElementById('btnDeleteAnim');
     if (delAnim) {
       delAnim.onclick = async () => {
@@ -3578,11 +3579,6 @@ if (stMs) stMs.oninput = () => {
           'onTap':       'tap',
           'scheduled':   'scheduled',
         };
-      const setBgBtn = document.getElementById('btnSetAsBackground');
-      if (setBgBtn) {
-        setBgBtn.onclick = () => setCurrentAnimationAsBackground();
-      }
-       
         const name = nameMap[trigger] || 'anim';
         if (!confirm(`Delete animation "${name}" from watch?`)) return;
         try {
@@ -3595,6 +3591,8 @@ if (stMs) stMs.oninput = () => {
     }
   }
 }
+
+// Pulse styles
 
 // Pulse styles
 const PULSE_STYLES = ['dot', 'bar', 'chevron', 'dash', 'counter', 'wave', 'bars'];
