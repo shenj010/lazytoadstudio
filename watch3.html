@@ -4669,6 +4669,50 @@ let schedState = {
   },
 };
 
+// Pack frames into the background payload and send to the watch.
+// frameList = [{pixels: Uint8Array(W*H)}, ...]
+async function sendBackgroundToWatch(frameList, frameMs) {
+  const frameCount = frameList.length;
+  if (frameCount === 0 || frameCount > 30) {
+    throw new Error(`Background frames must be 1..30 (got ${frameCount})`);
+  }
+
+  const bytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = bytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = frameList[f].pixels;
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      for (let x = 0; x < AD_W; x++) {
+        if (src[y * W + x]) {
+          all[base + y * bytesPerRow + (x >> 3)] |= (1 << (x & 7));
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(
+      null, all.subarray(i, Math.min(i + CHUNK, all.length))
+    );
+  }
+
+  await sendRawPayload(JSON.stringify({
+    kind: 'background',
+    v: 1,
+    w: AD_W,
+    h: AD_H,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    format: 'bitpacked-row-lsb',
+    data: btoa(binary),
+  }), 'background');
+}
+   
 function buildSchedUI() {
   const panel = document.getElementById('schedPanel');
   if (!panel) return;
@@ -6611,12 +6655,42 @@ function libApplyFace(obj) {
   render();
 }
 
-function libApplyBackground(obj) {
+async function libApplyBackground(obj) {
   if (!obj || !Array.isArray(obj.frames)) return;
-  currentBackgroundFrames = obj.frames.map(b64 => libBytesFromB64(b64));
-  currentBackgroundFrameMs = obj.frameMs || 100;
+
+  const decoded = obj.frames.map(b64 => ({ pixels: libBytesFromB64(b64) }));
+  const frameMs = obj.frameMs || 100;
+
+  // Update local designer state
+  currentBackgroundFrames = decoded.map(d => new Uint8Array(d.pixels));
+  currentBackgroundFrameMs = frameMs;
+
+  // Make sure each page has a background element
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const pg = pages[i];
+    if (pg.elements.some(e => e.type === 'background')) continue;
+    pg.elements.unshift({
+      id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128,
+    });
+    pg.used = pg.elements.length > 0;
+  }
+
   render();
   rebuildProps();
+
+  // Push to watch if connected
+  if (bleConnected && bleRxChar) {
+    try {
+      connStatus.textContent = `Sending background (${decoded.length} frames)…`;
+      await sendBackgroundToWatch(decoded, frameMs);
+      connStatus.textContent = `Background sent (${decoded.length} frames).`;
+    } catch (e) {
+      console.error('Background push failed:', e);
+      connStatus.textContent = 'Background push failed: ' + e.message;
+    }
+  } else {
+    connStatus.textContent = `Background loaded locally — connect to push.`;
+  }
 }
 
 let libCurrentTab = 'face';
