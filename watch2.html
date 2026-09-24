@@ -1420,8 +1420,13 @@ function drawDiagMasterElement(el) {
   if (L.maxRows < 1) return;
 
   const pad2 = n => String(n).padStart(2, '0');
-
-  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
+  const opts = () => ({
+    typewriter: !!el.typewriter,
+    stutter: !!el.stutter,
+    stutterChance: el.stutterChance ?? 0.04,
+    stutterHoldMs: el.stutterHoldMs ?? 0,
+    rowIndex: L.count,
+  });
 
   const rows = [];
   if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
@@ -1435,7 +1440,7 @@ function drawDiagMasterElement(el) {
 
   for (const [label, value] of rows) {
     if (L.count >= L.maxRows) break;
-    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, label, value, true, vertical);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, label, value, true, vertical, opts());
   }
 
   if (L.count > 0 && L.count < L.maxRows) {
