@@ -2946,6 +2946,8 @@ function renderPageRow() {
       border:1px solid ${active ? 'var(--amber-dim)' : 'var(--line-hot)'};
       cursor:pointer;
     `;
+    btn.onclick = () => setPageIndex(i);
+    row.appendChild(btn);
   }
 }
 // ============================================================
