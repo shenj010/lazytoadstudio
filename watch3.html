@@ -5132,17 +5132,11 @@ async function setCurrentAnimationAsBackground() {
     currentBackgroundFrames = frames.map(f => new Uint8Array(f.pixels));
     currentBackgroundFrameMs = frameMs;
 
-    // Ensure every page has a background element
-    for (let i = 0; i < MAX_PAGES; i++) {
-      const pg = pages[i];
-      if (pg.elements.some(e => e.type === 'background')) continue;
-      pg.elements.unshift({
-        id: nextId++,
-        type: 'background',
-        x: 0, y: 0, w: 32, h: 128,
-      });
-      pg.used = pg.elements.length > 0;
-    }
+   const pg = pages[currentPageIndex];
+   if (!pg.elements.some(e => e.type === 'background')) {
+     pg.elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
+     pg.used = pg.elements.length > 0;
+   }
 
     render();
     rebuildProps();
@@ -6473,12 +6467,11 @@ async function importUseAsBackground() {
     currentBackgroundFrames = importConvertedFrames.map(f => new Uint8Array(f.pixels));
     currentBackgroundFrameMs = frameMs;
 
-      for (let i = 0; i < MAX_PAGES; i++) {
-    const pg = pages[i];
-    if (pg.elements.some(e => e.type === 'background')) continue;
-    pg.elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
-    pg.used = pg.elements.length > 0;
-  }
+       const pg = pages[currentPageIndex];
+   if (!pg.elements.some(e => e.type === 'background')) {
+     pg.elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
+     pg.used = pg.elements.length > 0;
+   }
     render();
     rebuildProps();
   } catch (e) {
@@ -6666,14 +6659,11 @@ async function libApplyBackground(obj) {
   currentBackgroundFrameMs = frameMs;
 
   // Make sure each page has a background element
-  for (let i = 0; i < MAX_PAGES; i++) {
-    const pg = pages[i];
-    if (pg.elements.some(e => e.type === 'background')) continue;
-    pg.elements.unshift({
-      id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128,
-    });
-    pg.used = pg.elements.length > 0;
-  }
+   const pg = pages[currentPageIndex];
+   if (!pg.elements.some(e => e.type === 'background')) {
+     pg.elements.unshift({ id: nextId++, type: 'background', x: 0, y: 0, w: 32, h: 128 });
+     pg.used = pg.elements.length > 0;
+   }
 
   render();
   rebuildProps();
