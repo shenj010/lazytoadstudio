@@ -1373,8 +1373,14 @@ function drawDiagEnvElement(el) {
   const L = makeDiagLayout(el, vertical);
   if (L.maxRows < 1) return;
 
-  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
-
+  const opts = () => ({
+    typewriter: !!el.typewriter,
+    stutter: !!el.stutter,
+    stutterChance: el.stutterChance ?? 0.04,
+    stutterHoldMs: el.stutterHoldMs ?? 0,
+    rowIndex: L.count,
+  });
+ 
   if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical);
   if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical);
   if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical);
