@@ -1057,9 +1057,9 @@ function drawWeatherElement(el) {
 // ============================================================
 // Typewriter / stutter text effects
 // ============================================================
-const TYPEWRITER_TYPE_MS  = 900;   // time to type the value out
-const TYPEWRITER_HOLD_MS  = 1500;  // time held fully visible
-const TYPEWRITER_BLANK_MS = 300;   // pause before retyping
+const TYPEWRITER_TYPE_MS  = 1500;   // time to type the value out
+const TYPEWRITER_HOLD_MS  = 3000;  // time held fully visible
+const TYPEWRITER_BLANK_MS = 500;   // pause before retyping
 const TYPEWRITER_CYCLE_MS = TYPEWRITER_TYPE_MS + TYPEWRITER_HOLD_MS + TYPEWRITER_BLANK_MS;
 
 function typewriterRevealCount(text, rowIndex) {
@@ -1373,6 +1373,8 @@ function drawDiagEnvElement(el) {
   const L = makeDiagLayout(el, vertical);
   if (L.maxRows < 1) return;
 
+  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
+
   if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical);
   if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical);
   if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical);
@@ -1393,6 +1395,8 @@ function drawDiagSysElement(el) {
   if (L.maxRows < 1) return;
 
   const counter = Math.floor(Date.now() / 1000) % 10000;
+
+  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
 
   if (fields.B && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'BAT', '073', true, vertical);
   if (fields.S && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'STAT', 'NRM', true, vertical);
@@ -1416,6 +1420,8 @@ function drawDiagMasterElement(el) {
   if (L.maxRows < 1) return;
 
   const pad2 = n => String(n).padStart(2, '0');
+
+  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
 
   const rows = [];
   if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
@@ -2520,7 +2526,7 @@ function rebuildProps() {
    const typewriterBox = document.getElementById('propTypewriter');
     if (typewriterBox) typewriterBox.onchange = () => { el.typewriter = typewriterBox.checked; render(); };
 
-const stutterBox = document.getElementById('propStutter');
+   const stutterBox = document.getElementById('propStutter');
     if (stutterBox) stutterBox.onchange = () => { el.stutter = stutterBox.checked; render(); };
 
     const del = document.getElementById('propDelete');
