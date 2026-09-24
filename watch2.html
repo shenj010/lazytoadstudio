@@ -2644,6 +2644,41 @@ function rebuildProps() {
    const stutterBox = document.getElementById('propStutter');
     if (stutterBox) stutterBox.onchange = () => { el.stutter = stutterBox.checked; render(); };
 
+   const twMs = document.getElementById('propTypewriterMs');
+if (twMs) twMs.oninput = () => {
+  const v = parseInt(twMs.value, 10);
+  if (!isNaN(v)) el.typewriterMs = v;
+  render();
+};
+
+const twHold = document.getElementById('propTypewriterHoldMs');
+if (twHold) twHold.oninput = () => {
+  const v = parseInt(twHold.value, 10);
+  if (!isNaN(v)) el.typewriterHoldMs = v;
+  render();
+};
+
+const twBlank = document.getElementById('propTypewriterBlankMs');
+if (twBlank) twBlank.oninput = () => {
+  const v = parseInt(twBlank.value, 10);
+  if (!isNaN(v)) el.typewriterBlankMs = v;
+  render();
+};
+
+const stChance = document.getElementById('propStutterChance');
+if (stChance) stChance.oninput = () => {
+  const v = parseFloat(stChance.value);
+  if (!isNaN(v)) el.stutterChance = v / 100;
+  render();
+};
+
+const stMs = document.getElementById('propStutterMs');
+if (stMs) stMs.oninput = () => {
+  const v = parseInt(stMs.value, 10);
+  if (!isNaN(v)) el.stutterMs = v;
+  render();
+};
+
     const del = document.getElementById('propDelete');
     if (del) {
       del.onclick = () => {
@@ -2794,41 +2829,7 @@ function rebuildProps() {
           'onTap':       'tap',
           'scheduled':   'scheduled',
         };
-
-        const twMs = document.getElementById('propTypewriterMs');
-       if (twMs) twMs.oninput = () => {
-         const v = parseInt(twMs.value, 10);
-         if (!isNaN(v)) el.typewriterMs = v;
-         render();
-       };
        
-       const twHold = document.getElementById('propTypewriterHoldMs');
-       if (twHold) twHold.oninput = () => {
-         const v = parseInt(twHold.value, 10);
-         if (!isNaN(v)) el.typewriterHoldMs = v;
-         render();
-       };
-       
-       const twBlank = document.getElementById('propTypewriterBlankMs');
-       if (twBlank) twBlank.oninput = () => {
-         const v = parseInt(twBlank.value, 10);
-         if (!isNaN(v)) el.typewriterBlankMs = v;
-         render();
-       };
-       
-       const stChance = document.getElementById('propStutterChance');
-       if (stChance) stChance.oninput = () => {
-         const v = parseFloat(stChance.value);
-         if (!isNaN(v)) el.stutterChance = v / 100;
-         render();
-       };
-       
-       const stMs = document.getElementById('propStutterMs');
-       if (stMs) stMs.oninput = () => {
-         const v = parseInt(stMs.value, 10);
-         if (!isNaN(v)) el.stutterMs = v;
-         render();
-       };
         const name = nameMap[trigger] || 'anim';
         if (!confirm(`Delete animation "${name}" from watch?`)) return;
         try {
