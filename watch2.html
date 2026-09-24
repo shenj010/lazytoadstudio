@@ -1247,7 +1247,7 @@ function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical,
 
   let displayValue = value;
   if (typewriter) displayValue = value.slice(0, typewriterRevealCount(value, rowIndex));
-  if (stutter && displayValue.length > 0) displayValue = applyStutter(displayValue, 0.04);
+  if (stutter && displayValue.length > 0) displayValue = applyStutter(displayValue, 0.01);
 
   let t = textStart;
 
