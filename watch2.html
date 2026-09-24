@@ -1053,7 +1053,9 @@ function drawWeatherElement(el) {
   const weatherIndex = 1;
   drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
 }
-
+// ============================================================
+// Tiny 3x5 diagnostic font
+// ============================================================
 const TINY_DIGITS_HTML = [
   [0b11111, 0b10001, 0b11111],   // 0
   [0b00100, 0b11111, 0b00000],   // 1
@@ -1067,7 +1069,6 @@ const TINY_DIGITS_HTML = [
   [0b10111, 0b10101, 0b11111],   // 9
 ];
 
-// 3x5 letter font — only what the diagnostic chunks need
 const TINY_LETTERS = {
   'A': [0b11111, 0b10101, 0b11111],
   'B': [0b11111, 0b10101, 0b11111],
@@ -1097,51 +1098,60 @@ const TINY_LETTERS = {
   'Z': [0b11101, 0b00100, 0b10111],
 };
 
-function drawTinyGlyph(x, y, ch) {
-  // Draws one 3x5 glyph so it reads upright on the physical panel.
-  // The glyph's row axis maps to logical X (physical down),
-  // the glyph's column axis maps to logical Y (physical right).
-  // In logical space the glyph occupies:
-  //   3 pixels along X (its physical height)
-  //   5 pixels along Y (its physical width)
-  // (x, y) = logical top-left of the glyph's bounding box.
+function tinyGlyphBitmap(ch) {
+  if (ch >= '0' && ch <= '9') return TINY_DIGITS_HTML[ch.charCodeAt(0) - 48];
+  if (TINY_LETTERS[ch]) return TINY_LETTERS[ch];
+  if (ch === ':') return [0b00000, 0b01010, 0b00000];
+  if (ch === '.') return [0b00000, 0b00000, 0b00100];
+  if (ch === '-') return [0b00000, 0b11111, 0b00000];
+  if (ch === '+') return [0b00100, 0b01110, 0b00100];
+  if (ch === '/') return [0b00001, 0b00100, 0b10000];
+  if (ch === '_') return [0b00000, 0b00000, 0b11111];
+  if (ch === ' ') return [0, 0, 0];
+  return [0b11111, 0b11111, 0b11111];
+}
 
-  const bitmap = (() => {
-    if (ch >= '0' && ch <= '9') return TINY_DIGITS_HTML[ch.charCodeAt(0) - 48];
-    if (TINY_LETTERS[ch]) return TINY_LETTERS[ch];
-    if (ch === ':') return [0b00000, 0b01010, 0b00000];
-    if (ch === '.') return [0b00000, 0b00000, 0b00100];
-    if (ch === '-') return [0b00000, 0b11111, 0b00000];
-    if (ch === '+') return [0b00100, 0b01110, 0b00100];
-    if (ch === '/') return [0b00001, 0b00100, 0b10000];
-    if (ch === '_') return [0b00000, 0b00000, 0b11111];
-    if (ch === ' ') return [0, 0, 0];
-    return [0b11111, 0b11111, 0b11111];
-  })();
-
-  // bitmap[r] holds row r (0..2), bit c = column c (0..4), bit 0 = left.
+// Low-level convention, matching drawTextElement/drawBarElement elsewhere:
+// vertical=false -> content flows along logical X (rowCoord is a Y position)
+// vertical=true  -> content flows along logical Y (rowCoord is an X position)
+// rowCoord is always the "thickness axis" position, textCoord is always
+// where the string/shape starts along the "flow axis".
+function drawTinyGlyph(rowCoord, textCoord, ch, vertical) {
+  const bitmap = tinyGlyphBitmap(ch);
   for (let r = 0; r < 3; r++) {
     const row = bitmap[r];
     for (let c = 0; c < 5; c++) {
-      if (row & (1 << c)) fillRectPx(x + r, y + c, 1, 1);
+      if (!(row & (1 << c))) continue;
+      if (vertical) fillRectPx(rowCoord + r, textCoord + c, 1, 1);
+      else          fillRectPx(textCoord + c, rowCoord + r, 1, 1);
     }
   }
 }
 
-// Draw a string that reads left-to-right on the physical panel.
-// In logical space it runs along +Y.
-// Returns the length consumed along logical-Y.
-function drawTinyStringPx(x, y, str) {
-  let yy = y;
-  for (let i = 0; i < str.length; i++) {
-    drawTinyGlyph(x, yy, str[i].toUpperCase());
-    yy += 6;   // 5 glyph + 1 gap
+// Draws a string starting at textCoord along the flow axis.
+// Returns the length consumed along that axis.
+function drawTinyStringPx(rowCoord, textCoord, str, vertical) {
+  const s = str.toUpperCase();
+  let t = textCoord;
+  for (let i = 0; i < s.length; i++) {
+    drawTinyGlyph(rowCoord, t, s[i], vertical);
+    t += 6;   // 5 glyph + 1 gap
   }
-  return yy - y;
+  return t - textCoord;
 }
 
 function tinyStringWidthPx(str) {
   return str.length * 6 - 1;
+}
+
+function plotRowText(rowCoord, tCoord, dRow, dText, vertical) {
+  if (vertical) fillRectPx(rowCoord + dRow, tCoord + dText, 1, 1);
+  else          fillRectPx(tCoord + dText, rowCoord + dRow, 1, 1);
+}
+
+function fillRowRect(rowCoord, textCoord, rowSize, textSize, vertical) {
+  if (vertical) fillRectPx(rowCoord, textCoord, rowSize, textSize);
+  else          fillRectPx(textCoord, rowCoord, textSize, rowSize);
 }
 
 function drawElement(el) {
@@ -1167,40 +1177,57 @@ function drawElement(el) {
   }
 }
 
-// Draw one diag row.
-// x = logical X of the row's top edge (this is physical TOP of the row)
-// y = logical Y where the row's text starts (physical LEFT)
-// h = logical Y length of the row (physical width available)
-// bullet = draw the "»" prefix
-function drawDiagRowPx(x, y, h, label, value, bullet) {
-  let cursorY = y;
+// Draw one diag row. rowCoord/textStart/len already resolved to the
+// correct axes by the caller via makeDiagLayout(). If the label+bullet
+// don't fit in `len`, they're dropped in priority order so the value
+// (the actually-useful number) is the last thing to disappear.
+function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical) {
+  const labelLen = tinyStringWidthPx(label);
+  const valueLen = tinyStringWidthPx(value);
+  const gap = 2;
 
-  if (bullet) {
-    // "»" chevron pointing along +Y
-    fillRectPx(x + 2, cursorY + 0, 1, 1);
-    fillRectPx(x + 1, cursorY + 1, 1, 1);
-    fillRectPx(x + 2, cursorY + 1, 1, 1);
-    fillRectPx(x + 3, cursorY + 1, 1, 1);
-    fillRectPx(x + 2, cursorY + 2, 1, 1);
-    cursorY += 4;
+  let showBullet = bullet;
+  let showLabel = true;
+  const need = () => (showBullet ? 4 : 0) + (showLabel ? labelLen + gap : 0) + valueLen;
+  if (need() > len) showBullet = false;
+  if (need() > len) showLabel = false;
+
+  let t = textStart;
+
+  if (showBullet) {
+    // "»" chevron pointing along the flow axis
+    plotRowText(rowCoord, t, 2, 0, vertical);
+    plotRowText(rowCoord, t, 1, 1, vertical);
+    plotRowText(rowCoord, t, 2, 1, vertical);
+    plotRowText(rowCoord, t, 3, 1, vertical);
+    plotRowText(rowCoord, t, 2, 2, vertical);
+    t += 4;
   }
 
-  drawTinyStringPx(x, cursorY, label);
-  cursorY += tinyStringWidthPx(label) + 2;
+  if (showLabel) {
+    t += drawTinyStringPx(rowCoord, t, label, vertical);
+    t += gap;
+  }
 
-  const valueLen = tinyStringWidthPx(value);
-  const valueStartY = y + h - valueLen;
-  if (valueStartY > cursorY) {
-    drawTinyStringPx(x, valueStartY, value);
+  const rightAligned = textStart + len - valueLen;
+  const drawAt = Math.max(rightAligned, t);
+  if (drawAt < textStart + len) {
+    drawTinyStringPx(rowCoord, drawAt, value, vertical);
   }
 }
 
-function drawDiagDividerPx(x, y, h) {
-  fillRectPx(x, y, 1, h);
-  const q1 = y + Math.floor(h / 4);
-  const q3 = y + Math.floor((h * 3) / 4);
-  fillRectPx(x - 1, q1, 3, 1);
-  fillRectPx(x - 1, q3, 3, 1);
+function drawDiagDividerPx(rowCoord, textStart, len, vertical) {
+  const q1 = textStart + Math.floor(len / 4);
+  const q3 = textStart + Math.floor((len * 3) / 4);
+  if (vertical) {
+    fillRectPx(rowCoord, textStart, 1, len);
+    fillRectPx(rowCoord - 1, q1, 3, 1);
+    fillRectPx(rowCoord - 1, q3, 3, 1);
+  } else {
+    fillRectPx(textStart, rowCoord, len, 1);
+    fillRectPx(q1, rowCoord - 1, 1, 3);
+    fillRectPx(q3, rowCoord - 1, 1, 3);
+  }
 }
 
 function parseEnabledFields(content, allKeys, defaultOn) {
@@ -1217,157 +1244,129 @@ function parseEnabledFields(content, allKeys, defaultOn) {
   return out;
 }
 
+// Resolves an el + rotation into a row-stacking layout.
+// vertical=true  (default for diag): rows stack across X (32px axis),
+//   each row's text runs the length of Y (128px axis) — fits a tall
+//   narrow panel or a tall sub-box.
+// vertical=false (el.rotation === 0 or 180): rows stack down Y,
+//   each row's text runs across X — fits a short wide sub-box.
+function makeDiagLayout(el, vertical) {
+  const rowH = 8, pad = 2;
+  const rowBase  = (vertical ? el.x : el.y) + pad;
+  const rowSpan  = (vertical ? el.w : el.h) - pad * 2;
+  const textBase = (vertical ? el.y : el.x) + 2;
+  const textLen  = (vertical ? el.h : el.w) - 4;
+  const maxRows  = Math.floor(rowSpan / rowH);
+  let idx = 0;
+  return {
+    maxRows,
+    textBase,
+    textLen,
+    get count() { return idx; },
+    nextRowCoord() {
+      const pos = rowBase + idx * rowH + Math.floor(rowH / 2) - 2;
+      idx++;
+      return pos;
+    },
+    dividerCoord() { return rowBase + idx * rowH; },
+    withinBounds(pos) {
+      return pos < (vertical ? el.x + el.w - 4 : el.y + el.h - 4);
+    },
+  };
+}
+
+// Diag elements default to rotation 90 (not 0) when el.rotation is unset,
+// because that's the layout that actually fits a 32-wide portrait panel.
+// Set el.rotation to 0 or 180 explicitly to flip to the short/wide layout.
+function diagRotationVertical(el) {
+  const rot = (el.rotation === undefined || el.rotation === null) ? 90 : el.rotation;
+  return (rot === 90 || rot === 270);
+}
+
 function drawDiagTimeElement(el) {
   const now = tzNow();
   const fields = parseEnabledFields(el.content, ['T','D','W','Z'], true);
+  const vertical = diagRotationVertical(el);
+  const L = makeDiagLayout(el, vertical);
+  if (L.maxRows < 1) return;
 
-  const rowH = 8;
-  const padTop = 2, padBottom = 2;
-  const xStart = el.x + padTop;
-  const availW = el.w - padTop - padBottom;
-  const maxRows = Math.floor(availW / rowH);
-  if (maxRows < 1) return;
-
-  let rowIdx = 0;
-  const nextX = () => {
-    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
-    rowIdx++;
-    return rx;
-  };
   const pad2 = n => String(n).padStart(2, '0');
 
-  const rowLen = el.h - 4;
-  const yStart = el.y + 2;
-
-  if (fields.T && rowIdx < maxRows) {
+  if (fields.T && L.count < L.maxRows) {
     const s = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-    drawDiagRowPx(nextX(), yStart, rowLen, 'TIME', s, true);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TIME', s, true, vertical);
   }
-  if (fields.D && rowIdx < maxRows) {
+  if (fields.D && L.count < L.maxRows) {
     const s = `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`;
-    drawDiagRowPx(nextX(), yStart, rowLen, 'DATE', s, true);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DATE', s, true, vertical);
   }
-  if (fields.W && rowIdx < maxRows) {
+  if (fields.W && L.count < L.maxRows) {
     const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    drawDiagRowPx(nextX(), yStart, rowLen, 'DAY', DOW[now.getDay()], true);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DAY', DOW[now.getDay()], true, vertical);
   }
-  if (fields.Z && rowIdx < maxRows) {
+  if (fields.Z && L.count < L.maxRows) {
     const tz = TZ_TABLE[activeTzIndex];
-    drawDiagRowPx(nextX(), yStart, rowLen, 'TZ', tz.code, true);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TZ', tz.code, true, vertical);
   }
 
-  if (rowIdx > 0 && rowIdx < maxRows) {
-    const divX = xStart + rowIdx * rowH;
-    if (divX < el.x + el.w - 4) {
-      drawDiagDividerPx(divX, yStart, rowLen);
-    }
+  if (L.count > 0 && L.count < L.maxRows) {
+    const divPos = L.dividerCoord();
+    if (L.withinBounds(divPos)) drawDiagDividerPx(divPos, L.textBase, L.textLen, vertical);
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
-    // Pulse indicator at physical bottom-right of the box.
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
   }
 }
 
 function drawDiagEnvElement(el) {
   const fields = parseEnabledFields(el.content, ['T','W','H'], true);
+  const vertical = diagRotationVertical(el);
+  const L = makeDiagLayout(el, vertical);
+  if (L.maxRows < 1) return;
 
-  const rowH = 8;
-  const padTop = 2, padBottom = 2;
-  const xStart = el.x + padTop;
-  const availW = el.w - padTop - padBottom;
-  const maxRows = Math.floor(availW / rowH);
-  if (maxRows < 1) return;
+  if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical);
+  if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical);
+  if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical);
 
-  let rowIdx = 0;
-  const nextX = () => {
-    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
-    rowIdx++;
-    return rx;
-  };
-
-  const rowLen = el.h - 4;
-  const yStart = el.y + 2;
-
-  if (fields.T && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'TEMP', '12.4C', true);
-  }
-  if (fields.W && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'WX', 'CLD', true);
-  }
-  if (fields.H && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'HUM', '78%', true);
-  }
-
-  if (rowIdx > 0 && rowIdx < maxRows) {
-    const divX = xStart + rowIdx * rowH;
-    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
+  if (L.count > 0 && L.count < L.maxRows) {
+    const divPos = L.dividerCoord();
+    if (L.withinBounds(divPos)) drawDiagDividerPx(divPos, L.textBase, L.textLen, vertical);
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
   }
 }
+
 function drawDiagSysElement(el) {
   const fields = parseEnabledFields(el.content, ['B','S','C','P'], true);
-
-  const rowH = 8;
-  const padTop = 2, padBottom = 2;
-  const xStart = el.x + padTop;
-  const availW = el.w - padTop - padBottom;
-  const maxRows = Math.floor(availW / rowH);
-  if (maxRows < 1) return;
-
-  let rowIdx = 0;
-  const nextX = () => {
-    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
-    rowIdx++;
-    return rx;
-  };
-
-  const rowLen = el.h - 4;
-  const yStart = el.y + 2;
+  const vertical = diagRotationVertical(el);
+  const L = makeDiagLayout(el, vertical);
+  if (L.maxRows < 1) return;
 
   const counter = Math.floor(Date.now() / 1000) % 10000;
 
-  if (fields.B && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'BAT', '073', true);
-  }
-  if (fields.S && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'STAT', 'NRM', true);
-  }
-  if (fields.C && rowIdx < maxRows) {
-    drawDiagRowPx(nextX(), yStart, rowLen, 'CNT', String(counter).padStart(4, '0'), true);
-  }
-  if (fields.P && rowIdx < maxRows) {
-    const yp = yStart;
-    fillRectPx(nextX() + 1, yp, 2, 2);
-    rowIdx++;
+  if (fields.B && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'BAT', '073', true, vertical);
+  if (fields.S && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'STAT', 'NRM', true, vertical);
+  if (fields.C && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'CNT', String(counter).padStart(4, '0'), true, vertical);
+  if (fields.P && L.count < L.maxRows) {
+    const rc = L.nextRowCoord();
+    fillRowRect(rc + 1, L.textBase, 2, 2, vertical);
   }
 
-  if (rowIdx > 0 && rowIdx < maxRows) {
-    const divX = xStart + rowIdx * rowH;
-    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
+  if (L.count > 0 && L.count < L.maxRows) {
+    const divPos = L.dividerCoord();
+    if (L.withinBounds(divPos)) drawDiagDividerPx(divPos, L.textBase, L.textLen, vertical);
   }
 }
+
 function drawDiagMasterElement(el) {
   const fields = parseEnabledFields(el.content, ['T','D','W','Z','P','X','H','B'], true);
   const now = tzNow();
+  const vertical = diagRotationVertical(el);
+  const L = makeDiagLayout(el, vertical);
+  if (L.maxRows < 1) return;
 
-  const rowH = 8;
-  const padTop = 2, padBottom = 2;
-  const xStart = el.x + padTop;
-  const availW = el.w - padTop - padBottom;
-  const maxRows = Math.floor(availW / rowH);
-  if (maxRows < 1) return;
-
-  let rowIdx = 0;
-  const nextX = () => {
-    const rx = xStart + rowIdx * rowH + Math.floor(rowH / 2) - 2;
-    rowIdx++;
-    return rx;
-  };
   const pad2 = n => String(n).padStart(2, '0');
-  const rowLen = el.h - 4;
-  const yStart = el.y + 2;
 
   const rows = [];
   if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
@@ -1380,13 +1379,13 @@ function drawDiagMasterElement(el) {
   if (fields.B) rows.push(['BAT',  '073']);
 
   for (const [label, value] of rows) {
-    if (rowIdx >= maxRows) break;
-    drawDiagRowPx(nextX(), yStart, rowLen, label, value, true);
+    if (L.count >= L.maxRows) break;
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, label, value, true, vertical);
   }
 
-  if (rowIdx > 0 && rowIdx < maxRows) {
-    const divX = xStart + rowIdx * rowH;
-    if (divX < el.x + el.w - 4) drawDiagDividerPx(divX, yStart, rowLen);
+  if (L.count > 0 && L.count < L.maxRows) {
+    const divPos = L.dividerCoord();
+    if (L.withinBounds(divPos)) drawDiagDividerPx(divPos, L.textBase, L.textLen, vertical);
   }
   if (Math.floor(Date.now() / 1000) % 2 === 0) {
     fillRectPx(el.x + el.w - 3, el.y + el.h - 3, 2, 2);
@@ -1404,10 +1403,10 @@ function pulseComputeLit(el, now) {
     case 'hour':          return now.getMinutes() === 0 && now.getSeconds() < 1;
     case 'hour_progress': return ((now.getMinutes() * 60 + now.getSeconds()) / 3600) > 0.5;
     case 'day_progress':  return ((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400) > 0.5;
-    case 'battery.charging': return true;      // designer preview: "on"
-    case 'battery.low':      return false;     // designer preview: "off"
-    case 'battery.percent':  return true;      // for bar-fill styles
-    case 'ble.connected':    return true;      // designer preview
+    case 'battery.charging': return true;
+    case 'battery.low':      return false;
+    case 'battery.percent':  return true;
+    case 'ble.connected':    return true;
     case 'ble.advertising':  return false;
     case 'time.synced':      return true;
     case 'weather.valid':    return true;
@@ -1424,7 +1423,6 @@ function pulseComputeLit(el, now) {
 }
 
 function pulseComputeFraction(el, now) {
-  // For bar/wave styles that need a 0..1 value
   const src = el.source || 'seconds';
   switch (src) {
     case 'seconds':          return (now.getSeconds() + now.getMilliseconds() / 1000) / 60;
@@ -1436,13 +1434,20 @@ function pulseComputeFraction(el, now) {
   }
 }
 
+// pulse has no legacy layout to preserve, so it uses the standard
+// codebase convention directly: rotation 0/180 (default) -> horizontal
+// flow along w; rotation 90/270 -> vertical flow along h.
 function drawPulseElement(el) {
   const now = tzNow();
   const style = el.style || 'dot';
   const lit = pulseComputeLit(el, now);
   const frac = pulseComputeFraction(el, now);
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
 
   const x = el.x, y = el.y, w = el.w, h = el.h;
+  const spanLen  = vertical ? h : w;   // axis the animation/value runs along
+  const crossLen = vertical ? w : h;   // the perpendicular/thickness axis
 
   switch (style) {
     case 'dot': {
@@ -1450,21 +1455,23 @@ function drawPulseElement(el) {
       const px = x + Math.floor((w - size) / 2);
       const py = y + Math.floor((h - size) / 2);
       if (lit) fillRectPx(px, py, size, size);
-      else     ctx.strokeStyle = '#ffffff', ctx.strokeRect(px * SCALE + 0.5, py * SCALE + 0.5, size * SCALE - 1, size * SCALE - 1);
+      else { ctx.strokeStyle = '#ffffff'; ctx.strokeRect(px * SCALE + 0.5, py * SCALE + 0.5, size * SCALE - 1, size * SCALE - 1); }
       break;
     }
 
     case 'bar': {
-      const fillW = Math.floor(w * frac);
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1;
       ctx.strokeRect(x * SCALE + 0.5, y * SCALE + 0.5, w * SCALE - 1, h * SCALE - 1);
-      if (fillW > 0) fillRectPx(x + 1, y + 1, fillW, h - 2);
+      const fillLen = Math.floor(spanLen * frac);
+      if (fillLen > 0) {
+        if (vertical) fillRectPx(x + 1, y + h - 1 - fillLen, w - 2, fillLen);
+        else          fillRectPx(x + 1, y + 1, fillLen, h - 2);
+      }
       break;
     }
 
     case 'chevron': {
-      // Rotate through 4 positions
       const phase = Math.floor(Date.now() / 400) % 4;
       const cx = x + Math.floor(w / 2);
       const cy = y + Math.floor(h / 2);
@@ -1475,41 +1482,43 @@ function drawPulseElement(el) {
     }
 
     case 'dash': {
-      if (lit) fillRectPx(x, y + Math.floor(h / 2), w, 1);
+      if (!lit) break;
+      if (vertical) fillRectPx(x + Math.floor(w / 2), y, 1, h);
+      else          fillRectPx(x, y + Math.floor(h / 2), w, 1);
       break;
     }
 
     case 'counter': {
       const n = Math.floor(Date.now() / 1000) % 10000;
       const s = String(n).padStart(4, '0');
-      drawTinyStringPx(x, y + Math.floor((h - 5) / 2), s);
+      if (vertical) drawTinyStringPx(x + Math.floor((w - 5) / 2), y, s, true);
+      else          drawTinyStringPx(y + Math.floor((h - 5) / 2), x, s, false);
       break;
     }
 
     case 'wave': {
-      const cx = x;
-      const cy = y + Math.floor(h / 2);
-      for (let i = 0; i < w; i++) {
+      for (let i = 0; i < spanLen; i++) {
         const v = (Math.sin((Date.now() / 300) + i * 0.5) + 1) / 2;
-        const barH = Math.max(1, Math.floor(v * (h - 2)));
-        fillRectPx(cx + i, cy - Math.floor(barH / 2), 1, barH);
+        const amp = Math.max(1, Math.floor(v * (crossLen - 2)));
+        if (vertical) fillRectPx(x + Math.floor((w - amp) / 2), y + i, amp, 1);
+        else          fillRectPx(x + i, y + Math.floor((h - amp) / 2), 1, amp);
       }
       break;
     }
 
     case 'bars': {
-      const n = Math.max(2, Math.min(5, w >> 1));
-      const bw = Math.floor(w / n);
+      const n = Math.max(2, Math.min(5, spanLen >> 1));
+      const bw = Math.max(1, Math.floor(spanLen / n));
       for (let i = 0; i < n; i++) {
         const v = (Math.sin((Date.now() / 200) + i * 1.3) + 1) / 2;
-        const barH = Math.max(1, Math.floor(v * (h - 2)));
-        fillRectPx(x + i * bw, y + h - barH, bw - 1, barH);
+        const amp = Math.max(1, Math.floor(v * (crossLen - 2)));
+        if (vertical) fillRectPx(x, y + i * bw, amp, Math.max(1, bw - 1));
+        else          fillRectPx(x + i * bw, y + h - amp, Math.max(1, bw - 1), amp);
       }
       break;
     }
   }
 }
-
 function drawBarElement(el) {
   const now = tzNow();
   let value = 0;
