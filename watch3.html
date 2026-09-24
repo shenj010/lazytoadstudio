@@ -5018,6 +5018,99 @@ async function setPageIndex(i) {
 }
 
 // ============================================================
+// Set the current animation timeline as the watch background
+// ============================================================
+async function setCurrentAnimationAsBackground() {
+  if (!frames || frames.length === 0) {
+    alert('Timeline is empty.');
+    return;
+  }
+
+  const frameCount = frames.length;
+  if (frameCount > 30) {
+    alert(
+      `Too many frames for a background: ${frameCount} (max 30).\n` +
+      `Delete ${frameCount - 30} frames or reduce the length.`
+    );
+    return;
+  }
+
+  if (!bleConnected || !bleRxChar) {
+    alert('Not connected to the watch.');
+    return;
+  }
+
+  const frameMs = frames[0].durationMs || 100;
+
+  // Pack all frames into the bitpacked-row-lsb layout the firmware expects
+  const bytesPerRow = Math.ceil(AD_W / 8);
+  const bytesPerFrame = bytesPerRow * AD_H;
+  const all = new Uint8Array(bytesPerFrame * frameCount);
+
+  for (let f = 0; f < frameCount; f++) {
+    const src = frames[f].pixels;
+    const base = f * bytesPerFrame;
+    for (let y = 0; y < AD_H; y++) {
+      for (let x = 0; x < AD_W; x++) {
+        if (src[y * W + x]) {
+          const byteIndex = base + y * bytesPerRow + (x >> 3);
+          const bitIndex  = x & 7;
+          all[byteIndex] |= (1 << bitIndex);
+        }
+      }
+    }
+  }
+
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(
+      null, all.subarray(i, Math.min(i + CHUNK, all.length))
+    );
+  }
+  const b64 = btoa(binary);
+
+  const payload = JSON.stringify({
+    kind: 'background',
+    v: 1,
+    w: AD_W,
+    h: AD_H,
+    frameMs: frameMs,
+    frameCount: frameCount,
+    format: 'bitpacked-row-lsb',
+    data: b64,
+  });
+
+  try {
+    connStatus.textContent = `Sending background (${frameCount} frames)…`;
+    await sendRawPayload(payload, 'background');
+    connStatus.textContent = `Background sent (${frameCount} frames).`;
+
+    // Update local designer state so previews reflect it
+    currentBackgroundFrames = frames.map(f => new Uint8Array(f.pixels));
+    currentBackgroundFrameMs = frameMs;
+
+    // Ensure every page has a background element
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const pg = pages[i];
+      if (pg.elements.some(e => e.type === 'background')) continue;
+      pg.elements.unshift({
+        id: nextId++,
+        type: 'background',
+        x: 0, y: 0, w: 32, h: 128,
+      });
+      pg.used = pg.elements.length > 0;
+    }
+
+    render();
+    rebuildProps();
+  } catch (e) {
+    console.error(e);
+    connStatus.textContent = 'Background send failed: ' + e.message;
+  }
+}
+
+// ============================================================
 // Button wiring
 // ============================================================
 btnSend.onclick = async () => {
