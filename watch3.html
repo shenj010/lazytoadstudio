@@ -993,12 +993,42 @@ canvas.face-mode { cursor: default; }
     max-width: none;
   }
 
-  #canvasWrap {
-    order: 1;
-    padding: 14px;
-    align-self: center;
-    width: auto;
-  }
+ #canvasWrap {
+  order: 1;
+  padding: 14px;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#canvasWrap canvas {
+  align-self: center;
+  margin: 0 auto;
+}
+
+#timeline {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#timelineFrames {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.timeline-thumb {
+  width: 40px;
+  height: 128px;
+}
+
+.timeline-thumb .thumb-label {
+  font-size: 10px;
+  padding: 3px 0;
+}
 
   aside {
     display: none;
