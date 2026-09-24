@@ -1053,6 +1053,35 @@ function drawWeatherElement(el) {
   const weatherIndex = 1;
   drawKanjiBitmap(el.x, el.y, WEATHER_KANJI[weatherIndex], s);
 }
+
+// ============================================================
+// Typewriter / stutter text effects
+// ============================================================
+const TYPEWRITER_TYPE_MS  = 900;   // time to type the value out
+const TYPEWRITER_HOLD_MS  = 1500;  // time held fully visible
+const TYPEWRITER_BLANK_MS = 300;   // pause before retyping
+const TYPEWRITER_CYCLE_MS = TYPEWRITER_TYPE_MS + TYPEWRITER_HOLD_MS + TYPEWRITER_BLANK_MS;
+
+function typewriterRevealCount(text, rowIndex) {
+  const stagger = (rowIndex * 220) % TYPEWRITER_CYCLE_MS;
+  const t = (Date.now() + stagger) % TYPEWRITER_CYCLE_MS;
+  if (t < TYPEWRITER_TYPE_MS) {
+    return Math.min(text.length, Math.floor((t / TYPEWRITER_TYPE_MS) * (text.length + 1)));
+  }
+  if (t < TYPEWRITER_TYPE_MS + TYPEWRITER_HOLD_MS) return text.length;
+  return 0;
+}
+
+const STUTTER_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function applyStutter(text, chance) {
+  let out = '';
+  for (const ch of text) {
+    out += (ch !== ' ' && Math.random() < chance)
+      ? STUTTER_CHARS[Math.floor(Math.random() * STUTTER_CHARS.length)]
+      : ch;
+  }
+  return out;
+}
 // ============================================================
 // Tiny 3x5 diagnostic font
 // ============================================================
@@ -1109,6 +1138,7 @@ function tinyGlyphBitmap(ch) {
   if (ch === '+') return [0b00100, 0b01110, 0b00100];
   if (ch === '/') return [0b00001, 0b00100, 0b10000];
   if (ch === '_') return [0b00000, 0b00000, 0b11111];
+  if (ch === '%') return [0b11001, 0b11010, 0b00100, 0b01011, 0b10011];
   if (ch === ' ') return [0, 0, 0];
   return [0b11111, 0b11111, 0b11111];
 }
@@ -1183,7 +1213,28 @@ function drawElement(el) {
 // correct axes by the caller via makeDiagLayout(). If the label+bullet
 // don't fit in `len`, they're dropped in priority order so the value
 // (the actually-useful number) is the last thing to disappear.
-function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical) {
+function drawDiagField(L, rowCoord, label, value, el, vertical) {
+  if (el.boxed) {
+    if (drawBoxedInline(rowCoord, L.textBase, L.textLen, label, value, vertical)) return;
+  }
+  drawDiagRowPx(rowCoord, L.textBase, L.textLen, label, value, true, vertical);
+}
+function drawDiagDividerPx(rowCoord, textStart, len, vertical) {
+  const q1 = textStart + Math.floor(len / 4);
+  const q3 = textStart + Math.floor((len * 3) / 4);
+  if (vertical) {
+    fillRectPx(rowCoord, textStart, 1, len);
+    fillRectPx(rowCoord - 1, q1, 3, 1);
+    fillRectPx(rowCoord - 1, q3, 3, 1);
+  } else {
+    fillRectPx(textStart, rowCoord, len, 1);
+    fillRectPx(q1, rowCoord - 1, 1, 3);
+    fillRectPx(q3, rowCoord - 1, 1, 3);
+  }
+}
+function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical, opts = {}) {
+  const { typewriter = false, stutter = false, rowIndex = 0 } = opts;
+
   const labelLen = tinyStringWidthPx(label);
   const valueLen = tinyStringWidthPx(value);
   const gap = 2;
@@ -1194,10 +1245,13 @@ function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical)
   if (need() > len) showBullet = false;
   if (need() > len) showLabel = false;
 
+  let displayValue = value;
+  if (typewriter) displayValue = value.slice(0, typewriterRevealCount(value, rowIndex));
+  if (stutter && displayValue.length > 0) displayValue = applyStutter(displayValue, 0.04);
+
   let t = textStart;
 
   if (showBullet) {
-    // "»" chevron pointing along the flow axis
     plotRowText(rowCoord, t, 2, 0, vertical);
     plotRowText(rowCoord, t, 1, 1, vertical);
     plotRowText(rowCoord, t, 2, 1, vertical);
@@ -1211,24 +1265,10 @@ function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical)
     t += gap;
   }
 
-  const rightAligned = textStart + len - valueLen;
+  const rightAligned = textStart + len - valueLen; // reserve full width, even if displayValue is shorter
   const drawAt = Math.max(rightAligned, t);
-  if (drawAt < textStart + len) {
-    drawTinyStringPx(rowCoord, drawAt, value, vertical);
-  }
-}
-
-function drawDiagDividerPx(rowCoord, textStart, len, vertical) {
-  const q1 = textStart + Math.floor(len / 4);
-  const q3 = textStart + Math.floor((len * 3) / 4);
-  if (vertical) {
-    fillRectPx(rowCoord, textStart, 1, len);
-    fillRectPx(rowCoord - 1, q1, 3, 1);
-    fillRectPx(rowCoord - 1, q3, 3, 1);
-  } else {
-    fillRectPx(textStart, rowCoord, len, 1);
-    fillRectPx(q1, rowCoord - 1, 1, 3);
-    fillRectPx(q3, rowCoord - 1, 1, 3);
+  if (drawAt < textStart + len && displayValue.length > 0) {
+    drawTinyStringPx(rowCoord, drawAt, displayValue, vertical);
   }
 }
 
@@ -1253,7 +1293,8 @@ function parseEnabledFields(content, allKeys, defaultOn) {
 // vertical=false (el.rotation === 0 or 180): rows stack down Y,
 //   each row's text runs across X — fits a short wide sub-box.
 function makeDiagLayout(el, vertical) {
-  const rowH = 8, pad = 2;
+  const rowH = el.rowH || 8;
+  const pad = 2;
   const rowBase  = (vertical ? el.x : el.y) + pad;
   const rowSpan  = (vertical ? el.w : el.h) - pad * 2;
   const textBase = (vertical ? el.y : el.x) + 2;
@@ -1262,6 +1303,7 @@ function makeDiagLayout(el, vertical) {
   let idx = 0;
   return {
     maxRows,
+    rowH,
     textBase,
     textLen,
     get count() { return idx; },
@@ -1292,23 +1334,28 @@ function drawDiagTimeElement(el) {
   const L = makeDiagLayout(el, vertical);
   if (L.maxRows < 1) return;
 
+  const opts = () => ({ typewriter: !!el.typewriter, stutter: !!el.stutter, rowIndex: L.count });
   const pad2 = n => String(n).padStart(2, '0');
 
   if (fields.T && L.count < L.maxRows) {
+    const rowOpts = opts();
     const s = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TIME', s, true, vertical);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TIME', s, true, vertical, rowOpts);
   }
   if (fields.D && L.count < L.maxRows) {
+    const rowOpts = opts();
     const s = `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`;
-    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DATE', s, true, vertical);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DATE', s, true, vertical, rowOpts);
   }
   if (fields.W && L.count < L.maxRows) {
+    const rowOpts = opts();
     const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DAY', DOW[now.getDay()], true, vertical);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'DAY', DOW[now.getDay()], true, vertical, rowOpts);
   }
   if (fields.Z && L.count < L.maxRows) {
+    const rowOpts = opts();
     const tz = TZ_TABLE[activeTzIndex];
-    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TZ', tz.code, true, vertical);
+    drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TZ', tz.code, true, vertical, rowOpts);
   }
 
   if (L.count > 0 && L.count < L.maxRows) {
@@ -1601,6 +1648,16 @@ function drawBarElement(el) {
         for (let px = bx; px < bx + fillW; px++)
           if (((px + py) & 1) === 0) fillRectPx(px, py, 1, 1);
     }
+  }
+}
+
+
+// Cycling bar. `n` segments along flow axis, one more lit per `periodMs`.
+function drawAutoCountBar(rowCoord, textStart, n, periodMs, vertical) {
+  const seg = Math.floor(Date.now() / periodMs) % n;
+  for (let i = 0; i <= seg && i < n; i++) {
+    if (vertical) fillRectPx(rowCoord, textStart + i, 1, 1);
+    else          fillRectPx(textStart + i, rowCoord, 1, 1);
   }
 }
 
@@ -2154,6 +2211,15 @@ function rebuildProps() {
       return;
     }
 
+      const diagEffectFields = ['diagTime','diagEnv','diagSys','diagMaster'].includes(el.type) ? `
+     <label class="checkbox-row">
+       <input type="checkbox" id="propTypewriter" ${el.typewriter ? 'checked' : ''}> Typewriter
+     </label>
+     <label class="checkbox-row">
+       <input type="checkbox" id="propStutter" ${el.stutter ? 'checked' : ''}> Stutter
+     </label>
+   ` : '';
+
     const dateFields = el.type === 'date' ? `
       <div class="prop-row">
         <label>Format</label>
@@ -2288,6 +2354,7 @@ function rebuildProps() {
       ${barFields}
       ${diagFields}
       ${pulseFields}
+      ${diagEffectFields}
       
 
       ${el.type === 'background' ? `
@@ -2449,6 +2516,12 @@ function rebuildProps() {
     if (weekdayStyle) {
       weekdayStyle.onchange = () => { el.weekdayStyle = weekdayStyle.value; render(); };
     }
+
+   const typewriterBox = document.getElementById('propTypewriter');
+    if (typewriterBox) typewriterBox.onchange = () => { el.typewriter = typewriterBox.checked; render(); };
+
+const stutterBox = document.getElementById('propStutter');
+    if (stutterBox) stutterBox.onchange = () => { el.stutter = stutterBox.checked; render(); };
 
     const del = document.getElementById('propDelete');
     if (del) {
