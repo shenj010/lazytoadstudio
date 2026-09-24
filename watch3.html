@@ -1087,7 +1087,7 @@ canvas.face-mode { cursor: default; }
     <button data-mode="face" class="active">Watch Face</button>
     <button data-mode="anim">Animation</button>
   </div>
-  <button id="btnLibrary" style="width:auto;margin-left:12px;padding:8px 14px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Library</button>
+  <button id="btnLibrary" style="width:auto;margin-left:12px">Library</button>
     <div class="conn">
     <button id="btnConnect">Connect to Watch</button>
     <button id="btnSync" disabled>Sync Time+Weather</button>
@@ -2131,9 +2131,9 @@ function drawDiagEnvElement(el) {
   stutterChance: el.stutterChance ?? 0.01,
 });
  
-  if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical);
-  if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical);
-  if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical);
+  if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical, opts());
+  if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical, opts());
+  if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical, opts());
 
   if (L.count > 0 && L.count < L.maxRows) {
     const divPos = L.dividerCoord();
@@ -2164,9 +2164,9 @@ function drawDiagSysElement(el) {
   stutterChance: el.stutterChance ?? 0.01,
 });
 
-  if (fields.B && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'BAT', '073', true, vertical);
-  if (fields.S && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'STAT', 'NRM', true, vertical);
-  if (fields.C && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'CNT', String(counter).padStart(4, '0'), true, vertical);
+  if (fields.B && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'BAT', '073', true, vertical, opts());
+  if (fields.S && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'STAT', 'NRM', true, vertical, opts());
+  if (fields.C && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'CNT', String(counter).padStart(4, '0'), true, vertical, opts());
   if (fields.P && L.count < L.maxRows) {
     const rc = L.nextRowCoord();
     fillRowRect(rc + 1, L.textBase, 2, 2, vertical);
@@ -2934,14 +2934,13 @@ function renderPageRow() {
     btn.textContent = String(i + 1) + marker;
 
     btn.style.cssText = `
-      flex:1;margin:0;padding:6px 0;font-size:13px;
-      background:${active ? '#3a3a3a' : 'transparent'};
-      color:${active ? '#fff' : (filled ? (dirty ? '#fc6' : '#8c8') : '#555')};
-      border:1px solid ${active ? '#666' : '#444'};
-      border-radius:4px;cursor:pointer;
+      flex:1;margin:0;padding:6px 0;font-size:11px;letter-spacing:1px;
+      font-family:var(--mono);text-transform:uppercase;
+      background:${active ? 'var(--bg-raised)' : 'transparent'};
+      color:${active ? 'var(--amber)' : (filled ? (dirty ? '#ffcc55' : 'var(--ok)') : 'var(--text-faint)')};
+      border:1px solid ${active ? 'var(--amber-dim)' : 'var(--line-hot)'};
+      cursor:pointer;
     `;
-    btn.onclick = () => setPageIndex(i);
-    row.appendChild(btn);
   }
 }
 // ============================================================
@@ -3216,19 +3215,19 @@ function rebuildProps() {
             Presets
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button id="bgPresetFill"   style="flex:1;margin:0;padding:6px 4px;font-size:11px">Fill</button>
-            <button id="bgPresetCenter" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Center</button>
-            <button id="bgPresetTop"    style="flex:1;margin:0;padding:6px 4px;font-size:11px">Top</button>
-            <button id="bgPresetBottom" style="flex:1;margin:0;padding:6px 4px;font-size:11px">Bottom</button>
+            <button id="bgPresetFill"   style="flex:1;margin:0;padding:6px 4px;font-size:10px">Fill</button>
+            <button id="bgPresetCenter" style="flex:1;margin:0;padding:6px 4px;font-size:10px">Center</button>
+            <button id="bgPresetTop"    style="flex:1;margin:0;padding:6px 4px;font-size:10px">Top</button>
+            <button id="bgPresetBottom" style="flex:1;margin:0;padding:6px 4px;font-size:10px">Bottom</button>
           </div>
         </div>
       ` : ''}
 
       <button id="propDelete" style="
         margin-top:16px;
-        background:#4a2020;
-        border-color:#833;
-        color:#fbb;
+        background:transparent;
+        border-color:var(--red-dim);
+        color:var(--red);
       ">Delete Element</button>
 
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid #2a2a2a">
@@ -3238,7 +3237,7 @@ function rebuildProps() {
         <div id="bgStatus" style="font-size:12px;color:#aaa;margin-bottom:6px">
           ${currentBackgroundFrames ? `${currentBackgroundFrames.length} frame${currentBackgroundFrames.length === 1 ? '' : 's'} loaded` : 'None'}
         </div>
-        <button id="btnClearBg" style="background:#2a2a2a;border-color:#444" ${currentBackgroundFrames ? '' : 'disabled'}>Remove background</button>
+        <button id="btnClearBg" style="background:transparent;border-color:var(--line-hot);color:var(--text-dim)" ${currentBackgroundFrames ? '' : 'disabled'}>Remove background</button>
       </div>
 
       <div style="font-size:11px;color:#666;margin-top:12px">
@@ -3498,7 +3497,7 @@ if (stMs) stMs.oninput = () => {
       <div style="font-size:11px;color:#666;margin-top:6px">
         Max ${AD_MAX_FRAMES} frames.
       </div>
-      <button id="btnDeleteAnim" style="margin-top:14px;background:#4a2020;border-color:#833;color:#fbb">Delete from Watch</button>
+      <button id="btnDeleteAnim" style="margin-top:14px;background:transparent;border-color:var(--red-dim);color:var(--red)">Delete from Watch</button>
     `;
 
     const refreshSummary = () => {
@@ -4718,7 +4717,7 @@ function buildSchedUI() {
       ${schedState.mode === 0 ? randomBlock : fixedBlock}
     </div>
     <div style="display:flex;gap:6px;margin-top:8px">
-      <button id="btnSendSched" style="flex:1;padding:6px;font-size:12px;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Send to Watch</button>
+      <button id="btnSendSched" style="flex:1;padding:6px;font-size:11px;background:transparent;border-color:var(--cyan-dim);color:var(--cyan)">Send to Watch</button>
     </div>
     <div id="schedStatus" style="font-size:11px;color:#888;margin-top:6px"></div>
   `;
@@ -5893,8 +5892,8 @@ function importBuildPanelUI() {
     <div id="importButtons">
       <button id="btnImportConvert">Convert</button>
       <button id="btnImportCancel" style="display:none">Cancel</button>
-      <button id="btnImportReplace" style="display:none;background:#2a4a2a;border-color:#4a6a4a;color:#cfc">Replace timeline</button>
-      <button id="btnImportBackground" style="display:none;background:#2a3a5a;border-color:#4a6a8a;color:#cce">Use as background</button>
+      <button id="btnImportReplace" style="display:none;background:transparent;border-color:var(--ok);color:var(--ok)">Replace timeline</button>
+      <button id="btnImportBackground" style="display:none;background:transparent;border-color:var(--cyan-dim);color:var(--cyan)">Use as background</button>
     </div>
   `;
 
