@@ -1,0 +1,3786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Toad Battle Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME
+   ============================================================ */
+:root {
+  --bg-dark: #FFC107;
+  --bg-swamp: #1a2535;
+  --mustard: #FFC107;
+  --olive: #2B3A52;
+  --danger: #ff4444;
+  --accent: #FFFFFF;
+  --panel: rgba(26, 37, 53, 0.95);
+  --bg1: var(--bg-dark);
+  --bg2: var(--bg-swamp);
+  --bg3: var(--olive);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Press Start 2P', 'DotGothic16', monospace;
+  background: radial-gradient(circle at center, #FFD03A, #FFC107);
+  color: #FFFFFF;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* CRT scanline */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 10000;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: rgba(18, 16, 16, 0.1);
+    opacity: 0.15;
+    z-index: 10001;
+    pointer-events: none;
+    animation: flicker 0.15s infinite;
+  }
+}
+
+@keyframes flicker {
+  0%   { opacity: 0.10; }
+  5%   { opacity: 0.20; }
+  10%  { opacity: 0.10; }
+  15%  { opacity: 0.30; }
+  20%  { opacity: 0.10; }
+  100% { opacity: 0.15; }
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrap {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px;
+  padding-bottom: 320px;
+  box-sizing: border-box;
+}
+
+.header {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 12px;
+  z-index: 5;
+}
+
+.title {
+  color: var(--accent);
+  font-size: 22px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.game-container {
+  display: flex;
+  width: 100%;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.arena {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  background:
+    linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.12)),
+    url('images/game mat colour.png') center center / cover no-repeat;
+  border-radius: 12px;
+  border: 3px solid #FFFFFF;
+  overflow: visible;
+}
+
+/* ============================================================
+   PLAYER INFO
+   ============================================================ */
+.computer-portrait {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  object-position: bottom;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+
+.area {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 3px solid #FFFFFF;
+  padding: 12px 14px;
+  border-radius: 12px;
+  min-height: 200px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  flex-basis: 180px;
+  flex-shrink: 0;
+}
+
+.name {
+  color: var(--accent);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.hp-bar {
+  width: 180px;
+  height: 24px;
+  background: #111;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hp-segments {
+  display: flex;
+  width: 92%;
+  gap: 2px;
+}
+
+.seg {
+  flex: 1;
+  height: 18px;
+  background: #fff;
+  border-radius: 2px;
+  opacity: 1;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.seg.half::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 50%;
+  background: #111;
+}
+
+/* Perk UI */
+.perk-kills {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 6px;
+  text-align: center;
+}
+.perk-kills span { color: #FFC107; }
+
+.perk-btn {
+  margin-top: 8px;
+  background: #111;
+  color: #555;
+  border: 2px solid #444;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  cursor: not-allowed;
+  text-align: center;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  width: 160px;
+  box-sizing: border-box;
+}
+.perk-btn.perk-ready {
+  background: linear-gradient(135deg, #FFC107, #FFD03A);
+  color: #000;
+  border-color: #fff;
+  cursor: pointer;
+  animation: perkPulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(255,193,7,0.6);
+}
+.perk-btn.perk-used {
+  background: #222;
+  color: #444;
+  border-color: #333;
+  cursor: not-allowed;
+  animation: none;
+}
+@keyframes perkPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,193,7,0.5); transform: scale(1); }
+  50%      { box-shadow: 0 0 20px rgba(255,193,7,0.9); transform: scale(1.04); }
+}
+
+/* ============================================================
+   SLOTS / BATTLEFIELD
+   ============================================================ */
+.slots {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.slot {
+  width: 110px;
+  height: 170px;
+  border: 2px dashed rgba(255,255,255,0.25);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-bottom: 20px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.slot.occupied { border-style: solid; }
+
+.slot .card {
+  width: 104px;
+  height: 140px;
+  border: 3px solid #fff;
+  border-radius: 8px;
+  background: #222;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+  position: relative;
+}
+
+.slot .card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card .stats { display: none !important; }
+
+.card.used {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.card.used::after {
+  content: 'USED';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 3px 8px;
+  font-size: 9px;
+  border-radius: 3px;
+  pointer-events: none;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* ============================================================
+   HAND
+   ============================================================ */
+.hand {
+  position: relative;
+  height: 120px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  overflow: visible;
+}
+
+.hand .card {
+  width: 104px;
+  height: 140px;
+  border: 3px solid #fff;
+  border-radius: 8px;
+  background: #222;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  position: relative;
+}
+
+.hand .card:hover {
+  transform: translateY(-10px) scale(1.1);
+  z-index: 999 !important;
+}
+
+.hand .card.selected {
+  transform: translateY(-10px) scale(1.1);
+  z-index: 999 !important;
+  border-color: var(--mustard);
+  box-shadow: 0 0 18px rgba(255,193,7,0.8);
+}
+
+.hand .card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ============================================================
+   DECK PILES (new)
+   ============================================================ */
+.pile-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pile {
+  position: relative;
+  width: 60px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+}
+
+.pile .pile-stack {
+  width: 60px;
+  height: 84px;
+  background: url('images/cards/card back.jpeg') center/cover;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.55);
+  position: relative;
+}
+
+.pile.discard .pile-stack {
+  background: linear-gradient(135deg, #2b1010, #551616);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.pile .pile-count {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: #FFC107;
+  color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 2px solid #000;
+  min-width: 14px;
+  text-align: center;
+  z-index: 2;
+}
+
+.pile .pile-label {
+  margin-top: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+}
+
+/* ============================================================
+   ACTION COUNTER (new)
+   ============================================================ */
+.action-counter {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  background: rgba(0,0,0,0.9);
+  border: 2px solid var(--accent);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  z-index: 60;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+.action-counter.empty { color: #ff4444; border-color: #ff4444; }
+
+/* ============================================================
+   TURN INDICATOR
+   ============================================================ */
+.turn-indicator {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  border: 2px solid var(--accent);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 60;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* ============================================================
+   TURN PANEL / BUTTONS
+   ============================================================ */
+.turn-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 24px;
+  display: flex;
+  gap: 16px;
+  z-index: 50;
+}
+
+.btn {
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  padding: 12px 20px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  user-select: none;
+}
+.btn:hover { background: #FFC107; color: #181818; }
+.btn:active { transform: scale(.98); }
+.btn.disabled { background: #666; color: #333; cursor: not-allowed; }
+
+/* ============================================================
+   ACTION PANEL
+   ============================================================ */
+.card-action-panel {
+  position: absolute;
+  z-index: 100;
+  background: rgba(0,0,0,0.95);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.card-action-panel .btn {
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  padding: 8px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.card-action-panel .btn.cooldown {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.card-action-panel .btn.cooldown::after {
+  content: 'CD: ' attr(data-cooldown);
+  position: absolute;
+  top: -18px;
+  right: -5px;
+  background: #ff4444;
+  color: #fff;
+  font-size: 7px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.card-action-panel .btn .attack-desc {
+  display: block;
+  font-size: 6px;
+  color: #666;
+  margin-top: 3px;
+  font-family: 'DotGothic16', monospace;
+}
+
+/* ============================================================
+   BOTTOM PANEL (log + discard/graveyard)
+   ============================================================ */
+.bottom-panel {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 16px;
+}
+
+.log {
+  flex: 1;
+  min-width: 0;
+  height: 220px;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 12px;
+  overflow-y: auto;
+  font-size: 11px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+.log::-webkit-scrollbar { width: 8px; }
+.log::-webkit-scrollbar-track { background: #181818; border-left: 2px solid #FFFFFF; }
+.log::-webkit-scrollbar-thumb { background: #FFC107; border: 2px solid #181818; }
+.log::-webkit-scrollbar-thumb:hover { background: #FFD03A; }
+
+.log .entry { margin-bottom: 8px; line-height: 1.4; }
+.log .player { color: var(--accent); }
+.log .computer { color: var(--danger); }
+.log .system { color: #FFD03A; }
+
+/* Graveyard */
+.discard-pile {
+  flex: 0 0 240px;
+  height: 220px;
+  background: rgba(0,0,0,0.9);
+  border: 3px solid #ff4444;
+  border-radius: 8px;
+  padding: 10px;
+  z-index: 55;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.discard-pile .title {
+  color: #ff4444;
+  font-size: 11px;
+  text-align: center;
+  margin-bottom: 8px;
+  border-bottom: 2px solid #ff4444;
+  padding-bottom: 6px;
+  font-weight: bold;
+}
+
+.discard-pile .discarded-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  align-content: flex-start;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.discard-pile .mini-card {
+  width: 32px;
+  height: 44px;
+  border: 2px solid #666;
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+.discard-pile .mini-card:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  z-index: 10;
+  border-color: #ff4444;
+}
+.discard-pile .mini-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.8);
+}
+.discard-pile .mini-card:hover img { filter: grayscale(0); }
+
+.discard-pile .count {
+  font-size: 9px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #444;
+}
+
+/* ============================================================
+   INDIVIDUAL CARD HP BARS
+   ============================================================ */
+.card-hp-bar {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88%;
+  height: 14px;
+  background: #111;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.card-hp-bar .hp-seg {
+  flex: 1;
+  height: 100%;
+  background: #FFC107;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+.card-hp-bar .hp-seg.empty    { background: #333; opacity: 0.35; }
+.card-hp-bar .hp-seg.damaged  { background: #FFA500; }
+.card-hp-bar .hp-seg.critical { background: #ff4444; }
+
+/* ============================================================
+   STATUS ICONS
+   ============================================================ */
+.status-icon {
+  position: absolute;
+  top: -15px;
+  right: 8px;
+  min-width: 32px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  border: 2px solid #fff;
+  z-index: 150;
+  animation: statusPulse 2s ease-in-out infinite;
+  box-shadow: 2px 2px 0 #181818;
+  box-sizing: border-box;
+}
+.status-icon.poison  { background: #8B4513; color: #fff; }
+.status-icon.stun    { background: #FFD700; color: #000; }
+.status-icon.sleep   { background: #4169E1; color: #fff; }
+.status-icon.weaken  { background: #800080; color: #fff; }
+.status-icon.cooldown{ background: #666; color: #ccc; border-color: #999; }
+
+.status-icon:nth-child(2) { right: 44px; }
+.status-icon:nth-child(3) { right: 80px; }
+.status-icon:nth-child(4) { right: 116px; }
+
+@keyframes statusPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.1); opacity: 1; }
+}
+
+.status-effect-popup {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+  animation: statusEffectFloat 1500ms ease-out forwards;
+  z-index: 250;
+  text-shadow: 2px 2px 0 #000;
+  left: 50%;
+  top: 20%;
+  font-family: 'Press Start 2P', monospace;
+}
+@keyframes statusEffectFloat {
+  0%   { transform: translateY(0) translateX(-50%) scale(0.5); opacity: 0; }
+  15%  { transform: translateY(-15px) translateX(-50%) scale(1.3); opacity: 1; }
+  30%  { transform: translateY(-25px) translateX(-50%) scale(1.1); opacity: 1; }
+  70%  { transform: translateY(-45px) translateX(-50%) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-60px) translateX(-50%) scale(0.8); opacity: 0; }
+}
+
+/* ============================================================
+   DAMAGE POPUPS
+   ============================================================ */
+.dmg-pop {
+  position: absolute;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff4444;
+  pointer-events: none;
+  animation: damageFloat 1000ms ease-out forwards;
+  z-index: 200;
+  text-shadow: 2px 2px 0 #000;
+  font-family: 'Press Start 2P', monospace;
+}
+@keyframes damageFloat {
+  0%   { transform: translateY(0) translateX(-50%) scale(0.8); opacity: 0; }
+  20%  { transform: translateY(-10px) translateX(-50%) scale(1.2); opacity: 1; }
+  60%  { transform: translateY(-40px) translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateY(-70px) translateX(-50%) scale(0.8); opacity: 0; }
+}
+
+/* ============================================================
+   COMBAT ANIMATIONS
+   ============================================================ */
+.attacking-forward {
+  animation: attackForward 1000ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes attackForward {
+  0%   { transform: translateY(0) scale(1); }
+  25%  { transform: translateY(-80px) scale(1.2); }
+  50%  { transform: translateY(-160px) scale(1.3); }
+  75%  { transform: translateY(-200px) scale(1.1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.attacking-backward {
+  animation: attackBackward 1000ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes attackBackward {
+  0%   { transform: translateY(0) scale(1); }
+  25%  { transform: translateY(80px) scale(1.2); }
+  50%  { transform: translateY(160px) scale(1.3); }
+  75%  { transform: translateY(200px) scale(1.1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.attacking-diagonal-left {
+  animation: diagonalSlashLeft 900ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes diagonalSlashLeft {
+  0%   { transform: translate(0,0) scale(1) rotateZ(0deg); }
+  25%  { transform: translate(-60px, 60px) scale(1.15) rotateZ(-25deg); }
+  50%  { transform: translate(-120px, 120px) scale(1.25) rotateZ(-35deg); }
+  75%  { transform: translate(-140px, 140px) scale(1.1) rotateZ(-30deg); }
+  100% { transform: translate(0,0) scale(1) rotateZ(0deg); }
+}
+.attacking-diagonal-right {
+  animation: diagonalSlashRight 900ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes diagonalSlashRight {
+  0%   { transform: translate(0,0) scale(1) rotateZ(0deg); }
+  25%  { transform: translate(60px, 60px) scale(1.15) rotateZ(25deg); }
+  50%  { transform: translate(120px, 120px) scale(1.25) rotateZ(35deg); }
+  75%  { transform: translate(140px, 140px) scale(1.1) rotateZ(30deg); }
+  100% { transform: translate(0,0) scale(1) rotateZ(0deg); }
+}
+
+.attacking-knight {
+  animation: knightLeap 1100ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes knightLeap {
+  0%   { transform: translate(0,0) scale(1) rotateZ(0deg); filter: brightness(1); }
+  15%  { transform: translate(20px, -30px) scale(1.1) rotateZ(15deg); filter: brightness(1.2); }
+  40%  { transform: translate(80px, -40px) scale(1.3) rotateZ(360deg); filter: brightness(1.4); }
+  60%  { transform: translate(120px, 80px) scale(1.4) rotateZ(540deg); filter: brightness(1.5); }
+  80%  { transform: translate(100px, 60px) scale(1.2) rotateZ(630deg); filter: brightness(1.2); }
+  100% { transform: translate(0,0) scale(1) rotateZ(720deg); filter: brightness(1); }
+}
+
+.attacking-sweep {
+  animation: sweepingArc 1000ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes sweepingArc {
+  0%   { transform: translate(0,0) scale(1) rotateZ(0deg); opacity: 1; }
+  20%  { transform: translate(0, 40px) scale(1.2) rotateZ(-10deg); opacity: 0.9; }
+  40%  { transform: translate(-80px, 80px) scale(1.3) rotateZ(-20deg); opacity: 0.7; }
+  60%  { transform: translate(80px, 80px) scale(1.3) rotateZ(20deg); opacity: 0.7; }
+  80%  { transform: translate(0, 40px) scale(1.2) rotateZ(10deg); opacity: 0.9; }
+  100% { transform: translate(0,0) scale(1) rotateZ(0deg); opacity: 1; }
+}
+
+.attacking-pierce {
+  animation: piercingThrust 700ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes piercingThrust {
+  0%   { transform: translateY(0) scale(1); filter: brightness(1); }
+  30%  { transform: translateY(100px) scale(1.3); filter: brightness(1.5); }
+  50%  { transform: translateY(180px) scale(1.4); filter: brightness(1.8); }
+  70%  { transform: translateY(200px) scale(1.2); filter: brightness(1.3); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+.attacking-adjacent-left {
+  animation: adjacentSlideLeft 800ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes adjacentSlideLeft {
+  0%   { transform: translateX(0) scale(1); }
+  40%  { transform: translateX(-120px) scale(1.2); }
+  60%  { transform: translateX(-140px) scale(1.25); }
+  100% { transform: translateX(0) scale(1); }
+}
+.attacking-adjacent-right {
+  animation: adjacentSlideRight 800ms ease-in-out forwards;
+  z-index: 1000;
+  position: relative;
+}
+@keyframes adjacentSlideRight {
+  0%   { transform: translateX(0) scale(1); }
+  40%  { transform: translateX(120px) scale(1.2); }
+  60%  { transform: translateX(140px) scale(1.25); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+.flying-attack {
+  animation: flyToTarget 800ms ease-in-out forwards;
+  z-index: 2000;
+  position: fixed;
+  pointer-events: none;
+}
+@keyframes flyToTarget {
+  0%   { transform: translate(0,0) scale(1) rotateZ(0deg); opacity: 1; }
+  50%  { transform: translate(var(--target-x), var(--target-y)) scale(1.2) rotateZ(180deg); opacity: 0.8; }
+  100% { transform: translate(var(--target-x), var(--target-y)) scale(0.8) rotateZ(360deg); opacity: 0; }
+}
+
+.defending-anim {
+  animation: defendPulse 600ms ease-in-out forwards;
+}
+@keyframes defendPulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 rgba(56,239,125,0.8); }
+  50%  { transform: scale(1.08); box-shadow: 0 0 20px rgba(56,239,125,0.8); }
+  100% { transform: scale(1);    box-shadow: 0 0 10px rgba(56,239,125,0.6); }
+}
+
+.hit { animation: hitShake 400ms ease-out forwards; }
+@keyframes hitShake {
+  0%   { transform: translateX(0); }
+  10%  { transform: translateX(-8px) rotateZ(-2deg); }
+  20%  { transform: translateX(6px) rotateZ(1deg); }
+  30%  { transform: translateX(-4px) rotateZ(-1deg); }
+  40%  { transform: translateX(3px) rotateZ(0.5deg); }
+  50%  { transform: translateX(-2px) rotateZ(-0.5deg); }
+  60%  { transform: translateX(1px) rotateZ(0.2deg); }
+  100% { transform: translateX(0) rotateZ(0deg); }
+}
+
+.flash { animation: flashHit 300ms ease-out forwards; }
+@keyframes flashHit {
+  0%   { filter: brightness(1) contrast(1); }
+  25%  { filter: brightness(1.8) contrast(1.3) saturate(0); }
+  50%  { filter: brightness(1.5) contrast(1.2) saturate(0.2); }
+  75%  { filter: brightness(1.3) contrast(1.1) saturate(0.6); }
+  100% { filter: brightness(1) contrast(1) saturate(1); }
+}
+
+.die { animation: dieFade 600ms ease forwards; }
+@keyframes dieFade {
+  0%   { opacity: 1; transform: scale(1) rotateZ(0deg); }
+  100% { opacity: 0; transform: scale(0.3) rotateZ(15deg); }
+}
+
+/* ============================================================
+   TARGET HIGHLIGHTS
+   ============================================================ */
+.slot.valid-target {
+  border-color: var(--mustard) !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  animation: targetPulse 1s ease-in-out infinite;
+  background: rgba(255, 193, 7, 0.2);
+}
+@keyframes targetPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(255,193,7,0.6); transform: scale(1); }
+  50%      { box-shadow: 0 0 25px rgba(255,193,7,0.9); transform: scale(1.05); }
+}
+.slot.switch-target {
+  border-color: #FFD700 !important;
+  border-style: dashed !important;
+  border-width: 3px !important;
+  animation: switchPulse 1s ease-in-out infinite;
+  background: rgba(255, 215, 0, 0.1);
+}
+@keyframes switchPulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+.slot.stranger-target {
+  border-color: #FFC107 !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  animation: strangerPulse 0.8s ease-in-out infinite;
+  cursor: pointer;
+}
+@keyframes strangerPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,193,7,0.5); }
+  50%      { box-shadow: 0 0 24px rgba(255,193,7,1); }
+}
+
+.slot.immune-glow {
+  box-shadow: 0 0 18px rgba(255,255,255,0.8), inset 0 0 12px rgba(255,255,255,0.15) !important;
+  border-color: #fff !important;
+  border-style: solid !important;
+}
+.slot.disabled-glow {
+  box-shadow: 0 0 18px rgba(255,68,68,0.6) !important;
+  border-color: #ff4444 !important;
+  border-style: solid !important;
+  filter: grayscale(0.5);
+}
+
+/* ============================================================
+   TUTORIAL
+   ============================================================ */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.tutorial-overlay.show { display: flex; }
+.tutorial-content {
+  background: linear-gradient(135deg, #1a2535, #2B3A52);
+  border: 3px solid var(--mustard);
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 0 30px rgba(255,193,7,0.5);
+  color: #fff;
+}
+.tutorial-content h2 {
+  color: var(--mustard);
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 25px;
+  text-shadow: 0 0 10px rgba(255,193,7,0.8);
+}
+.tutorial-step {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+.step-number {
+  background: var(--mustard);
+  color: #000;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  flex-shrink: 0;
+  font-family: 'Press Start 2P', monospace;
+}
+.tutorial-step p { margin: 0; line-height: 1.5; font-size: 10px; }
+.tutorial-step strong { color: var(--mustard); display: block; margin-bottom: 5px; font-size: 11px; }
+.tutorial-close { width: 100%; margin-top: 20px; padding: 12px; font-size: 11px; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============================================================
+   CHARACTER SELECT
+   ============================================================ */
+.char-select-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.98);
+  z-index: 30000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.cso-eyebrow {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--mustard);
+  opacity: 0.8;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+}
+.cso-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(18px, 4vw, 28px);
+  color: var(--mustard);
+  text-align: center;
+  text-shadow: 3px 3px 0 #000;
+  margin: 0 0 10px 0;
+}
+.cso-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #666;
+  margin-bottom: 40px;
+}
+.cso-cards-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
+}
+.cso-card {
+  width: 240px;
+  background: #111;
+  border: 4px solid #333;
+  border-radius: 12px;
+  padding: 30px 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.cso-card:hover {
+  transform: translateY(-15px);
+  border-color: var(--mustard);
+  box-shadow: 0 15px 30px rgba(255, 193, 7, 0.2);
+}
+.cso-portrait-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #222;
+  margin-bottom: 20px;
+  overflow: hidden;
+  background: #000;
+  transition: border-color 0.3s ease;
+}
+.cso-card:hover .cso-portrait-wrap { border-color: var(--mustard); }
+.cso-portrait-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.cso-char-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #FFF;
+  margin-bottom: 15px;
+  text-align: center;
+}
+.cso-divider {
+  width: 40px; height: 2px;
+  background: #333;
+  margin-bottom: 15px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.cso-card:hover .cso-divider { width: 80px; background: var(--mustard); }
+.cso-perk-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--mustard);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.cso-perk-desc {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #888;
+  line-height: 1.7;
+  text-align: center;
+}
+.cso-select-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #444;
+  margin-top: 40px;
+  letter-spacing: 2px;
+}
+
+/* ============================================================
+   GAME OVER
+   ============================================================ */
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 10000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.game-over-overlay.show { display: flex; opacity: 1; }
+
+.game-over-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 64px;
+  font-weight: bold;
+  text-align: center;
+  animation: gameOver-animation 1.2s forwards;
+  padding: 0 20px;
+}
+.game-over-text.victory {
+  color: #FFC107;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255,193,7,0.5);
+}
+.game-over-text.defeat {
+  color: #ff4444;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.9), 0 0 40px rgba(255,68,68,0.5);
+}
+@keyframes gameOver-animation {
+  0%   { transform: scale(3); opacity: 0; filter: blur(10px); }
+  60%  { transform: scale(0.9); opacity: 1; filter: blur(0); }
+  80%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.game-over-options {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  animation: fadeInOptions 0.5s 1.2s forwards;
+  opacity: 0;
+}
+@keyframes fadeInOptions { to { opacity: 1; transform: translateY(0); } }
+
+.reward-panel { text-align: center; margin-bottom: 20px; }
+.reward-panel .reward-text {
+  font-size: 12px;
+  color: var(--mustard);
+  margin-bottom: 15px;
+  font-family: 'Press Start 2P', monospace;
+}
+.reward-panel .card {
+  margin: 0 auto;
+  animation: newCardPulse 2s infinite;
+}
+@keyframes newCardPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 15px #FFC107; }
+  50%      { transform: scale(1.05); box-shadow: 0 0 25px #FFC107; }
+}
+
+/* ============================================================
+   MAGE MODAL
+   ============================================================ */
+.mage-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 15000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.mage-modal h3 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: #FFC107;
+  text-align: center;
+  margin: 0;
+}
+.mage-modal p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  margin: 0;
+}
+.mage-choices {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mage-choice-btn {
+  background: #1a2535;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fff;
+  text-align: center;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+.mage-choice-btn:hover {
+  border-color: #FFC107;
+  color: #FFC107;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255,193,7,0.3);
+}
+
+/* ============================================================
+   TOUCH EXPANSION
+   ============================================================ */
+.touch-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.touch-backdrop.show { opacity: 1; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+  .computer-portrait { width: 80px; height: 80px; margin-bottom: 4px; }
+
+  .game-container { display: block; }
+
+  .arena {
+    background: none;
+    border: none;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .wrap { padding: 8px; padding-bottom: 340px; }
+
+  .title { font-size: 14px; }
+  .turn-indicator { top: 10px; font-size: 10px; padding: 6px 12px; }
+  .action-counter { top: 10px; left: 10px; font-size: 8px; padding: 6px 10px; }
+
+  .area {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+  #computerArea {
+    background: url('images/game mat colour.png') center top / cover no-repeat;
+    border-radius: 8px;
+  }
+  #playerArea {
+    background: url('images/game mat colour.png') center bottom / cover no-repeat;
+    border-radius: 8px;
+  }
+
+  #computerArea .player-info { order: 1; }
+  #computerArea .slots       { order: 2; }
+  #computerArea .hand        { order: 3; }
+  #computerArea .pile-row    { order: 4; }
+
+  #playerArea .slots    { order: 1; }
+  #playerArea .hand     { order: 2; }
+  #playerArea .pile-row { order: 3; }
+  #playerArea .player-info { order: 4; }
+
+  .player-info { min-width: 120px; width: auto; flex-basis: auto; }
+  .name { font-size: 11px; }
+  .hp-bar { width: 120px; height: 16px; }
+  .hp-segments { width: 90%; gap: 1px; }
+  .seg { height: 12px; }
+
+  .slots {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
+    overflow-x: auto;
+    padding: 0 2px;
+    gap: 4px;
+  }
+  .slot {
+    width: 60px;
+    min-width: 60px;
+    height: 100px;
+    margin: 0;
+    padding-bottom: 22px;
+  }
+  .slot .card { width: 56px; height: 84px; }
+
+  .hand { min-height: 90px; gap: 6px; }
+  .hand .card { width: 50px; height: 68px; transition: all 0.3s ease; }
+  .hand .card.selected {
+    width: 62px;
+    height: 86px;
+    transform: translateY(-8px) scale(1.1);
+    z-index: 300;
+  }
+
+  .pile-row { gap: 8px; }
+  .pile { width: 44px; height: 62px; }
+  .pile .pile-stack { width: 44px; height: 62px; }
+  .pile .pile-count { font-size: 7px; padding: 1px 4px; }
+  .pile .pile-label { font-size: 5px; margin-top: 6px; }
+
+  .bottom-panel {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    margin: 0;
+    height: 140px;
+    gap: 0;
+    z-index: 998;
+  }
+  .log {
+    height: 100%;
+    border-radius: 0;
+    border-right: 2px solid #444;
+    font-size: 10px;
+    padding: 8px;
+  }
+  .discard-pile {
+    flex: 0 0 40%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    border-left: 2px solid #ff4444;
+    padding: 8px;
+  }
+  .discard-pile .mini-card { width: 24px; height: 34px; }
+
+  .turn-panel { bottom: 150px; gap: 8px; }
+  .btn { padding: 8px 12px; font-size: 9px; }
+
+  .card-action-panel {
+    position: fixed !important;
+    bottom: 160px !important;
+    left: 50% !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: 85% !important;
+    max-width: 260px !important;
+    padding: 8px !important;
+    z-index: 99999 !important;
+  }
+  .card-action-panel .btn {
+    width: 100% !important;
+    padding: 9px 10px !important;
+    font-size: 9px !important;
+    white-space: normal !important;
+    box-sizing: border-box;
+  }
+
+  .status-icon {
+    width: auto !important;
+    height: 16px !important;
+    font-size: 7px !important;
+    padding: 0 3px !important;
+    top: -12px !important;
+  }
+
+  .tutorial-content { padding: 20px; }
+  .tutorial-content h2 { font-size: 12px; }
+  .tutorial-step p { font-size: 9px; }
+  .tutorial-step strong { font-size: 10px; }
+  .step-number { width: 26px; height: 26px; font-size: 12px; }
+
+  .game-over-text { font-size: 40px; }
+}
+
+@media (max-width: 700px) {
+  .cso-cards-row { flex-direction: column; align-items: center; gap: 14px; }
+  .cso-card {
+    width: 90%;
+    max-width: 340px;
+    flex-direction: row;
+    padding: 14px 16px;
+    text-align: left;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .cso-portrait-wrap { width: 70px; height: 70px; flex-shrink: 0; margin-bottom: 0; }
+  .cso-divider { display: none; }
+  .cso-char-name, .cso-perk-label, .cso-perk-desc { text-align: left; }
+}
+
+@media (max-width: 480px) {
+  .hand .card { width: 42px; height: 58px; }
+  .hand .card.selected { width: 58px; height: 80px; }
+  .slot { width: 55px; height: 92px; }
+  .slot .card { width: 52px; height: 78px; }
+  .game-over-text { font-size: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     CHARACTER SELECT OVERLAY
+     ============================================================ -->
+<div class="char-select-overlay" id="charSelectOverlay">
+  <div class="cso-eyebrow">Lazy Toad Studios</div>
+  <div class="cso-title">CHOOSE YOUR<br>CHAMPION</div>
+  <div class="cso-sub">Select a character to enter the arena</div>
+  <div class="cso-cards-row" id="csoCardsRow"></div>
+  <div class="cso-select-hint">Click a card to confirm your choice</div>
+</div>
+
+<!-- ============================================================
+     MAIN GAME
+     ============================================================ -->
+<div class="wrap">
+  <div class="header"><div class="title">TOAD BATTLE ARENA</div></div>
+
+  <div class="turn-indicator" id="turnIndicator">Player Setup Phase</div>
+  <div class="action-counter" id="actionCounter">Actions: 1 / 1</div>
+
+  <div class="arena" id="arena">
+
+    <!-- COMPUTER AREA -->
+    <div class="area" id="computerArea">
+      <div class="player-info">
+        <img id="computerPortrait" class="computer-portrait" src="" alt="Computer">
+        <div class="name" id="computerNameLabel">Computer</div>
+        <div class="hp-bar" title="Computer total HP">
+          <div class="hp-segments" id="computerGlobalHP"></div>
+        </div>
+        <div class="perk-kills" id="computerKillCount">Kills: <span>0</span>/3</div>
+        <div class="perk-btn perk-used" id="computerPerkBtn">PERK<br>LOCKED</div>
+      </div>
+
+      <div class="slots" id="computerSlots"></div>
+
+      <div class="hand" id="computerHand"></div>
+
+      <div class="pile-row" id="computerPiles">
+        <div class="pile" id="computerDeckPile"></div>
+        <div class="pile discard" id="computerDiscardPile"></div>
+      </div>
+    </div>
+
+    <!-- PLAYER AREA -->
+    <div class="area" id="playerArea">
+      <div class="player-info">
+        <img id="playerPortrait" class="computer-portrait" src="" alt="Player" style="display:none">
+        <div class="name" id="playerNameLabel">Player</div>
+        <div class="hp-bar" title="Player total HP">
+          <div class="hp-segments" id="playerGlobalHP"></div>
+        </div>
+        <div class="perk-kills" id="playerKillCount">Kills: <span>0</span>/3</div>
+        <button class="perk-btn" id="playerPerkBtn" disabled>PERK<br>LOCKED</button>
+      </div>
+
+      <div class="slots" id="playerSlots"></div>
+
+      <div class="hand" id="playerHand"></div>
+
+      <div class="pile-row" id="playerPiles">
+        <div class="pile" id="playerDeckPile"></div>
+        <div class="pile discard" id="playerDiscardPile"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM PANEL -->
+  <div class="bottom-panel">
+    <div class="log" id="battleLog">
+      <div class="entry system">Battle ready — draw a card and place it.</div>
+    </div>
+    <div class="discard-pile" id="discardPile">
+      <div class="title">💀 GRAVEYARD</div>
+      <div class="discarded-cards" id="discardedCards"></div>
+      <div class="count" id="discardCount">0 defeated</div>
+    </div>
+  </div>
+
+  <!-- TURN PANEL -->
+  <div class="turn-panel" id="turnPanel">
+    <div class="btn" id="endTurnBtn">END TURN</div>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-content">
+    <h2>Welcome to Toad Battle Arena!</h2>
+    <div class="tutorial-step">
+      <div class="step-number">1</div>
+      <p><strong>Draw Phase</strong>You draw 1 card at the start of every turn.</p>
+    </div>
+    <div class="tutorial-step">
+      <div class="step-number">2</div>
+      <p><strong>Place a Card</strong>Click a card in your hand, then an empty slot to place it. This uses your action.</p>
+    </div>
+    <div class="tutorial-step">
+      <div class="step-number">3</div>
+      <p><strong>Or Act</strong>Click one of your cards on the battlefield to attack, defend or switch. This also uses your action.</p>
+    </div>
+    <div class="tutorial-step">
+      <div class="step-number">4</div>
+      <p><strong>End Turn</strong>Click "END TURN" to draw again and pass to the computer.</p>
+    </div>
+    <button class="btn tutorial-close" id="tutorialClose">Got It!</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div id="gameOverText" class="game-over-text"></div>
+  <div id="gameOverOptions" class="game-over-options"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   CONFIG & CONSTANTS
+   ============================================================ */
+const MAX_SLOTS = 5;
+const MAX_HP = 100;
+const SEGMENTS = 10;
+const BASE_COOLDOWN = 2;
+const MAX_HAND_SIZE = 7;
+const DRAW_PER_TURN = 1;
+const DECK_SIZE = 24;
+
+const ATTACK_PATTERNS = {
+  straight: [[0, -1]],
+  diagonal: [[-1, -1], [1, -1]],
+  knight:   [[-1, -2], [1, -2], [-2, -1], [2, -1]],
+  adjacent: [[-1, 0], [1, 0]],
+  cross:    [[0, -1], [-1, 0], [1, 0]],
+  wide:     [[-1, -1], [0, -1], [1, -1]],
+  pierce:   [[0, -1]]
+};
+
+/* ============================================================
+   CARD POOL
+   ============================================================ */
+const cardPool = [
+  {
+    src: "images/cards/the stranger card format.jpg",
+    name: "The Stranger",
+    hp: 70,
+    mobile: true,
+    attacks: [
+      { name: "Hidden Strike", damage: 10, type: "physical", pattern: "diagonal",
+        effect: "stun", duration: 1,
+        description: "Diagonal slice. 10 dmg + stun 1 turn." },
+      { name: "Shadow Step", damage: 8, type: "physical", pattern: "knight",
+        description: "Leap in L-shape. 8 dmg." }
+    ]
+  },
+  {
+    src: "images/cards/horny toad card format.jpg",
+    name: "Horny Toad",
+    hp: 80,
+    mobile: true,
+    attacks: [
+      { name: "Piercing Strike", damage: 20, type: "physical", pattern: "pierce",
+        description: "Straight thrust. 20 dmg." }
+    ]
+  },
+  {
+    src: "images/cards/hypno toad card format.jpg",
+    name: "Hypno Toad",
+    hp: 80,
+    mobile: true,
+    attacks: [
+      { name: "Hypnotize", damage: 0, type: "mental", pattern: "wide",
+        effect: "sleep", duration: 2,
+        description: "Sleep 3 forward enemies for 2 turns." },
+      { name: "Poison Dart", damage: 3, type: "poison", pattern: "straight",
+        effect: "poison", duration: 5,
+        description: "3 dmg + 5 poison dmg/turn for 5 turns." }
+    ]
+  },
+  {
+    src: "images/cards/sumo toad card format.jpg",
+    name: "Sumo Toad",
+    hp: 100,
+    mobile: true,
+    attacks: [
+      { name: "Oshidashi", damage: 10, type: "physical", pattern: "straight",
+        effect: "weaken", duration: 1,
+        description: "10 dmg + weaken (-30% atk)." },
+      { name: "Sweeping Push", damage: 8, type: "physical", pattern: "cross",
+        description: "Hit forward + both sides for 8." }
+    ]
+  },
+  {
+    src: "images/cards/mad toad card format.jpg",
+    name: "Mad Toad",
+    hp: 65,
+    mobile: true,
+    attacks: [
+      { name: "Flasher", damage: 0, type: "mental", pattern: "adjacent",
+        effect: "stun", duration: 1,
+        description: "Stun adjacent enemies 1 turn." },
+      { name: "Bubble Slam", damage: 10, type: "physical", pattern: "knight",
+        description: "Rear-end leap. 10 dmg." }
+    ]
+  }
+];
+
+/* ============================================================
+   CHARACTERS
+   ============================================================ */
+const CHARACTERS = [
+  { id: 'samurai',  name: 'Samurai Toad', src: 'images/samurai profile.png',
+    perkName: 'Bushido Fury',
+    perkDesc: 'All your cards deal +20% damage for 2 turns' },
+  { id: 'mage',     name: 'Mage Toad',    src: 'images/mage profile.png',
+    perkName: 'Arcane Hex',
+    perkDesc: 'Apply poison, weaken, or sleep to all enemy cards' },
+  { id: 'stranger', name: 'The Stranger', src: 'images/stranger profile.png',
+    perkName: 'Ghost Ward',
+    perkDesc: 'One chosen card gains immunity for 2 turns' }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let playerDeck = [];
+let playerHand = [];
+let playerDiscard = [];
+let computerDeck = [];
+let computerHand = [];
+let computerDiscard = [];
+
+let playerSlots  = new Array(MAX_SLOTS).fill(null);
+let computerSlots = new Array(MAX_SLOTS).fill(null);
+
+let selected = null;
+let playerTurn = true;
+let actionsRemaining = 1;
+let currentActionPanel = null;
+let clickTimer = null;
+let battleStarted = false;
+let strangerPickingMode = false;
+
+// Perk state
+let playerKills = 0, computerKills = 0;
+let playerPerkReady = false, computerPerkReady = false;
+let playerPerkActive = false, playerPerkTurnsLeft = 0;
+let computerPerkActive = false, computerPerkTurnsLeft = 0;
+
+let playerCharacter = null, computerCharacter = null;
+
+// AI memory
+let computerTurnHistory = [];
+const MAX_HISTORY = 3;
+
+// Graveyard (merged display)
+const discardPile = [];
+
+// DOM
+const playerHandEl = document.getElementById('playerHand');
+const computerHandEl = document.getElementById('computerHand');
+const playerSlotsEl = document.getElementById('playerSlots');
+const computerSlotsEl = document.getElementById('computerSlots');
+const logEl = document.getElementById('battleLog');
+const turnPanel = document.getElementById('turnPanel');
+const endTurnBtn = document.getElementById('endTurnBtn');
+const playerGlobalHP = document.getElementById('playerGlobalHP');
+const computerGlobalHP = document.getElementById('computerGlobalHP');
+const turnIndicator = document.getElementById('turnIndicator');
+const actionCounter = document.getElementById('actionCounter');
+const playerDeckPileEl = document.getElementById('playerDeckPile');
+const computerDeckPileEl = document.getElementById('computerDeckPile');
+const playerDiscardPileEl = document.getElementById('playerDiscardPile');
+const computerDiscardPileEl = document.getElementById('computerDiscardPile');
+const discardPileEl = document.getElementById('discardPile');
+const discardedCardsEl = document.getElementById('discardedCards');
+const discardCountEl = document.getElementById('discardCount');
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function addLog(type, text) {
+  const div = document.createElement('div');
+  div.className = 'entry ' + (type === 'player' ? 'player'
+                    : type === 'computer' ? 'computer' : 'system');
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* ============================================================
+   DECK / DRAW / DISCARD
+   ============================================================ */
+function loadPlayerDeck() {
+  let collection = [];
+  try {
+    const stored = localStorage.getItem('collectedCards');
+    if (stored) collection = JSON.parse(stored);
+  } catch(e) { collection = []; }
+
+  // Normalize: match names to full card objects
+  let normalized = collection
+    .map(saved => cardPool.find(c => c.name === saved.name))
+    .filter(Boolean);
+
+  // Fallback starter deck
+  if (normalized.length === 0) {
+    normalized = [...cardPool, ...cardPool, ...cardPool, ...cardPool, ...cardPool].slice(0, DECK_SIZE);
+  }
+
+  // Build DECK_SIZE-card deck
+  const deck = [];
+  let i = 0;
+  while (deck.length < DECK_SIZE && normalized.length > 0) {
+    deck.push(normalized[i % normalized.length]);
+    i++;
+  }
+
+  playerDeck = shuffle(deck);
+  playerHand = [];
+  playerDiscard = [];
+}
+
+function buildComputerDeck() {
+  const deck = [];
+  for (let i = 0; i < DECK_SIZE; i++) {
+    deck.push(cardPool[Math.floor(Math.random() * cardPool.length)]);
+  }
+  computerDeck = shuffle(deck);
+  computerHand = [];
+  computerDiscard = [];
+}
+
+function drawCard(side) {
+  const deck = side === 'player' ? playerDeck : computerDeck;
+  const hand = side === 'player' ? playerHand : computerHand;
+  const discard = side === 'player' ? playerDiscard : computerDiscard;
+
+  if (hand.length >= MAX_HAND_SIZE) {
+    if (deck.length > 0) deck.pop();
+    addLog('system', `${side === 'player' ? 'Your' : "Computer's"} hand is full — card burned.`);
+    return null;
+  }
+
+  if (deck.length === 0) {
+    if (discard.length === 0) {
+      addLog('system', `${side === 'player' ? 'Your' : "Computer's"} deck is empty.`);
+      return null;
+    }
+    deck.push(...shuffle(discard.splice(0, discard.length)));
+    addLog('system', `${side === 'player' ? 'Your' : "Computer's"} discard reshuffled into deck.`);
+  }
+
+  const card = deck.pop();
+  hand.push(card);
+  return card;
+}
+
+function addToDiscard(card, owner) {
+  if (owner === 'Player') {
+    playerDiscard.push(card);
+  } else {
+    computerDiscard.push(card);
+  }
+  // Merged graveyard view
+  discardPile.push({ card, owner, timestamp: Date.now() });
+  renderDiscardPile();
+  renderDeckPiles();
+}
+
+/* ============================================================
+   DECK PILE RENDERING
+   ============================================================ */
+function renderDeckPiles() {
+  renderPile(playerDeckPileEl, playerDeck.length, 'DECK');
+  renderPile(computerDeckPileEl, computerDeck.length, 'DECK');
+  renderPile(playerDiscardPileEl, playerDiscard.length, 'DISCARD', true);
+  renderPile(computerDiscardPileEl, computerDiscard.length, 'DISCARD', true);
+}
+
+function renderPile(el, count, label, isDiscard) {
+  if (!el) return;
+  el.innerHTML = `
+    <div class="pile-stack">${isDiscard ? '💀' : ''}</div>
+    <span class="pile-count">${count}</span>
+    <div class="pile-label">${label}</div>
+  `;
+}
+
+/* ============================================================
+   SLOT UI
+   ============================================================ */
+function makeSlotsUI() {
+  playerSlotsEl.innerHTML = '';
+  computerSlotsEl.innerHTML = '';
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const ps = document.createElement('div');
+    ps.className = 'slot';
+    ps.dataset.i = i;
+    ps.dataset.side = 'player';
+    ps.addEventListener('click', () => onSlotClick('player', i));
+    playerSlotsEl.appendChild(ps);
+
+    const cs = document.createElement('div');
+    cs.className = 'slot';
+    cs.dataset.i = i;
+    cs.dataset.side = 'computer';
+    cs.addEventListener('click', () => onSlotClick('computer', i));
+    computerSlotsEl.appendChild(cs);
+  }
+}
+
+/* ============================================================
+   HAND RENDERING
+   ============================================================ */
+function createHandCardEl(card, idx, side) {
+  const el = document.createElement('div');
+  el.className = 'card';
+
+  if (side === 'player') {
+    el.addEventListener('click', () => onHandClick(idx));
+    el.addEventListener('dblclick', () => {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      showFullCardImage(card);
+    });
+  } else {
+    el.style.cursor = 'default';
+  }
+
+  const img = document.createElement('img');
+  img.src = card.src;
+  img.alt = card.name;
+  el.appendChild(img);
+  return el;
+}
+
+function createCardBackEl() {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.cursor = 'default';
+  const img = document.createElement('img');
+  img.src = 'images/cards/card back.jpeg';
+  img.alt = 'Hidden Card';
+  el.appendChild(img);
+  return el;
+}
+
+function renderHand(side) {
+  const handEl = side === 'player' ? playerHandEl : computerHandEl;
+  const hand = side === 'player' ? playerHand : computerHand;
+
+  handEl.innerHTML = '';
+  if (!hand || hand.length === 0) {
+    handEl.style.height = '140px';
+    return;
+  }
+
+  const cardWidth = 104;
+  const containerWidth = handEl.clientWidth || 400;
+
+  // Few cards: relative spacing
+  if (hand.length <= 3) {
+    hand.forEach((card, i) => {
+      const c = side === 'player'
+        ? createHandCardEl(card, i, 'player')
+        : createCardBackEl();
+      c.style.position = 'relative';
+      c.style.margin = '0 5px';
+      handEl.appendChild(c);
+    });
+    handEl.style.height = '140px';
+    return;
+  }
+
+  // Overlap
+  let overlap = (containerWidth - cardWidth) / (hand.length - 1);
+  overlap = Math.min(overlap, cardWidth * 0.4);
+
+  hand.forEach((card, i) => {
+    const c = side === 'player'
+      ? createHandCardEl(card, i, 'player')
+      : createCardBackEl();
+    c.style.position = 'absolute';
+    c.style.left = `${i * overlap}px`;
+    c.style.top = '0';
+    c.style.zIndex = i;
+    handEl.appendChild(c);
+  });
+
+  handEl.style.height = '140px';
+  handEl.style.position = 'relative';
+}
+
+/* ============================================================
+   FULL CARD VIEWER (desktop dblclick)
+   ============================================================ */
+function showFullCardImage(card) {
+  if (window.innerWidth <= 768) return;
+  if (document.querySelector('.desktop-card-viewer')) return;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'desktop-card-viewer';
+  backdrop.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 20000;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0;
+    transition: opacity 0.3s ease;
+  `;
+
+  const img = document.createElement('img');
+  img.src = card.src;
+  img.style.cssText = `
+    max-width: 80vw; max-height: 80vh;
+    border: 4px solid var(--mustard);
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(255,193,7,0.5);
+  `;
+
+  backdrop.appendChild(img);
+  document.body.appendChild(backdrop);
+  setTimeout(() => backdrop.style.opacity = '1', 10);
+
+  backdrop.addEventListener('click', () => {
+    backdrop.style.opacity = '0';
+    setTimeout(() => backdrop.remove(), 300);
+  });
+}
+
+/* ============================================================
+   SLOT CLICK HANDLERS
+   ============================================================ */
+function onSlotClick(side, idx) {
+  if (side === 'player') {
+    // Stranger perk picking mode
+    if (strangerPickingMode) {
+      if (playerSlots[idx] && playerSlots[idx].hp > 0) {
+        strangerPickingMode = false;
+        document.querySelectorAll('.stranger-target').forEach(el => el.classList.remove('stranger-target'));
+        applyStrangerPerk('player', idx);
+      }
+      return;
+    }
+
+    // Placing a hand card
+    if (selected && selected.type === 'hand') {
+      if (actionsRemaining <= 0) {
+        addLog('system', 'No actions remaining this turn.');
+        return;
+      }
+      if (playerSlots[idx] === null) {
+        const card = playerHand.splice(selected.index, 1)[0];
+        if (!card) { selected = null; return; }
+        const cooldowns = {};
+        card.attacks.forEach((a, i) => {
+          if (a.effect && ['stun','sleep','poison'].includes(a.effect)) cooldowns[i] = 0;
+        });
+        playerSlots[idx] = {
+          card, hp: MAX_HP, defending: false, used: false,
+          statusEffects: [], attackCooldowns: cooldowns
+        };
+        selected = null;
+        actionsRemaining--;
+        updateActionUI();
+        addLog('player', `Placed ${card.name} in slot ${idx+1}`);
+        renderAll();
+        checkBattleStart();
+      }
+      return;
+    }
+
+    // Switching
+    if (selected && selected.type === 'switching') {
+      if (idx !== selected.fromSlot && playerSlots[idx] === null) {
+        playerSlots[idx] = playerSlots[selected.fromSlot];
+        playerSlots[selected.fromSlot] = null;
+        addLog('player', `${playerSlots[idx].card.name} moved to slot ${idx+1}`);
+        clearSwitchHighlights();
+        selected = null;
+        renderAll();
+      }
+      return;
+    }
+
+    // Show actions for occupied slot
+    const slot = playerSlots[idx];
+    if (slot && playerTurn && battleStarted) {
+      if (actionsRemaining <= 0) {
+        addLog('system', 'No actions remaining this turn.');
+        return;
+      }
+      if (slot.used) {
+        addLog('system', `${slot.card.name} has already acted this turn.`);
+        return;
+      }
+      if (hasStatusEffect(slot, 'stun') || hasStatusEffect(slot, 'sleep')) {
+        addLog('system', `${slot.card.name} cannot act due to status effects!`);
+        return;
+      }
+      hideActionPanel();
+      showCardActions('player', idx);
+    }
+  } else {
+    // Computer slot — resolve pattern targeting
+    if (selected && selected.type === 'pattern-targeting') {
+      if (selected.validTargets.includes(idx)) {
+        performPatternAttack(selected.attackerIdx, selected.attackIndex, idx, selected.pattern);
+        clearTargetHighlights();
+        selected = null;
+      }
+    }
+  }
+}
+
+function onHandClick(index) {
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+  clickTimer = setTimeout(() => {
+    if (actionsRemaining <= 0 && battleStarted) {
+      addLog('system', 'No actions remaining this turn.');
+      return;
+    }
+    hideActionPanel();
+    clearSelections();
+    selected = { type: 'hand', index };
+    document.querySelectorAll('#playerHand .card').forEach((c, i) => {
+      c.classList.toggle('selected', i === index);
+    });
+  }, 220);
+}
+
+/* ============================================================
+   CARD ACTIONS PANEL
+   ============================================================ */
+function showCardActions(side, idx) {
+  if (side !== 'player' || !playerTurn) return;
+  const slot = playerSlots[idx];
+  if (!slot || slot.used) return;
+
+  hideActionPanel();
+  clearSelections();
+
+  const slotEl = playerSlotsEl.children[idx];
+  const cardEl = slotEl.querySelector('.card');
+  if (!cardEl) return;
+
+  cardEl.classList.add('selected');
+
+  const panel = document.createElement('div');
+  panel.className = 'card-action-panel';
+
+  const rect = slotEl.getBoundingClientRect();
+  if (window.innerWidth <= 1200) {
+    panel.style.position = 'fixed';
+    panel.style.bottom = '160px';
+    panel.style.left = '50%';
+    panel.style.transform = 'translateX(-50%)';
+  } else {
+    panel.style.position = 'absolute';
+    panel.style.left = (rect.right + 10) + 'px';
+    panel.style.top  = rect.top + 'px';
+  }
+
+  // Attack buttons
+  slot.card.attacks.forEach((attack, attackIndex) => {
+    const onCD = isAttackOnCooldown(slot, attackIndex);
+    const cdTurns = getAttackCooldown(slot, attackIndex);
+    const pattern = attack.pattern || 'straight';
+    const validTargets = getValidTargets(idx, pattern, 'player');
+    const hasTargets = validTargets.length > 0;
+    const isDisabled = !hasTargets || onCD;
+
+    const attackBtn = document.createElement('div');
+    attackBtn.className = `btn ${isDisabled ? 'disabled' : ''} ${onCD ? 'cooldown' : ''}`;
+
+    let buttonText = attack.name;
+    if (attack.damage > 0) buttonText += ` (${attack.damage})`;
+    if (attack.effect) buttonText += ` [${attack.effect.slice(0,3).toUpperCase()}]`;
+    if (onCD) buttonText += ` CD:${cdTurns}`;
+    if (!hasTargets && !onCD) buttonText += ` — no target`;
+    attackBtn.innerHTML = buttonText;
+
+    if (window.innerWidth <= 1200 && attack.description) {
+      const desc = document.createElement('span');
+      desc.className = 'attack-desc';
+      desc.textContent = attack.description;
+      attackBtn.appendChild(desc);
+    } else {
+      attackBtn.title = attack.description + (onCD ? ` — cooldown: ${cdTurns}` : '');
+    }
+
+    if (onCD) attackBtn.setAttribute('data-cooldown', cdTurns);
+
+    attackBtn.addEventListener('click', () => {
+      if (isDisabled) return;
+      hideActionPanel();
+      const isMulti = ['cross', 'adjacent'].includes(pattern);
+      if (isMulti && validTargets.length > 1) {
+        performMultiTargetAttack(idx, attackIndex, pattern);
+      } else if (validTargets.length === 1) {
+        performPatternAttack(idx, attackIndex, validTargets[0], pattern);
+      } else if (validTargets.length > 1) {
+        showValidTargets(idx, pattern, 'player');
+        addLog('system', `Select a target for ${attack.name}`);
+        selected = {
+          type: 'pattern-targeting', attackerIdx: idx,
+          attackIndex, validTargets, pattern
+        };
+      }
+    });
+    panel.appendChild(attackBtn);
+  });
+
+  // Defend
+  const defendBtn = document.createElement('div');
+  defendBtn.className = 'btn';
+  if (window.innerWidth <= 1200) {
+    defendBtn.innerHTML = 'Defend<span class="attack-desc">-50% damage until hit</span>';
+  } else {
+    defendBtn.textContent = 'Defend';
+    defendBtn.title = 'Reduce damage by 50% until hit';
+  }
+  defendBtn.addEventListener('click', () => performDefend(idx));
+  panel.appendChild(defendBtn);
+
+  // Switch
+  if (slot.card.mobile) {
+    const switchBtn = document.createElement('div');
+    switchBtn.className = 'btn';
+    if (window.innerWidth <= 1200) {
+      switchBtn.innerHTML = 'Switch<span class="attack-desc">Move to empty slot</span>';
+    } else {
+      switchBtn.textContent = 'Switch Position';
+      switchBtn.title = 'Move this card to an empty slot';
+    }
+    switchBtn.addEventListener('click', () => {
+      hideActionPanel();
+      startSwitching(idx);
+    });
+    panel.appendChild(switchBtn);
+  }
+
+  document.body.appendChild(panel);
+  currentActionPanel = panel;
+  selected = { side: 'player', idx };
+}
+
+function hideActionPanel() {
+  if (currentActionPanel) {
+    currentActionPanel.remove();
+    currentActionPanel = null;
+  }
+}
+
+function clearSelections() {
+  document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+  selected = null;
+}
+
+/* ============================================================
+   TARGETING HELPERS
+   ============================================================ */
+function getValidTargets(attackerIdx, pattern, attackerSide) {
+  const offsets = ATTACK_PATTERNS[pattern] || ATTACK_PATTERNS.straight;
+  const targetSlots = attackerSide === 'player' ? computerSlots : playerSlots;
+  const valid = [];
+  offsets.forEach(([dx]) => {
+    const t = attackerIdx + dx;
+    if (t >= 0 && t < MAX_SLOTS && targetSlots[t] && targetSlots[t].hp > 0) {
+      valid.push(t);
+    }
+  });
+  return valid;
+}
+
+function showValidTargets(attackerIdx, pattern, attackerSide) {
+  clearTargetHighlights();
+  const valid = getValidTargets(attackerIdx, pattern, attackerSide);
+  const targetSlotsEl = attackerSide === 'player' ? computerSlotsEl : playerSlotsEl;
+  valid.forEach(idx => targetSlotsEl.children[idx].classList.add('valid-target'));
+  return valid;
+}
+
+function clearTargetHighlights() {
+  document.querySelectorAll('.valid-target').forEach(el => el.classList.remove('valid-target'));
+}
+
+function clearSwitchHighlights() {
+  document.querySelectorAll('.switch-target').forEach(el => el.classList.remove('switch-target'));
+}
+
+/* ============================================================
+   ATTACK ANIMATION HELPERS
+   ============================================================ */
+function getAttackAnimation(attackerIdx, targetIdx, pattern, attackerSide) {
+  const offset = targetIdx - attackerIdx;
+  const direction = attackerSide === 'player' ? 'backward' : 'forward';
+  switch (pattern) {
+    case 'diagonal': return `attacking-diagonal-${offset < 0 ? 'left' : 'right'}`;
+    case 'knight':   return 'attacking-knight';
+    case 'adjacent': return `attacking-adjacent-${offset < 0 ? 'left' : 'right'}`;
+    case 'cross':
+    case 'wide':     return 'attacking-sweep';
+    case 'pierce':   return attackerSide === 'player' ? 'attacking-forward' : 'attacking-pierce';
+    case 'straight':
+    default:         return `attacking-${direction}`;
+  }
+}
+
+function getAnimationTiming(cls) {
+  const map = {
+    'attacking-diagonal-left': 900,
+    'attacking-diagonal-right': 900,
+    'attacking-knight': 1100,
+    'attacking-sweep': 1000,
+    'attacking-pierce': 700,
+    'attacking-adjacent-left': 800,
+    'attacking-adjacent-right': 800,
+    'attacking-forward': 1000,
+    'attacking-backward': 1000
+  };
+  return map[cls] || 1000;
+}
+
+/* ============================================================
+   DAMAGE / IMPACT / STATUS
+   ============================================================ */
+function applyDamage(attacker, target, baseDamage) {
+  let finalDmg = baseDamage;
+
+  if (target.immune && target.immune > 0) {
+    addLog('system', `${target.card.name} is IMMUNE — no damage!`);
+    return 0;
+  }
+  if (attacker.disabled && attacker.disabled > 0) {
+    addLog('system', `${attacker.card.name} is DISABLED and cannot attack!`);
+    return 0;
+  }
+
+  const isPlayerAttacker = playerSlots.includes(attacker);
+  if (isPlayerAttacker && playerPerkActive)   finalDmg = Math.floor(finalDmg * 1.2);
+  if (!isPlayerAttacker && computerPerkActive) finalDmg = Math.floor(finalDmg * 1.2);
+
+  if (hasStatusEffect(attacker, 'weaken')) {
+    finalDmg = Math.floor(finalDmg * 0.7);
+    addLog('system', `${attacker.card.name}'s attack is weakened! (${baseDamage} → ${finalDmg})`);
+  }
+
+  if (target.defending && finalDmg > 0) {
+    finalDmg = Math.ceil(finalDmg / 2);
+    target.defending = false;
+    target.defendPersists = false;
+    const targetSlotsEl = playerSlots.includes(target) ? playerSlotsEl : computerSlotsEl;
+    const targetIdx = (playerSlots.includes(target) ? playerSlots : computerSlots).indexOf(target);
+    const cardEl = targetSlotsEl.children[targetIdx]?.querySelector('.card');
+    if (cardEl) cardEl.style.boxShadow = '';
+    addLog('system', `${target.card.name} defended — reduced damage!`);
+  }
+
+  return finalDmg;
+}
+
+function showDamagePopup(container, damage, color) {
+  const popup = document.createElement('div');
+  popup.className = 'dmg-pop';
+  popup.style.color = color || '#ff4444';
+  popup.textContent = `-${damage}`;
+  popup.style.left = '50%';
+  popup.style.top = '10%';
+  container.style.position = 'relative';
+  container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
+
+function createImpactEffect(targetSlotEl, pattern) {
+  const impact = document.createElement('div');
+  switch (pattern) {
+    case 'diagonal':
+      impact.style.cssText = `position:absolute;top:0;left:0;width:150%;height:3px;background:linear-gradient(90deg,transparent,var(--accent),transparent);transform:rotate(-45deg);animation:slashFlash 300ms ease-out;z-index:100;`;
+      break;
+    case 'knight':
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          const ripple = document.createElement('div');
+          ripple.style.cssText = `position:absolute;top:50%;left:50%;width:100%;height:100%;border:3px solid var(--accent);border-radius:50%;animation:rippleExpand 600ms ease-out forwards;pointer-events:none;z-index:100;`;
+          targetSlotEl.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
+        }, i * 100);
+      }
+      return;
+    case 'cross':
+    case 'wide':
+    case 'adjacent':
+      impact.style.cssText = `position:absolute;top:50%;left:-20%;width:140%;height:4px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent),transparent);animation:sweepFlash 400ms ease-out;z-index:100;`;
+      break;
+    case 'pierce':
+    case 'straight':
+      impact.style.cssText = `position:absolute;top:-10%;left:50%;width:4px;height:120%;background:linear-gradient(180deg,var(--accent),transparent);transform:translateX(-50%);animation:pierceFlash 250ms ease-out;z-index:100;`;
+      break;
+    default:
+      impact.style.cssText = `position:absolute;top:50%;left:50%;width:80%;height:80%;background:radial-gradient(circle,var(--accent),transparent);transform:translate(-50%,-50%);animation:impactFlash 300ms ease-out;z-index:100;`;
+  }
+  targetSlotEl.style.position = 'relative';
+  targetSlotEl.appendChild(impact);
+  setTimeout(() => impact.remove(), 500);
+}
+
+function hasStatusEffect(slot, type) {
+  if (!slot || !slot.statusEffects) return false;
+  return slot.statusEffects.some(e => e.type === type && e.turnsRemaining > 0);
+}
+
+function applyStatusEffect(target, effect, duration, attackerName) {
+  if (!effect || !duration) return;
+  if (!target.statusEffects) target.statusEffects = [];
+  const type = effect.toLowerCase();
+
+  const limits = { poison: 1, sleep: 1, stun: 1, weaken: 3 };
+  const max = limits[type] ?? 1;
+  const existing = target.statusEffects.filter(e => e.type === type && e.turnsRemaining > 0);
+
+  if (type !== 'weaken' && existing.length >= 1) {
+    addLog('system', `${target.card.name} already has ${type}.`);
+    return;
+  }
+  if (type === 'weaken' && existing.length >= max) {
+    addLog('system', `${target.card.name} is at max weaken stacks.`);
+    return;
+  }
+
+  target.statusEffects.push({
+    type, duration, attacker: attackerName,
+    turnsRemaining: duration, justApplied: true
+  });
+
+  const msgs = {
+    stun: `${target.card.name} is stunned!`,
+    sleep: `${target.card.name} falls asleep!`,
+    poison: `${target.card.name} is poisoned for ${duration} turns!`,
+    weaken: `${target.card.name} is weakened!`
+  };
+  if (msgs[type]) addLog('system', msgs[type]);
+
+  // Popup
+  setTimeout(() => {
+    let slotEl = null;
+    let idx = computerSlots.indexOf(target);
+    if (idx !== -1) slotEl = computerSlotsEl.children[idx];
+    else {
+      idx = playerSlots.indexOf(target);
+      if (idx !== -1) slotEl = playerSlotsEl.children[idx];
+    }
+    if (slotEl) showStatusEffectPopup(slotEl, type);
+  }, 600);
+}
+
+function showStatusEffectPopup(container, type) {
+  const popup = document.createElement('div');
+  popup.className = 'status-effect-popup';
+  const icons = {
+    poison: { s: '☠ POISONED', c: '#8B4513' },
+    stun:   { s: '⚡ STUNNED',  c: '#FFD700' },
+    sleep:  { s: '💤 ASLEEP',   c: '#4169E1' },
+    weaken: { s: '⬇ WEAKENED', c: '#800080' }
+  };
+  const e = icons[type] || { s: '?', c: '#fff' };
+  popup.style.color = e.c;
+  popup.textContent = e.s;
+  container.style.position = 'relative';
+  container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1500);
+}
+
+function updateStatusIcons(slotElement, statusEffects) {
+  slotElement.querySelectorAll('.status-icon').forEach(i => i.remove());
+  if (!statusEffects) return;
+  statusEffects.forEach((effect, i) => {
+    if (effect.turnsRemaining > 0) {
+      const icon = document.createElement('div');
+      icon.className = `status-icon ${effect.type}`;
+      const labels = { poison: 'PSN', stun: 'STN', sleep: 'ZZZ', weaken: 'WKN' };
+      icon.textContent = labels[effect.type] || '?';
+      icon.title = `${effect.type} — ${effect.turnsRemaining} turns`;
+      slotElement.appendChild(icon);
+    }
+  });
+}
+
+function processStatusEffects(side) {
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  slots.forEach((slot, idx) => {
+    if (!slot || !slot.statusEffects) return;
+    slot.statusEffects = slot.statusEffects.filter(effect => {
+      if (effect.justApplied) { effect.justApplied = false; return true; }
+      if (effect.type === 'poison') {
+        const dmg = 5;
+        slot.hp = Math.max(0, slot.hp - dmg);
+        addLog('system', `${slot.card.name} takes ${dmg} poison damage`);
+        if (slotsEl.children[idx]) showDamagePopup(slotsEl.children[idx], dmg, '#8B4513');
+        if (slot.hp <= 0) {
+          addLog('system', `${slot.card.name} dies from poison!`);
+          const parent = slotsEl.children[idx];
+          setTimeout(() => {
+            const cardEl = parent.querySelector('.card');
+            if (cardEl) cardEl.classList.add('die');
+            setTimeout(() => {
+              const owner = side === 'player' ? 'Player' : 'Computer';
+              addToDiscard(slot.card, owner);
+              recordKill(side === 'player' ? 'computer' : 'player');
+              slots[idx] = null;
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 400);
+          return false;
+        }
+      }
+      effect.turnsRemaining--;
+      if (effect.turnsRemaining <= 0) return false;
+      return true;
+    });
+    if (slot && slot.hp > 0) updateSlotUI(side, idx);
+  });
+  renderAll();
+}
+
+/* ============================================================
+   COMBAT ACTIONS
+   ============================================================ */
+function performDefend(slotIdx) {
+  const slot = playerSlots[slotIdx];
+  if (!slot || slot.used) return;
+  if (actionsRemaining <= 0) { addLog('system', 'No actions remaining.'); return; }
+
+  slot.used = true;
+  slot.defending = true;
+  slot.defendPersists = true;
+  actionsRemaining--;
+  updateActionUI();
+
+  const cardEl = playerSlotsEl.children[slotIdx].querySelector('.card');
+  if (cardEl) {
+    cardEl.classList.add('defending-anim');
+    setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
+    cardEl.style.boxShadow = '0 0 15px rgba(56,239,125,0.9)';
+  }
+  addLog('player', `${slot.card.name} defends.`);
+  hideActionPanel();
+  renderAll();
+}
+
+function startSwitching(fromSlotIdx) {
+  const slot = playerSlots[fromSlotIdx];
+  if (!slot || slot.used) return;
+  if (actionsRemaining <= 0) { addLog('system', 'No actions remaining.'); return; }
+
+  slot.used = true;
+  actionsRemaining--;
+  updateActionUI();
+
+  if (slot.card.name === 'Sumo Toad' || slot.card.name === 'Horny Toad') {
+    [fromSlotIdx - 1, fromSlotIdx + 1].forEach(i => {
+      if (i >= 0 && i < MAX_SLOTS && playerSlots[i] === null) {
+        playerSlotsEl.children[i].classList.add('switch-target');
+      }
+    });
+    addLog('system', `Select an adjacent empty slot for ${slot.card.name}.`);
+  } else {
+    playerSlots.forEach((s, i) => {
+      if (i !== fromSlotIdx && s === null) {
+        playerSlotsEl.children[i].classList.add('switch-target');
+      }
+    });
+    addLog('system', `Select an empty slot for ${slot.card.name}.`);
+  }
+
+  selected = { type: 'switching', fromSlot: fromSlotIdx };
+}
+
+function performPatternAttack(attackerIdx, attackIndex, targetIdx, pattern) {
+  const attacker = playerSlots[attackerIdx];
+  const target = computerSlots[targetIdx];
+  const attack = attacker?.card.attacks[attackIndex];
+  if (!attacker || !target || !attack) return;
+  if (actionsRemaining <= 0) { addLog('system', 'No actions remaining.'); return; }
+
+  attacker.used = true;
+  actionsRemaining--;
+  updateActionUI();
+
+  if (attack.effect && ['stun','sleep','poison'].includes(attack.effect)) {
+    if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+    attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
+  }
+
+  const attackerCardEl = playerSlotsEl.children[attackerIdx].querySelector('.card');
+  const targetSlotEl = computerSlotsEl.children[targetIdx];
+  const targetCardEl = targetSlotEl.querySelector('.card');
+
+  const animClass = getAttackAnimation(attackerIdx, targetIdx, pattern, 'player');
+  attackerCardEl.classList.add(animClass);
+  const timing = getAnimationTiming(animClass);
+
+  setTimeout(() => {
+    const finalDmg = applyDamage(attacker, target, attack.damage);
+    if (attack.effect) applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+
+    if (finalDmg > 0) {
+      createImpactEffect(targetSlotEl, pattern);
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+      target.hp = Math.max(0, target.hp - finalDmg);
+
+      addLog('player', `${attacker.card.name} hits ${target.card.name} for ${finalDmg}.`);
+
+      if (target.hp <= 0) {
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => {
+            addToDiscard(target.card, 'Computer');
+            computerSlots[targetIdx] = null;
+            recordKill('player');
+            renderAll();
+            checkBattleOver();
+          }, 600);
+        }, 200);
+      } else {
+        updateSlotUI('computer', targetIdx);
+        checkBattleOver();
+      }
+    } else {
+      addLog('player', `${attacker.card.name} uses ${attack.name} on ${target.card.name}.`);
+      updateSlotUI('computer', targetIdx);
+      checkBattleOver();
+    }
+  }, timing * 0.6);
+
+  setTimeout(() => {
+    attackerCardEl.classList.remove(animClass);
+    attackerCardEl.classList.add('used');
+    updateSlotUI('player', attackerIdx);
+  }, timing);
+
+  hideActionPanel();
+  renderAll();
+}
+
+function performMultiTargetAttack(attackerIdx, attackIndex, pattern) {
+  const attacker = playerSlots[attackerIdx];
+  if (!attacker) return;
+  const attack = attacker.card.attacks[attackIndex];
+  const validTargets = getValidTargets(attackerIdx, pattern, 'player');
+  if (validTargets.length === 0) return;
+  if (actionsRemaining <= 0) { addLog('system', 'No actions remaining.'); return; }
+
+  attacker.used = true;
+  actionsRemaining--;
+  updateActionUI();
+
+  if (attack.effect && ['stun','sleep','poison'].includes(attack.effect)) {
+    if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+    attacker.attackCooldowns[attackIndex] = BASE_COOLDOWN;
+  }
+
+  const attackerCardEl = playerSlotsEl.children[attackerIdx].querySelector('.card');
+  const animClass = getAttackAnimation(attackerIdx, validTargets[0], pattern, 'player');
+  attackerCardEl.classList.add(animClass);
+
+  validTargets.forEach((tIdx, i) => {
+    setTimeout(() => {
+      const target = computerSlots[tIdx];
+      if (!target) return;
+      const targetSlotEl = computerSlotsEl.children[tIdx];
+      const targetCardEl = targetSlotEl.querySelector('.card');
+
+      const finalDmg = applyDamage(attacker, target, attack.damage);
+      if (attack.effect) applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+
+      if (finalDmg > 0) {
+        createImpactEffect(targetSlotEl, pattern);
+        showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+        targetCardEl.classList.add('hit', 'flash');
+        setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+        target.hp = Math.max(0, target.hp - finalDmg);
+        addLog('player', `${attacker.card.name}'s ${attack.name} hits ${target.card.name} for ${finalDmg}.`);
+
+        if (target.hp <= 0) {
+          setTimeout(() => {
+            targetCardEl.classList.add('die');
+            setTimeout(() => {
+              addToDiscard(target.card, 'Computer');
+              computerSlots[tIdx] = null;
+              recordKill('player');
+              renderAll();
+              checkBattleOver();
+            }, 600);
+          }, 200);
+        } else {
+          updateSlotUI('computer', tIdx);
+        }
+      }
+    }, i * 250);
+  });
+
+  setTimeout(() => {
+    attackerCardEl.classList.remove(animClass);
+    attackerCardEl.classList.add('used');
+    updateSlotUI('player', attackerIdx);
+    checkBattleOver();
+  }, 1000 + validTargets.length * 250);
+
+  addLog('player', `${attacker.card.name} uses ${attack.name} on ${validTargets.length} target(s)!`);
+  hideActionPanel();
+}
+
+/* ============================================================
+   COOLDOWN HELPERS
+   ============================================================ */
+function isAttackOnCooldown(slot, attackIndex) {
+  if (!slot || !slot.attackCooldowns) return false;
+  return slot.attackCooldowns[attackIndex] > 0;
+}
+function getAttackCooldown(slot, attackIndex) {
+  if (!slot || !slot.attackCooldowns) return 0;
+  return slot.attackCooldowns[attackIndex] || 0;
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function makeBattleCardEl(slotObj, owner, slotIndex) {
+  const wrap = document.createElement('div');
+  wrap.className = `card ${slotObj.used ? 'used' : ''}`;
+  wrap.style.position = 'relative';
+
+  const img = document.createElement('img');
+  img.src = slotObj.card.src;
+  img.alt = slotObj.card.name;
+  wrap.appendChild(img);
+
+  if (slotObj.defending) {
+    wrap.style.boxShadow = '0 0 10px rgba(56,239,125,0.8)';
+  }
+  wrap.dataset.owner = owner;
+  wrap.dataset.slot = slotIndex;
+  return wrap;
+}
+
+function createCardHPBar(currentHP, maxHP) {
+  const hpBar = document.createElement('div');
+  hpBar.className = 'card-hp-bar';
+  const segments = 8;
+  const perSeg = maxHP / segments;
+  for (let i = 0; i < segments; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'hp-seg';
+    const start = i * perSeg;
+    const end = (i + 1) * perSeg;
+    if (currentHP <= start) seg.classList.add('empty');
+    else if (currentHP < end) {
+      const pct = (currentHP - start) / perSeg;
+      seg.classList.add(pct < 0.5 ? 'critical' : 'damaged');
+    }
+    hpBar.appendChild(seg);
+  }
+  return hpBar;
+}
+
+function updateCardHPBar(hpBarElement, currentHP, maxHP) {
+  if (!hpBarElement) return;
+  const segs = hpBarElement.querySelectorAll('.hp-seg');
+  const perSeg = maxHP / segs.length;
+  segs.forEach((seg, i) => {
+    const start = i * perSeg;
+    const end = (i + 1) * perSeg;
+    seg.classList.remove('empty', 'damaged', 'critical');
+    if (currentHP <= start) seg.classList.add('empty');
+    else if (currentHP < end) {
+      const pct = (currentHP - start) / perSeg;
+      seg.classList.add(pct < 0.5 ? 'critical' : 'damaged');
+    }
+  });
+}
+
+function renderAll() {
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    // Player
+    const pSlotEl = playerSlotsEl.children[i];
+    pSlotEl.innerHTML = '';
+    pSlotEl.classList.remove('occupied');
+    pSlotEl.style.overflow = 'visible';
+    if (playerSlots[i]) {
+      pSlotEl.classList.add('occupied');
+      const cardEl = makeBattleCardEl(playerSlots[i], 'player', i);
+      pSlotEl.appendChild(cardEl);
+      const hpBar = createCardHPBar(playerSlots[i].hp, MAX_HP);
+      pSlotEl.appendChild(hpBar);
+      cardEl._hpBar = hpBar;
+      updateStatusIcons(pSlotEl, playerSlots[i].statusEffects);
+    }
+
+    // Computer
+    const cSlotEl = computerSlotsEl.children[i];
+    cSlotEl.innerHTML = '';
+    cSlotEl.classList.remove('occupied');
+    cSlotEl.style.overflow = 'visible';
+    if (computerSlots[i]) {
+      cSlotEl.classList.add('occupied');
+      const cardEl = makeBattleCardEl(computerSlots[i], 'computer', i);
+      cSlotEl.appendChild(cardEl);
+      const hpBar = createCardHPBar(computerSlots[i].hp, MAX_HP);
+      cSlotEl.appendChild(hpBar);
+      cardEl._hpBar = hpBar;
+      updateStatusIcons(cSlotEl, computerSlots[i].statusEffects);
+    }
+  }
+  renderHand('player');
+  renderHand('computer');
+  renderDeckPiles();
+  updateGlobalHPUI();
+}
+
+function updateSlotUI(side, idx) {
+  const slot = side === 'player' ? playerSlots[idx] : computerSlots[idx];
+  const slotEl = (side === 'player' ? playerSlotsEl : computerSlotsEl).children[idx];
+  if (!slot || !slotEl.firstChild) { renderAll(); return; }
+
+  const cardEl = slotEl.querySelector('.card');
+  if (cardEl && cardEl._hpBar) updateCardHPBar(cardEl._hpBar, slot.hp, MAX_HP);
+  updateStatusIcons(slotEl, slot.statusEffects);
+  updateGlobalHPUI();
+}
+
+function updateGlobalHPUI() {
+  const sumP = playerSlots.reduce((s, slot) => s + (slot ? slot.hp : 0), 0);
+  const sumC = computerSlots.reduce((s, slot) => s + (slot ? slot.hp : 0), 0);
+  playerGlobalHP.innerHTML = '';
+  computerGlobalHP.innerHTML = '';
+  const maxTotal = MAX_SLOTS * MAX_HP;
+  renderSegments(playerGlobalHP, sumP / maxTotal);
+  renderSegments(computerGlobalHP, sumC / maxTotal);
+}
+
+function renderSegments(container, fraction) {
+  const toShow = fraction * SEGMENTS;
+  for (let i = 0; i < SEGMENTS; i++) {
+    const s = document.createElement('div');
+    s.className = 'seg';
+    const remain = toShow - i;
+    if (remain <= 0) s.style.opacity = 0.12;
+    else if (remain < 1) s.classList.add('half');
+    container.appendChild(s);
+  }
+}
+
+function updateActionUI() {
+  if (!actionCounter) return;
+  actionCounter.textContent = `Actions: ${actionsRemaining} / 1`;
+  actionCounter.classList.toggle('empty', actionsRemaining <= 0);
+}
+
+/* ============================================================
+   TURN FLOW
+   ============================================================ */
+function beginPlayerTurn() {
+  playerTurn = true;
+  actionsRemaining = 1;
+  turnIndicator.textContent = 'Player Turn';
+  endTurnBtn.classList.remove('disabled');
+  updateActionUI();
+
+  tickPerkEffects('player');
+  processStatusEffects('player');
+
+  // Reset slots
+  playerSlots.forEach(slot => {
+    if (!slot) return;
+    slot.used = false;
+    slot.defending = false;
+    slot.defendPersists = false;
+    const cardEl = playerSlotsEl.children[playerSlots.indexOf(slot)]?.querySelector('.card');
+    if (cardEl) {
+      cardEl.classList.remove('used');
+      cardEl.style.boxShadow = '';
+    }
+    if (slot.attackCooldowns) {
+      Object.keys(slot.attackCooldowns).forEach(k => {
+        if (slot.attackCooldowns[k] > 0) {
+          slot.attackCooldowns[k]--;
+          if (slot.attackCooldowns[k] === 0) {
+            const nm = slot.card.attacks[parseInt(k)]?.name;
+            if (nm) addLog('system', `${slot.card.name}'s ${nm} is ready again!`);
+          }
+        }
+      });
+    }
+  });
+
+  // Draw
+  const drawn = drawCard('player');
+  if (drawn) addLog('system', `You drew ${drawn.name}.`);
+
+  renderAll();
+}
+
+function endTurn() {
+  if (!playerTurn || endTurnBtn.classList.contains('disabled')) return;
+  if (!battleStarted) {
+    addLog('system', 'Place at least one card before ending your turn.');
+    return;
+  }
+  hideActionPanel();
+  clearSelections();
+  playerTurn = false;
+  endTurnBtn.classList.add('disabled');
+  actionCounter.textContent = 'Waiting...';
+  actionCounter.classList.remove('empty');
+  addLog('system', 'You ended your turn.');
+  setTimeout(computerTurn, 500);
+}
+
+function computerTurn() {
+  if (playerTurn) return;
+  if (!battleStarted) return;
+
+  turnIndicator.textContent = 'Computer Turn';
+  endTurnBtn.classList.add('disabled');
+
+  setTimeout(() => {
+    if (computerPerkReady) computerUsePerk();
+
+    tickPerkEffects('computer');
+    processStatusEffects('computer');
+
+    // Reset computer slots
+    computerSlots.forEach((slot, idx) => {
+      if (!slot) return;
+      slot.used = false;
+      slot.defending = false;
+      const cardEl = computerSlotsEl.children[idx]?.querySelector('.card');
+      if (cardEl) cardEl.classList.remove('used');
+      if (!slot.attackCooldowns) {
+        slot.attackCooldowns = {};
+        slot.card.attacks.forEach((a, i) => {
+          if (a.effect && ['stun','sleep','poison'].includes(a.effect)) slot.attackCooldowns[i] = 0;
+        });
+      }
+      Object.keys(slot.attackCooldowns).forEach(k => {
+        if (slot.attackCooldowns[k] > 0) slot.attackCooldowns[k]--;
+      });
+    });
+
+    // Draw
+    const drawn = drawCard('computer');
+    if (drawn) addLog('system', `Computer drew a card.`);
+
+    renderAll();
+
+    setTimeout(() => {
+      if (!computerSlots.some(s => s && s.hp > 0) && computerHand.length === 0 && computerDeck.length === 0) {
+        addLog('system', 'All computer cards are defeated.');
+        checkBattleOver();
+        return;
+      }
+      performComputerActions();
+    }, 500);
+  }, 800);
+}
+
+function endComputerTurn() {
+  beginPlayerTurn();
+  addLog('system', 'Player turn begins.');
+}
+
+/* ============================================================
+   COMPUTER AI
+   ============================================================ */
+function getPlayerCardThreat(slot) {
+  if (!slot || !slot.card) return 0;
+  let score = 0;
+  slot.card.attacks.forEach(a => {
+    score += a.damage * 2;
+    if (a.effect) score += 8;
+    if (['stun','sleep','poison','weaken'].includes(a.effect)) score += 10;
+  });
+  score += slot.hp / 10;
+  return score;
+}
+
+function getHighestThreatPlayerSlot() {
+  let best = -1, bestScore = -Infinity;
+  playerSlots.forEach((slot, idx) => {
+    const s = getPlayerCardThreat(slot);
+    if (s > bestScore) { bestScore = s; best = idx; }
+  });
+  return best;
+}
+
+function getTotalHealth(side) {
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  return slots.reduce((t, s) => t + (s ? s.hp : 0), 0);
+}
+
+function pickBestCardFromHand(hand) {
+  if (!hand || hand.length === 0) return null;
+  let best = hand[0], bestScore = -Infinity;
+  hand.forEach(card => {
+    let score = 0;
+    card.attacks.forEach(a => {
+      score += a.damage * 2;
+      if (a.effect) score += 10;
+    });
+    score += card.hp / 5;
+    if (score > bestScore) { bestScore = score; best = card; }
+  });
+  return best;
+}
+
+function computerPlaceCardFromHand() {
+  if (computerHand.length === 0) return false;
+  const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+  if (emptySlots.length === 0) return false;
+
+  // Prefer slots opposite player cards
+  const playerOccupied = playerSlots.map((s, i) => s && s.hp > 0 ? i : -1).filter(i => i !== -1);
+  const opposing = emptySlots.filter(i => playerOccupied.includes(i));
+  const target = opposing.length > 0
+    ? opposing[Math.floor(Math.random() * opposing.length)]
+    : emptySlots[Math.floor(Math.random() * emptySlots.length)];
+
+  const card = pickBestCardFromHand(computerHand);
+  const idx = computerHand.indexOf(card);
+  computerHand.splice(idx, 1);
+
+  const cooldowns = {};
+  card.attacks.forEach((a, i) => {
+    if (a.effect && ['stun','sleep','poison'].includes(a.effect)) cooldowns[i] = 0;
+  });
+
+  computerSlots[target] = {
+    card, hp: MAX_HP, defending: false, used: false,
+    statusEffects: [], attackCooldowns: cooldowns
+  };
+
+  addLog('computer', `Computer placed ${card.name} in slot ${target + 1}.`);
+  renderAll();
+  return true;
+}
+
+function performComputerActions() {
+  if (playerTurn) return;
+
+  if (computerTurnHistory.length > MAX_HISTORY) computerTurnHistory.shift();
+
+  const activeComputerSlots = computerSlots.map((slot, index) => ({ slot, index }))
+    .filter(item => item.slot && item.slot.hp > 0 && !item.slot.used
+      && !hasStatusEffect(item.slot, 'stun')
+      && !hasStatusEffect(item.slot, 'sleep')
+      && !(item.slot.disabled && item.slot.disabled > 0));
+
+  // If nothing can act, place a card if possible then end turn
+  if (activeComputerSlots.length === 0) {
+    if (computerHand.length > 0 && computerSlots.filter(s => s).length < MAX_SLOTS) {
+      if (computerPlaceCardFromHand()) {
+        setTimeout(endComputerTurn, 900);
+        return;
+      }
+    }
+    addLog('system', 'Computer has no available actions.');
+    setTimeout(endComputerTurn, 800);
+    return;
+  }
+
+  // AI personality
+  const computerHP = getTotalHealth('computer');
+  const playerHP = getTotalHealth('player');
+  const hpRatio = computerHP / Math.max(playerHP, 1);
+  const cardDiff = computerSlots.filter(s => s).length - playerSlots.filter(s => s).length;
+  let aggression = Math.min(2.0, Math.max(0.5, 1 + (hpRatio - 1) + (cardDiff * 0.1)));
+
+  const isCornered = computerHP < playerHP * 0.5 ||
+    (computerDeck.length === 0 && computerHand.length === 0 &&
+     computerSlots.filter(s => s).length <= 1);
+  if (isCornered) aggression = Math.min(2.5, aggression + 0.8);
+  else if (computerHP < playerHP) aggression += 0.3;
+
+  const retreatAllowed = !isCornered && hpRatio > 0.4;
+  const lastMoves = computerTurnHistory.slice(-2);
+  const forceAttack = lastMoves.every(m => m === 'defend' || m === 'switch') || isCornered;
+
+  const possibleMoves = [];
+
+  activeComputerSlots.forEach(({ slot, index: attackerIdx }) => {
+    if (!slot.attackCooldowns) slot.attackCooldowns = {};
+
+    const canKO = playerSlots.some((ps, pi) => {
+      if (!ps) return false;
+      return slot.card.attacks.some((a, ai) => {
+        if (isAttackOnCooldown(slot, ai)) return false;
+        const targets = getValidTargets(attackerIdx, a.pattern, 'computer');
+        return targets.includes(pi) && a.damage >= ps.hp;
+      });
+    });
+
+    if (slot.hp < MAX_HP * 0.35 && !canKO && !isCornered && retreatAllowed
+        && (!slot._streak || slot._streak.defend < 2)) {
+      possibleMoves.push({ type: 'defend', score: 10 - slot.hp / 10, attackerIdx });
+    }
+
+    // Switch
+    if (slot.card.mobile && (!slot._streak || slot._streak.switch < 2)) {
+      const emptySlots = computerSlots.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+      emptySlots.forEach(destIdx => {
+        if (destIdx === attackerIdx) return;
+        let moveScore = 0;
+        const fromT = slot.card.attacks.flatMap(a => getValidTargets(attackerIdx, a.pattern, 'computer'));
+        const toT   = slot.card.attacks.flatMap(a => getValidTargets(destIdx, a.pattern, 'computer'));
+        const gain = toT.filter(t => !fromT.includes(t));
+        const lost = fromT.filter(t => !toT.includes(t));
+        gain.forEach(t => {
+          if (playerSlots[t]) moveScore += 15 + getPlayerCardThreat(playerSlots[t]) * 0.5;
+        });
+        moveScore -= lost.length * 10;
+
+        const ht = getHighestThreatPlayerSlot();
+        if (toT.includes(ht)) moveScore += 20;
+
+        const dangerCur = playerSlots.filter((ps, pi) => ps && ps.card.attacks.some(a =>
+          getValidTargets(pi, a.pattern, 'player').includes(attackerIdx))).length;
+        const dangerNew = playerSlots.filter((ps, pi) => ps && ps.card.attacks.some(a =>
+          getValidTargets(pi, a.pattern, 'player').includes(destIdx))).length;
+        if (dangerCur > 0 && dangerNew === 0 && retreatAllowed) moveScore += 25;
+        if (dangerNew > dangerCur) {
+          moveScore -= isCornered ? 5 * (dangerNew - dangerCur) : 20 * (dangerNew - dangerCur);
+        }
+        if (slot.hp < MAX_HP * 0.4 && dangerNew === 0 && retreatAllowed) moveScore += 15;
+        if (slot.hp < MAX_HP * 0.4 && isCornered && gain.length > 0) moveScore += 20;
+
+        if (['cross','wide','adjacent'].includes(slot.card.attacks[0]?.pattern)) {
+          const central = MAX_SLOTS / 2 - Math.abs(destIdx - (MAX_SLOTS - 1) / 2);
+          moveScore += central * 3;
+        }
+
+        if (moveScore > 10) {
+          possibleMoves.push({ type: 'switch', score: moveScore, attackerIdx, targetIdx: destIdx });
+        }
+      });
+    }
+
+    // Attacks
+    slot.card.attacks.forEach((attack, attackIdx) => {
+      if (isAttackOnCooldown(slot, attackIdx)) return;
+      const targets = getValidTargets(attackerIdx, attack.pattern, 'computer');
+      targets.forEach(targetIdx => {
+        const target = playerSlots[targetIdx];
+        if (!target) return;
+        let score = 0;
+        const playerAlive = playerSlots.filter(s => s && s.hp > 0).length;
+        if (playerAlive === 1 && attack.damage >= target.hp) score += 100;
+        const threat = getPlayerCardThreat(target);
+        if (attack.effect && !hasStatusEffect(target, attack.effect)) score += threat * 1.5;
+        if (attack.effect && hasStatusEffect(target, attack.effect)) score -= 20;
+        if (['cross','wide','adjacent'].includes(attack.pattern) && targets.length > 1) {
+          score += 10 * targets.length;
+        }
+        score += attack.damage * aggression;
+        if (aggression > 1.2 && attack.effect) score += 15;
+        if (forceAttack) score += 30;
+        possibleMoves.push({ type: 'attack', score, attackerIdx, attack, attackIdx, targetIdx });
+      });
+    });
+  });
+
+  // Placement score
+  const computerCardCount = computerSlots.filter(s => s).length;
+  const playerCardCount = playerSlots.filter(s => s).length;
+  let placementScore = 0;
+  const canPlace = computerCardCount < MAX_SLOTS && computerHand.length > 0;
+  if (canPlace) {
+    if (computerCardCount === 0) placementScore += 100; // forced
+    if (playerCardCount >= computerCardCount) placementScore += 30;
+    if (computerCardCount < MAX_SLOTS - 1 && computerHand.length > 1) placementScore += 15;
+    if (computerHP > playerHP * 1.2) placementScore += 20;
+    if (computerHP < playerHP * 0.6) placementScore += 25;
+    placementScore += (MAX_SLOTS - computerCardCount) * 8;
+    if (computerCardCount > playerCardCount && computerHP > playerHP) placementScore -= 20;
+    if (computerTurnHistory.slice(-1)[0] === 'switch') placementScore -= 10;
+  }
+
+  // Only allow ONE action per computer turn
+  let actionTaken = false;
+
+  if (canPlace && (placementScore > 20 || possibleMoves.length === 0)) {
+    if (computerPlaceCardFromHand()) {
+      computerTurnHistory.push('place');
+      actionTaken = true;
+    }
+  }
+
+  if (!actionTaken) {
+    const best = possibleMoves.reduce((b, m) => m.score > b.score ? m : b, { score: -1 });
+    if (!best || best.score === -1 || !best.type) {
+      addLog('system', 'Computer hesitates.');
+    } else {
+      computerTurnHistory.push(best.type);
+      if (best.type === 'defend' || best.type === 'switch') {
+        updateDefendSwitchStreak(computerSlots[best.attackerIdx], best.type);
+      } else if (best.type === 'attack') {
+        updateDefendSwitchStreak(computerSlots[best.attackerIdx], 'attack');
+      }
+
+      if (best.type === 'attack')      executeComputerAttack(best);
+      else if (best.type === 'switch') executeComputerSwitch(best);
+      else if (best.type === 'defend') performComputerDefend(best.attackerIdx);
+    }
+  }
+
+  // End turn after one action
+  setTimeout(() => {
+    // If cornered & can still place, do one more placement before ending
+    if (isCornered && computerSlots.filter(s => s).length < MAX_SLOTS && computerHand.length > 0) {
+      if (computerPlaceCardFromHand()) {
+        setTimeout(endComputerTurn, 900);
+        return;
+      }
+    }
+    endComputerTurn();
+  }, 1800);
+}
+
+function updateDefendSwitchStreak(slot, moveType) {
+  if (!slot) return;
+  if (!slot._streak) slot._streak = { defend: 0, switch: 0 };
+  if (moveType === 'defend') { slot._streak.defend++; slot._streak.switch = 0; }
+  else if (moveType === 'switch') { slot._streak.switch++; slot._streak.defend = 0; }
+  else { slot._streak.defend = 0; slot._streak.switch = 0; }
+}
+
+function executeComputerAttack({ attackerIdx, attack, attackIdx, targetIdx }) {
+  const attacker = computerSlots[attackerIdx];
+  if (!attacker) return;
+
+  attacker.used = true;
+  const attackerCardEl = computerSlotsEl.children[attackerIdx].querySelector('.card');
+  const targetSlotEl = playerSlotsEl.children[targetIdx];
+  const targetCardEl = targetSlotEl.querySelector('.card');
+  const target = playerSlots[targetIdx];
+
+  if (attack.effect) {
+    const already = hasStatusEffect(target, attack.effect);
+    if (['stun','sleep','poison'].includes(attack.effect)) {
+      if (!attacker.attackCooldowns) attacker.attackCooldowns = {};
+      attacker.attackCooldowns[attackIdx] = BASE_COOLDOWN;
+    }
+    if (attack.effect === 'weaken') {
+      const wc = target.statusEffects ? target.statusEffects.filter(e => e.type === 'weaken').length : 0;
+      if (wc < 3) applyStatusEffect(target, 'weaken', attack.duration, attacker.card.name);
+    } else if (!already) {
+      applyStatusEffect(target, attack.effect, attack.duration, attacker.card.name);
+    }
+  }
+
+  addLog('computer', `Computer's ${attacker.card.name} attacks ${target.card.name}!`);
+
+  const animClass = getAttackAnimation(attackerIdx, targetIdx, attack.pattern || 'straight', 'computer');
+  attackerCardEl.classList.add(animClass);
+  const timing = getAnimationTiming(animClass);
+
+  setTimeout(() => {
+    const finalDmg = applyDamage(attacker, target, attack.damage);
+    if (finalDmg > 0) {
+      createImpactEffect(targetSlotEl, attack.pattern);
+      showDamagePopup(targetSlotEl, finalDmg, '#ff4444');
+      targetCardEl.classList.add('hit', 'flash');
+      setTimeout(() => targetCardEl.classList.remove('hit', 'flash'), 400);
+      target.hp = Math.max(0, target.hp - finalDmg);
+      addLog('computer', `${attacker.card.name} hits ${target.card.name} for ${finalDmg}.`);
+
+      if (target.hp <= 0) {
+        setTimeout(() => {
+          targetCardEl.classList.add('die');
+          setTimeout(() => {
+            addToDiscard(target.card, 'Player');
+            playerSlots[targetIdx] = null;
+            recordKill('computer');
+            renderAll();
+            checkBattleOver();
+          }, 600);
+        }, 200);
+      } else updateSlotUI('player', targetIdx);
+    }
+    checkBattleOver();
+  }, timing * 0.6);
+
+  setTimeout(() => {
+    attackerCardEl.classList.remove(animClass);
+    attackerCardEl.classList.add('used');
+    updateSlotUI('computer', attackerIdx);
+  }, timing);
+}
+
+function executeComputerSwitch({ attackerIdx, targetIdx }) {
+  const temp = computerSlots[attackerIdx];
+  computerSlots[attackerIdx] = null;
+  computerSlots[targetIdx] = temp;
+  temp.used = true;
+  addLog('system', `Computer moves ${temp.card.name} to slot ${targetIdx + 1}.`);
+  renderAll();
+}
+
+function performComputerDefend(slotIdx) {
+  const slot = computerSlots[slotIdx];
+  if (!slot) return;
+  slot.used = true;
+  slot.defending = true;
+  const cardEl = computerSlotsEl.children[slotIdx]?.querySelector('.card');
+  if (cardEl) {
+    cardEl.classList.add('defending-anim');
+    setTimeout(() => cardEl.classList.remove('defending-anim'), 600);
+  }
+  addLog('computer', `${slot.card.name} defends.`);
+  renderAll();
+}
+
+/* ============================================================
+   BATTLE START / END
+   ============================================================ */
+function checkBattleStart() {
+  if (battleStarted) return;
+  const playerHasCards = playerSlots.some(s => s !== null);
+  if (playerHasCards) {
+    battleStarted = true;
+    endTurnBtn.classList.remove('disabled');
+    addLog('system', 'Battle begins!');
+    // Computer places initial 2 cards
+    setTimeout(() => {
+      drawCard('computer');
+      drawCard('computer');
+      computerPlaceCardFromHand();
+      setTimeout(() => {
+        computerPlaceCardFromHand();
+        renderAll();
+      }, 400);
+    }, 400);
+  }
+}
+
+function checkBattleOver() {
+  const playerAlive = playerSlots.some(s => s && s.hp > 0);
+  const computerAlive = computerSlots.some(s => s && s.hp > 0);
+  const playerCanPlay = playerHand.length > 0 || playerDeck.length > 0;
+  const computerCanPlay = computerHand.length > 0 || computerDeck.length > 0;
+
+  // Player defeated if no board and no cards to play
+  if (!playerAlive && !playerCanPlay) {
+    addLog('system', 'Battle over: DEFEAT');
+    setTimeout(() => showGameOver('defeat'), 500);
+    battleStarted = false;
+    return;
+  }
+  if (!computerAlive && !computerCanPlay) {
+    addLog('system', 'Battle over: VICTORY');
+    setTimeout(() => showGameOver('victory'), 500);
+    battleStarted = false;
+    return;
+  }
+}
+
+/* ============================================================
+   GRAVEYARD
+   ============================================================ */
+function renderDiscardPile() {
+  discardedCardsEl.innerHTML = '';
+  [...discardPile].reverse().forEach(entry => {
+    const miniCard = document.createElement('div');
+    miniCard.className = 'mini-card';
+    miniCard.title = `${entry.card.name} — defeated by ${entry.owner}`;
+    const img = document.createElement('img');
+    img.src = entry.card.src;
+    img.alt = entry.card.name;
+    miniCard.appendChild(img);
+    miniCard.addEventListener('click', () => showDiscardedCardDetails(entry));
+    discardedCardsEl.appendChild(miniCard);
+  });
+  discardCountEl.textContent = `${discardPile.length} defeated`;
+}
+
+function showDiscardedCardDetails(entry) {
+  const attacksList = entry.card.attacks.map(a =>
+    `• ${a.name} (${a.damage} dmg)${a.effect ? ` [${a.effect}]` : ''}`
+  ).join('\n');
+  alert(`${entry.card.name}\nDefeated by: ${entry.owner}\nMax HP: ${MAX_HP}\n\nAttacks:\n${attacksList}`);
+}
+
+/* ============================================================
+   PERK SYSTEM
+   ============================================================ */
+function recordKill(killerSide) {
+  if (killerSide === 'player') {
+    playerKills++;
+    updatePerkUI('player');
+    if (playerKills >= 3 && !playerPerkReady) {
+      playerPerkReady = true;
+      updatePerkUI('player');
+      addLog('system', `★ ${playerCharacter?.name || 'Player'} PERK READY! Click the perk button.`);
+    }
+  } else {
+    computerKills++;
+    updatePerkUI('computer');
+    if (computerKills >= 3 && !computerPerkReady) {
+      computerPerkReady = true;
+      updatePerkUI('computer');
+      addLog('system', `★ ${computerCharacter?.name || 'Computer'} perk is charged...`);
+    }
+  }
+}
+
+function updatePerkUI(side) {
+  if (side === 'player') {
+    const btn = document.getElementById('playerPerkBtn');
+    const counter = document.getElementById('playerKillCount');
+    if (!btn || !counter) return;
+    counter.innerHTML = `Kills: <span>${Math.min(playerKills, 3)}</span>/3`;
+    if (playerPerkReady) {
+      btn.className = 'perk-btn perk-ready';
+      btn.disabled = false;
+      btn.innerHTML = `${playerCharacter?.perkName || 'PERK'}<br>READY!`;
+    } else {
+      btn.className = 'perk-btn';
+      btn.disabled = true;
+      btn.innerHTML = 'PERK<br>LOCKED';
+    }
+  } else {
+    const btn = document.getElementById('computerPerkBtn');
+    const counter = document.getElementById('computerKillCount');
+    if (!btn || !counter) return;
+    counter.innerHTML = `Kills: <span>${Math.min(computerKills, 3)}</span>/3`;
+    if (computerPerkReady) {
+      btn.className = 'perk-btn perk-ready';
+      btn.innerHTML = `${computerCharacter?.perkName || 'PERK'}<br>READY!`;
+    } else {
+      btn.className = 'perk-btn perk-used';
+      btn.innerHTML = 'PERK<br>LOCKED';
+    }
+  }
+}
+
+function activatePlayerPerk() {
+  if (!playerPerkReady || !playerCharacter) return;
+  playerPerkReady = false;
+  playerKills -= 3;
+  updatePerkUI('player');
+
+  if (playerCharacter.id === 'samurai') {
+    playerPerkActive = true;
+    playerPerkTurnsLeft = 2;
+    addLog('player', `⚔ Bushido Fury! +20% damage for 2 turns.`);
+  } else if (playerCharacter.id === 'mage') {
+    showMageModal('player');
+  } else if (playerCharacter.id === 'stranger') {
+    startStrangerPick('player');
+  }
+}
+
+function showMageModal(side) {
+  const modal = document.createElement('div');
+  modal.className = 'mage-modal';
+  modal.innerHTML = `
+    <h3>ARCANE HEX</h3>
+    <p>Choose a status effect for ALL enemy cards</p>
+    <div class="mage-choices">
+      <div class="mage-choice-btn" data-effect="poison">☠ POISON<br><span style="font-size:7px;color:#aaa">5 dmg/turn</span></div>
+      <div class="mage-choice-btn" data-effect="sleep">💤 SLEEP<br><span style="font-size:7px;color:#aaa">Skip 2 turns</span></div>
+      <div class="mage-choice-btn" data-effect="weaken">⬇ WEAKEN<br><span style="font-size:7px;color:#aaa">-30% attack</span></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelectorAll('.mage-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const effect = btn.dataset.effect;
+      modal.remove();
+      applyMagePerk(side, effect);
+    });
+  });
+}
+
+function applyMagePerk(side, effect) {
+  const enemySlots = side === 'player' ? computerSlots : playerSlots;
+  const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+  const duration = effect === 'sleep' ? 2 : effect === 'poison' ? 3 : 2;
+  let count = 0;
+  enemySlots.forEach((slot, i) => {
+    if (!slot || slot.hp <= 0) return;
+    if (!hasStatusEffect(slot, effect)) {
+      applyStatusEffect(slot, effect, duration,
+        side === 'player' ? playerCharacter.name : computerCharacter.name);
+      showStatusEffectPopup(enemySlotsEl.children[i], effect);
+      count++;
+    }
+  });
+  addLog(side === 'player' ? 'player' : 'computer',
+    `✦ Arcane Hex! ${effect.toUpperCase()} on ${count} enemy card(s)!`);
+  renderAll();
+}
+
+function startStrangerPick(side) {
+  if (side === 'player') {
+    strangerPickingMode = true;
+    addLog('player', `👁 Ghost Ward: Click one of YOUR cards to grant immunity.`);
+    playerSlots.forEach((slot, i) => {
+      if (!slot || slot.hp <= 0) return;
+      playerSlotsEl.children[i].classList.add('stranger-target');
+    });
+  }
+}
+
+function applyStrangerPerk(side, friendlySlotIdx) {
+  const friendlySlots = side === 'player' ? playerSlots : computerSlots;
+  const friendlySlotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  const slot = friendlySlots[friendlySlotIdx];
+  if (!slot) return;
+
+  slot.immune = 2;
+  friendlySlotsEl.children[friendlySlotIdx].classList.add('immune-glow');
+  addLog(side === 'player' ? 'player' : 'computer',
+    `🛡 ${slot.card.name} is IMMUNE for 2 turns!`);
+
+  const enemySlots = side === 'player' ? computerSlots : playerSlots;
+  const enemySlotsEl = side === 'player' ? computerSlotsEl : playerSlotsEl;
+  const liveEnemies = enemySlots.map((s, i) => s && s.hp > 0 ? i : -1).filter(i => i !== -1);
+  if (liveEnemies.length > 0) {
+    const tIdx = liveEnemies[Math.floor(Math.random() * liveEnemies.length)];
+    enemySlots[tIdx].disabled = 2;
+    enemySlotsEl.children[tIdx].classList.add('disabled-glow');
+    addLog(side === 'player' ? 'player' : 'computer',
+      `💀 ${enemySlots[tIdx].card.name} is DISABLED for 2 turns!`);
+  }
+  renderAll();
+}
+
+function tickPerkEffects(side) {
+  if (side === 'player' && playerPerkActive) {
+    playerPerkTurnsLeft--;
+    if (playerPerkTurnsLeft <= 0) { playerPerkActive = false; addLog('system', 'Bushido Fury fades.'); }
+  }
+  if (side === 'computer' && computerPerkActive) {
+    computerPerkTurnsLeft--;
+    if (computerPerkTurnsLeft <= 0) { computerPerkActive = false; addLog('system', "Computer's boost fades."); }
+  }
+  const slots = side === 'player' ? playerSlots : computerSlots;
+  const slotsEl = side === 'player' ? playerSlotsEl : computerSlotsEl;
+  slots.forEach((slot, i) => {
+    if (!slot) return;
+    if (slot.immune > 0) {
+      slot.immune--;
+      if (slot.immune <= 0) {
+        slotsEl.children[i].classList.remove('immune-glow');
+        addLog('system', `${slot.card.name}'s immunity expires.`);
+      }
+    }
+    if (slot.disabled > 0) {
+      slot.disabled--;
+      if (slot.disabled <= 0) {
+        slotsEl.children[i].classList.remove('disabled-glow');
+        addLog('system', `${slot.card.name} is no longer disabled.`);
+      }
+    }
+  });
+}
+
+function computerUsePerk() {
+  if (!computerPerkReady || !computerCharacter) return;
+  computerPerkReady = false;
+  computerKills -= 3;
+  updatePerkUI('computer');
+
+  if (computerCharacter.id === 'samurai') {
+    computerPerkActive = true;
+    computerPerkTurnsLeft = 2;
+    addLog('computer', `⚔ Computer's Bushido Fury! +20% damage for 2 turns.`);
+  } else if (computerCharacter.id === 'mage') {
+    const alive = playerSlots.filter(s => s && s.hp > 0);
+    const hasSleep = alive.every(s => hasStatusEffect(s, 'sleep'));
+    const hasPoison = alive.every(s => hasStatusEffect(s, 'poison'));
+    const effect = hasSleep ? 'poison' : hasPoison ? 'weaken' : 'sleep';
+    applyMagePerk('computer', effect);
+  } else if (computerCharacter.id === 'stranger') {
+    const live = computerSlots.map((s, i) => s && s.hp > 0 ? i : -1).filter(i => i !== -1);
+    if (live.length > 0) {
+      const lowest = live.reduce((a, b) => computerSlots[a].hp < computerSlots[b].hp ? a : b);
+      applyStrangerPerk('computer', lowest);
+    }
+  }
+}
+
+/* ============================================================
+   GAME OVER / REWARD
+   ============================================================ */
+function grantRandomCard() {
+  let collection = [];
+  try {
+    const stored = localStorage.getItem('collectedCards');
+    if (stored) collection = JSON.parse(stored);
+  } catch(e) {}
+  if (!Array.isArray(collection) || collection.length === 0) {
+    collection = playerDeck.map(c => ({ name: c.name, src: c.src }));
+  }
+  const newCard = cardPool[Math.floor(Math.random() * cardPool.length)];
+  collection.push({ name: newCard.name, src: newCard.src });
+  try { localStorage.setItem('collectedCards', JSON.stringify(collection)); } catch(e) {}
+  return newCard;
+}
+
+function showGameOver(result) {
+  const overlay = document.getElementById('gameOverOverlay');
+  const textEl = document.getElementById('gameOverText');
+  const optionsEl = document.getElementById('gameOverOptions');
+  optionsEl.innerHTML = '';
+
+  textEl.textContent = result === 'victory' ? 'VICTORY' : 'DEFEAT';
+  textEl.className = `game-over-text ${result}`;
+
+  if (result === 'victory') {
+    const newCard = grantRandomCard();
+    const reward = document.createElement('div');
+    reward.className = 'reward-panel';
+    const label = document.createElement('div');
+    label.className = 'reward-text';
+    label.textContent = newCard ? 'You won a new card!' : 'No new card.';
+    reward.appendChild(label);
+    if (newCard) reward.appendChild(createHandCardEl(newCard, -1, 'reward'));
+    optionsEl.appendChild(reward);
+  }
+
+  const nextBtn = document.createElement('div');
+  nextBtn.className = 'btn';
+  nextBtn.textContent = 'Play Again';
+  nextBtn.onclick = () => resetGame();
+  optionsEl.appendChild(nextBtn);
+
+  const returnBtn = document.createElement('div');
+  returnBtn.className = 'btn';
+  returnBtn.textContent = 'Return to LazyToadStudios';
+  returnBtn.onclick = () => { window.location.href = 'index.html'; };
+  optionsEl.appendChild(returnBtn);
+
+  overlay.classList.add('show');
+}
+
+/* ============================================================
+   RESET / INIT
+   ============================================================ */
+function resetGame() {
+  document.getElementById('gameOverOverlay').classList.remove('show');
+
+  playerSlots = new Array(MAX_SLOTS).fill(null);
+  computerSlots = new Array(MAX_SLOTS).fill(null);
+  discardPile.length = 0;
+  computerTurnHistory = [];
+  selected = null;
+  battleStarted = false;
+  strangerPickingMode = false;
+
+  clearSelections();
+  hideActionPanel();
+
+  loadPlayerDeck();
+  buildComputerDeck();
+
+  playerTurn = true;
+  actionsRemaining = 1;
+  turnIndicator.textContent = 'Player Setup Phase';
+  endTurnBtn.classList.add('disabled');
+  updateActionUI();
+  actionCounter.textContent = 'Actions: 1 / 1';
+
+  playerKills = 0; computerKills = 0;
+  playerPerkReady = false; computerPerkReady = false;
+  playerPerkActive = false; computerPerkActive = false;
+  updatePerkUI('player');
+  updatePerkUI('computer');
+
+  logEl.innerHTML = '';
+  addLog('system', 'Battle ready — draw a card and place it.');
+
+  // Draw opening hand
+  for (let i = 0; i < 3; i++) drawCard('player');
+
+  renderAll();
+  renderDiscardPile();
+}
+
+/* ============================================================
+   CHARACTER SELECT
+   ============================================================ */
+function buildCharSelectScreen() {
+  const row = document.getElementById('csoCardsRow');
+  row.innerHTML = '';
+  CHARACTERS.forEach(char => {
+    const card = document.createElement('div');
+    card.className = 'cso-card';
+    card.innerHTML = `
+      <div class="cso-portrait-wrap"><img src="${char.src}" alt="${char.name}"></div>
+      <div class="cso-char-name">${char.name}</div>
+      <div class="cso-divider"></div>
+      <div class="cso-perk-label">${char.perkName}</div>
+      <div class="cso-perk-desc">${char.perkDesc}</div>
+    `;
+    card.addEventListener('click', () => onCharacterSelected(char.id));
+    row.appendChild(card);
+  });
+  document.getElementById('charSelectOverlay').style.display = 'flex';
+}
+
+function onCharacterSelected(charId) {
+  playerCharacter = CHARACTERS.find(c => c.id === charId);
+  const others = CHARACTERS.filter(c => c.id !== charId);
+  computerCharacter = others[Math.floor(Math.random() * others.length)];
+
+  document.getElementById('charSelectOverlay').style.display = 'none';
+
+  const pp = document.getElementById('playerPortrait');
+  if (pp) { pp.src = playerCharacter.src; pp.style.display = ''; }
+  document.getElementById('playerNameLabel').textContent = playerCharacter.name;
+
+  const cp = document.getElementById('computerPortrait');
+  if (cp) cp.src = computerCharacter.src;
+  document.getElementById('computerNameLabel').textContent = computerCharacter.name;
+
+  document.getElementById('playerPerkBtn').addEventListener('click', () => {
+    if (playerPerkReady && playerTurn) activatePlayerPerk();
+  });
+
+  updatePerkUI('player');
+  updatePerkUI('computer');
+
+  init();
+}
+
+/* ============================================================
+   TUTORIAL
+   ============================================================ */
+function showTutorialIfNeeded() {
+  const overlay = document.getElementById('tutorialOverlay');
+  const closeBtn = document.getElementById('tutorialClose');
+  if (!overlay) return;
+  const seen = localStorage.getItem('toadBattle_tutorialSeen');
+  if (!seen) overlay.classList.add('show');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.remove('show');
+      localStorage.setItem('toadBattle_tutorialSeen', 'true');
+    });
+  }
+}
+
+/* ============================================================
+   GLOBAL EVENT LISTENERS
+   ============================================================ */
+endTurnBtn.addEventListener('click', endTurn);
+
+document.addEventListener('click', (e) => {
+  if (currentActionPanel && !currentActionPanel.contains(e.target) &&
+      !e.target.closest('.slot') && !e.target.closest('.card')) {
+    hideActionPanel();
+    clearSelections();
+  }
+  if (selected && selected.type === 'hand') {
+    const clickedCard = e.target.closest('.card');
+    const clickedSlot = e.target.closest('.slot');
+    const clickedHand = e.target.closest('#playerHand');
+    if (!clickedCard && !clickedSlot && !clickedHand) clearSelections();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { hideActionPanel(); clearSelections(); }
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (playerTurn && !endTurnBtn.classList.contains('disabled')) {
+      endTurnBtn.click();
+      e.preventDefault();
+    }
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  makeSlotsUI();
+  resetGame();
+  showTutorialIfNeeded();
+  addLog('system', 'Click a hand card, then a slot to place it.');
+  addLog('system', 'You get 1 action per turn. End your turn when done.');
+}
+
+// Start
+buildCharSelectScreen();
+
+})();
+</script>
+</body>
+</html>
