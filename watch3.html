@@ -4255,7 +4255,7 @@ let bleTxChar = null;
 let bleConnected = false;
 
 const pendingAcks = new Map();  // msgId -> { resolve, reject, timer, label }
-const ACK_TIMEOUT_MS = 4000;
+const ACK_TIMEOUT_MS = 8000;
 
 const btnConnect = document.getElementById('btnConnect');
 const btnSend    = document.getElementById('btnSend');
