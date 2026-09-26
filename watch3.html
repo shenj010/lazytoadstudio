@@ -1999,10 +1999,6 @@ function drawSnakeElement(el) {
 }
 
 function drawInvadersElement(el) {
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(el.x * SCALE + 0.5, el.y * SCALE + 0.5,
-                 el.w * SCALE - 1, el.h * SCALE - 1);
 
   // HUD row — lives dots on left, score on right
   fillRectPx(el.x + 2, el.y + 3, 1, 1);
