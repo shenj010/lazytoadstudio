@@ -1942,6 +1942,7 @@ function drawElement(el) {
     case 'diagMaster': drawDiagMasterElement(el); break;
     case 'pulse':      drawPulseElement(el);      break;
     case 'snake':      drawSnakeElement(el);      break;
+    case 'invaders':   drawInvadersElement(el);   break;
     default:         break;
   }
 }
@@ -1996,6 +1997,72 @@ function drawSnakeElement(el) {
   fillRectPx(fx,     fy + 1, 4, 1);
   fillRectPx(fx + 1, fy + 2, 2, 1);
 }
+
+function drawInvadersElement(el) {
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(el.x * SCALE + 0.5, el.y * SCALE + 0.5,
+                 el.w * SCALE - 1, el.h * SCALE - 1);
+
+  // HUD row — lives dots on left, score on right
+  fillRectPx(el.x + 2, el.y + 3, 1, 1);
+  fillRectPx(el.x + 6, el.y + 3, 1, 1);
+  fillRectPx(el.x + 10, el.y + 3, 1, 1);
+  // "score" digits as tiny dots so the mock reads as a real HUD
+  for (let i = 0; i < 3; i++) {
+    fillRectPx(el.x + el.w - 3 - i * 4, el.y + 3, 2, 1);
+  }
+
+  // Swarm — three rows of 5×4 invaders, mock pattern
+  const COLS = 6, ROWS = 3;
+  const CELL_W = 5, CELL_H = 4, SPACING_X = 5, SPACING_Y = 3;
+  const swarmX = el.x + 4;
+  const swarmY = el.y + 10;
+
+  // Sprite patterns (5 bits per row, MSB = left)
+  const sprites = [
+    [0b01010, 0b11111, 0b10101, 0b01010],  // crab
+    [0b00100, 0b01110, 0b11111, 0b10101],  // squid
+    [0b10001, 0b01010, 0b11111, 0b01010],  // octopus
+  ];
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const ix = swarmX + c * SPACING_X;
+      const iy = swarmY + r * (CELL_H + SPACING_Y);
+      const sprite = sprites[r % 3];
+      for (let row = 0; row < 4; row++) {
+        const bits = sprite[row];
+        for (let col = 0; col < 5; col++) {
+          if (bits & (1 << (4 - col))) {
+            fillRectPx(ix + col, iy + row, 1, 1);
+          }
+        }
+      }
+    }
+  }
+
+  // Shields — two 6-wide clusters with the arcade notch
+  const shieldY = el.y + 100;
+  for (let s = 0; s < 2; s++) {
+    const baseX = el.x + (s === 0 ? 4 : 18);
+    for (let x = 0; x < 6; x++) {
+      for (let y = 0; y < 3; y++) {
+        if (y === 0 && (x === 2 || x === 3)) continue;
+        fillRectPx(baseX + x, shieldY + y, 1, 1);
+      }
+    }
+  }
+
+  // Player ship at bottom
+  const px = el.x + 15;
+  const py = el.y + 120;
+  fillRectPx(px,     py,     1, 1);
+  fillRectPx(px - 1, py + 1, 3, 1);
+  fillRectPx(px - 1, py + 2, 3, 1);
+  fillRectPx(px,     py + 3, 1, 1);
+}
+   
 function drawDiagRowPx(rowCoord, textStart, len, label, value, bullet, vertical, opts = {}) {
   const {
     typewriter = false,
@@ -2925,6 +2992,7 @@ function addElement(type) {
     diagMaster: DIAG_CHUNKS.diagMaster.defaults,
     pulse:      { w: 6, h: 6, style: 'dot', source: 'seconds' },
     snake:      { w: 32, h: 128 },
+    invaders:   { w: 32, h: 128 },
   };
   const def = defaults[type];
   if (!def) return;
@@ -3048,6 +3116,7 @@ function rebuildPalette() {
       <button data-add="pulse">Pulse</button>
       <button data-add="pulse">Pulse</button>
       <button data-add="snake">Snake</button>
+      <button data-add="invaders">Space Invaders</button>
     `;
        renderPageRow();
     body.querySelectorAll('[data-add]').forEach(btn => {
