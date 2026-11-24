@@ -3634,6 +3634,7 @@ function rebuildProps() {
     const chargeBadge = document.getElementById('propChargeBadge');
     if (chargeBadge) {
       chargeBadge.onchange = () => { el.chargeBadge = chargeBadge.value; render(); };
+    }
 
    const typewriterBox = document.getElementById('propTypewriter');
     if (typewriterBox) typewriterBox.onchange = () => { el.typewriter = typewriterBox.checked; render(); };
