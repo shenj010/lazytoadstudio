@@ -1932,6 +1932,7 @@ function drawElement(el) {
     case 'weekday':  drawWeekdayElement(el, now); break;
     case 'weather':  drawWeatherElement(el);      break;
     case 'temp':     drawTempElement(el);         break;
+    case 'battery':  drawBatteryElement(el);      break;
     case 'text':     drawTextElement(el);         break;
     case 'bar':      drawBarElement(el);          break;
     case 'background': drawBackgroundElement(el); break;
@@ -2506,6 +2507,9 @@ function drawBarElement(el) {
     case 'battery.percent':
       value = 0.73;
       break;
+    case 'battery.voltage':
+      value = (3.92 - 3.0) / (4.2 - 3.0);   // mock normalized to 3.0–4.2V
+      break;
     default:
       value = 0.5;
   }
@@ -2712,6 +2716,7 @@ function drawDateElement(el, now) {
     for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
   }
 }
+
 
 function drawTempElement(el) {
   const rot = el.rotation || 0;
@@ -2982,6 +2987,7 @@ function addElement(type) {
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
     background: { w: 32, h: 128 },
     timezone: { w: 14, h: 8, style: 'text', scale: 1 },
+    battery: { w: 26, h: 16, style: 'microhex', scale: 2, format: 'PCT' },
     diagTime:   DIAG_CHUNKS.diagTime.defaults,
     diagEnv:    DIAG_CHUNKS.diagEnv.defaults,
     diagSys:    DIAG_CHUNKS.diagSys.defaults,
@@ -3043,6 +3049,113 @@ function renderPageRow() {
     row.appendChild(btn);
   }
 }
+
+function drawBatteryElement(el) {
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
+  const s = scaleFromHeight(el.h, 8);
+
+  // Mock battery reading for the designer. The watch firmware overrides
+  // these with real hardware readings when the face is drawn live.
+  const pct  = 73;         // 0–100
+  const volts = 3.92;      // for VOLT format
+
+  let str = '';
+  switch (el.format || 'PCT') {
+    case 'VOLT': str = volts.toFixed(2); break;   // "3.92"
+    case 'BAR':  str = ''; break;                 // handled below
+    case 'PCT':
+    default:     str = String(pct); break;        // "73"
+  }
+
+  // 'BAR' format draws a segmented battery icon instead of digits.
+  if ((el.format || 'PCT') === 'BAR') {
+    drawBatteryIcon(el, pct, vertical);
+    return;
+  }
+
+  if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of str) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of str) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+    return;
+  }
+
+  // microhex / 7seg digits
+  if (el.style === '7seg') {
+    // 7-seg needs numeric digits only; drop the '.' for VOLT
+    const digits = str.replace(/[^0-9]/g, '').split('').map(Number);
+    if (vertical) {
+      const digitH = Math.floor((el.h - (digits.length - 1)) / digits.length);
+      const thick = Math.max(1, Math.round(Math.min(el.w, digitH) / 6));
+      let yy = el.y;
+      for (const d of digits) {
+        draw7SegDigit(el.x, yy, el.w, digitH - 1, thick, d);
+        yy += digitH;
+      }
+    } else {
+      const digitW = Math.floor((el.w - (digits.length - 1)) / digits.length);
+      const thick = Math.max(1, Math.round(Math.min(digitW, el.h) / 6));
+      let xx = el.x;
+      for (const d of digits) {
+        draw7SegDigit(xx, el.y, digitW - 1, el.h, thick, d);
+        xx += digitW;
+      }
+    }
+    return;
+  }
+
+  // microhex (default)
+  const digits = str.split('').filter(c => c !== '.').map(Number);
+  const glyphW = (MHEX_WIDTH + 1) * s;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+  if (vertical) {
+    let yy = el.y;
+    for (const c of digits) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+  } else {
+    let xx = el.x;
+    for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+  }
+}
+
+function drawBatteryIcon(el, pct, vertical) {
+  // Simple segmented battery: body + nub + fill segments.
+  const cellCount = Math.max(3, Math.min(6, Math.floor((vertical ? el.h : el.w) / 4)));
+  const lit = Math.round(cellCount * (pct / 100));
+  const x = el.x, y = el.y, w = el.w, h = el.h;
+  const gap = 1;
+
+  if (vertical) {
+    const bodyH = h - 3;
+    const segH = Math.floor((bodyH - (cellCount - 1) * gap) / cellCount);
+    // outline
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.strokeRect(x * SCALE + 0.5, y * SCALE + 0.5, w * SCALE - 1, bodyH * SCALE - 1);
+    // nub
+    fillRectPx(x + Math.floor(w / 2) - 1, y + bodyH + 1, 2, 2);
+    // segments (bottom up)
+    for (let i = 0; i < cellCount; i++) {
+      if (i >= lit) continue;
+      const sy = y + bodyH - (i + 1) * segH - i * gap;
+      fillRectPx(x + 1, sy, w - 2, segH);
+    }
+  } else {
+    const bodyW = w - 3;
+    const segW = Math.floor((bodyW - (cellCount - 1) * gap) / cellCount);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.strokeRect(x * SCALE + 0.5, y * SCALE + 0.5, bodyW * SCALE - 1, h * SCALE - 1);
+    fillRectPx(x + bodyW + 1, y + Math.floor(h / 2) - 1, 2, 2);
+    for (let i = 0; i < cellCount; i++) {
+      if (i >= lit) continue;
+      const sx = x + 1 + i * (segW + gap);
+      fillRectPx(sx, y + 1, segW, h - 2);
+    }
+  }
+}
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -3101,6 +3214,7 @@ function rebuildPalette() {
       <button data-add="weekday">Weekday</button>
       <button data-add="weather">Weather</button>
       <button data-add="temp">Temp</button>
+      <button data-add="battery">Battery</button>
       <button data-add="bar">Bar</button>
       <button data-add="text">Text</button>
       <button data-add="background">Background</button>
@@ -3183,7 +3297,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary'].includes(el.type) ? `
+     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary', 'battery'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
@@ -3279,7 +3393,43 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-   
+   const batteryFields = el.type === 'battery' ? `
+  <div class="prop-row">
+    <label>Style</label>
+    <select id="propStyle">
+      <option value="microhex" ${el.style==='microhex'?'selected':''}>Microhex</option>
+      <option value="7seg"     ${el.style==='7seg'    ?'selected':''}>7-seg</option>
+      <option value="text"     ${el.style==='text'    ?'selected':''}>Text (5x7)</option>
+    </select>
+  </div>
+  <div class="prop-row">
+    <label>Format</label>
+    <select id="propBatteryFormat">
+      <option value="PCT"  ${(el.format||'PCT')==='PCT' ?'selected':''}>Percent</option>
+      <option value="VOLT" ${el.format==='VOLT'         ?'selected':''}>Voltage</option>
+      <option value="BAR"  ${el.format==='BAR'          ?'selected':''}>Battery icon</option>
+    </select>
+  </div>
+  <div class="prop-row">
+    <label>Charge style</label>
+    <select id="propChargeStyle">
+      <option value="badge"     ${(el.chargeStyle||'badge')==='badge'?'selected':''}>Badge</option>
+      <option value="alternate" ${el.chargeStyle==='alternate'        ?'selected':''}>Alternate (flash)</option>
+      <option value="none"      ${el.chargeStyle==='none'             ?'selected':''}>Hidden</option>
+    </select>
+  </div>
+  <div class="prop-row">
+    <label>Badge</label>
+    <select id="propChargeBadge">
+      <option value="+"    ${(el.chargeBadge||'+')==='+'?'selected':''}>Plus (+)</option>
+      <option value="bolt" ${el.chargeBadge==='bolt'   ?'selected':''}>Lightning bolt</option>
+    </select>
+  </div>
+  <div class="prop-row">
+    <label>Scale</label>
+    <input type="number" id="propScale" min="1" max="4" step="1" value="${el.scale || 1}">
+  </div>
+` : '';
 
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
@@ -3309,7 +3459,7 @@ function rebuildProps() {
       ${diagFields}
       ${pulseFields}
       ${diagEffectFields}
-      
+      ${batteryFields}
 
       ${el.type === 'background' ? `
         <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
@@ -3470,6 +3620,20 @@ function rebuildProps() {
     if (weekdayStyle) {
       weekdayStyle.onchange = () => { el.weekdayStyle = weekdayStyle.value; render(); };
     }
+
+   const batteryFormat = document.getElementById('propBatteryFormat');
+    if (batteryFormat) {
+      batteryFormat.onchange = () => { el.format = batteryFormat.value; render(); };
+    }
+
+    const chargeStyle = document.getElementById('propChargeStyle');
+    if (chargeStyle) {
+      chargeStyle.onchange = () => { el.chargeStyle = chargeStyle.value; render(); };
+    }
+
+    const chargeBadge = document.getElementById('propChargeBadge');
+    if (chargeBadge) {
+      chargeBadge.onchange = () => { el.chargeBadge = chargeBadge.value; render(); };
 
    const typewriterBox = document.getElementById('propTypewriter');
     if (typewriterBox) typewriterBox.onchange = () => { el.typewriter = typewriterBox.checked; render(); };
