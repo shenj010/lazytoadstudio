@@ -3565,6 +3565,20 @@ function rebuildProps() {
       </div>
     ` : '';
 
+       const forecastFields = el.type === 'forecast' ? `
+      <div class="prop-row">
+        <label>Graph</label>
+        <select id="propForecastSource">
+          <option value="forecast.temp" ${el.source!=='forecast.rain'?'selected':''}>Temperature curve</option>
+          <option value="forecast.rain" ${el.source==='forecast.rain'?'selected':''}>Rain-chance bars</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Hours</label>
+        <input type="number" id="propForecastHours" min="6" max="48" step="1" value="${el.segments || 12}">
+      </div>
+    ` : '';
+
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
         <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
