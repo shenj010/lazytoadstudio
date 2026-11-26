@@ -1931,6 +1931,7 @@ function drawElement(el) {
     case 'date':     drawDateElement(el, now);    break;
     case 'weekday':  drawWeekdayElement(el, now); break;
     case 'weather':  drawWeatherElement(el);      break;
+    case 'forecast': drawForecastElement(el); break;
     case 'temp':     drawTempElement(el);         break;
     case 'battery':  drawBatteryElement(el);      break;
     case 'steps':    drawStepsElement(el);        break;
@@ -2212,7 +2213,7 @@ function drawDiagTimeElement(el) {
 }
 
 function drawDiagEnvElement(el) {
-  const fields = parseEnabledFields(el.content, ['T','W','H'], true);
+  const fields = parseEnabledFields(el.content, ['T','W','H','L','K','R','N'], true)
   const vertical = diagRotationVertical(el);
   const L = makeDiagLayout(el, vertical);
   if (L.maxRows < 1) return;
@@ -2232,6 +2233,10 @@ function drawDiagEnvElement(el) {
   if (fields.T && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TEMP', '12.4C', true, vertical, opts());
   if (fields.W && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'WX', 'CLD', true, vertical, opts());
   if (fields.H && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'HUM', '78%', true, vertical, opts());
+  if (fields.L && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'H/L', '19/11', true, vertical, opts());
+  if (fields.K && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TMR', '20/12', true, vertical, opts());
+  if (fields.R && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'RN', '60%', true, vertical, opts());
+  if (fields.N && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, '+3H', '17C', true, vertical, opts());
 
   if (L.count > 0 && L.count < L.maxRows) {
     const divPos = L.dividerCoord();
@@ -2277,7 +2282,7 @@ function drawDiagSysElement(el) {
 }
 
 function drawDiagMasterElement(el) {
-  const fields = parseEnabledFields(el.content, ['T','D','W','Z','P','X','H','B'], true);
+  const fields = parseEnabledFields(el.content, ['T','D','W','Z','P','X','H','B', 'L', 'K', 'R', 'N'], true);
   const now = tzNow();
   const vertical = diagRotationVertical(el);
   const L = makeDiagLayout(el, vertical);
@@ -2296,8 +2301,6 @@ function drawDiagMasterElement(el) {
   stutterChance: el.stutterChance ?? 0.01,
 });
 
- 
-
   const rows = [];
   if (fields.T) rows.push(['TIME', `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`]);
   if (fields.D) rows.push(['DATE', `${pad2(now.getMonth()+1)}.${pad2(now.getDate())}.${pad2(now.getFullYear()%100)}`]);
@@ -2307,6 +2310,10 @@ function drawDiagMasterElement(el) {
   if (fields.X) rows.push(['WX',   'CLD']);
   if (fields.H) rows.push(['HUM',  '78%']);
   if (fields.B) rows.push(['BAT',  '073']);
+  if (fields.L && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'H/L', '19/11', true, vertical, opts());
+  if (fields.K && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'TMR', '20/12', true, vertical, opts());
+  if (fields.R && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, 'RN', '60%', true, vertical, opts());
+  if (fields.N && L.count < L.maxRows) drawDiagRowPx(L.nextRowCoord(), L.textBase, L.textLen, '+3H', '17C', true, vertical, opts());
 
   for (const [label, value] of rows) {
     if (L.count >= L.maxRows) break;
@@ -2993,6 +3000,7 @@ function addElement(type) {
     date:    { w: 26, h: 16, style: 'microhex', scale: 2, format: 'MMDD' },
     weekday: { w: 16, h: 16 },
     weather: { w: 16, h: 16 },
+　　forecast: { w: 32, h: 16, source: 'forecast.temp', segments: 12 },
     temp:    { w: 26, h: 16, style: 'microhex', scale: 2 },
     bar: { w: 4, h: 48, source: 'time.hourProgress', barStyle: 'solid', segments: 10, barOutline: true },
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
@@ -3212,6 +3220,57 @@ function drawBatteryIcon(el, pct, vertical) {
     for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
   }
 }
+
+function drawForecastElement(el) {
+  const vertical = (el.rotation === 90 || el.rotation === 270);
+  const rain = (el.source === 'forecast.rain');
+  const spanLen = vertical ? el.h : el.w;
+  const crossLen = vertical ? el.w : el.h;
+  if (spanLen < 4 || crossLen < 3) return;
+  const hours = (el.segments >= 6 && el.segments <= 48) ? el.segments : 12;
+
+  // plot in (along, across) space; across grows upward (horizontal) or rightward (vertical)
+  const plot = (a, c) => {
+    if (a < 0 || a >= spanLen || c < 0 || c >= crossLen) return;
+    if (vertical) fillRectPx(el.x + c, el.y + a, 1, 1);
+    else          fillRectPx(el.x + a, el.y + (crossLen - 1 - c), 1, 1);
+  };
+
+  if (rain) {   // mock data in the designer
+    const bw = Math.max(1, Math.floor(spanLen / hours));
+    const gap = bw >= 3 ? 1 : 0;
+    for (let a = 0; a < spanLen; a++) plot(a, 0);
+    for (let i = 0; i < hours; i++) {
+      const pct = Math.max(0, Math.min(100, 55 * Math.sin(i * 0.6 + 1) + 25));
+      const h = Math.round(pct * (crossLen - 1) / 100);
+      for (let a = i * bw; a < i * bw + bw - gap; a++)
+        for (let c = 1; c <= h; c++) plot(a, c);
+    }
+    return;
+  }
+
+  const temps = [];
+  for (let i = 0; i < hours; i++) temps.push(14 + 5 * Math.sin(i / hours * Math.PI * 1.6));
+  let tmin = Math.min(...temps), tmax = Math.max(...temps);
+  if (tmax - tmin < 4) { const mid = (tmax + tmin) / 2; tmin = mid - 2; tmax = mid + 2; }
+  let prevA = 0, prevC = 0, lastC = 0;
+  for (let i = 0; i < hours; i++) {
+    const a = Math.round(i * (spanLen - 1) / (hours - 1));
+    const c = Math.round((temps[i] - tmin) * (crossLen - 1) / (tmax - tmin));
+    if (i === 0) { plot(a, c); lastC = c; }
+    else {
+      for (let x = prevA + 1; x <= a; x++) {
+        const f = (x - prevA) / Math.max(1, a - prevA);
+        const cc = Math.round(prevC + (c - prevC) * f);
+        for (let y = Math.min(lastC, cc); y <= Math.max(lastC, cc); y++) plot(x, y);
+        lastC = cc;
+      }
+    }
+    prevA = a; prevC = c;
+  }
+  const c0 = Math.round((temps[0] - tmin) * (crossLen - 1) / (tmax - tmin));
+  for (let dx = 0; dx < 2; dx++) for (let dy = -1; dy <= 1; dy++) plot(dx, c0 + dy);
+}
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -3269,6 +3328,7 @@ function rebuildPalette() {
       <button data-add="date">Date</button>
       <button data-add="weekday">Weekday</button>
       <button data-add="weather">Weather</button>
+      <button data-add="forecast">Forecast</button>
       <button data-add="temp">Temp</button>
       <button data-add="battery">Battery</button>
       <button data-add="steps">Steps</button>
@@ -3354,7 +3414,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary', 'battery', 'steps'].includes(el.type) ? `
+     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary', 'battery', 'steps', 'forecast'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
@@ -3535,6 +3595,7 @@ function rebuildProps() {
       ${diagEffectFields}
       ${batteryFields}
       ${stepsFields}
+      ${forecastFields}
 
       ${el.type === 'background' ? `
         <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
@@ -3667,6 +3728,14 @@ function rebuildProps() {
     if (barSource) {
       barSource.onchange = () => { el.source = barSource.value; render(); };
     }
+
+       const fcSource = document.getElementById('propForecastSource');
+    if (fcSource) fcSource.onchange = () => { el.source = fcSource.value; render(); };
+    const fcHours = document.getElementById('propForecastHours');
+    if (fcHours) fcHours.oninput = () => {
+      const v = parseInt(fcHours.value, 10);
+      if (!isNaN(v) && v >= 6 && v <= 48) { el.segments = v; render(); }
+    };
 
     const barStyle = document.getElementById('propBarStyle');
     if (barStyle) {
@@ -3962,6 +4031,10 @@ const DIAG_CHUNKS = {
       { key: 'T', label: 'Temp',     default: true },
       { key: 'W', label: 'Weather',  default: true },
       { key: 'H', label: 'Humidity', default: true },
+      { key: 'L', label: 'Today hi/lo',   default: false },
+      { key: 'K', label: 'Tomorrow hi/lo', default: false },
+      { key: 'R', label: 'Rain now',      default: false },
+      { key: 'N', label: 'Temp +3h',      default: false },
     ],
     defaults: { w: 32, h: 30, content: 'T,W,H' },
   },
@@ -3984,6 +4057,10 @@ const DIAG_CHUNKS = {
       { key: 'X', label: 'Weather',  default: true },
       { key: 'H', label: 'Humidity', default: true },
       { key: 'B', label: 'Battery',  default: true },
+      { key: 'L', label: 'Today hi/lo',   default: false },
+      { key: 'K', label: 'Tomorrow hi/lo', default: false },
+      { key: 'R', label: 'Rain now',      default: false },
+      { key: 'N', label: 'Temp +3h',      default: false },
     ],
     defaults: { w: 32, h: 80, content: 'T,D,W,Z,P,X,H,B' },
   },
@@ -4579,6 +4656,60 @@ async function pushWeather() {
     console.warn('weather push failed:', e);
   }
 }
+
+// ---- Forecast (Open-Meteo, no API key) ----
+const FORECAST_LAT = 34.737, FORECAST_LON = 135.342, FORECAST_TZ = 'Asia/Tokyo';   // Nishinomiya
+
+// WMO weather code -> 0 clear, 1 clouds, 2 rain, 3 snow, 4 thunder, 5 fog
+function wmoToCat(c) {
+  if (c <= 1) return 0;
+  if (c <= 3) return 1;
+  if (c === 45 || c === 48) return 5;
+  if (c >= 51 && c <= 67) return 2;
+  if (c >= 71 && c <= 77) return 3;
+  if (c >= 80 && c <= 82) return 2;
+  if (c === 85 || c === 86) return 3;
+  if (c >= 95) return 4;
+  return 1;
+}
+
+async function pushForecast() {
+  if (!bleConnected || !bleRxChar) return;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${FORECAST_LAT}&longitude=${FORECAST_LON}`
+      + `&hourly=temperature_2m,precipitation_probability,weather_code`
+      + `&daily=temperature_2m_max,temperature_2m_min,weather_code`
+      + `&timezone=${encodeURIComponent(FORECAST_TZ)}&forecast_days=7`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('forecast fetch ' + r.status);
+    const j = await r.json();
+    const off = j.utc_offset_seconds || 0;
+    const toEpoch = s => {
+      const m = s.match(/(\d+)-(\d+)-(\d+)T(\d+):(\d+)/);
+      return Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) / 1000 - off;
+    };
+    const nowSec = Date.now() / 1000;
+    const hTimes = j.hourly.time.map(toEpoch);
+    let start = hTimes.findIndex(t => t + 3600 > nowSec);   // the hour we are in
+    if (start < 0) start = 0;
+    const N = 48;
+    const slice = arr => arr.slice(start, start + N);
+    await sendRawPayload(JSON.stringify({
+      kind: 'forecast', v: 1,
+      t0: hTimes[start],
+      th: slice(j.hourly.temperature_2m).map(v => Math.round(v)),
+      rp: slice(j.hourly.precipitation_probability).map(v => Math.round(v ?? 0)),
+      wc: slice(j.hourly.weather_code).map(wmoToCat),
+      d0: toEpoch(j.daily.time[0] + 'T00:00'),
+      dh: j.daily.temperature_2m_max.map(v => Math.round(v)),
+      dl: j.daily.temperature_2m_min.map(v => Math.round(v)),
+      dc: j.daily.weather_code.map(wmoToCat),
+    }));
+    console.log('forecast pushed');
+  } catch (e) {
+    console.warn('forecast push failed:', e);
+  }
+}
  
 // ============================================================
 // getState — fetch the watch's current state
@@ -4687,6 +4818,7 @@ async function autoPushOnConnect() {
   }
 
   await pushWeather();
+  await pushForecast();
 
   // 2. Face layout (compacted)
   try {
@@ -5516,6 +5648,7 @@ btnSync.onclick = async () => {
     console.log('timesync sent');
 
     await pushWeather();
+    await pushForecast();
 
     connStatus.textContent = 'Synced time';
     connStatus.classList.add('connected');
