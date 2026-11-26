@@ -1933,6 +1933,7 @@ function drawElement(el) {
     case 'weather':  drawWeatherElement(el);      break;
     case 'temp':     drawTempElement(el);         break;
     case 'battery':  drawBatteryElement(el);      break;
+    case 'steps':    drawStepsElement(el);        break;
     case 'text':     drawTextElement(el);         break;
     case 'bar':      drawBarElement(el);          break;
     case 'background': drawBackgroundElement(el); break;
@@ -2347,6 +2348,9 @@ function pulseComputeLit(el, now) {
     case 'random':           return (ms % 2000) < 1000;
     case 'sine':             return Math.sin(ms / 500) > 0;
     case 'synth':            return (ms % 700) < 350;
+    case 'steps.walking':    return true;
+    case 'steps.step':       return (ms % 500) < 150;
+    case 'steps.motion':     return true;
     default:                 return (Math.floor(ms / 1000) & 1) === 1;
   }
 }
@@ -2359,6 +2363,7 @@ function pulseComputeFraction(el, now) {
     case 'day_progress':     return (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
     case 'battery.percent':  return 0.73;
     case 'weather.humidity': return 0.78;
+    case 'steps.motion':     return 0.6;
     default:                 return pulseComputeLit(el, now) ? 1 : 0;
   }
 }
@@ -2509,6 +2514,12 @@ function drawBarElement(el) {
       break;
     case 'battery.voltage':
       value = (3.92 - 3.0) / (4.2 - 3.0);   // mock normalized to 3.0–4.2V
+      break;
+    case 'steps.today':
+      value = 0.43;
+      break;
+    case 'steps.motion':
+      value = 0.6;
       break;
     default:
       value = 0.5;
@@ -2988,6 +2999,7 @@ function addElement(type) {
     background: { w: 32, h: 128 },
     timezone: { w: 14, h: 8, style: 'text', scale: 1 },
     battery: { w: 40, h: 16, style: 'microhex', scale: 2, format: 'PCT' },
+    steps:   { w: 26, h: 16, style: 'microhex', scale: 2 },
     diagTime:   DIAG_CHUNKS.diagTime.defaults,
     diagEnv:    DIAG_CHUNKS.diagEnv.defaults,
     diagSys:    DIAG_CHUNKS.diagSys.defaults,
@@ -3156,6 +3168,50 @@ function drawBatteryIcon(el, pct, vertical) {
     }
   }
 }
+
+   function drawStepsElement(el) {
+  const rot = el.rotation || 0;
+  const vertical = (rot === 90 || rot === 270);
+  const s = scaleFromHeight(el.h, 8);
+  const str = '4280';   // mock value; the watch shows the real count
+
+  if (el.style === 'text') {
+    if (vertical) {
+      let yy = el.y;
+      for (const ch of str) { drawGLCDFontChar(el.x, yy, ch.charCodeAt(0), s); yy += 8 * s; }
+    } else {
+      let xx = el.x;
+      for (const ch of str) { drawGLCDFontChar(xx, el.y, ch.charCodeAt(0), s); xx += 6 * s; }
+    }
+    return;
+  }
+
+  const digits = str.split('').map(Number);
+  if (el.style === '7seg') {
+    if (vertical) {
+      const digitH = Math.floor((el.h - (digits.length - 1)) / digits.length);
+      const thick = Math.max(1, Math.round(Math.min(el.w, digitH) / 6));
+      let yy = el.y;
+      for (const d of digits) { draw7SegDigit(el.x, yy, el.w, digitH - 1, thick, d); yy += digitH; }
+    } else {
+      const digitW = Math.floor((el.w - (digits.length - 1)) / digits.length);
+      const thick = Math.max(1, Math.round(Math.min(digitW, el.h) / 6));
+      let xx = el.x;
+      for (const d of digits) { draw7SegDigit(xx, el.y, digitW - 1, el.h, thick, d); xx += digitW; }
+    }
+    return;
+  }
+
+  const glyphW = (MHEX_WIDTH + 1) * s;
+  const glyphH = (MHEX_HEIGHT + 1) * s;
+  if (vertical) {
+    let yy = el.y;
+    for (const c of digits) { drawMicroHexDigit(el.x, yy, c, s); yy += glyphH; }
+  } else {
+    let xx = el.x;
+    for (const c of digits) { drawMicroHexDigit(xx, el.y, c, s); xx += glyphW; }
+  }
+}
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -3215,6 +3271,7 @@ function rebuildPalette() {
       <button data-add="weather">Weather</button>
       <button data-add="temp">Temp</button>
       <button data-add="battery">Battery</button>
+      <button data-add="steps">Steps</button>
       <button data-add="bar">Bar</button>
       <button data-add="text">Text</button>
       <button data-add="background">Background</button>
@@ -3297,7 +3354,7 @@ function rebuildProps() {
         </select>
       </div>
     ` : '';
-     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary', 'battery'].includes(el.type) ? `
+     const rotateFields = ['time', 'seconds', 'date', 'temp', 'text', 'bar', 'rotary', 'battery', 'steps'].includes(el.type) ? `
       <div class="prop-row">
         <label>Rotation</label>
         <select id="propRotation">
@@ -3334,6 +3391,8 @@ function rebuildProps() {
           <option value="time.dayProgress"  ${el.source==='time.dayProgress' ?'selected':''}>Day progress</option>
           <option value="weather.humidity"  ${el.source==='weather.humidity' ?'selected':''}>Humidity</option>
           <option value="battery.percent"   ${el.source==='battery.percent'  ?'selected':''}>Battery</option>
+          <option value="steps.today"       ${el.source==='steps.today'      ?'selected':''}>Steps (daily goal)</option>
+          <option value="steps.motion"      ${el.source==='steps.motion'     ?'selected':''}>Step motion (live)</option>
         </select>
       </div>
       <div class="prop-row">
@@ -3431,6 +3490,21 @@ function rebuildProps() {
   </div>
 ` : '';
 
+    const stepsFields = el.type === 'steps' ? `
+      <div class="prop-row">
+        <label>Style</label>
+        <select id="propStyle">
+          <option value="microhex" ${el.style==='microhex'?'selected':''}>Microhex</option>
+          <option value="7seg"     ${el.style==='7seg'    ?'selected':''}>7-seg</option>
+          <option value="text"     ${el.style==='text'    ?'selected':''}>Text (5x7)</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Scale</label>
+        <input type="number" id="propScale" min="1" max="4" step="1" value="${el.scale || 1}">
+      </div>
+    ` : '';
+
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
         <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
@@ -3460,6 +3534,7 @@ function rebuildProps() {
       ${pulseFields}
       ${diagEffectFields}
       ${batteryFields}
+      ${stepsFields}
 
       ${el.type === 'background' ? `
         <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
@@ -3496,6 +3571,7 @@ function rebuildProps() {
         Drag body to move · drag corners to resize
       </div>
     `;
+
 
     const bind = (id, key) => {
       const input = document.getElementById(id);
@@ -3866,7 +3942,8 @@ const PULSE_SOURCES = [
   'time.synced', 'weather.valid',
   'weather.humidity', 'weather.temp', 'weather.is_day',
   'system.uptime', 'system.activity', 'system.error',
-  'static', 'random', 'sine', 'synth'
+  'static', 'random', 'sine', 'synth',
+  'steps.walking', 'steps.step', 'steps.motion'
 ];
 
 // Diagnostic chunk types
