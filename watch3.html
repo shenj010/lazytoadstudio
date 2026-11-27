@@ -3293,10 +3293,11 @@ function tileFrame(el, label) {
 }
 function tileText(x, y, s) { for (const ch of s) { drawGLCDFontChar(x, y, ch.charCodeAt(0), 1); x += 6; } }
 function tileBigNumber(x, y, w, h, v) {
-  const neg = v < 0; v = Math.min(99, Math.abs(v));
+  const neg = v < 0; v = Math.min(999, Math.abs(v));
   const s = String(v), n = s.length;
-  const dw = n === 2 ? Math.floor((w - 2) / 2) : Math.min(w - 2, 13);
-  const thick = Math.max(1, Math.floor(Math.min(dw, h) / 5));
+  const avail = w - (neg ? 4 : 0) - 2 * (n - 1);
+  const dw = n === 1 ? Math.min(avail, 13) : Math.floor(avail / n);
+  const thick = Math.max(n === 3 ? 2 : 1, Math.floor(Math.min(dw, h) / 5));
   const total = n * dw + (n - 1) * 2 + (neg ? 4 : 0);
   let xx = x + Math.floor((w - total) / 2);
   if (neg) { fillRectPx(xx, y + Math.floor(h / 2), 3, 2); xx += 4; }
@@ -3312,6 +3313,15 @@ function tileTinyNumber(x, cy, v, colW) {
       for (let ry = 0; ry < 5; ry++) if (col & (1 << ry)) fillRectPx(px, cy - 2 + ry, 1, 1);
     }
 }
+
+function tileTinySigned(rightX, cy, v) {
+  const a = Math.min(99, Math.abs(v)), digits = a >= 10 ? 2 : 1;
+  const w = (v < 0 ? 4 : 0) + digits * 4 - 1;
+  let x = rightX - w + 1;
+  if (v < 0) { fillRectPx(x, cy, 3, 1); x += 4; }
+  tileTinyNumber(x, cy, a, 8);
+}
+   
 function drawTileElement(el) {
   const kind = el.content || 'now';
   const x = el.x, y = el.y, TW = 32;
@@ -3352,7 +3362,7 @@ function drawTileElement(el) {
 
   if (kind === 'rain') {
     tileFrame(el, 'RAIN');
-    tileBigNumber(x + 2, y + 13, TW - 4, 12, 60);
+    tileBigNumber(x + 2, y + 13, TW - 4, 12, 100);
     const bx = x + 2, bw = TW - 4, base = y + 39, bh = 11;
     const sw = Math.max(1, Math.floor(bw / hours)), gap = sw >= 3 ? 1 : 0;
     fillRectPx(bx, base, bw, 1);
@@ -3370,9 +3380,13 @@ function drawTileElement(el) {
     const mock = [[20, 14], [17, 14], [18, 12]];
     for (let r = 0; r < 3; r++) {
       const ry = y + 13 + r * 9;
-      drawGLCDFontChar(x + 3, ry, 'SMTWTFS'.charCodeAt((wd + r) % 7), 1);
-      tileText(x + 10, ry, String(mock[r][0]));
-      tileTinyNumber(x + 23, ry + 3, mock[r][1], 8);
+      const hiS = String(mock[r][0]), lo = mock[r][1];
+      const loW = (lo < 0 ? 4 : 0) + (Math.abs(lo) >= 10 ? 2 : 1) * 4 - 1;
+      const showWd = (6 + 1 + (hiS.length * 6 - 1) + 2 + loW) <= 28;
+      let cx = x + 3;
+      if (showWd) { drawGLCDFontChar(cx, ry, 'SMTWTFS'.charCodeAt((wd + r) % 7), 1); cx += 7; }
+      tileText(cx, ry, hiS);
+      tileTinySigned(x + 30, ry + 3, lo);
     }
     return;
   }
