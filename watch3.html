@@ -1939,6 +1939,7 @@ function drawElement(el) {
     case 'bar':      drawBarElement(el);          break;
     case 'background': drawBackgroundElement(el); break;
     case 'timezone': drawTimezoneElement(el); break;
+    case 'tile': drawTileElement(el); break;
     case 'diagTime':   drawDiagTimeElement(el);   break;
     case 'diagEnv':    drawDiagEnvElement(el);    break;
     case 'diagSys':    drawDiagSysElement(el);    break;
@@ -3006,6 +3007,7 @@ function addElement(type) {
     text: { w: 32, h: 16, content: 'Hello', scale: 1 },
     background: { w: 32, h: 128 },
     timezone: { w: 14, h: 8, style: 'text', scale: 1 },
+    tile: { w: 32, h: 42, content: 'now', segments: 12 },
     battery: { w: 40, h: 16, style: 'microhex', scale: 2, format: 'PCT' },
     steps:   { w: 26, h: 16, style: 'microhex', scale: 2 },
     diagTime:   DIAG_CHUNKS.diagTime.defaults,
@@ -3033,7 +3035,12 @@ function addElement(type) {
     return;
   }
 
-  const spot = findFreeSpot(w, h);
+  let spot = findFreeSpot(w, h);
+  if (type === 'tile') {
+    const used = new Set(elements.filter(e => e.type === 'tile').map(e => e.y));
+    const free = [0, 43, 86].find(y => !used.has(y));
+    spot = { x: 0, y: free !== undefined ? free : spot.y };
+  }
   const el = { id: nextId++, type, x: spot.x, y: spot.y, w, h, ...props };
   elements.push(el);
   pages[currentPageIndex].used = elements.length > 0;
@@ -3271,6 +3278,110 @@ function drawForecastElement(el) {
   const c0 = Math.round((temps[0] - tmin) * (crossLen - 1) / (tmax - tmin));
   for (let dx = 0; dx < 2; dx++) for (let dy = -1; dy <= 1; dy++) plot(dx, c0 + dy);
 }
+
+// ---- Tiles: 32 x 42, three per face ----
+function tileFrame(el, label) {
+  const x = el.x, y = el.y, TW = 32, TH = 42;
+  fillRectPx(x, y, 3, 1);               fillRectPx(x, y, 1, 3);
+  fillRectPx(x + TW - 3, y, 3, 1);      fillRectPx(x + TW - 1, y, 1, 3);
+  fillRectPx(x, y + TH - 1, 3, 1);      fillRectPx(x, y + TH - 3, 1, 3);
+  fillRectPx(x + TW - 3, y + TH - 1, 3, 1); fillRectPx(x + TW - 1, y + TH - 3, 1, 3);
+  let cx = x + 3;
+  for (const ch of label) { drawGLCDFontChar(cx, y + 2, ch.charCodeAt(0), 1); cx += 6; }
+  drawDiagDividerPx(y + 10, x + 2, TW - 4, false);
+  if (Math.floor(Date.now() / 1000) % 2 === 0) fillRectPx(x + TW - 5, y + 4, 2, 2);
+}
+function tileText(x, y, s) { for (const ch of s) { drawGLCDFontChar(x, y, ch.charCodeAt(0), 1); x += 6; } }
+function tileBigNumber(x, y, w, h, v) {
+  const neg = v < 0; v = Math.min(99, Math.abs(v));
+  const s = String(v), n = s.length;
+  const dw = n === 2 ? Math.floor((w - 2) / 2) : Math.min(w - 2, 13);
+  const thick = Math.max(1, Math.floor(Math.min(dw, h) / 5));
+  const total = n * dw + (n - 1) * 2 + (neg ? 4 : 0);
+  let xx = x + Math.floor((w - total) / 2);
+  if (neg) { fillRectPx(xx, y + Math.floor(h / 2), 3, 2); xx += 4; }
+  for (const ch of s) { draw7SegDigit(xx, y, dw, h, thick, +ch); xx += dw + 2; }
+}
+function tileTinyNumber(x, cy, v, colW) {
+  const s = String(Math.min(99, Math.abs(v)));
+  for (let i = 0; i < s.length; i++)
+    for (let cx = 0; cx < 3; cx++) {
+      const px = x + i * 4 + cx;
+      if (px >= x + colW) continue;
+      const col = TINY_DIGITS[+s[i]][cx];
+      for (let ry = 0; ry < 5; ry++) if (col & (1 << ry)) fillRectPx(px, cy - 2 + ry, 1, 1);
+    }
+}
+function drawTileElement(el) {
+  const kind = el.content || 'now';
+  const x = el.x, y = el.y, TW = 32;
+  const hours = (el.segments >= 6 && el.segments <= 48) ? el.segments : 12;
+
+  if (kind === 'hourly') {
+    tileFrame(el, 'TEMP');
+    const gx = x + 2, gw = TW - 4, gy = y + 13, gh = 18;
+    const temps = [];
+    for (let i = 0; i < hours; i++) temps.push(Math.round(14 + 5 * Math.sin(i / hours * Math.PI * 1.6)));
+    const rmin = Math.min(...temps), rmax = Math.max(...temps);
+    let tmin = rmin, tmax = rmax;
+    if (tmax - tmin < 4) { const mid = Math.trunc((tmax + tmin) / 2); tmin = mid - 2; tmax = mid + 2; }
+    const range = tmax - tmin;
+    let prevA = 0, prevC = 0, lastC = 0;
+    for (let i = 0; i < hours; i++) {
+      const a = Math.floor(i * (gw - 1) / (hours - 1));
+      const c = Math.floor(((temps[i] - tmin) * (gh - 1) + range / 2) / range);
+      if (i === 0) { fillRectPx(gx + a, gy + gh - 1 - c, 1, 1); lastC = c; }
+      else {
+        for (let xx = prevA + 1; xx <= a; xx++) {
+          const f = (xx - prevA) / Math.max(1, a - prevA);
+          const cc = Math.floor(prevC + (c - prevC) * f + 0.5);
+          for (let yy = Math.min(lastC, cc); yy <= Math.max(lastC, cc); yy++) fillRectPx(gx + xx, gy + gh - 1 - yy, 1, 1);
+          lastC = cc;
+        }
+      }
+      prevA = a; prevC = c;
+    }
+    const c0 = Math.floor(((temps[0] - tmin) * (gh - 1) + range / 2) / range);
+    fillRectPx(gx, gy + gh - 2 - c0, 2, 3);                       // "now" marker
+    for (let i = 0; i < hours; i += 3) fillRectPx(gx + Math.floor(i * (gw - 1) / (hours - 1)), gy + gh + 1, 1, 1);
+    const hi = String(rmax);
+    tileText(x + 2, y + 34, String(rmin));
+    tileText(x + TW - 2 - hi.length * 6 + 1, y + 34, hi);
+    return;
+  }
+
+  if (kind === 'rain') {
+    tileFrame(el, 'RAIN');
+    tileBigNumber(x + 2, y + 13, TW - 4, 12, 60);
+    const bx = x + 2, bw = TW - 4, base = y + 39, bh = 11;
+    const sw = Math.max(1, Math.floor(bw / hours)), gap = sw >= 3 ? 1 : 0;
+    fillRectPx(bx, base, bw, 1);
+    for (let i = 0; i < hours; i++) {
+      const pct = Math.max(0, Math.min(100, 55 * Math.sin(i * 0.6 + 1) + 25));
+      const h = Math.floor((Math.round(pct) * bh + 50) / 100);
+      for (let a = i * sw; a < i * sw + sw - gap && a < bw; a++) if (h > 0) fillRectPx(bx + a, base - h, 1, h);
+    }
+    return;
+  }
+
+  if (kind === 'days') {
+    tileFrame(el, 'DAYS');
+    const wd = tzNow().getDay();
+    const mock = [[20, 14], [17, 14], [18, 12]];
+    for (let r = 0; r < 3; r++) {
+      const ry = y + 13 + r * 9;
+      drawGLCDFontChar(x + 3, ry, 'SMTWTFS'.charCodeAt((wd + r) % 7), 1);
+      tileText(x + 10, ry, String(mock[r][0]));
+      tileTinyNumber(x + 23, ry + 3, mock[r][1], 8);
+    }
+    return;
+  }
+
+  tileFrame(el, 'NOW');   // default: now
+  tileBigNumber(x + 2, y + 13, TW - 4, 18, 19);
+  const s = '20/14';
+  tileText(x + Math.floor((TW - (s.length * 6 - 1)) / 2), y + 33, s);
+}
 // ============================================================
 // Palette & properties rebuild
 // ============================================================
@@ -3336,6 +3447,7 @@ function rebuildPalette() {
       <button data-add="text">Text</button>
       <button data-add="background">Background</button>
       <button data-add="timezone">Timezone</button>
+      <button data-add="tile">Tile</button>
       <button data-add="diagTime">Diag: Time</button>
       <button data-add="diagEnv">Diag: Env</button>
       <button data-add="diagSys">Diag: Sys</button>
@@ -3579,6 +3691,25 @@ function rebuildProps() {
       </div>
     ` : '';
 
+         const tileFields = el.type === 'tile' ? `
+      <div class="prop-row"><label>Slot</label>
+        <select id="propTileSlot">
+          <option value="0"  ${el.y===0 ?'selected':''}>1 (top)</option>
+          <option value="43" ${el.y===43?'selected':''}>2 (middle)</option>
+          <option value="86" ${el.y===86?'selected':''}>3 (bottom)</option>
+        </select></div>
+      <div class="prop-row"><label>Tile</label>
+        <select id="propTileKind">
+          <option value="now"    ${(el.content||'now')==='now'?'selected':''}>Now</option>
+          <option value="hourly" ${el.content==='hourly'?'selected':''}>Hourly temp</option>
+          <option value="rain"   ${el.content==='rain'  ?'selected':''}>Rain</option>
+          <option value="days"   ${el.content==='days'  ?'selected':''}>3 days</option>
+        </select></div>
+      ${(el.content==='hourly' || el.content==='rain') ? `
+      <div class="prop-row"><label>Hours</label>
+        <input type="number" id="propTileHours" min="6" max="48" step="1" value="${el.segments || 12}"></div>` : ''}
+    ` : '';
+
     body.innerHTML = `
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">
         <strong style="color:#fff;text-transform:capitalize">${el.type}</strong>
@@ -3610,6 +3741,7 @@ function rebuildProps() {
       ${batteryFields}
       ${stepsFields}
       ${forecastFields}
+      ${tileFields}
 
       ${el.type === 'background' ? `
         <div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2a2a">
@@ -3748,6 +3880,16 @@ function rebuildProps() {
     const fcHours = document.getElementById('propForecastHours');
     if (fcHours) fcHours.oninput = () => {
       const v = parseInt(fcHours.value, 10);
+      if (!isNaN(v) && v >= 6 && v <= 48) { el.segments = v; render(); }
+    };
+
+       const tSlot = document.getElementById('propTileSlot');
+    if (tSlot) tSlot.onchange = () => { el.x = 0; el.y = parseInt(tSlot.value, 10); rebuildProps(); render(); };
+    const tKind = document.getElementById('propTileKind');
+    if (tKind) tKind.onchange = () => { el.content = tKind.value; rebuildProps(); render(); };
+    const tHours = document.getElementById('propTileHours');
+    if (tHours) tHours.oninput = () => {
+      const v = parseInt(tHours.value, 10);
       if (!isNaN(v) && v >= 6 && v <= 48) { el.segments = v; render(); }
     };
 
@@ -4691,7 +4833,7 @@ async function pushForecast() {
   if (!bleConnected || !bleRxChar) return;
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${FORECAST_LAT}&longitude=${FORECAST_LON}`
-      + `&hourly=temperature_2m,precipitation_probability,weather_code`
+      + `&hourly=temperature_2m,precipitation_probability,weather_code,relative_humidity_2m`
       + `&daily=temperature_2m_max,temperature_2m_min,weather_code`
       + `&timezone=${encodeURIComponent(FORECAST_TZ)}&forecast_days=7`;
     const r = await fetch(url);
@@ -4713,6 +4855,7 @@ async function pushForecast() {
       t0: hTimes[start],
       th: slice(j.hourly.temperature_2m).map(v => Math.round(v)),
       rp: slice(j.hourly.precipitation_probability).map(v => Math.round(v ?? 0)),
+      hm: slice(j.hourly.relative_humidity_2m).map(v => Math.round(v ?? 0)),
       wc: slice(j.hourly.weather_code).map(wmoToCat),
       d0: toEpoch(j.daily.time[0] + 'T00:00'),
       dh: j.daily.temperature_2m_max.map(v => Math.round(v)),
@@ -4831,7 +4974,6 @@ async function autoPushOnConnect() {
     console.warn('timesync failed:', e);
   }
 
-  await pushWeather();
   await pushForecast();
 
   // 2. Face layout (compacted)
@@ -5661,7 +5803,6 @@ btnSync.onclick = async () => {
     }));
     console.log('timesync sent');
 
-    await pushWeather();
     await pushForecast();
 
     connStatus.textContent = 'Synced time';
